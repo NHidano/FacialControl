@@ -1,5 +1,19 @@
 {
   "dependencies": {
+    "com.mikunote.hatsunemiku-sample": {
+      "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Sample",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "41ad48d9313638ba6ff85febe06bf9cdf9b726a3"
+    },
+    "com.mikunote.magica-cloth-2": {
+      "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/MagicaCloth2",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f29d0af15a508941504f696f595c27a38b8a69f2"
+    },
     "com.unity.burst": {
       "version": "1.8.26",
       "depth": 2,
@@ -158,6 +172,13 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
+    },
+    "jp.lilxyzw.liltoon": {
+      "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Packages/jp.lilxyzw.liltoon",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f23be65e21f80d2ba7a92123192328e77e72b715"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
