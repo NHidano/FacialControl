@@ -31,9 +31,9 @@
 本プロジェクトの範囲を明確に定義します。
 
 **対象範囲**
-- 項目1
-- 項目2
-- 項目3
+- Unityにおける一般的な3DCGアバターのAnimatorによるBlendShape制御
+- Unity純正のInputSystemによる表情の変化と、外部プラグインによるリップシンクアニメーションのブレンド
+- 表情のプリセットデータとなるAnimationClipのバインド設定を保持するScriptableObjectAssetの作成と管理
 
 **対象外**
 - 項目1
