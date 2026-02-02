@@ -4,7 +4,17 @@
       "version": "file:com.hidano.facialcontrol",
       "depth": 0,
       "source": "embedded",
-      "dependencies": {}
+      "dependencies": {
+        "com.unity.inputsystem": "1.17.0",
+        "com.hidano.uosc": "1.0.0"
+      }
+    },
+    "com.hidano.uosc": {
+      "version": "1.0.0",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://registry.npmjs.org"
     },
     "com.mikunote.hatsunemiku-sample": {
       "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Sample",

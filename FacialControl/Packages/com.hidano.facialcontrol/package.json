@@ -8,6 +8,10 @@
     "author": {
         "name": "Hidano"
     },
+    "dependencies": {
+        "com.unity.inputsystem": "1.17.0",
+        "com.hidano.uosc": "1.0.0"
+    },
     "keywords": [
         "facial",
         "blendshape",
