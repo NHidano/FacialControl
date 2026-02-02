@@ -1,0 +1,20 @@
+{
+    "name": "Hidano.FacialControl.Editor",
+    "rootNamespace": "Hidano.FacialControl.Editor",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

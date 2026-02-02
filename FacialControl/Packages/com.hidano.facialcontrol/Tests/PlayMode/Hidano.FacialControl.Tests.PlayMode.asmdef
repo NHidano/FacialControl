@@ -1,0 +1,24 @@
+{
+    "name": "Hidano.FacialControl.Tests.PlayMode",
+    "rootNamespace": "Hidano.FacialControl.Tests.PlayMode",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
