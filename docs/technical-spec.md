@@ -491,7 +491,7 @@ public interface IBlinkTrigger
 ```
 StreamingAssets/FacialControl/
 ├── config.json                      # グローバル設定（OSCマッピング、キャッシュ設定等）
-├── miku_profile.json                # プロファイル（キャラクター単位）
+├── character01_profile.json          # プロファイル（キャラクター単位）
 ├── avatar01_profile.json
 └── ...
 ```

@@ -28,9 +28,8 @@ FacialControl は、3D キャラクターの表情をリアルタイムに制御
 | `com.unity.test-framework` (1.6.0) | Edit Mode / Play Mode テスト |
 | `jp.lilxyzw.liltoon` | トゥーンシェーダー |
 | `com.mikunote.magica-cloth-2` | クロスシミュレーション |
-| `com.mikunote.hatsunemiku-sample` | 開発用サンプルモデル（リリース非同梱） |
 
-外部パッケージ（lilToon、MagicaCloth2、Miku モデル）は `NHidano/Mikunote_Models` リポジトリから SSH 経由で取得される。
+外部パッケージ（lilToon、MagicaCloth2）は Git リポジトリから SSH 経由で取得される。
 
 ## 開発コマンド
 
