@@ -1,152 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="21" result="Passed" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.0340753">
-  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.034075" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="25" result="Passed" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.063203">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.063203" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1024" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.029462" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1050" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.057533" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="272392" />
+        <property name="_PID" value="627456" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestSuite" id="1025" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.029059" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestSuite" id="1051" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.055920" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-suite type="TestSuite" id="1026" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.028782" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="TestSuite" id="1052" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.054988" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-suite type="TestSuite" id="1027" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.028497" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <test-suite type="TestSuite" id="1053" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.054388" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
             <properties />
-            <test-suite type="TestSuite" id="1028" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.028226" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <test-suite type="TestSuite" id="1054" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.053511" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
               <properties />
-              <test-suite type="TestSuite" id="1029" name="Domain" fullname="Hidano.FacialControl.Tests.EditMode.Domain" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.027904" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <test-suite type="TestSuite" id="1055" name="Domain" fullname="Hidano.FacialControl.Tests.EditMode.Domain" runstate="Runnable" testcasecount="46" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.052540" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
                 <properties />
-                <test-suite type="TestFixture" id="1001" name="LayerDefinitionTests" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.021005" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <test-suite type="TestFixture" id="1001" name="ExpressionTests" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.047591" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
                   <properties />
-                  <test-case id="1003" name="Constructor_BlendMode_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_BlendMode_CreatesInstance" methodname="Constructor_BlendMode_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="2067732175" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:21Z" duration="0.008388" asserts="0">
+                  <test-case id="1025" name="BlendShapeValues_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.BlendShapeValues_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" methodname="BlendShapeValues_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1719573873" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.008747" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1006" name="Constructor_EmptyName_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_EmptyName_ThrowsArgumentException" methodname="Constructor_EmptyName_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="1904801044" result="Passed" start-time="2026-02-02 16:44:21Z" end-time="2026-02-02 16:44:22Z" duration="0.001533" asserts="0">
+                  <test-case id="1011" name="Constructor_CustomCurve_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_CustomCurve_CreatesInstance" methodname="Constructor_CustomCurve_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1468156072" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.001045" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1004" name="Constructor_HighPriority_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_HighPriority_CreatesInstance" methodname="Constructor_HighPriority_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="638922303" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000140" asserts="0">
+                  <test-case id="1005" name="Constructor_DefaultBlendShapeValues_IsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_DefaultBlendShapeValues_IsEmpty" methodname="Constructor_DefaultBlendShapeValues_IsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="501365466" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000206" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1011" name="Constructor_JapaneseName_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_JapaneseName_CreatesInstance" methodname="Constructor_JapaneseName_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="737231084" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000158" asserts="0">
+                  <test-case id="1006" name="Constructor_DefaultLayerSlots_IsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_DefaultLayerSlots_IsEmpty" methodname="Constructor_DefaultLayerSlots_IsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="559552334" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000208" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1008" name="Constructor_NegativePriority_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_NegativePriority_ThrowsArgumentOutOfRangeException" methodname="Constructor_NegativePriority_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="536139118" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000233" asserts="0">
+                  <test-case id="1004" name="Constructor_DefaultTransitionCurve_IsLinear" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_DefaultTransitionCurve_IsLinear" methodname="Constructor_DefaultTransitionCurve_IsLinear" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1662926403" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000161" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1009" name="Constructor_NegativePriorityLarge_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_NegativePriorityLarge_ThrowsArgumentOutOfRangeException" methodname="Constructor_NegativePriorityLarge_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="501283333" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000224" asserts="0">
+                  <test-case id="1003" name="Constructor_DefaultTransitionDuration_Is025" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_DefaultTransitionDuration_Is025" methodname="Constructor_DefaultTransitionDuration_Is025" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="502380902" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000167" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1005" name="Constructor_NullName_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_NullName_ThrowsArgumentNullException" methodname="Constructor_NullName_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="1385313483" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000218" asserts="0">
+                  <test-case id="1017" name="Constructor_EmptyId_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_EmptyId_ThrowsArgumentException" methodname="Constructor_EmptyId_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="348580650" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.001448" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1010" name="Constructor_PriorityZero_IsValid" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_PriorityZero_IsValid" methodname="Constructor_PriorityZero_IsValid" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="941713901" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000117" asserts="0">
+                  <test-case id="1023" name="Constructor_EmptyLayer_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_EmptyLayer_ThrowsArgumentException" methodname="Constructor_EmptyLayer_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="691496327" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000196" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1012" name="Constructor_SpecialCharacterName_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_SpecialCharacterName_CreatesInstance" methodname="Constructor_SpecialCharacterName_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="974822688" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000104" asserts="0">
+                  <test-case id="1020" name="Constructor_EmptyName_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_EmptyName_ThrowsArgumentException" methodname="Constructor_EmptyName_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1134493268" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000190" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1002" name="Constructor_ValidParameters_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_ValidParameters_CreatesInstance" methodname="Constructor_ValidParameters_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="698647592" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000132" asserts="0">
+                  <test-case id="1012" name="Constructor_JapaneseName_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_JapaneseName_CreatesInstance" methodname="Constructor_JapaneseName_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="403336065" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000212" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1007" name="Constructor_WhitespaceName_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests.Constructor_WhitespaceName_ThrowsArgumentException" methodname="Constructor_WhitespaceName_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerDefinitionTests" runstate="Runnable" seed="410323847" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000167" asserts="0">
+                  <test-case id="1009" name="Constructor_MultipleBlendShapeValues_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_MultipleBlendShapeValues_CreatesInstance" methodname="Constructor_MultipleBlendShapeValues_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1233036851" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000250" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                </test-suite>
-                <test-suite type="TestFixture" id="1013" name="LayerSlotTests" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.005633" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
-                  <properties />
-                  <test-case id="1023" name="BlendShapeValues_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.BlendShapeValues_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" methodname="BlendShapeValues_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="1835462538" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000906" asserts="0">
+                  <test-case id="1010" name="Constructor_MultipleLayerSlots_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_MultipleLayerSlots_CreatesInstance" methodname="Constructor_MultipleLayerSlots_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1092753190" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.004868" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1016" name="Constructor_EmptyBlendShapeValues_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_EmptyBlendShapeValues_CreatesInstance" methodname="Constructor_EmptyBlendShapeValues_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="942642781" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000288" asserts="0">
+                  <test-case id="1016" name="Constructor_NullId_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_NullId_ThrowsArgumentNullException" methodname="Constructor_NullId_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1333464731" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000833" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1018" name="Constructor_EmptyLayer_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_EmptyLayer_ThrowsArgumentException" methodname="Constructor_EmptyLayer_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="442653505" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000232" asserts="0">
+                  <test-case id="1022" name="Constructor_NullLayer_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_NullLayer_ThrowsArgumentNullException" methodname="Constructor_NullLayer_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="360193579" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000630" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1021" name="Constructor_JapaneseLayerName_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_JapaneseLayerName_CreatesInstance" methodname="Constructor_JapaneseLayerName_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="1145507510" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000150" asserts="0">
+                  <test-case id="1019" name="Constructor_NullName_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_NullName_ThrowsArgumentNullException" methodname="Constructor_NullName_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="612865900" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000878" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1015" name="Constructor_MultipleBlendShapeValues_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_MultipleBlendShapeValues_CreatesInstance" methodname="Constructor_MultipleBlendShapeValues_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="2130179459" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000226" asserts="0">
+                  <test-case id="1013" name="Constructor_SpecialCharacterName_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_SpecialCharacterName_CreatesInstance" methodname="Constructor_SpecialCharacterName_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1505809932" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000464" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1020" name="Constructor_NullBlendShapeValues_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_NullBlendShapeValues_ThrowsArgumentNullException" methodname="Constructor_NullBlendShapeValues_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="1180279480" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000218" asserts="0">
+                  <test-case id="1014" name="Constructor_TransitionDurationNegative_ClampsToZero" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_TransitionDurationNegative_ClampsToZero" methodname="Constructor_TransitionDurationNegative_ClampsToZero" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="122686378" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000489" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1017" name="Constructor_NullLayer_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_NullLayer_ThrowsArgumentNullException" methodname="Constructor_NullLayer_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="676829183" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000216" asserts="0">
+                  <test-case id="1008" name="Constructor_TransitionDurationOne_IsValid" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_TransitionDurationOne_IsValid" methodname="Constructor_TransitionDurationOne_IsValid" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1563200764" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000572" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1022" name="Constructor_SpecialCharacterLayerName_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_SpecialCharacterLayerName_CreatesInstance" methodname="Constructor_SpecialCharacterLayerName_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="1389998076" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000173" asserts="0">
+                  <test-case id="1015" name="Constructor_TransitionDurationOverOne_ClampsToOne" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_TransitionDurationOverOne_ClampsToOne" methodname="Constructor_TransitionDurationOverOne_ClampsToOne" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1927283406" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000292" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1014" name="Constructor_ValidParameters_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_ValidParameters_CreatesInstance" methodname="Constructor_ValidParameters_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="1920237311" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000192" asserts="0">
+                  <test-case id="1007" name="Constructor_TransitionDurationZero_IsValid" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_TransitionDurationZero_IsValid" methodname="Constructor_TransitionDurationZero_IsValid" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1458578329" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000425" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
                     </properties>
                   </test-case>
-                  <test-case id="1019" name="Constructor_WhitespaceLayer_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests.Constructor_WhitespaceLayer_ThrowsArgumentException" methodname="Constructor_WhitespaceLayer_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerSlotTests" runstate="Runnable" seed="1999802885" result="Passed" start-time="2026-02-02 16:44:22Z" end-time="2026-02-02 16:44:22Z" duration="0.000215" asserts="0">
+                  <test-case id="1002" name="Constructor_ValidParameters_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_ValidParameters_CreatesInstance" methodname="Constructor_ValidParameters_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="1043185959" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.001263" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1018" name="Constructor_WhitespaceId_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_WhitespaceId_ThrowsArgumentException" methodname="Constructor_WhitespaceId_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="59510389" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000575" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1024" name="Constructor_WhitespaceLayer_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_WhitespaceLayer_ThrowsArgumentException" methodname="Constructor_WhitespaceLayer_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="296041180" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000384" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1021" name="Constructor_WhitespaceName_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.Constructor_WhitespaceName_ThrowsArgumentException" methodname="Constructor_WhitespaceName_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="984934016" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000457" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1026" name="LayerSlots_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests.LayerSlots_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" methodname="LayerSlots_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect" classname="Hidano.FacialControl.Tests.EditMode.Domain.ExpressionTests" runstate="Runnable" seed="623778509" result="Passed" start-time="2026-02-02 16:47:19Z" end-time="2026-02-02 16:47:19Z" duration="0.000581" asserts="0">
                     <properties>
                       <property name="retryIteration" value="0" />
                       <property name="repeatIteration" value="0" />
