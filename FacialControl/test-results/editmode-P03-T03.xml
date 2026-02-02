@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="24" result="Passed" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.0759172">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.075917" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1245" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.069700" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="241208" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1246" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.066009" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1247" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.060248" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1248" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.055570" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1249" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.051041" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1250" name="Domain" fullname="Hidano.FacialControl.Tests.EditMode.Domain" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.046334" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1154" name="LayerBlenderTests" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.033880" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1175" name="ApplyLayerSlotOverrides_ArrayOverload_Works" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_ArrayOverload_Works" methodname="ApplyLayerSlotOverrides_ArrayOverload_Works" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1390783291" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.009115" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1171" name="ApplyLayerSlotOverrides_EmptySlots_NoChange" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_EmptySlots_NoChange" methodname="ApplyLayerSlotOverrides_EmptySlots_NoChange" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="143608386" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000370" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1176" name="ApplyLayerSlotOverrides_JapaneseBlendShapeNames_MatchesCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_JapaneseBlendShapeNames_MatchesCorrectly" methodname="ApplyLayerSlotOverrides_JapaneseBlendShapeNames_MatchesCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1845310198" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000237" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1170" name="ApplyLayerSlotOverrides_MultipleSlots_AllApplied" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_MultipleSlots_AllApplied" methodname="ApplyLayerSlotOverrides_MultipleSlots_AllApplied" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="77608428" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000285" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1173" name="ApplyLayerSlotOverrides_OverlappingSlots_LastSlotWins" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_OverlappingSlots_LastSlotWins" methodname="ApplyLayerSlotOverrides_OverlappingSlots_LastSlotWins" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1382136517" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000250" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1169" name="ApplyLayerSlotOverrides_SingleSlot_ReplacesTargetLayerValues" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_SingleSlot_ReplacesTargetLayerValues" methodname="ApplyLayerSlotOverrides_SingleSlot_ReplacesTargetLayerValues" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1465013189" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000276" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1172" name="ApplyLayerSlotOverrides_UnknownBlendShapeName_Skipped" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_UnknownBlendShapeName_Skipped" methodname="ApplyLayerSlotOverrides_UnknownBlendShapeName_Skipped" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1368165151" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000230" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1174" name="ApplyLayerSlotOverrides_ValuesClampedToZeroOne" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.ApplyLayerSlotOverrides_ValuesClampedToZeroOne" methodname="ApplyLayerSlotOverrides_ValuesClampedToZeroOne" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1983646731" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.001799" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1162" name="Blend_EmptyLayers_OutputRemainsZero" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_EmptyLayers_OutputRemainsZero" methodname="Blend_EmptyLayers_OutputRemainsZero" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1836650946" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000569" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1163" name="Blend_EmptyOutput_NoException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_EmptyOutput_NoException" methodname="Blend_EmptyOutput_NoException" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1703392715" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000759" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1167" name="Blend_LargeArray_AllElementsCorrect" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_LargeArray_AllElementsCorrect" methodname="Blend_LargeArray_AllElementsCorrect" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="950408614" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000805" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1166" name="Blend_OutputClampedToZeroOne" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_OutputClampedToZeroOne" methodname="Blend_OutputClampedToZeroOne" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="962996523" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000192" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1178" name="Blend_SamePriority_InputOrderMaintained" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_SamePriority_InputOrderMaintained" methodname="Blend_SamePriority_InputOrderMaintained" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1574175678" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000190" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1155" name="Blend_SingleLayer_ReturnsLayerValues" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_SingleLayer_ReturnsLayerValues" methodname="Blend_SingleLayer_ReturnsLayerValues" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1724928163" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000202" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1168" name="Blend_Span_SingleLayer_ReturnsLayerValues" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_Span_SingleLayer_ReturnsLayerValues" methodname="Blend_Span_SingleLayer_ReturnsLayerValues" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1967973988" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000210" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1160" name="Blend_ThreeLayers_MiddlePartialWeight_BlendCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_ThreeLayers_MiddlePartialWeight_BlendCorrectly" methodname="Blend_ThreeLayers_MiddlePartialWeight_BlendCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="422872669" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000178" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1159" name="Blend_ThreeLayers_PriorityOrder_HighestWins" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_ThreeLayers_PriorityOrder_HighestWins" methodname="Blend_ThreeLayers_PriorityOrder_HighestWins" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="181506268" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000199" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1156" name="Blend_TwoLayers_HigherPriorityOverridesLower" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_TwoLayers_HigherPriorityOverridesLower" methodname="Blend_TwoLayers_HigherPriorityOverridesLower" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1735093383" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000188" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1157" name="Blend_TwoLayers_PartialWeight_BlendsBetweenLayers" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_TwoLayers_PartialWeight_BlendsBetweenLayers" methodname="Blend_TwoLayers_PartialWeight_BlendsBetweenLayers" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="687135871" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000210" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1158" name="Blend_TwoLayers_ZeroWeight_LowerLayerUnchanged" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_TwoLayers_ZeroWeight_LowerLayerUnchanged" methodname="Blend_TwoLayers_ZeroWeight_LowerLayerUnchanged" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="916124691" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000211" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1161" name="Blend_UnsortedPriority_SortsBeforeBlending" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_UnsortedPriority_SortsBeforeBlending" methodname="Blend_UnsortedPriority_SortsBeforeBlending" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="288692045" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000233" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1165" name="Blend_WeightClamped_AboveOne_TreatedAsOne" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_WeightClamped_AboveOne_TreatedAsOne" methodname="Blend_WeightClamped_AboveOne_TreatedAsOne" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="167623483" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000180" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1164" name="Blend_WeightClamped_BelowZero_TreatedAsZero" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.Blend_WeightClamped_BelowZero_TreatedAsZero" methodname="Blend_WeightClamped_BelowZero_TreatedAsZero" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1219262466" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000186" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1177" name="BlendAndOverride_FullPipeline_CorrectResult" fullname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests.BlendAndOverride_FullPipeline_CorrectResult" methodname="BlendAndOverride_FullPipeline_CorrectResult" classname="Hidano.FacialControl.Tests.EditMode.Domain.LayerBlenderTests" runstate="Runnable" seed="1754813226" result="Passed" start-time="2026-02-02 17:59:21Z" end-time="2026-02-02 17:59:21Z" duration="0.000289" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
