@@ -1,8 +1,288 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="0" result="Passed" total="0" passed="0" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 16:38:06Z" end-time="2026-02-02 16:38:06Z" duration="0.001892">
-  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="0" result="Passed" start-time="2026-02-02 16:38:06Z" end-time="2026-02-02 16:38:06Z" duration="0.001892" total="0" passed="0" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="42" result="Passed" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.046689">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.046689" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
+    <test-suite type="Assembly" id="1245" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.042002" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="268840" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1246" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.041492" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1247" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.041122" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1248" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.040733" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1249" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.040338" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1250" name="Domain" fullname="Hidano.FacialControl.Tests.EditMode.Domain" runstate="Runnable" testcasecount="235" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.039906" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1001" name="ARKitDetectorTests" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" testcasecount="42" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.034837" total="42" passed="42" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1005" name="ARKit52Names_ContainsBrowDownLeft" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.ARKit52Names_ContainsBrowDownLeft" methodname="ARKit52Names_ContainsBrowDownLeft" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1696559465" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.006147" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1003" name="ARKit52Names_ContainsEyeBlinkLeft" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.ARKit52Names_ContainsEyeBlinkLeft" methodname="ARKit52Names_ContainsEyeBlinkLeft" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="227217332" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000161" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1004" name="ARKit52Names_ContainsJawOpen" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.ARKit52Names_ContainsJawOpen" methodname="ARKit52Names_ContainsJawOpen" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1562296444" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000113" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1006" name="ARKit52Names_ContainsTongueOut" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.ARKit52Names_ContainsTongueOut" methodname="ARKit52Names_ContainsTongueOut" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="461471641" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000102" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1002" name="ARKit52Names_Count_Returns52" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.ARKit52Names_Count_Returns52" methodname="ARKit52Names_Count_Returns52" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="245950132" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.002223" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1016" name="DetectAll_ARKitAndPerfectSync_ReturnsBoth" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectAll_ARKitAndPerfectSync_ReturnsBoth" methodname="DetectAll_ARKitAndPerfectSync_ReturnsBoth" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="298332505" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.001034" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1017" name="DetectAll_MixedKnownAndUnknown_SkipsUnknown" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectAll_MixedKnownAndUnknown_SkipsUnknown" methodname="DetectAll_MixedKnownAndUnknown_SkipsUnknown" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="625704820" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000168" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1038" name="DetectAll_NullInput_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectAll_NullInput_ThrowsArgumentNullException" methodname="DetectAll_NullInput_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="47117802" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.001392" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1009" name="DetectARKit_AllARKit52Names_ReturnsAll52" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_AllARKit52Names_ReturnsAll52" methodname="DetectARKit_AllARKit52Names_ReturnsAll52" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1909006966" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000139" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1012" name="DetectARKit_CaseSensitive_NoPartialMatch" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_CaseSensitive_NoPartialMatch" methodname="DetectARKit_CaseSensitive_NoPartialMatch" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1214440604" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000138" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1013" name="DetectARKit_EmptyInput_ReturnsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_EmptyInput_ReturnsEmpty" methodname="DetectARKit_EmptyInput_ReturnsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="681837843" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000118" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1019" name="DetectARKit_JapaneseBlendShapeNames_SkippedWithoutError" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_JapaneseBlendShapeNames_SkippedWithoutError" methodname="DetectARKit_JapaneseBlendShapeNames_SkippedWithoutError" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1775563092" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000135" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1011" name="DetectARKit_NoMatch_ReturnsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_NoMatch_ReturnsEmpty" methodname="DetectARKit_NoMatch_ReturnsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1775002367" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000118" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1036" name="DetectARKit_NullInput_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_NullInput_ThrowsArgumentNullException" methodname="DetectARKit_NullInput_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1089788410" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000155" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1010" name="DetectARKit_PartialMatch_ReturnsOnlyMatched" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_PartialMatch_ReturnsOnlyMatched" methodname="DetectARKit_PartialMatch_ReturnsOnlyMatched" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="21307657" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000144" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1018" name="DetectARKit_UnknownParametersSilentlySkipped" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectARKit_UnknownParametersSilentlySkipped" methodname="DetectARKit_UnknownParametersSilentlySkipped" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1084011777" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000124" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1014" name="DetectPerfectSync_AllPerfectSyncNames_ReturnsAll" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectPerfectSync_AllPerfectSyncNames_ReturnsAll" methodname="DetectPerfectSync_AllPerfectSyncNames_ReturnsAll" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="433951907" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000138" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1015" name="DetectPerfectSync_NoMatch_ReturnsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectPerfectSync_NoMatch_ReturnsEmpty" methodname="DetectPerfectSync_NoMatch_ReturnsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1437023325" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000116" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1037" name="DetectPerfectSync_NullInput_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.DetectPerfectSync_NullInput_ThrowsArgumentNullException" methodname="DetectPerfectSync_NullInput_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1568696493" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000156" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1029" name="GenerateExpressions_ARKit52Eye_CreatesEyeExpression" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_ARKit52Eye_CreatesEyeExpression" methodname="GenerateExpressions_ARKit52Eye_CreatesEyeExpression" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1220777828" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.001852" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1033" name="GenerateExpressions_BlendShapeValuesAreDefaultOne" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_BlendShapeValuesAreDefaultOne" methodname="GenerateExpressions_BlendShapeValuesAreDefaultOne" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="432174937" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000873" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1035" name="GenerateExpressions_DefaultTransitionDuration" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_DefaultTransitionDuration" methodname="GenerateExpressions_DefaultTransitionDuration" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="135828304" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000189" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1032" name="GenerateExpressions_EachHasValidIdAndName" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_EachHasValidIdAndName" methodname="GenerateExpressions_EachHasValidIdAndName" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1556999622" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000261" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1031" name="GenerateExpressions_EmptyInput_ReturnsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_EmptyInput_ReturnsEmpty" methodname="GenerateExpressions_EmptyInput_ReturnsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="766067290" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000158" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1030" name="GenerateExpressions_MixedGroups_CreatesPerLayer" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_MixedGroups_CreatesPerLayer" methodname="GenerateExpressions_MixedGroups_CreatesPerLayer" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1170052882" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000174" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1040" name="GenerateExpressions_NullInput_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_NullInput_ThrowsArgumentNullException" methodname="GenerateExpressions_NullInput_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1807014422" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000178" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1034" name="GenerateExpressions_UniqueIds" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GenerateExpressions_UniqueIds" methodname="GenerateExpressions_UniqueIds" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1197700648" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000177" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1043" name="GetLayerGroup_AllARKit52_AllHaveGroup" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_AllARKit52_AllHaveGroup" methodname="GetLayerGroup_AllARKit52_AllHaveGroup" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="2039362974" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.001089" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1022" name="GetLayerGroup_BrowParameters_ReturnsBrow" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_BrowParameters_ReturnsBrow" methodname="GetLayerGroup_BrowParameters_ReturnsBrow" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="970255150" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000120" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1024" name="GetLayerGroup_CheekParameters_ReturnsCheek" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_CheekParameters_ReturnsCheek" methodname="GetLayerGroup_CheekParameters_ReturnsCheek" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="725982070" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000094" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1020" name="GetLayerGroup_EyeParameters_ReturnsEye" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_EyeParameters_ReturnsEye" methodname="GetLayerGroup_EyeParameters_ReturnsEye" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="410077678" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000117" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1021" name="GetLayerGroup_MouthParameters_ReturnsMouth" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_MouthParameters_ReturnsMouth" methodname="GetLayerGroup_MouthParameters_ReturnsMouth" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="295000619" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000097" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1023" name="GetLayerGroup_NoseParameters_ReturnsNose" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_NoseParameters_ReturnsNose" methodname="GetLayerGroup_NoseParameters_ReturnsNose" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="596699284" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.001097" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1041" name="GetLayerGroup_NullInput_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_NullInput_ThrowsArgumentNullException" methodname="GetLayerGroup_NullInput_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1490906219" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000180" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1042" name="GetLayerGroup_PerfectSyncNames_AllHaveGroup" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_PerfectSyncNames_AllHaveGroup" methodname="GetLayerGroup_PerfectSyncNames_AllHaveGroup" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="986489745" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000159" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1025" name="GetLayerGroup_UnknownParameter_ReturnsNull" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GetLayerGroup_UnknownParameter_ReturnsNull" methodname="GetLayerGroup_UnknownParameter_ReturnsNull" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="359205897" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000138" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1027" name="GroupByLayer_EmptyInput_ReturnsEmptyDictionary" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GroupByLayer_EmptyInput_ReturnsEmptyDictionary" methodname="GroupByLayer_EmptyInput_ReturnsEmptyDictionary" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="255560646" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000120" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1026" name="GroupByLayer_MixedParameters_GroupsCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GroupByLayer_MixedParameters_GroupsCorrectly" methodname="GroupByLayer_MixedParameters_GroupsCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="433540067" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000167" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1039" name="GroupByLayer_NullInput_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GroupByLayer_NullInput_ThrowsArgumentNullException" methodname="GroupByLayer_NullInput_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="285039170" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000161" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1028" name="GroupByLayer_UnknownNames_ExcludedFromGroups" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.GroupByLayer_UnknownNames_ExcludedFromGroups" methodname="GroupByLayer_UnknownNames_ExcludedFromGroups" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1236298806" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000135" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1008" name="PerfectSyncNames_DoesNotOverlapWithARKit52" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.PerfectSyncNames_DoesNotOverlapWithARKit52" methodname="PerfectSyncNames_DoesNotOverlapWithARKit52" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1992064515" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000194" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1007" name="PerfectSyncNames_IsNotEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests.PerfectSyncNames_IsNotEmpty" methodname="PerfectSyncNames_IsNotEmpty" classname="Hidano.FacialControl.Tests.EditMode.Domain.ARKitDetectorTests" runstate="Runnable" seed="1515592917" result="Passed" start-time="2026-02-02 17:46:11Z" end-time="2026-02-02 17:46:11Z" duration="0.000114" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
   </test-suite>
 </test-run>
