@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.hidano.facialcontrol": {
+      "version": "file:com.hidano.facialcontrol",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.mikunote.hatsunemiku-sample": {
       "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Sample",
       "depth": 0,
