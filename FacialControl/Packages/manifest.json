@@ -9,6 +9,7 @@
     }
   ],
   "dependencies": {
+    "com.hidano.facialcontrol": "file:com.hidano.facialcontrol",
     "com.unity.ide.rider": "3.0.38",
     "com.unity.ide.visualstudio": "2.0.25",
     "com.unity.inputsystem": "1.17.0",
