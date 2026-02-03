@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="17" result="Passed" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.0509587">
+  <test-suite type="TestSuite" id="1081" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.050959" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1072" name="Hidano.FacialControl.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.PlayMode.dll" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.044665" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="29784" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1073" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.043198" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1074" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.041860" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1075" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.040593" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1076" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.039209" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1077" name="Adapters" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters" runstate="Runnable" testcasecount="68" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.037901" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1054" name="PlayableGraphBuilderTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.035735" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1066" name="Build_EmptyBlendShapeNames_CreatesGraphWithZeroBlendShapes" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_EmptyBlendShapeNames_CreatesGraphWithZeroBlendShapes" methodname="Build_EmptyBlendShapeNames_CreatesGraphWithZeroBlendShapes" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="919444644" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.016036" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1065" name="Build_EmptyLayers_CreatesGraphWithNoLayerPlayables" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_EmptyLayers_CreatesGraphWithNoLayerPlayables" methodname="Build_EmptyLayers_CreatesGraphWithNoLayerPlayables" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1270170019" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000625" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1064" name="Build_GraphOutputCount_IsOne" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_GraphOutputCount_IsOne" methodname="Build_GraphOutputCount_IsOne" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="2102676681" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000430" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1071" name="Build_JapaneseLayerNames_CreatesLayerPlayables" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_JapaneseLayerNames_CreatesLayerPlayables" methodname="Build_JapaneseLayerNames_CreatesLayerPlayables" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="784710267" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000854" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1061" name="Build_LayerPlayable_HasCorrectBlendShapeCount" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_LayerPlayable_HasCorrectBlendShapeCount" methodname="Build_LayerPlayable_HasCorrectBlendShapeCount" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="2060763465" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000462" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1060" name="Build_LayerPlayable_HasCorrectExclusionMode" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_LayerPlayable_HasCorrectExclusionMode" methodname="Build_LayerPlayable_HasCorrectExclusionMode" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1379446928" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000825" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1063" name="Build_MixerBlendShapeCount_MatchesBlendShapeNames" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_MixerBlendShapeCount_MatchesBlendShapeNames" methodname="Build_MixerBlendShapeCount_MatchesBlendShapeNames" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="130088083" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000310" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1062" name="Build_MixerLayerCount_MatchesProfileLayers" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_MixerLayerCount_MatchesProfileLayers" methodname="Build_MixerLayerCount_MatchesProfileLayers" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="791613835" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000352" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1059" name="Build_MultipleLayers_CreatesMultipleLayerPlayables" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_MultipleLayers_CreatesMultipleLayerPlayables" methodname="Build_MultipleLayers_CreatesMultipleLayerPlayables" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="996707904" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000330" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1067" name="Build_NullAnimator_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_NullAnimator_ThrowsArgumentNullException" methodname="Build_NullAnimator_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1037842695" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.001620" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1068" name="Build_NullBlendShapeNames_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_NullBlendShapeNames_ThrowsArgumentNullException" methodname="Build_NullBlendShapeNames_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="740880098" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000291" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1058" name="Build_SingleLayer_CreatesOneLayerPlayable" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_SingleLayer_CreatesOneLayerPlayable" methodname="Build_SingleLayer_CreatesOneLayerPlayable" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="565205149" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000296" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1056" name="Build_ValidProfile_GraphIsValid" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_ValidProfile_GraphIsValid" methodname="Build_ValidProfile_GraphIsValid" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1239922644" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000264" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1057" name="Build_ValidProfile_MixerIsValid" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_ValidProfile_MixerIsValid" methodname="Build_ValidProfile_MixerIsValid" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1990416516" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000327" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1055" name="Build_ValidProfile_ReturnsNonNullResult" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_ValidProfile_ReturnsNonNullResult" methodname="Build_ValidProfile_ReturnsNonNullResult" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="365014255" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.001145" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1070" name="Dispose_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Dispose_CalledTwice_DoesNotThrow" methodname="Dispose_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1494546351" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000665" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1069" name="Dispose_DestroysGraph" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Dispose_DestroysGraph" methodname="Dispose_DestroysGraph" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1593749553" result="Passed" start-time="2026-02-03 05:51:03Z" end-time="2026-02-03 05:51:03Z" duration="0.000359" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
