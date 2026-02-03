@@ -1,0 +1,25 @@
+# OpenUPM パッケージ登録用設定（uOsc フォーク）
+# https://github.com/openupm/openupm リポジトリの data/packages/ に PR として提出する
+# ファイル名: com.hidano.uosc.yml
+#
+# 注意: com.hidano.facialcontrol の必須依存パッケージ。
+# FacialControl より先に OpenUPM に登録する必要がある。
+
+name: uOsc
+displayName: uOsc
+description: OSC (Open Sound Control) implementation for Unity. Fork maintained for FacialControl compatibility.
+repoUrl: https://github.com/NHidano/uOsc
+parentRepoUrl: https://github.com/hecomi/uOSC
+licenseSpdxId: MIT
+licenseName: MIT License
+topics:
+  - osc
+  - udp
+  - network
+  - vrchat
+hunter: NHidano
+gitTagPrefix: v
+gitTagIgnore: ""
+minVersion: 1.0.0
+readme: main:README.md
+createdAt: 1738540800000
