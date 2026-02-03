@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.5685982">
+  <test-suite type="TestSuite" id="1262" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.568598" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1251" name="Hidano.FacialControl.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.PlayMode.dll" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.560397" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="564596" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1252" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.557345" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1253" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.554513" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1254" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.551663" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1255" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.548813" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1257" name="Integration" fullname="Hidano.FacialControl.Tests.PlayMode.Integration" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.545341" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1055" name="OscIntegrationTests" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.542304" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1065" name="FacialControllerWithOsc_InitializeAndReceive_NoErrors" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.FacialControllerWithOsc_InitializeAndReceive_NoErrors" methodname="FacialControllerWithOsc_InitializeAndReceive_NoErrors" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="2019371554" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.021864" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1062" name="OscLoopback_SenderToReceiver_ValuesTransferred" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscLoopback_SenderToReceiver_ValuesTransferred" methodname="OscLoopback_SenderToReceiver_ValuesTransferred" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="59892723" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.505876" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1064" name="OscMappingIntegration_UnmappedAddress_Ignored" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscMappingIntegration_UnmappedAddress_Ignored" methodname="OscMappingIntegration_UnmappedAddress_Ignored" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="57678546" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.001398" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1059" name="OscReceiver_DoubleBuffering_PreviousFrameCleared" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscReceiver_DoubleBuffering_PreviousFrameCleared" methodname="OscReceiver_DoubleBuffering_PreviousFrameCleared" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="636628900" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000354" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1056" name="OscReceiver_HandleMessage_WritesToDoubleBuffer" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscReceiver_HandleMessage_WritesToDoubleBuffer" methodname="OscReceiver_HandleMessage_WritesToDoubleBuffer" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="1409931952" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000289" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1063" name="OscReceiver_InitializeWithConfig_SetsPort" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscReceiver_InitializeWithConfig_SetsPort" methodname="OscReceiver_InitializeWithConfig_SetsPort" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="1730183368" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000811" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1058" name="OscReceiver_MultipleMessagesPerFrame_AllCaptured" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscReceiver_MultipleMessagesPerFrame_AllCaptured" methodname="OscReceiver_MultipleMessagesPerFrame_AllCaptured" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="950659558" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000352" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1057" name="OscReceiver_VRChatAndARKitFormats_BothProcessed" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscReceiver_VRChatAndARKitFormats_BothProcessed" methodname="OscReceiver_VRChatAndARKitFormats_BothProcessed" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="444723817" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000313" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1061" name="OscSender_InitializeWithConfig_SetsPortAndMappings" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscSender_InitializeWithConfig_SetsPortAndMappings" methodname="OscSender_InitializeWithConfig_SetsPortAndMappings" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="45492776" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000386" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1060" name="OscSender_InitializeWithMappings_SetsUpCorrectly" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests.OscSender_InitializeWithMappings_SetsUpCorrectly" methodname="OscSender_InitializeWithMappings_SetsUpCorrectly" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscIntegrationTests" runstate="Runnable" seed="226563110" result="Passed" start-time="2026-02-03 09:32:05Z" end-time="2026-02-03 09:32:05Z" duration="0.000256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
