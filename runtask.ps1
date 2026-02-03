@@ -52,7 +52,14 @@ foreach ($t in $tasks) {
         $proc.BeginOutputReadLine()
         $proc.BeginErrorReadLine()
 
-        $exited = $proc.WaitForExit($timeoutSec * 1000)
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        while (-not $proc.HasExited) {
+            if ($sw.Elapsed.TotalSeconds -ge $timeoutSec) {
+                break
+            }
+            Start-Sleep -Milliseconds 500
+        }
+        $exited = $proc.HasExited
 
         if (-not $exited) {
             $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -82,9 +89,6 @@ foreach ($t in $tasks) {
     "=== END $t (exit: $exitCode, $timestamp) ===" | Add-Content $logFile
 
     $proc.Dispose()
-
-    Write-Host "Waiting 180s before next task..."
-    Start-Sleep -Seconds 180
 }
 
 Remove-Item $emptyInput -ErrorAction SilentlyContinue
