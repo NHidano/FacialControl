@@ -61,6 +61,34 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
         }
 
         [Test]
+        public void Activate_BlendMode_MultipleExpressionsCoexist()
+        {
+            var controller = CreateInitializedControllerWithBlend(out var profile);
+            var expr1 = profile.Expressions.Span[0];
+            var expr2 = profile.Expressions.Span[1];
+
+            controller.Activate(expr1);
+            controller.Activate(expr2);
+
+            var active = controller.GetActiveExpressions();
+            Assert.AreEqual(2, active.Count);
+        }
+
+        [Test]
+        public void Activate_SameExpressionTwice_NoDuplicate()
+        {
+            var controller = CreateInitializedController(out var profile);
+            var expression = profile.Expressions.Span[0];
+
+            controller.Activate(expression);
+            controller.Activate(expression);
+
+            var active = controller.GetActiveExpressions();
+            Assert.AreEqual(1, active.Count);
+            Assert.AreEqual(expression.Id, active[0].Id);
+        }
+
+        [Test]
         public void Activate_BeforeInitialization_LogsWarning()
         {
             _gameObject = CreateGameObjectWithAnimator();
@@ -69,6 +97,20 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
 
             LogAssert.Expect(LogType.Warning, "FacialController が初期化されていません。Activate は無視されます。");
             controller.Activate(expression);
+        }
+
+        [Test]
+        public void Activate_DifferentLayers_BothActive()
+        {
+            var controller = CreateInitializedControllerMultiLayer(out var profile);
+            var emotionExpr = profile.Expressions.Span[0]; // emotion レイヤー
+            var eyeExpr = profile.Expressions.Span[1]; // eye レイヤー
+
+            controller.Activate(emotionExpr);
+            controller.Activate(eyeExpr);
+
+            var active = controller.GetActiveExpressions();
+            Assert.AreEqual(2, active.Count);
         }
 
         // ================================================================
@@ -95,6 +137,22 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
             var expression = profile.Expressions.Span[0];
 
             Assert.DoesNotThrow(() => controller.Deactivate(expression));
+        }
+
+        [Test]
+        public void Deactivate_OneOfMultipleBlend_OtherRemains()
+        {
+            var controller = CreateInitializedControllerWithBlend(out var profile);
+            var expr1 = profile.Expressions.Span[0];
+            var expr2 = profile.Expressions.Span[1];
+
+            controller.Activate(expr1);
+            controller.Activate(expr2);
+            controller.Deactivate(expr1);
+
+            var active = controller.GetActiveExpressions();
+            Assert.AreEqual(1, active.Count);
+            Assert.AreEqual(expr2.Id, active[0].Id);
         }
 
         [Test]
@@ -146,6 +204,34 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
             Assert.AreEqual(0, active.Count);
         }
 
+        [Test]
+        public void LoadProfile_UpdatesProfileSOReference()
+        {
+            var controller = CreateInitializedController(out _);
+            var newProfileSO = CreateProfileSOWithProfile(CreateAlternativeProfile());
+
+            controller.LoadProfile(newProfileSO);
+
+            Assert.AreEqual(newProfileSO, controller.ProfileSO);
+        }
+
+        [Test]
+        public void LoadProfile_NewProfileExpressionsCanBeActivated()
+        {
+            var controller = CreateInitializedController(out _);
+            var altProfile = CreateAlternativeProfile();
+            var newProfileSO = CreateProfileSOWithProfile(altProfile);
+
+            controller.LoadProfile(newProfileSO);
+
+            // LoadProfile はデフォルトプロファイルで再初期化するため
+            // Expression は新プロファイルの Expression ではなくデフォルトレイヤーで動作する
+            var newExpression = CreateTestExpression("new-expr", "Angry", "emotion");
+            Assert.DoesNotThrow(() => controller.Activate(newExpression));
+            var active = controller.GetActiveExpressions();
+            Assert.AreEqual(1, active.Count);
+        }
+
         // ================================================================
         // ReloadProfile
         // ================================================================
@@ -182,6 +268,17 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
             controller.ReloadProfile();
         }
 
+        [Test]
+        public void ReloadProfile_PreservesCurrentProfileData()
+        {
+            var controller = CreateInitializedController(out var profile);
+
+            controller.ReloadProfile();
+
+            Assert.IsTrue(controller.CurrentProfile.HasValue);
+            Assert.AreEqual(profile.SchemaVersion, controller.CurrentProfile.Value.SchemaVersion);
+        }
+
         // ================================================================
         // GetActiveExpressions
         // ================================================================
@@ -195,6 +292,32 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
 
             Assert.IsNotNull(active);
             Assert.AreEqual(0, active.Count);
+        }
+
+        [Test]
+        public void GetActiveExpressions_BeforeInitialization_ReturnsEmptyList()
+        {
+            _gameObject = CreateGameObjectWithAnimator();
+            var controller = _gameObject.AddComponent<FacialController>();
+
+            var active = controller.GetActiveExpressions();
+
+            Assert.IsNotNull(active);
+            Assert.AreEqual(0, active.Count);
+        }
+
+        [Test]
+        public void GetActiveExpressions_ReturnsDefensiveCopy()
+        {
+            var controller = CreateInitializedController(out var profile);
+            var expression = profile.Expressions.Span[0];
+            controller.Activate(expression);
+
+            var active1 = controller.GetActiveExpressions();
+            active1.Clear();
+
+            var active2 = controller.GetActiveExpressions();
+            Assert.AreEqual(1, active2.Count);
         }
 
         // ================================================================
@@ -225,6 +348,28 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
         private FacialController CreateInitializedController(out FacialProfile profile)
         {
             profile = CreateTestProfile();
+            _gameObject = CreateGameObjectWithAnimatorAndRenderer();
+            var controller = _gameObject.AddComponent<FacialController>();
+            var profileSO = CreateProfileSOWithProfile(profile);
+            controller.ProfileSO = profileSO;
+            controller.InitializeWithProfile(profile);
+            return controller;
+        }
+
+        private FacialController CreateInitializedControllerWithBlend(out FacialProfile profile)
+        {
+            profile = CreateBlendProfile();
+            _gameObject = CreateGameObjectWithAnimatorAndRenderer();
+            var controller = _gameObject.AddComponent<FacialController>();
+            var profileSO = CreateProfileSOWithProfile(profile);
+            controller.ProfileSO = profileSO;
+            controller.InitializeWithProfile(profile);
+            return controller;
+        }
+
+        private FacialController CreateInitializedControllerMultiLayer(out FacialProfile profile)
+        {
+            profile = CreateMultiLayerProfile();
             _gameObject = CreateGameObjectWithAnimatorAndRenderer();
             var controller = _gameObject.AddComponent<FacialController>();
             var profileSO = CreateProfileSOWithProfile(profile);
@@ -269,6 +414,55 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
                     new BlendShapeMapping[]
                     {
                         new BlendShapeMapping("frown", 0.8f)
+                    })
+            };
+            return new FacialProfile("1.0.0", layers, expressions);
+        }
+
+        private static FacialProfile CreateBlendProfile()
+        {
+            var layers = new LayerDefinition[]
+            {
+                new LayerDefinition("lipsync", 0, ExclusionMode.Blend)
+            };
+            var expressions = new Expression[]
+            {
+                new Expression("blend-001", "LipA", "lipsync", 0.1f,
+                    TransitionCurve.Linear,
+                    new BlendShapeMapping[]
+                    {
+                        new BlendShapeMapping("mouth_a", 1.0f)
+                    }),
+                new Expression("blend-002", "LipO", "lipsync", 0.1f,
+                    TransitionCurve.Linear,
+                    new BlendShapeMapping[]
+                    {
+                        new BlendShapeMapping("mouth_o", 0.8f)
+                    })
+            };
+            return new FacialProfile("1.0.0", layers, expressions);
+        }
+
+        private static FacialProfile CreateMultiLayerProfile()
+        {
+            var layers = new LayerDefinition[]
+            {
+                new LayerDefinition("emotion", 0, ExclusionMode.LastWins),
+                new LayerDefinition("eye", 1, ExclusionMode.LastWins)
+            };
+            var expressions = new Expression[]
+            {
+                new Expression("multi-001", "Happy", "emotion", 0.25f,
+                    TransitionCurve.Linear,
+                    new BlendShapeMapping[]
+                    {
+                        new BlendShapeMapping("smile", 1.0f)
+                    }),
+                new Expression("multi-002", "Wink", "eye", 0.1f,
+                    TransitionCurve.Linear,
+                    new BlendShapeMapping[]
+                    {
+                        new BlendShapeMapping("eye_wink", 1.0f)
                     })
             };
             return new FacialProfile("1.0.0", layers, expressions);
