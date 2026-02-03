@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="23" result="Passed" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.073137">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="358" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.073137" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1373" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="358" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.067255" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="771540" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1374" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="358" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.065952" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1375" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="358" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.061040" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1376" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="358" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.059077" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1377" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="358" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.056827" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1379" name="Application" fullname="Hidano.FacialControl.Tests.EditMode.Application" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.043841" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1245" name="ARKitUseCaseTests" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.040139" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1256" name="DetectAndGenerate_AllARKit52_DetectsAll52" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_AllARKit52_DetectsAll52" methodname="DetectAndGenerate_AllARKit52_DetectsAll52" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="8269378" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.014617" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1257" name="DetectAndGenerate_AllPerfectSync_DetectsAll" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_AllPerfectSync_DetectsAll" methodname="DetectAndGenerate_AllPerfectSync_DetectsAll" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="2040248043" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000377" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1249" name="DetectAndGenerate_ARKit52Names_DetectsAndGenerates" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_ARKit52Names_DetectsAndGenerates" methodname="DetectAndGenerate_ARKit52Names_DetectsAndGenerates" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="135991013" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000262" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1247" name="DetectAndGenerate_EmptyBlendShapeNames_ReturnsEmptyResult" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_EmptyBlendShapeNames_ReturnsEmptyResult" methodname="DetectAndGenerate_EmptyBlendShapeNames_ReturnsEmptyResult" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1150156759" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000310" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1268" name="DetectAndGenerate_GeneratedExpressions_HaveARKitPrefixedNames" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_GeneratedExpressions_HaveARKitPrefixedNames" methodname="DetectAndGenerate_GeneratedExpressions_HaveARKitPrefixedNames" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="14925586" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000444" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1255" name="DetectAndGenerate_GeneratedExpressions_HaveBlendShapeValues" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_GeneratedExpressions_HaveBlendShapeValues" methodname="DetectAndGenerate_GeneratedExpressions_HaveBlendShapeValues" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="764054551" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.001649" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1253" name="DetectAndGenerate_GeneratedExpressions_HaveCorrectLayerGroups" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_GeneratedExpressions_HaveCorrectLayerGroups" methodname="DetectAndGenerate_GeneratedExpressions_HaveCorrectLayerGroups" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="563934003" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000398" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1254" name="DetectAndGenerate_GeneratedExpressions_HaveDefaultTransitionDuration" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_GeneratedExpressions_HaveDefaultTransitionDuration" methodname="DetectAndGenerate_GeneratedExpressions_HaveDefaultTransitionDuration" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="456014982" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000255" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1267" name="DetectAndGenerate_GeneratedExpressions_HaveUniqueIds" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_GeneratedExpressions_HaveUniqueIds" methodname="DetectAndGenerate_GeneratedExpressions_HaveUniqueIds" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1287870737" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000345" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1252" name="DetectAndGenerate_GeneratedExpressions_HaveValidIds" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_GeneratedExpressions_HaveValidIds" methodname="DetectAndGenerate_GeneratedExpressions_HaveValidIds" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="2050312745" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000489" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1251" name="DetectAndGenerate_MixedNames_DetectsOnlyKnownNames" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_MixedNames_DetectsOnlyKnownNames" methodname="DetectAndGenerate_MixedNames_DetectsOnlyKnownNames" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1302162745" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000716" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1248" name="DetectAndGenerate_NoARKitNames_ReturnsEmptyResult" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_NoARKitNames_ReturnsEmptyResult" methodname="DetectAndGenerate_NoARKitNames_ReturnsEmptyResult" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1748965566" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000206" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1246" name="DetectAndGenerate_NullBlendShapeNames_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_NullBlendShapeNames_ThrowsArgumentNullException" methodname="DetectAndGenerate_NullBlendShapeNames_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1101713396" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000792" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1250" name="DetectAndGenerate_PerfectSyncNames_DetectsAndGenerates" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.DetectAndGenerate_PerfectSyncNames_DetectsAndGenerates" methodname="DetectAndGenerate_PerfectSyncNames_DetectsAndGenerates" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1985820190" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000229" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1266" name="EndToEnd_DetectThenGenerateMapping_WorksCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.EndToEnd_DetectThenGenerateMapping_WorksCorrectly" methodname="EndToEnd_DetectThenGenerateMapping_WorksCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1482853268" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000930" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1263" name="GenerateOscMapping_CorrectLayerAssignment" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_CorrectLayerAssignment" methodname="GenerateOscMapping_CorrectLayerAssignment" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1152052891" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000427" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1259" name="GenerateOscMapping_EmptyDetectedNames_ReturnsEmptyArray" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_EmptyDetectedNames_ReturnsEmptyArray" methodname="GenerateOscMapping_EmptyDetectedNames_ReturnsEmptyArray" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1411546686" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000224" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1262" name="GenerateOscMapping_MultipleNames_GeneratesAllMappings" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_MultipleNames_GeneratesAllMappings" methodname="GenerateOscMapping_MultipleNames_GeneratesAllMappings" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1352584575" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000214" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1258" name="GenerateOscMapping_NullDetectedNames_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_NullDetectedNames_ThrowsArgumentNullException" methodname="GenerateOscMapping_NullDetectedNames_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1097807006" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000227" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1265" name="GenerateOscMapping_PerfectSyncNames_GeneratesMapping" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_PerfectSyncNames_GeneratesMapping" methodname="GenerateOscMapping_PerfectSyncNames_GeneratesMapping" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="177994909" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000246" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1260" name="GenerateOscMapping_SingleName_GeneratesMapping" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_SingleName_GeneratesMapping" methodname="GenerateOscMapping_SingleName_GeneratesMapping" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1139630191" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000203" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1264" name="GenerateOscMapping_UnknownNames_SkippedSilently" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_UnknownNames_SkippedSilently" methodname="GenerateOscMapping_UnknownNames_SkippedSilently" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="918435758" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000228" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1261" name="GenerateOscMapping_VRChatOscAddressFormat" fullname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests.GenerateOscMapping_VRChatOscAddressFormat" methodname="GenerateOscMapping_VRChatOscAddressFormat" classname="Hidano.FacialControl.Tests.EditMode.Application.ARKitUseCaseTests" runstate="Runnable" seed="1437177393" result="Passed" start-time="2026-02-03 04:39:59Z" end-time="2026-02-03 04:39:59Z" duration="0.000306" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
