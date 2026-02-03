@@ -34,6 +34,20 @@ namespace Hidano.FacialControl.Adapters.Playable
         [SerializeField]
         private SkinnedMeshRenderer[] _skinnedMeshRenderers;
 
+        /// <summary>
+        /// OSC 送信ポート番号
+        /// </summary>
+        [Tooltip("OSC 送信ポート番号")]
+        [SerializeField]
+        private int _oscSendPort = Domain.Models.OscConfiguration.DefaultSendPort;
+
+        /// <summary>
+        /// OSC 受信ポート番号
+        /// </summary>
+        [Tooltip("OSC 受信ポート番号")]
+        [SerializeField]
+        private int _oscReceivePort = Domain.Models.OscConfiguration.DefaultReceivePort;
+
         private Animator _animator;
         private PlayableGraphBuilder.BuildResult _graphBuildResult;
         private ExpressionUseCase _expressionUseCase;
@@ -67,6 +81,24 @@ namespace Hidano.FacialControl.Adapters.Playable
         {
             get => _skinnedMeshRenderers;
             set => _skinnedMeshRenderers = value;
+        }
+
+        /// <summary>
+        /// OSC 送信ポート番号
+        /// </summary>
+        public int OscSendPort
+        {
+            get => _oscSendPort;
+            set => _oscSendPort = value;
+        }
+
+        /// <summary>
+        /// OSC 受信ポート番号
+        /// </summary>
+        public int OscReceivePort
+        {
+            get => _oscReceivePort;
+            set => _oscReceivePort = value;
         }
 
         // ================================================================

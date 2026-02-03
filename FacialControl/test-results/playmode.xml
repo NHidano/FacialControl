@@ -1,0 +1,1050 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="162" result="Passed" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.7921706">
+  <test-suite type="TestSuite" id="1180" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.792171" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1170" name="Hidano.FacialControl.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.PlayMode.dll" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.786445" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="779484" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1171" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.785871" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1172" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.785550" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1173" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.785257" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1174" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.784888" total="162" passed="162" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1176" name="Adapters" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters" runstate="Runnable" testcasecount="118" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.227672" total="118" passed="118" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1046" name="FacialControllerAPITests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.044327" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1051" name="Activate_BeforeInitialization_LogsWarning" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Activate_BeforeInitialization_LogsWarning" methodname="Activate_BeforeInitialization_LogsWarning" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1541006527" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.008223" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[FacialController が初期化されていません。Activate は無視されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1049" name="Activate_BlendMode_MultipleExpressionsCoexist" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Activate_BlendMode_MultipleExpressionsCoexist" methodname="Activate_BlendMode_MultipleExpressionsCoexist" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1748265852" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.012216" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1052" name="Activate_DifferentLayers_BothActive" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Activate_DifferentLayers_BothActive" methodname="Activate_DifferentLayers_BothActive" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="698671173" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000964" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1048" name="Activate_MultipleExpressions_LastWins_OnlyLastActive" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Activate_MultipleExpressions_LastWins_OnlyLastActive" methodname="Activate_MultipleExpressions_LastWins_OnlyLastActive" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1616281563" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000680" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1050" name="Activate_SameExpressionTwice_NoDuplicate" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Activate_SameExpressionTwice_NoDuplicate" methodname="Activate_SameExpressionTwice_NoDuplicate" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="2061387392" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000480" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1047" name="Activate_ValidExpression_AddsToActiveList" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Activate_ValidExpression_AddsToActiveList" methodname="Activate_ValidExpression_AddsToActiveList" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1503567045" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000369" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1069" name="CurrentProfile_AfterInitialize_ReturnsProfile" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.CurrentProfile_AfterInitialize_ReturnsProfile" methodname="CurrentProfile_AfterInitialize_ReturnsProfile" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1048608393" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000498" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1070" name="CurrentProfile_BeforeInitialize_ReturnsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.CurrentProfile_BeforeInitialize_ReturnsNull" methodname="CurrentProfile_BeforeInitialize_ReturnsNull" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="2096576008" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000318" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1053" name="Deactivate_ActiveExpression_RemovesFromActiveList" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Deactivate_ActiveExpression_RemovesFromActiveList" methodname="Deactivate_ActiveExpression_RemovesFromActiveList" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1359991324" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000678" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1056" name="Deactivate_BeforeInitialization_LogsWarning" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Deactivate_BeforeInitialization_LogsWarning" methodname="Deactivate_BeforeInitialization_LogsWarning" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1635698614" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000694" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[FacialController が初期化されていません。Deactivate は無視されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1054" name="Deactivate_InactiveExpression_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Deactivate_InactiveExpression_DoesNotThrow" methodname="Deactivate_InactiveExpression_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1179033384" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000813" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1055" name="Deactivate_OneOfMultipleBlend_OtherRemains" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.Deactivate_OneOfMultipleBlend_OtherRemains" methodname="Deactivate_OneOfMultipleBlend_OtherRemains" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1155684081" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000563" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1067" name="GetActiveExpressions_BeforeInitialization_ReturnsEmptyList" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.GetActiveExpressions_BeforeInitialization_ReturnsEmptyList" methodname="GetActiveExpressions_BeforeInitialization_ReturnsEmptyList" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1547241273" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.001106" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1066" name="GetActiveExpressions_NoActive_ReturnsEmptyList" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.GetActiveExpressions_NoActive_ReturnsEmptyList" methodname="GetActiveExpressions_NoActive_ReturnsEmptyList" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="2020319528" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000306" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1068" name="GetActiveExpressions_ReturnsDefensiveCopy" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.GetActiveExpressions_ReturnsDefensiveCopy" methodname="GetActiveExpressions_ReturnsDefensiveCopy" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1729100080" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000352" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1059" name="LoadProfile_ClearsActiveExpressions" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.LoadProfile_ClearsActiveExpressions" methodname="LoadProfile_ClearsActiveExpressions" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="901275855" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000692" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1061" name="LoadProfile_NewProfileExpressionsCanBeActivated" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.LoadProfile_NewProfileExpressionsCanBeActivated" methodname="LoadProfile_NewProfileExpressionsCanBeActivated" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1438432102" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000499" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1058" name="LoadProfile_NullProfileSO_LogsWarning" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.LoadProfile_NullProfileSO_LogsWarning" methodname="LoadProfile_NullProfileSO_LogsWarning" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="2045149112" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000685" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[ProfileSO が null です。LoadProfile は無視されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1060" name="LoadProfile_UpdatesProfileSOReference" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.LoadProfile_UpdatesProfileSOReference" methodname="LoadProfile_UpdatesProfileSOReference" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="824522983" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000458" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1057" name="LoadProfile_ValidProfileSO_RebuildsGraph" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.LoadProfile_ValidProfileSO_RebuildsGraph" methodname="LoadProfile_ValidProfileSO_RebuildsGraph" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1799767729" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000435" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1064" name="ReloadProfile_BeforeInitialization_LogsWarning" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.ReloadProfile_BeforeInitialization_LogsWarning" methodname="ReloadProfile_BeforeInitialization_LogsWarning" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1680640072" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000648" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[FacialController が初期化されていません。ReloadProfile は無視されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1063" name="ReloadProfile_ClearsActiveExpressions" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.ReloadProfile_ClearsActiveExpressions" methodname="ReloadProfile_ClearsActiveExpressions" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1602040824" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000373" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1065" name="ReloadProfile_PreservesCurrentProfileData" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.ReloadProfile_PreservesCurrentProfileData" methodname="ReloadProfile_PreservesCurrentProfileData" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="2100842474" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000324" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1062" name="ReloadProfile_WithLoadedProfile_RebuildsGraph" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests.ReloadProfile_WithLoadedProfile_RebuildsGraph" methodname="ReloadProfile_WithLoadedProfile_RebuildsGraph" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerAPITests" runstate="Runnable" seed="1799444066" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000390" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="1071" name="FacialControllerLifecycleTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.015524" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1072" name="AddComponent_FacialController_CanBeAdded" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.AddComponent_FacialController_CanBeAdded" methodname="AddComponent_FacialController_CanBeAdded" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1879335856" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000366" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1073" name="AddComponent_FacialController_IsNotInitializedWithoutProfile" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.AddComponent_FacialController_IsNotInitializedWithoutProfile" methodname="AddComponent_FacialController_IsNotInitializedWithoutProfile" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1693431799" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000228" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1084" name="AddComponent_FacialController_RequiresAnimator" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.AddComponent_FacialController_RequiresAnimator" methodname="AddComponent_FacialController_RequiresAnimator" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="906022141" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000458" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1078" name="Initialize_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.Initialize_CalledTwice_DoesNotThrow" methodname="Initialize_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="69346036" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000644" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1081" name="Initialize_WithChildSkinnedMeshRenderer_DetectsAutomatically" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.Initialize_WithChildSkinnedMeshRenderer_DetectsAutomatically" methodname="Initialize_WithChildSkinnedMeshRenderer_DetectsAutomatically" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1959357419" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000294" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1077" name="Initialize_WithoutProfileSO_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.Initialize_WithoutProfileSO_DoesNotThrow" methodname="Initialize_WithoutProfileSO_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1408151262" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000283" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1082" name="Initialize_WithoutSkinnedMeshRenderer_LogsWarningAndDoesNotInitialize" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.Initialize_WithoutSkinnedMeshRenderer_LogsWarningAndDoesNotInitialize" methodname="Initialize_WithoutSkinnedMeshRenderer_LogsWarningAndDoesNotInitialize" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="868475082" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000613" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[SkinnedMeshRenderer が見つかりません。初期化をスキップします。
+]]></output>
+                  </test-case>
+                  <test-case id="1076" name="Initialize_WithProfileSO_SetsIsInitializedTrue" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.Initialize_WithProfileSO_SetsIsInitializedTrue" methodname="Initialize_WithProfileSO_SetsIsInitializedTrue" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1710068455" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000309" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1079" name="OnDisable_DestroysGraphAndResources" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.OnDisable_DestroysGraphAndResources" methodname="OnDisable_DestroysGraphAndResources" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="2071757672" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.003968" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1080" name="OnDisable_ThenReEnable_CanReinitialize" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.OnDisable_ThenReEnable_CanReinitialize" methodname="OnDisable_ThenReEnable_CanReinitialize" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1672005920" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.002141" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1075" name="OnEnable_WithoutProfileSO_DoesNotInitialize" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.OnEnable_WithoutProfileSO_DoesNotInitialize" methodname="OnEnable_WithoutProfileSO_DoesNotInitialize" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1409945159" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.001145" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1074" name="OnEnable_WithProfileSO_InitializesAutomatically" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.OnEnable_WithProfileSO_InitializesAutomatically" methodname="OnEnable_WithProfileSO_InitializesAutomatically" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1629670092" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.001174" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1083" name="SkinnedMeshRenderers_ManualOverride_UsesOverrideList" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests.SkinnedMeshRenderers_ManualOverride_UsesOverrideList" methodname="SkinnedMeshRenderers_ManualOverride_UsesOverrideList" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControllerLifecycleTests" runstate="Runnable" seed="1924235909" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000514" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="1085" name="FacialControlMixerTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.016499" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1089" name="BlendShapeCount_ReturnsConfiguredCount" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.BlendShapeCount_ReturnsConfiguredCount" methodname="BlendShapeCount_ReturnsConfiguredCount" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1849939958" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000928" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1111" name="BlendShapeNames_ReturnsConfiguredNames" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.BlendShapeNames_ReturnsConfiguredNames" methodname="BlendShapeNames_ReturnsConfiguredNames" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="116528744" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000451" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1107" name="ClearActiveLayerSlots_RemovesOverrides" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ClearActiveLayerSlots_RemovesOverrides" methodname="ClearActiveLayerSlots_RemovesOverrides" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1282677779" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.002486" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1102" name="ComputeOutput_AfterSetLayerWeight_UsesUpdatedWeight" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_AfterSetLayerWeight_UsesUpdatedWeight" methodname="ComputeOutput_AfterSetLayerWeight_UsesUpdatedWeight" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="203664553" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000472" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1108" name="ComputeOutput_JapaneseBlendShapeNames_OverrideWorks" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_JapaneseBlendShapeNames_OverrideWorks" methodname="ComputeOutput_JapaneseBlendShapeNames_OverrideWorks" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="303883946" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000571" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1113" name="ComputeOutput_LayersRegisteredOutOfOrder_BlendsByPriority" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_LayersRegisteredOutOfOrder_BlendsByPriority" methodname="ComputeOutput_LayersRegisteredOutOfOrder_BlendsByPriority" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="616789193" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000376" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1101" name="ComputeOutput_NoLayers_OutputRemainsZero" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_NoLayers_OutputRemainsZero" methodname="ComputeOutput_NoLayers_OutputRemainsZero" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="675505691" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000536" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1106" name="ComputeOutput_NullLayerSlots_NoError" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_NullLayerSlots_NoError" methodname="ComputeOutput_NullLayerSlots_NoError" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1962549183" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000305" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1095" name="ComputeOutput_SingleLayer_FullWeight_PassesThrough" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_SingleLayer_FullWeight_PassesThrough" methodname="ComputeOutput_SingleLayer_FullWeight_PassesThrough" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1672008640" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000316" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1096" name="ComputeOutput_SingleLayer_HalfWeight_ScalesValues" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_SingleLayer_HalfWeight_ScalesValues" methodname="ComputeOutput_SingleLayer_HalfWeight_ScalesValues" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="162006348" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000302" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1097" name="ComputeOutput_SingleLayer_ZeroWeight_OutputZero" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_SingleLayer_ZeroWeight_OutputZero" methodname="ComputeOutput_SingleLayer_ZeroWeight_OutputZero" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="652298399" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000329" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1100" name="ComputeOutput_ThreeLayers_PriorityOrdering" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_ThreeLayers_PriorityOrdering" methodname="ComputeOutput_ThreeLayers_PriorityOrdering" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1476011828" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000362" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1098" name="ComputeOutput_TwoLayers_HigherPriorityOverrides" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_TwoLayers_HigherPriorityOverrides" methodname="ComputeOutput_TwoLayers_HigherPriorityOverrides" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1214595779" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000347" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1099" name="ComputeOutput_TwoLayers_PartialWeight_Blends" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_TwoLayers_PartialWeight_Blends" methodname="ComputeOutput_TwoLayers_PartialWeight_Blends" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1660638154" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000337" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1103" name="ComputeOutput_WithLayerSlots_OverridesSpecificBlendShapes" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_WithLayerSlots_OverridesSpecificBlendShapes" methodname="ComputeOutput_WithLayerSlots_OverridesSpecificBlendShapes" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1586356898" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000351" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1104" name="ComputeOutput_WithLayerSlots_UnknownName_Skipped" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_WithLayerSlots_UnknownName_Skipped" methodname="ComputeOutput_WithLayerSlots_UnknownName_Skipped" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="989960385" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000352" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1105" name="ComputeOutput_WithMultipleLayerSlots_AllApplied" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_WithMultipleLayerSlots_AllApplied" methodname="ComputeOutput_WithMultipleLayerSlots_AllApplied" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="234804327" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000369" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1112" name="ComputeOutput_ZeroBlendShapeCount_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.ComputeOutput_ZeroBlendShapeCount_DoesNotThrow" methodname="ComputeOutput_ZeroBlendShapeCount_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1815249631" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000366" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1087" name="Create_EmptyBlendShapeNames_ReturnsValidPlayable" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.Create_EmptyBlendShapeNames_ReturnsValidPlayable" methodname="Create_EmptyBlendShapeNames_ReturnsValidPlayable" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="744970138" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000371" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1086" name="Create_ValidParameters_ReturnsValidPlayable" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.Create_ValidParameters_ReturnsValidPlayable" methodname="Create_ValidParameters_ReturnsValidPlayable" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1652475202" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000248" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1110" name="Dispose_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.Dispose_CalledTwice_DoesNotThrow" methodname="Dispose_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="941998809" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000328" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1109" name="Dispose_ReleasesNativeArrays" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.Dispose_ReleasesNativeArrays" methodname="Dispose_ReleasesNativeArrays" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1861933703" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000318" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1088" name="GetBehaviour_AfterCreate_ReturnsNonNull" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.GetBehaviour_AfterCreate_ReturnsNonNull" methodname="GetBehaviour_AfterCreate_ReturnsNonNull" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1917925312" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000237" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1090" name="OutputWeights_AfterCreate_AllZero" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.OutputWeights_AfterCreate_AllZero" methodname="OutputWeights_AfterCreate_AllZero" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="168510486" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000281" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1092" name="RegisterLayer_MultipleLayers_IncrementsLayerCount" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.RegisterLayer_MultipleLayers_IncrementsLayerCount" methodname="RegisterLayer_MultipleLayers_IncrementsLayerCount" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1887764617" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000340" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1091" name="RegisterLayer_SingleLayer_IncrementsLayerCount" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.RegisterLayer_SingleLayer_IncrementsLayerCount" methodname="RegisterLayer_SingleLayer_IncrementsLayerCount" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="1809803281" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000281" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1093" name="SetLayerWeight_ExistingLayer_UpdatesWeight" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.SetLayerWeight_ExistingLayer_UpdatesWeight" methodname="SetLayerWeight_ExistingLayer_UpdatesWeight" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="2046205582" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000275" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1094" name="SetLayerWeight_NonExistentLayer_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests.SetLayerWeight_NonExistentLayer_DoesNotThrow" methodname="SetLayerWeight_NonExistentLayer_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.FacialControlMixerTests" runstate="Runnable" seed="172350237" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000303" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="1114" name="InputSystemAdapterTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.127361" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1126" name="BindExpression_WithoutController_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.BindExpression_WithoutController_DoesNotThrow" methodname="BindExpression_WithoutController_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1140985744" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.050301" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1120" name="ButtonTrigger_DisabledAction_DoesNotActivate" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_DisabledAction_DoesNotActivate" methodname="ButtonTrigger_DisabledAction_DoesNotActivate" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="191911083" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.017243" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1119" name="ButtonTrigger_MultipleDifferentButtons_ActivatesDifferentExpressions" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_MultipleDifferentButtons_ActivatesDifferentExpressions" methodname="ButtonTrigger_MultipleDifferentButtons_ActivatesDifferentExpressions" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="2008665174" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.011970" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1117" name="ButtonTrigger_Press_ActivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_Press_ActivatesExpression" methodname="ButtonTrigger_Press_ActivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1159596346" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004442" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1118" name="ButtonTrigger_PressAgain_DeactivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_PressAgain_DeactivatesExpression" methodname="ButtonTrigger_PressAgain_DeactivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="634128060" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004793" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1127" name="OnDisable_CleansUpBindings" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.OnDisable_CleansUpBindings" methodname="OnDisable_CleansUpBindings" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1309249060" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004243" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1116" name="SetFacialController_Null_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.SetFacialController_Null_DoesNotThrow" methodname="SetFacialController_Null_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1951660639" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.003920" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1115" name="SetFacialController_ValidController_SetsReference" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.SetFacialController_ValidController_SetsReference" methodname="SetFacialController_ValidController_SetsReference" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="634706998" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.003732" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1125" name="UnbindAll_RemovesAllBindings" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.UnbindAll_RemovesAllBindings" methodname="UnbindAll_RemovesAllBindings" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1384330487" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004466" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1124" name="UnbindExpression_RemovesBinding" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.UnbindExpression_RemovesBinding" methodname="UnbindExpression_RemovesBinding" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="885625671" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004309" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1121" name="ValueTrigger_FullValue_ActivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ValueTrigger_FullValue_ActivatesExpression" methodname="ValueTrigger_FullValue_ActivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1167049621" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.005388" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1123" name="ValueTrigger_PartialValue_ActivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ValueTrigger_PartialValue_ActivatesExpression" methodname="ValueTrigger_PartialValue_ActivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1488853382" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004718" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1122" name="ValueTrigger_ZeroValue_DeactivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ValueTrigger_ZeroValue_DeactivatesExpression" methodname="ValueTrigger_ZeroValue_DeactivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="605053536" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.004647" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="1128" name="LayerPlayableTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.011302" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1145" name="ActiveExpressionId_AfterCreate_IsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.ActiveExpressionId_AfterCreate_IsNull" methodname="ActiveExpressionId_AfterCreate_IsNull" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="419204379" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000471" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1146" name="ActiveExpressionId_AfterSetTarget_ReturnsId" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.ActiveExpressionId_AfterSetTarget_ReturnsId" methodname="ActiveExpressionId_AfterSetTarget_ReturnsId" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1388228018" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000287" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1140" name="AddBlendExpression_Blend_AddsWeightedValues" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.AddBlendExpression_Blend_AddsWeightedValues" methodname="AddBlendExpression_Blend_AddsWeightedValues" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1289825307" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000292" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1141" name="AddBlendExpression_MultipleExpressions_AddsAndClamps" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.AddBlendExpression_MultipleExpressions_AddsAndClamps" methodname="AddBlendExpression_MultipleExpressions_AddsAndClamps" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="327745228" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000350" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1150" name="BlendShapeCount_ReturnsConfiguredCount" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.BlendShapeCount_ReturnsConfiguredCount" methodname="BlendShapeCount_ReturnsConfiguredCount" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1940228464" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000260" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1129" name="Create_ValidParameters_ReturnsValidPlayable" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.Create_ValidParameters_ReturnsValidPlayable" methodname="Create_ValidParameters_ReturnsValidPlayable" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="66931940" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000266" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1130" name="Create_ZeroBlendShapeCount_ReturnsValidPlayable" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.Create_ZeroBlendShapeCount_ReturnsValidPlayable" methodname="Create_ZeroBlendShapeCount_ReturnsValidPlayable" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="602150941" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000227" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1143" name="Deactivate_LastWins_ResetsToZero" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.Deactivate_LastWins_ResetsToZero" methodname="Deactivate_LastWins_ResetsToZero" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="416923853" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000283" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1144" name="Deactivate_LastWins_WithDuration_TransitionsToZero" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.Deactivate_LastWins_WithDuration_TransitionsToZero" methodname="Deactivate_LastWins_WithDuration_TransitionsToZero" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="483832767" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000658" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1148" name="Dispose_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.Dispose_CalledTwice_DoesNotThrow" methodname="Dispose_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1541996750" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000296" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1147" name="Dispose_ReleasesNativeArrays" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.Dispose_ReleasesNativeArrays" methodname="Dispose_ReleasesNativeArrays" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1390432393" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000279" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1151" name="ExclusionMode_ReturnsConfiguredMode" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.ExclusionMode_ReturnsConfiguredMode" methodname="ExclusionMode_ReturnsConfiguredMode" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="561304878" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000786" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1131" name="GetBehaviour_AfterCreate_ReturnsNonNull" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.GetBehaviour_AfterCreate_ReturnsNonNull" methodname="GetBehaviour_AfterCreate_ReturnsNonNull" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="2100953771" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000226" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1132" name="OutputWeights_AfterCreate_AllZero" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.OutputWeights_AfterCreate_AllZero" methodname="OutputWeights_AfterCreate_AllZero" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1781294630" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000265" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1142" name="RemoveBlendExpression_RemovesFromOutput" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.RemoveBlendExpression_RemovesFromOutput" methodname="RemoveBlendExpression_RemovesFromOutput" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1023773814" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000293" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1139" name="SetTargetExpression_DuringTransition_SnapshotsAndStartsNewTransition" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.SetTargetExpression_DuringTransition_SnapshotsAndStartsNewTransition" methodname="SetTargetExpression_DuringTransition_SnapshotsAndStartsNewTransition" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1668514411" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000339" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1133" name="SetTargetExpression_LastWins_SetsTargetValues" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.SetTargetExpression_LastWins_SetsTargetValues" methodname="SetTargetExpression_LastWins_SetsTargetValues" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="725058139" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000274" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1134" name="SetTargetExpression_ZeroDuration_CompletesImmediately" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.SetTargetExpression_ZeroDuration_CompletesImmediately" methodname="SetTargetExpression_ZeroDuration_CompletesImmediately" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="156346541" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000289" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1149" name="UpdateTransition_EaseInOut_MidpointIs05" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.UpdateTransition_EaseInOut_MidpointIs05" methodname="UpdateTransition_EaseInOut_MidpointIs05" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1602875835" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000308" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1136" name="UpdateTransition_LastWins_LinearInterpolation_Complete" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.UpdateTransition_LastWins_LinearInterpolation_Complete" methodname="UpdateTransition_LastWins_LinearInterpolation_Complete" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1862384398" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000289" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1135" name="UpdateTransition_LastWins_LinearInterpolation_Midpoint" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.UpdateTransition_LastWins_LinearInterpolation_Midpoint" methodname="UpdateTransition_LastWins_LinearInterpolation_Midpoint" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1683566302" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000326" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1137" name="UpdateTransition_LastWins_OvershootDuration_ClampsToTarget" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.UpdateTransition_LastWins_OvershootDuration_ClampsToTarget" methodname="UpdateTransition_LastWins_OvershootDuration_ClampsToTarget" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1623553379" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000303" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1138" name="UpdateTransition_LastWins_SequentialExpressions_CrossfadesFromCurrent" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests.UpdateTransition_LastWins_SequentialExpressions_CrossfadesFromCurrent" methodname="UpdateTransition_LastWins_SequentialExpressions_CrossfadesFromCurrent" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.LayerPlayableTests" runstate="Runnable" seed="1453069923" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000291" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="1152" name="PlayableGraphBuilderTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.010153" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1164" name="Build_EmptyBlendShapeNames_CreatesGraphWithZeroBlendShapes" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_EmptyBlendShapeNames_CreatesGraphWithZeroBlendShapes" methodname="Build_EmptyBlendShapeNames_CreatesGraphWithZeroBlendShapes" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1315577183" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000502" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1163" name="Build_EmptyLayers_CreatesGraphWithNoLayerPlayables" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_EmptyLayers_CreatesGraphWithNoLayerPlayables" methodname="Build_EmptyLayers_CreatesGraphWithNoLayerPlayables" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="492574890" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000433" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1162" name="Build_GraphOutputCount_IsOne" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_GraphOutputCount_IsOne" methodname="Build_GraphOutputCount_IsOne" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="230350977" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000431" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1169" name="Build_JapaneseLayerNames_CreatesLayerPlayables" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_JapaneseLayerNames_CreatesLayerPlayables" methodname="Build_JapaneseLayerNames_CreatesLayerPlayables" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="452925651" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000441" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1159" name="Build_LayerPlayable_HasCorrectBlendShapeCount" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_LayerPlayable_HasCorrectBlendShapeCount" methodname="Build_LayerPlayable_HasCorrectBlendShapeCount" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1569758135" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000404" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1158" name="Build_LayerPlayable_HasCorrectExclusionMode" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_LayerPlayable_HasCorrectExclusionMode" methodname="Build_LayerPlayable_HasCorrectExclusionMode" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="587265880" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000368" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1161" name="Build_MixerBlendShapeCount_MatchesBlendShapeNames" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_MixerBlendShapeCount_MatchesBlendShapeNames" methodname="Build_MixerBlendShapeCount_MatchesBlendShapeNames" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1430613247" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000319" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1160" name="Build_MixerLayerCount_MatchesProfileLayers" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_MixerLayerCount_MatchesProfileLayers" methodname="Build_MixerLayerCount_MatchesProfileLayers" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1824701381" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000330" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1157" name="Build_MultipleLayers_CreatesMultipleLayerPlayables" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_MultipleLayers_CreatesMultipleLayerPlayables" methodname="Build_MultipleLayers_CreatesMultipleLayerPlayables" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="567926592" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000372" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1165" name="Build_NullAnimator_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_NullAnimator_ThrowsArgumentNullException" methodname="Build_NullAnimator_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="998656682" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.001622" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1166" name="Build_NullBlendShapeNames_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_NullBlendShapeNames_ThrowsArgumentNullException" methodname="Build_NullBlendShapeNames_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="145945901" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000358" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1156" name="Build_SingleLayer_CreatesOneLayerPlayable" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_SingleLayer_CreatesOneLayerPlayable" methodname="Build_SingleLayer_CreatesOneLayerPlayable" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="150932322" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000355" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1154" name="Build_ValidProfile_GraphIsValid" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_ValidProfile_GraphIsValid" methodname="Build_ValidProfile_GraphIsValid" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1266437876" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000290" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1155" name="Build_ValidProfile_MixerIsValid" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_ValidProfile_MixerIsValid" methodname="Build_ValidProfile_MixerIsValid" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="977096054" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000273" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1153" name="Build_ValidProfile_ReturnsNonNullResult" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Build_ValidProfile_ReturnsNonNullResult" methodname="Build_ValidProfile_ReturnsNonNullResult" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="56002637" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000270" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1168" name="Dispose_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Dispose_CalledTwice_DoesNotThrow" methodname="Dispose_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1063515924" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000322" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1167" name="Dispose_DestroysGraph" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests.Dispose_DestroysGraph" methodname="Dispose_DestroysGraph" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.PlayableGraphBuilderTests" runstate="Runnable" seed="1131841091" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000292" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+              <test-suite type="TestSuite" id="1175" name="Integration" fullname="Hidano.FacialControl.Tests.PlayMode.Integration" runstate="Runnable" testcasecount="44" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.556731" total="44" passed="44" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1001" name="OscSendReceiveTests" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" testcasecount="44" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:53Z" duration="1.555688" total="44" passed="44" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1003" name="ExtractBlendShapeName_ARKitAddress_ReturnsBlendShapeName" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_ARKitAddress_ReturnsBlendShapeName" methodname="ExtractBlendShapeName_ARKitAddress_ReturnsBlendShapeName" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="270539546" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000598" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1008" name="ExtractBlendShapeName_ARKitPrefixOnly_ReturnsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_ARKitPrefixOnly_ReturnsNull" methodname="ExtractBlendShapeName_ARKitPrefixOnly_ReturnsNull" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="926303488" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000199" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1010" name="ExtractBlendShapeName_ARKitWithSpecialChars_ReturnsName" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_ARKitWithSpecialChars_ReturnsName" methodname="ExtractBlendShapeName_ARKitWithSpecialChars_ReturnsName" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1902506918" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000196" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1005" name="ExtractBlendShapeName_EmptyString_ReturnsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_EmptyString_ReturnsNull" methodname="ExtractBlendShapeName_EmptyString_ReturnsNull" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1154372599" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000185" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1006" name="ExtractBlendShapeName_Null_ReturnsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_Null_ReturnsNull" methodname="ExtractBlendShapeName_Null_ReturnsNull" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1540043601" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000170" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1004" name="ExtractBlendShapeName_UnknownPrefix_ReturnsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_UnknownPrefix_ReturnsNull" methodname="ExtractBlendShapeName_UnknownPrefix_ReturnsNull" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="508975221" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000168" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1002" name="ExtractBlendShapeName_VRChatAddress_ReturnsParameterName" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_VRChatAddress_ReturnsParameterName" methodname="ExtractBlendShapeName_VRChatAddress_ReturnsParameterName" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1767104569" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000174" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1009" name="ExtractBlendShapeName_VRChatJapanese_ReturnsName" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_VRChatJapanese_ReturnsName" methodname="ExtractBlendShapeName_VRChatJapanese_ReturnsName" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1593043778" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000180" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1007" name="ExtractBlendShapeName_VRChatPrefixOnly_ReturnsNull" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.ExtractBlendShapeName_VRChatPrefixOnly_ReturnsNull" methodname="ExtractBlendShapeName_VRChatPrefixOnly_ReturnsNull" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1138937862" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000180" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1026" name="HandleOscMessage_AfterSwap_NewFrameStartsClean" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_AfterSwap_NewFrameStartsClean" methodname="HandleOscMessage_AfterSwap_NewFrameStartsClean" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1922530677" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.001235" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1023" name="HandleOscMessage_ARKitAddressMatchesByBlendShapeName_WritesToBuffer" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_ARKitAddressMatchesByBlendShapeName_WritesToBuffer" methodname="HandleOscMessage_ARKitAddressMatchesByBlendShapeName_WritesToBuffer" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="60850629" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000310" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1022" name="HandleOscMessage_BeforeInitialize_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_BeforeInitialize_DoesNotThrow" methodname="HandleOscMessage_BeforeInitialize_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="114418148" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000290" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1019" name="HandleOscMessage_EmptyAddress_Ignored" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_EmptyAddress_Ignored" methodname="HandleOscMessage_EmptyAddress_Ignored" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="949314328" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000298" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1017" name="HandleOscMessage_IntValue_ConvertedToFloat" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_IntValue_ConvertedToFloat" methodname="HandleOscMessage_IntValue_ConvertedToFloat" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="300995279" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000290" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1015" name="HandleOscMessage_MatchingAddress_WritesToBuffer" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_MatchingAddress_WritesToBuffer" methodname="HandleOscMessage_MatchingAddress_WritesToBuffer" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="538493508" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000322" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1024" name="HandleOscMessage_MultipleMessagesInOneFrame_AllWritten" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_MultipleMessagesInOneFrame_AllWritten" methodname="HandleOscMessage_MultipleMessagesInOneFrame_AllWritten" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="611649388" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000373" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1020" name="HandleOscMessage_NoValues_Ignored" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_NoValues_Ignored" methodname="HandleOscMessage_NoValues_Ignored" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1904558168" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000302" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1025" name="HandleOscMessage_SameAddressMultipleTimes_KeepsLatestValue" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_SameAddressMultipleTimes_KeepsLatestValue" methodname="HandleOscMessage_SameAddressMultipleTimes_KeepsLatestValue" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1571761851" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000302" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1016" name="HandleOscMessage_SecondMapping_WritesToCorrectIndex" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_SecondMapping_WritesToCorrectIndex" methodname="HandleOscMessage_SecondMapping_WritesToCorrectIndex" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="745354624" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000315" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1021" name="HandleOscMessage_StringValue_Ignored" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_StringValue_Ignored" methodname="HandleOscMessage_StringValue_Ignored" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="27753213" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000283" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1018" name="HandleOscMessage_UnmatchedAddress_DoesNotWriteToBuffer" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.HandleOscMessage_UnmatchedAddress_DoesNotWriteToBuffer" methodname="HandleOscMessage_UnmatchedAddress_DoesNotWriteToBuffer" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1196755618" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000285" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1012" name="Initialize_NullBuffer_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.Initialize_NullBuffer_ThrowsArgumentNullException" methodname="Initialize_NullBuffer_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1799845695" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000288" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1013" name="Initialize_NullMappings_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.Initialize_NullMappings_ThrowsArgumentNullException" methodname="Initialize_NullMappings_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="2093735749" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000296" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1011" name="Initialize_ValidParameters_SetsBufferAndMappings" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.Initialize_ValidParameters_SetsBufferAndMappings" methodname="Initialize_ValidParameters_SetsBufferAndMappings" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1467752216" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000286" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1014" name="Initialize_WithOscConfiguration_SetsPortFromConfig" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.Initialize_WithOscConfiguration_SetsPortFromConfig" methodname="Initialize_WithOscConfiguration_SetsPortFromConfig" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1353091623" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000819" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1029" name="IsRunning_BeforeStart_ReturnsFalse" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.IsRunning_BeforeStart_ReturnsFalse" methodname="IsRunning_BeforeStart_ReturnsFalse" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="890971133" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000225" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1034" name="OscSender_Address_DefaultValue_IsLocalhost" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_Address_DefaultValue_IsLocalhost" methodname="OscSender_Address_DefaultValue_IsLocalhost" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1729807817" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000393" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1030" name="OscSender_Initialize_NullMappings_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_Initialize_NullMappings_ThrowsArgumentNullException" methodname="OscSender_Initialize_NullMappings_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="41727302" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000395" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1031" name="OscSender_Initialize_ValidMappings_SetsInitialized" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_Initialize_ValidMappings_SetsInitialized" methodname="OscSender_Initialize_ValidMappings_SetsInitialized" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="38300048" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000344" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1032" name="OscSender_Initialize_WithConfig_SetsPortFromConfig" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_Initialize_WithConfig_SetsPortFromConfig" methodname="OscSender_Initialize_WithConfig_SetsPortFromConfig" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="2057497092" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000425" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1035" name="OscSender_IsRunning_BeforeStart_ReturnsFalse" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_IsRunning_BeforeStart_ReturnsFalse" methodname="OscSender_IsRunning_BeforeStart_ReturnsFalse" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="464416153" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000279" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1033" name="OscSender_Port_DefaultValue_Is9000" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_Port_DefaultValue_Is9000" methodname="OscSender_Port_DefaultValue_Is9000" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="796330198" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000237" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1036" name="OscSender_SendAll_BeforeInitialize_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_SendAll_BeforeInitialize_DoesNotThrow" methodname="OscSender_SendAll_BeforeInitialize_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="2017211232" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000384" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1037" name="OscSender_SendAll_NullValues_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_SendAll_NullValues_DoesNotThrow" methodname="OscSender_SendAll_NullValues_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1772761449" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:51Z" duration="0.000339" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1041" name="OscSender_SendAll_ReceivedByOscReceiver" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_SendAll_ReceivedByOscReceiver" methodname="OscSender_SendAll_ReceivedByOscReceiver" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="329768127" result="Passed" start-time="2026-02-03 07:40:51Z" end-time="2026-02-03 07:40:52Z" duration="0.505857" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1038" name="OscSender_SendSingle_BeforeInitialize_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_SendSingle_BeforeInitialize_DoesNotThrow" methodname="OscSender_SendSingle_BeforeInitialize_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1323443265" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:52Z" duration="0.000531" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1042" name="OscSender_SendSingle_ReceivedByOscReceiver" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_SendSingle_ReceivedByOscReceiver" methodname="OscSender_SendSingle_ReceivedByOscReceiver" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1399936694" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:52Z" duration="0.505649" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1039" name="OscSender_StartSending_StartsClient" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_StartSending_StartsClient" methodname="OscSender_StartSending_StartsClient" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1270578739" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:52Z" duration="0.003347" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1040" name="OscSender_StopSending_StopsClient" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.OscSender_StopSending_StopsClient" methodname="OscSender_StopSending_StopsClient" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1499949595" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:52Z" duration="0.003866" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1027" name="Port_DefaultValue_Is9001" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.Port_DefaultValue_Is9001" methodname="Port_DefaultValue_Is9001" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="363406374" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:52Z" duration="0.000228" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1028" name="Port_SetValue_UpdatesPort" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.Port_SetValue_UpdatesPort" methodname="Port_SetValue_UpdatesPort" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="1105932775" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:52Z" duration="0.000217" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1045" name="RealUdpReceive_WithUOscClient_ReceivesValue" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.RealUdpReceive_WithUOscClient_ReceivesValue" methodname="RealUdpReceive_WithUOscClient_ReceivesValue" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="852407787" result="Passed" start-time="2026-02-03 07:40:52Z" end-time="2026-02-03 07:40:53Z" duration="0.504818" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1043" name="StartReceiving_CreatesUOscServer" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.StartReceiving_CreatesUOscServer" methodname="StartReceiving_CreatesUOscServer" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="999898407" result="Passed" start-time="2026-02-03 07:40:53Z" end-time="2026-02-03 07:40:53Z" duration="0.006191" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1044" name="StopReceiving_StopsServer" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests.StopReceiving_StopsServer" methodname="StopReceiving_StopsServer" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscSendReceiveTests" runstate="Runnable" seed="23157884" result="Passed" start-time="2026-02-03 07:40:53Z" end-time="2026-02-03 07:40:53Z" duration="0.007668" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
