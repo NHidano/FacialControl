@@ -5,7 +5,8 @@
         "Hidano.FacialControl.Domain",
         "Hidano.FacialControl.Application",
         "Unity.Animation",
-        "Unity.Collections"
+        "Unity.Collections",
+        "uOSC.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
