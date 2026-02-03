@@ -30,14 +30,8 @@ namespace Hidano.FacialControl.Editor.Tools
         private SkinnedMeshRenderer[] _skinnedMeshRenderers;
 
         // プレビュー
-        private PreviewRenderUtility _previewRenderUtility;
-        private GameObject _previewInstance;
-        private RenderTexture _previewTexture;
+        private PreviewRenderWrapper _previewWrapper;
         private IMGUIContainer _previewContainer;
-        private Vector2 _previewRotation = new Vector2(0f, 0f);
-        private float _previewZoom = 1.5f;
-        private Vector2 _lastMousePos;
-        private bool _isDragging;
 
         // BlendShape 管理
         private List<BlendShapeEntry> _blendShapeEntries = new List<BlendShapeEntry>();
@@ -77,11 +71,13 @@ namespace Hidano.FacialControl.Editor.Tools
             _parser = new SystemTextJsonParser();
             _repository = new FileProfileRepository(_parser);
             _mapper = new FacialProfileMapper(_repository);
+            _previewWrapper = new PreviewRenderWrapper();
         }
 
         private void OnDisable()
         {
-            CleanupPreview();
+            _previewWrapper?.Dispose();
+            _previewWrapper = null;
         }
 
         private void CreateGUI()
@@ -397,58 +393,19 @@ namespace Hidano.FacialControl.Editor.Tools
         // ========================================
 
         /// <summary>
-        /// PreviewRenderUtility を初期化してプレビューインスタンスを作成する
+        /// PreviewRenderWrapper を使ってプレビューインスタンスを作成する
         /// </summary>
         private void SetupPreview()
         {
-            CleanupPreview();
+            _previewWrapper.Setup(_targetObject);
 
-            if (_targetObject == null)
-                return;
-
-            _previewRenderUtility = new PreviewRenderUtility();
-            _previewRenderUtility.camera.fieldOfView = 30f;
-            _previewRenderUtility.camera.nearClipPlane = 0.01f;
-            _previewRenderUtility.camera.farClipPlane = 100f;
-            _previewRenderUtility.camera.clearFlags = CameraClearFlags.SolidColor;
-            _previewRenderUtility.camera.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 1f);
-
-            // ライティング設定
-            _previewRenderUtility.lights[0].intensity = 1.2f;
-            _previewRenderUtility.lights[0].transform.rotation = Quaternion.Euler(30f, -30f, 0f);
-
-            // プレビューインスタンス生成
-            _previewInstance = Instantiate(_targetObject);
-            _previewInstance.hideFlags = HideFlags.HideAndDontSave;
-
-            // 位置リセット
-            _previewInstance.transform.position = Vector3.zero;
-            _previewInstance.transform.rotation = Quaternion.identity;
-
-            _previewRenderUtility.AddSingleGO(_previewInstance);
-
-            // プレビュー用 SkinnedMeshRenderer を更新
-            _skinnedMeshRenderers = _previewInstance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            if (_previewWrapper.IsInitialized)
+            {
+                // プレビュー用 SkinnedMeshRenderer を更新
+                _skinnedMeshRenderers = _previewWrapper.PreviewInstance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            }
 
             ApplyAllBlendShapesToPreview();
-        }
-
-        /// <summary>
-        /// プレビューリソースを解放する
-        /// </summary>
-        private void CleanupPreview()
-        {
-            if (_previewInstance != null)
-            {
-                DestroyImmediate(_previewInstance);
-                _previewInstance = null;
-            }
-
-            if (_previewRenderUtility != null)
-            {
-                _previewRenderUtility.Cleanup();
-                _previewRenderUtility = null;
-            }
         }
 
         /// <summary>
@@ -456,7 +413,7 @@ namespace Hidano.FacialControl.Editor.Tools
         /// </summary>
         private void ApplyBlendShapeToPreview(int entryIndex)
         {
-            if (_previewInstance == null || _skinnedMeshRenderers == null)
+            if (!_previewWrapper.IsInitialized || _skinnedMeshRenderers == null)
                 return;
 
             var entry = _blendShapeEntries[entryIndex];
@@ -478,7 +435,7 @@ namespace Hidano.FacialControl.Editor.Tools
         /// </summary>
         private void ApplyAllBlendShapesToPreview()
         {
-            if (_previewInstance == null || _skinnedMeshRenderers == null)
+            if (!_previewWrapper.IsInitialized || _skinnedMeshRenderers == null)
                 return;
 
             for (int i = 0; i < _blendShapeEntries.Count; i++)
@@ -502,7 +459,7 @@ namespace Hidano.FacialControl.Editor.Tools
         /// </summary>
         private void OnPreviewGUI()
         {
-            if (_previewRenderUtility == null || _previewInstance == null)
+            if (!_previewWrapper.IsInitialized)
             {
                 GUILayout.Label("モデルを選択してください。", EditorStyles.centeredGreyMiniLabel,
                     GUILayout.Width(PreviewSize), GUILayout.Height(PreviewSize));
@@ -511,85 +468,10 @@ namespace Hidano.FacialControl.Editor.Tools
 
             var rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize);
 
-            // マウス操作（回転・ズーム）
-            HandlePreviewInput(rect);
+            if (_previewWrapper.HandleInput(rect))
+                Repaint();
 
-            // カメラ位置の計算
-            var bounds = CalculateBounds(_previewInstance);
-            float distance = bounds.extents.magnitude * _previewZoom;
-            var center = bounds.center;
-
-            var rotation = Quaternion.Euler(_previewRotation.y, _previewRotation.x, 0f);
-            var camPos = center + rotation * new Vector3(0f, 0f, -distance);
-
-            _previewRenderUtility.camera.transform.position = camPos;
-            _previewRenderUtility.camera.transform.LookAt(center);
-
-            _previewRenderUtility.BeginPreview(rect, GUIStyle.none);
-            _previewRenderUtility.Render(true, true);
-            var texture = _previewRenderUtility.EndPreview();
-
-            GUI.DrawTexture(rect, texture, ScaleMode.StretchToFill, false);
-        }
-
-        /// <summary>
-        /// プレビューのマウス入力処理（回転・ズーム）
-        /// </summary>
-        private void HandlePreviewInput(Rect rect)
-        {
-            var evt = Event.current;
-
-            if (!rect.Contains(evt.mousePosition))
-                return;
-
-            switch (evt.type)
-            {
-                case EventType.MouseDown when evt.button == 0:
-                    _isDragging = true;
-                    _lastMousePos = evt.mousePosition;
-                    evt.Use();
-                    break;
-
-                case EventType.MouseUp when evt.button == 0:
-                    _isDragging = false;
-                    evt.Use();
-                    break;
-
-                case EventType.MouseDrag when _isDragging:
-                    var delta = evt.mousePosition - _lastMousePos;
-                    _previewRotation.x += delta.x * 0.5f;
-                    _previewRotation.y -= delta.y * 0.5f;
-                    _previewRotation.y = Mathf.Clamp(_previewRotation.y, -89f, 89f);
-                    _lastMousePos = evt.mousePosition;
-                    evt.Use();
-                    Repaint();
-                    break;
-
-                case EventType.ScrollWheel:
-                    _previewZoom += evt.delta.y * 0.05f;
-                    _previewZoom = Mathf.Clamp(_previewZoom, 0.5f, 5f);
-                    evt.Use();
-                    Repaint();
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// GameObject の全 Renderer を含むバウンディングボックスを計算する
-        /// </summary>
-        private static Bounds CalculateBounds(GameObject go)
-        {
-            var renderers = go.GetComponentsInChildren<Renderer>(true);
-            if (renderers.Length == 0)
-                return new Bounds(go.transform.position, Vector3.one);
-
-            var bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-            {
-                bounds.Encapsulate(renderers[i].bounds);
-            }
-
-            return bounds;
+            _previewWrapper.Render(rect);
         }
 
         // ========================================
