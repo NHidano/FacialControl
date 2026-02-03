@@ -37,6 +37,9 @@ namespace Hidano.FacialControl.Editor.Windows
         private Label _statusLabel;
         private Label _profileInfoLabel;
         private Button _addButton;
+        private Button _importButton;
+        private Button _exportButton;
+        private Button _syncButton;
 
         private IJsonParser _parser;
         private IProfileRepository _repository;
@@ -108,6 +111,34 @@ namespace Hidano.FacialControl.Editor.Windows
             toolbarSection.Add(_addButton);
 
             root.Add(toolbarSection);
+
+            // ========================================
+            // インポート / エクスポート / 同期セクション
+            // ========================================
+            var ioSection = new VisualElement();
+            ioSection.style.flexDirection = FlexDirection.Row;
+            ioSection.style.paddingLeft = 4;
+            ioSection.style.paddingRight = 4;
+            ioSection.style.marginBottom = 4;
+
+            _importButton = new Button(OnImportClicked) { text = "インポート" };
+            _importButton.AddToClassList(FacialControlStyles.ActionButton);
+            _importButton.SetEnabled(false);
+            ioSection.Add(_importButton);
+
+            _exportButton = new Button(OnExportClicked) { text = "エクスポート" };
+            _exportButton.AddToClassList(FacialControlStyles.ActionButton);
+            _exportButton.style.marginLeft = 4;
+            _exportButton.SetEnabled(false);
+            ioSection.Add(_exportButton);
+
+            _syncButton = new Button(OnSyncClicked) { text = "SO 同期" };
+            _syncButton.AddToClassList(FacialControlStyles.ActionButton);
+            _syncButton.style.marginLeft = 4;
+            _syncButton.SetEnabled(false);
+            ioSection.Add(_syncButton);
+
+            root.Add(ioSection);
 
             // ========================================
             // Expression リスト表示セクション
@@ -229,7 +260,11 @@ namespace Hidano.FacialControl.Editor.Windows
         private void UpdateUI()
         {
             bool hasProfile = !string.IsNullOrEmpty(_currentJsonPath);
+            bool hasSO = _profileSO != null;
             _addButton?.SetEnabled(hasProfile);
+            _importButton?.SetEnabled(hasSO);
+            _exportButton?.SetEnabled(hasProfile);
+            _syncButton?.SetEnabled(hasProfile);
 
             if (_profileInfoLabel != null)
             {
@@ -475,6 +510,140 @@ namespace Hidano.FacialControl.Editor.Windows
             {
                 ShowStatus($"保存エラー: {ex.Message}", isError: true);
                 Debug.LogError($"[ProfileManagerWindow] JSON 保存エラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// JSON ファイルをインポートする。
+        /// 外部ファイルを選択し、パース後に SO の JSON パスへ保存する。
+        /// </summary>
+        private void OnImportClicked()
+        {
+            if (_profileSO == null)
+                return;
+
+            var path = EditorUtility.OpenFilePanel(
+                "プロファイル JSON のインポート",
+                "",
+                "json");
+
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            try
+            {
+                var json = File.ReadAllText(path, System.Text.Encoding.UTF8);
+                var imported = _parser.ParseProfile(json);
+
+                // SO に JSON パスが未設定の場合はインポート元のファイル名を StreamingAssets に設定
+                if (string.IsNullOrWhiteSpace(_profileSO.JsonFilePath))
+                {
+                    var fileName = Path.GetFileName(path);
+                    _profileSO.JsonFilePath = fileName;
+                }
+
+                var fullPath = Path.Combine(UnityEngine.Application.streamingAssetsPath, _profileSO.JsonFilePath);
+
+                // StreamingAssets ディレクトリが存在しない場合は作成
+                var dir = Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                Undo.RecordObject(_profileSO, "プロファイル JSON インポート");
+
+                var serialized = _parser.SerializeProfile(imported);
+                File.WriteAllText(fullPath, serialized, System.Text.Encoding.UTF8);
+
+                _currentProfile = imported;
+                _currentJsonPath = fullPath;
+                _mapper.UpdateSO(_profileSO, imported);
+                EditorUtility.SetDirty(_profileSO);
+
+                FilterExpressions();
+                UpdateUI();
+                ShowStatus($"インポートしました: {Path.GetFileName(path)}", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"インポートエラー: {ex.Message}", isError: true);
+                Debug.LogError($"[ProfileManagerWindow] JSON インポートエラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// 現在のプロファイルを JSON ファイルにエクスポートする。
+        /// 保存先を選択し、現在のプロファイルをシリアライズして書き込む。
+        /// </summary>
+        private void OnExportClicked()
+        {
+            if (string.IsNullOrEmpty(_currentJsonPath))
+                return;
+
+            var defaultName = _profileSO != null && !string.IsNullOrEmpty(_profileSO.JsonFilePath)
+                ? Path.GetFileNameWithoutExtension(_profileSO.JsonFilePath)
+                : "profile";
+
+            var path = EditorUtility.SaveFilePanel(
+                "プロファイル JSON のエクスポート",
+                "",
+                defaultName,
+                "json");
+
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            try
+            {
+                var json = _parser.SerializeProfile(_currentProfile);
+
+                var dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                File.WriteAllText(path, json, System.Text.Encoding.UTF8);
+                ShowStatus($"エクスポートしました: {Path.GetFileName(path)}", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"エクスポートエラー: {ex.Message}", isError: true);
+                Debug.LogError($"[ProfileManagerWindow] JSON エクスポートエラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// SO と JSON の手動同期。
+        /// JSON ファイルを再読み込みし、SO の表示用フィールドを更新する。
+        /// </summary>
+        private void OnSyncClicked()
+        {
+            if (_profileSO == null || string.IsNullOrEmpty(_currentJsonPath))
+                return;
+
+            try
+            {
+                if (!File.Exists(_currentJsonPath))
+                {
+                    ShowStatus($"ファイルが見つかりません: {_currentJsonPath}", isError: true);
+                    return;
+                }
+
+                var json = File.ReadAllText(_currentJsonPath, System.Text.Encoding.UTF8);
+                var profile = _parser.ParseProfile(json);
+
+                Undo.RecordObject(_profileSO, "SO 同期");
+
+                _currentProfile = profile;
+                _mapper.UpdateSO(_profileSO, profile);
+                EditorUtility.SetDirty(_profileSO);
+
+                FilterExpressions();
+                UpdateUI();
+                ShowStatus("SO を JSON と同期しました。", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"同期エラー: {ex.Message}", isError: true);
+                Debug.LogError($"[ProfileManagerWindow] SO 同期エラー: {ex}");
             }
         }
 
