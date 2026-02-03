@@ -4,7 +4,8 @@
     "references": [
         "Hidano.FacialControl.Domain",
         "Hidano.FacialControl.Application",
-        "Unity.Animation"
+        "Unity.Animation",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
