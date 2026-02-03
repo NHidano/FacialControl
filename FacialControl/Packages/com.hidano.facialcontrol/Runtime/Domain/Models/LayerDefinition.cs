@@ -22,6 +22,12 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public ExclusionMode ExclusionMode { get; }
 
+        /// <summary>
+        /// レイヤー定義を生成する。
+        /// </summary>
+        /// <param name="name">レイヤー名（空文字不可）</param>
+        /// <param name="priority">優先度（0 以上）</param>
+        /// <param name="exclusionMode">排他モード</param>
         public LayerDefinition(string name, int priority, ExclusionMode exclusionMode)
         {
             if (name == null)

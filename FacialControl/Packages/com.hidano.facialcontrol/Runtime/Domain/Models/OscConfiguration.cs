@@ -42,6 +42,13 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public ReadOnlyMemory<OscMapping> Mapping { get; }
 
+        /// <summary>
+        /// OSC 通信設定を生成する。mapping は防御的コピーされる。
+        /// </summary>
+        /// <param name="sendPort">送信ポート番号（0〜65535）</param>
+        /// <param name="receivePort">受信ポート番号（0〜65535）</param>
+        /// <param name="preset">プリセット名。null の場合はデフォルト値を使用</param>
+        /// <param name="mapping">OSC マッピング配列。null の場合は空配列</param>
         public OscConfiguration(
             int sendPort = DefaultSendPort,
             int receivePort = DefaultReceivePort,

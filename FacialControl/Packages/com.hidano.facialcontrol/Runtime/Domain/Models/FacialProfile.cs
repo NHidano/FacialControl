@@ -26,6 +26,12 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public ReadOnlyMemory<Expression> Expressions { get; }
 
+        /// <summary>
+        /// 表情設定プロファイルを生成する。配列パラメータは防御的コピーされる。
+        /// </summary>
+        /// <param name="schemaVersion">JSON スキーマバージョン（空文字不可）</param>
+        /// <param name="layers">レイヤー定義の配列。null の場合は空配列</param>
+        /// <param name="expressions">Expression の配列。null の場合は空配列</param>
         public FacialProfile(
             string schemaVersion,
             LayerDefinition[] layers = null,

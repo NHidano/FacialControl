@@ -1,0 +1,9 @@
+apiRules:
+  - include:
+      uidRegex: ^Hidano\.FacialControl
+  - exclude:
+      uidRegex: ^Hidano\.FacialControl\.Tests
+  - exclude:
+      hasAttribute:
+        uid: System.SerializableAttribute
+      type: Type

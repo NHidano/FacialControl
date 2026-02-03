@@ -1,0 +1,63 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "FacialControl/Packages/com.hidano.facialcontrol",
+          "files": [
+            "Runtime/**/*.cs",
+            "Editor/**/*.cs"
+          ],
+          "exclude": [
+            "Tests/**"
+          ]
+        }
+      ],
+      "dest": "api",
+      "filter": "docfx-filter.yml",
+      "properties": {
+        "TargetFramework": "netstandard2.1"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "api/**.yml",
+          "api/index.md"
+        ]
+      },
+      {
+        "files": [
+          "docs/toc.yml",
+          "docs/*.md"
+        ]
+      },
+      {
+        "files": [
+          "toc.yml",
+          "index.md"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "docs/images/**"
+        ]
+      }
+    ],
+    "dest": "_site",
+    "globalMetadata": {
+      "_appTitle": "FacialControl API Reference",
+      "_appName": "FacialControl",
+      "_appFooter": "FacialControl - MIT License",
+      "_enableSearch": true
+    },
+    "template": [
+      "default",
+      "modern"
+    ]
+  }
+}

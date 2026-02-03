@@ -26,6 +26,10 @@ namespace Hidano.FacialControl.Application.UseCases
         /// </summary>
         public string CurrentPath => _currentPath;
 
+        /// <summary>
+        /// ProfileUseCase を生成する。
+        /// </summary>
+        /// <param name="repository">プロファイルリポジトリ</param>
         public ProfileUseCase(IProfileRepository repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));

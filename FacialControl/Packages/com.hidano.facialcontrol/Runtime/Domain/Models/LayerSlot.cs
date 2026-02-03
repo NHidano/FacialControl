@@ -18,6 +18,11 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public ReadOnlyMemory<BlendShapeMapping> BlendShapeValues { get; }
 
+        /// <summary>
+        /// レイヤースロットを生成する。blendShapeValues は防御的コピーされる。
+        /// </summary>
+        /// <param name="layer">ターゲットレイヤー名（空文字不可）</param>
+        /// <param name="blendShapeValues">オーバーライドする BlendShape 値の配列</param>
         public LayerSlot(string layer, BlendShapeMapping[] blendShapeValues)
         {
             if (layer == null)

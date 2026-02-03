@@ -48,6 +48,12 @@ namespace Hidano.FacialControl.Application.UseCases
             public List<string> PreviousActiveIds;
         }
 
+        /// <summary>
+        /// LayerUseCase を生成する。
+        /// </summary>
+        /// <param name="profile">対象の表情設定プロファイル</param>
+        /// <param name="expressionUseCase">Expression 管理ユースケース</param>
+        /// <param name="blendShapeNames">BlendShape 名の配列</param>
         public LayerUseCase(FacialProfile profile, ExpressionUseCase expressionUseCase, string[] blendShapeNames)
         {
             if (blendShapeNames == null)

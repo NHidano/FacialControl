@@ -15,6 +15,7 @@ namespace Hidano.FacialControl.Adapters.Json
     {
         private const string SupportedSchemaVersion = "1.0";
 
+        /// <inheritdoc/>
         public FacialProfile ParseProfile(string json)
         {
             if (json == null)
@@ -43,12 +44,14 @@ namespace Hidano.FacialControl.Adapters.Json
             return ConvertToProfile(dto);
         }
 
+        /// <inheritdoc/>
         public string SerializeProfile(FacialProfile profile)
         {
             var dto = ConvertToProfileDto(profile);
             return JsonUtility.ToJson(dto, true);
         }
 
+        /// <inheritdoc/>
         public FacialControlConfig ParseConfig(string json)
         {
             if (json == null)
@@ -77,6 +80,7 @@ namespace Hidano.FacialControl.Adapters.Json
             return ConvertToConfig(dto);
         }
 
+        /// <inheritdoc/>
         public string SerializeConfig(FacialControlConfig config)
         {
             var dto = ConvertToConfigDto(config);

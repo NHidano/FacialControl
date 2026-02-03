@@ -22,6 +22,12 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public string Renderer { get; }
 
+        /// <summary>
+        /// BlendShapeMapping を生成する。
+        /// </summary>
+        /// <param name="name">BlendShape 名</param>
+        /// <param name="value">値（0〜1、範囲外は自動クランプ）</param>
+        /// <param name="renderer">対象 Renderer 名。null の場合は全 SkinnedMeshRenderer に適用</param>
         public BlendShapeMapping(string name, float value, string renderer = null)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));

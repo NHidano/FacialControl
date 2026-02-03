@@ -17,6 +17,10 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public int AnimationClipLruSize { get; }
 
+        /// <summary>
+        /// キャッシュ設定を生成する。
+        /// </summary>
+        /// <param name="animationClipLruSize">AnimationClip LRU キャッシュの最大エントリ数（1 以上）</param>
         public CacheConfiguration(int animationClipLruSize = DefaultAnimationClipLruSize)
         {
             if (animationClipLruSize < 1)

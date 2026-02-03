@@ -42,6 +42,16 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public ReadOnlyMemory<LayerSlot> LayerSlots { get; }
 
+        /// <summary>
+        /// 表情定義を生成する。配列パラメータは防御的コピーされる。
+        /// </summary>
+        /// <param name="id">一意識別子（空文字不可）</param>
+        /// <param name="name">表情名（空文字不可）</param>
+        /// <param name="layer">所属レイヤー名（空文字不可）</param>
+        /// <param name="transitionDuration">遷移時間（0〜1 秒、範囲外は自動クランプ）</param>
+        /// <param name="transitionCurve">遷移カーブ設定</param>
+        /// <param name="blendShapeValues">BlendShape 値の配列。null の場合は空配列</param>
+        /// <param name="layerSlots">他レイヤーへのオーバーライドスロット配列。null の場合は空配列</param>
         public Expression(
             string id,
             string name,

@@ -23,6 +23,12 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public CacheConfiguration Cache { get; }
 
+        /// <summary>
+        /// FacialControl 設定データを生成する。
+        /// </summary>
+        /// <param name="schemaVersion">JSON スキーマバージョン（空文字不可）</param>
+        /// <param name="osc">OSC 通信設定</param>
+        /// <param name="cache">キャッシュ設定</param>
         public FacialControlConfig(
             string schemaVersion,
             OscConfiguration osc = default,

@@ -15,6 +15,11 @@ namespace Hidano.FacialControl.Domain.Models
         /// </summary>
         public string ReferencedLayer { get; }
 
+        /// <summary>
+        /// 無効なレイヤー参照情報を生成する。
+        /// </summary>
+        /// <param name="expressionId">対象 Expression の ID</param>
+        /// <param name="referencedLayer">参照されている未定義レイヤー名</param>
         public InvalidLayerReference(string expressionId, string referencedLayer)
         {
             ExpressionId = expressionId;

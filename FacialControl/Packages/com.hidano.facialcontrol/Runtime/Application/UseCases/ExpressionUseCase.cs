@@ -14,6 +14,10 @@ namespace Hidano.FacialControl.Application.UseCases
         private FacialProfile _profile;
         private readonly Dictionary<string, List<Expression>> _activeByLayer;
 
+        /// <summary>
+        /// ExpressionUseCase を生成する。
+        /// </summary>
+        /// <param name="profile">対象の表情設定プロファイル</param>
         public ExpressionUseCase(FacialProfile profile)
         {
             _profile = profile;
