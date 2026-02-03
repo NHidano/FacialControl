@@ -127,6 +127,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1728236551027116114, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1728236551027116114, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1728236551027116114, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1728236551027116114, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1728236551027116114, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1728236551027116114, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8198287467416625081, guid: 5588fb1befbdc5344a5457a74467ca94, type: 3}
       propertyPath: m_Name
       value: HatsuneMiku

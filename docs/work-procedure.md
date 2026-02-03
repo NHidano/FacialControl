@@ -736,6 +736,112 @@ GitHub Actions による自動テスト・リリースパイプラインを構�
 
 ---
 
+## P17: Editor 改善・テンプレート拡充
+
+### 目的
+プロトタイプ段階で判明した Editor 拡張の不足機能を追加し、テンプレートファイルを拡充する。ARKit / PerfectSync 検出仕様の不整合も調査・修正する。
+
+### 作業内容
+
+#### P17-01: ProfileManagerWindow にプロファイル新規作成機能を追加
+- **対象ファイル**: `Editor/Windows/ProfileManagerWindow.cs`
+- **追加 UI 要素**:
+  - ウィンドウ上部に「新規プロファイル作成」ボタンを配置
+  - 押下時にダイアログを表示:
+    - プロファイル名入力（`TextField`）
+    - レイヤー定義リスト（デフォルト 3 レイヤー: emotion / lipsync / eye）
+    - 各レイヤーの `priority`（`IntegerField`）/ `exclusionMode`（`EnumField`）設定
+    - レイヤー追加・削除ボタン
+- **処理フロー**:
+  1. ユーザーがプロファイル名・レイヤーを設定し「作成」を押下
+  2. `SystemTextJsonParser.SerializeProfile()` で空 Expression リスト付き JSON を生成
+  3. `StreamingAssets/FacialControl/{profileName}.json` に保存
+  4. `AssetDatabase.CreateAsset()` で `FacialProfileSO` を `Assets/` 配下に自動生成
+  5. SO の `_jsonFilePath` を保存先相対パスに自動設定
+
+#### P17-02: FacialProfileSOEditor に JSON 内詳細情報の表示を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **追加 UI 要素**:
+  - 「レイヤー一覧」`Foldout`: 各レイヤーの `name` / `priority` / `exclusionMode` を `Label` で一覧表示
+  - 「Expression 一覧」`Foldout`: 各 Expression の `name` / `layer` / `transitionDuration` / `BlendShapeValues.Length` を表示
+  - 各 Expression 内に子 `Foldout` を設け、BlendShape 名と値の一覧を展開可能にする
+- **実装方針**:
+  - JSON 読み込み成功時に `FacialProfile` をフィールドにキャッシュ
+  - キャッシュ済み `FacialProfile` から UI を動的構築
+  - 既存の簡易表示（スキーマバージョン / レイヤー数 / Expression 数）は維持
+
+#### P17-03: FacialProfileSOEditor にインライン編集・JSON 上書き保存機能を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P17-02 完了後
+- **変更内容**:
+  - P17-02 で追加した `Label` を編集可能フィールドに変更:
+    - レイヤー: `TextField`(name) / `IntegerField`(priority) / `EnumField`(exclusionMode)
+    - Expression: `TextField`(name) / ドロップダウン(layer) / `FloatField`(transitionDuration)
+  - 「JSON に保存」ボタンを追加
+- **処理フロー**:
+  1. ユーザーがフィールドを編集
+  2. 「JSON に保存」押下時に `Undo.RecordObject()` で Undo 登録
+  3. 編集済み値で `FacialProfile` を再構築
+  4. `SystemTextJsonParser.SerializeProfile()` でシリアライズ
+  5. `File.WriteAllText()` で StreamingAssets の JSON を上書き
+  6. SO の表示用フィールド（`_schemaVersion` / `_layerCount` / `_expressionCount`）も同期更新
+
+#### P17-04: FacialProfileSOEditor に JSONPath の説明を明記
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **変更内容**:
+  - JSON ファイルパスフィールド（`_jsonFilePath` の `PropertyField`）の直下に `HelpBox` を追加
+  - メッセージ: `「パスは StreamingAssets/ からの相対パスです（例: FacialControl/default_profile.json）」`
+  - `HelpBoxMessageType.Info` で表示
+  - 現状の tooltip（"StreamingAssets からの相対パス"）は維持
+
+#### P17-05: InputActions テンプレートに Xbox コントローラのバインディングを追加
+- **対象ファイル**:
+  - `Templates/default_inputactions.inputactions`
+  - `Runtime/Adapters/Input/FacialControlDefaultActions.inputactions`
+- **現状**: Gamepad は D-Pad Up/Right/Down/Left → Trigger1〜4 のみ
+- **追加バインディング**:
+
+  | ボタン | InputSystem パス | 割り当て先 |
+  |--------|-----------------|-----------|
+  | A (South) | `<Gamepad>/buttonSouth` | Trigger5 |
+  | B (East) | `<Gamepad>/buttonEast` | Trigger6 |
+  | X (West) | `<Gamepad>/buttonWest` | Trigger7 |
+  | Y (North) | `<Gamepad>/buttonNorth` | Trigger8 |
+  | LB | `<Gamepad>/leftShoulder` | Trigger9 |
+  | RB | `<Gamepad>/rightShoulder` | Trigger10 |
+
+- LT / RT はアナログ入力のため Button タイプでは不適切。将来の Value タイプアクション追加で対応（今回スコープ外）
+- 両ファイルに同一のバインディングを追加し同期を維持
+
+#### P17-06: ARKit / PerfectSync 検出仕様の調査と修正
+- **対象ファイル**:
+  - `Runtime/Domain/Services/ARKitDetector.cs`
+  - `Editor/Windows/ARKitDetectorWindow.cs`
+  - `Assets/Samples/ARKitModel/`、`Assets/Samples/PerfectSyncModel/`
+- **調査手順**:
+  1. サンプルモデル（ARKitModel / PerfectSyncModel）を Unity で開き、SkinnedMeshRenderer の BlendShape 名を全件リストアップ
+  2. リストアップ結果を `ARKit52Names[]`（52 件）/ `PerfectSyncNames[]`（13 件）と突合し、一致・不一致を確認
+  3. PerfectSync の正確な定義を確認: PerfectSync 対応 = ARKit 52 + 拡張 13 の全 65 パラメータを持つモデル。ARKit 52 のみのモデルは PerfectSync 非対応で正しい
+  4. `ARKitDetectorWindow.UpdateSummary()` のサマリー表示が誤解を招かないか確認
+- **想定される修正**:
+  - サマリーラベルの文言改善（例: `「PerfectSync 拡張: 0/13」` に変更し、ARKit 52 とは別の追加パラメータであることを明示）
+  - BlendShape 名の命名規則がモデル間で異なる場合、検出ロジックの調整を検討
+  - 検出ロジックに修正が入る場合は既存テスト（P03-T04: `ARKitDetectorTests`）と合わせて更新
+
+### テスト（EditMode/）
+- **P17-T01**: `ProfileCreationTests` — 新規プロファイル JSON 生成の検証（デフォルトレイヤー構成、空 Expression リスト、スキーマバージョン "1.0"）
+- **P17-T02**: `ProfileEditSaveTests` — レイヤー編集・Expression 編集後の JSON 上書き保存ラウンドトリップ検証（パース → 編集 → シリアライズ → 再パースで値が一致）
+
+### 完了基準
+- 新規プロファイルが UI から作成でき、有効な JSON として StreamingAssets に保存される
+- SO Inspector でレイヤー・Expression の詳細が閲覧できる
+- インライン編集の結果が JSON に正しく書き戻される
+- JSONPath の説明が Inspector 上で `HelpBox` として視覚的に確認できる
+- Xbox コントローラの A/B/X/Y/LB/RB が Trigger5〜10 に割り当てられる
+- ARKit / PerfectSync の検出結果がサンプルモデルの実態と一致する
+
+---
+
 ## フェーズ間の依存関係
 
 ```
@@ -748,10 +854,10 @@ P00 (基盤)
           │       ├→ P06 (PlayableAPI) ←── 最重要・最大工数
           │       ├→ P07 (OSC 通信)
           │       └→ P08 (SO / Input / Controller)
-          │           ├→ P09 (Inspector)
-          │           ├→ P10 (プロファイル管理)
-          │           ├→ P11 (Expression 作成)
-          │           └→ P12 (ARKit 検出)
+          │           ├→ P09 (Inspector) ─────┐
+          │           ├→ P10 (プロファイル管理) ┼→ P17 (Editor 改善・テンプレート拡充)
+          │           ├→ P11 (Expression 作成) │
+          │           └→ P12 (ARKit 検出) ────┘
           └→ P13 (テンプレート) ←── P05 の後でも可
               └→ P14 (統合・性能テスト) ←── P06〜P08 完了後
                   └→ P15 (ドキュメント)
@@ -762,6 +868,7 @@ P00 (基盤)
 - P05 / P06 / P07 / P08 は P04 完了後に並行着手可能
 - P09 / P10 / P11 / P12 は P08 完了後に並行着手可能
 - P13 は P05 完了後ならいつでも着手可能
+- P17 は P09 / P10 / P12 / P13 完了後に着手可能（P17-01〜P17-06 は並行着手可能、ただし P17-03 は P17-02 に依存）
 
 ---
 
@@ -788,8 +895,9 @@ P00 (基盤)
 | P14 | 統合テスト・パフォーマンステスト | P06, P07, P08 |
 | P15 | ドキュメント | P14 |
 | P16 | CI/CD・リリース準備 | P15 |
+| P17 | Editor 改善・テンプレート拡充 | P09, P10, P12, P13 |
 
-### 作業項目一覧（全 69 項目）
+### 作業項目一覧（全 75 項目）
 
 | ID | 作業項目 |
 |----|---------|
@@ -860,8 +968,14 @@ P00 (基盤)
 | P16-02 | パッケージバリデーション |
 | P16-03 | OpenUPM 登録準備 |
 | P16-04 | バージョンタグ |
+| P17-01 | ProfileManagerWindow にプロファイル新規作成機能を追加 |
+| P17-02 | FacialProfileSOEditor に JSON 内詳細情報の表示を追加 |
+| P17-03 | FacialProfileSOEditor にインライン編集・JSON 上書き保存機能を追加 |
+| P17-04 | FacialProfileSOEditor に JSONPath の説明を明記 |
+| P17-05 | InputActions テンプレートに Xbox コントローラのバインディングを追加 |
+| P17-06 | ARKit / PerfectSync 検出仕様の調査と修正 |
 
-### テスト一覧（全 27 項目）
+### テスト一覧（全 36 項目）
 
 | ID | テスト名 |
 |----|---------|
@@ -899,6 +1013,8 @@ P00 (基盤)
 | P14-T04 | MultiRendererTests |
 | P14-T05 | GCAllocationTests |
 | P14-T06 | MultiCharacterPerformanceTests |
+| P17-T01 | ProfileCreationTests |
+| P17-T02 | ProfileEditSaveTests |
 
 ---
 
