@@ -1,0 +1,28 @@
+/* FacialControl Editor 共通スタイル定義 */
+
+/* 情報ラベル（読み取り専用のプロファイル情報等） */
+.fc-info-label {
+    margin-left: 4px;
+}
+
+/* ステータスラベル（操作結果の表示用、初期状態は非表示） */
+.fc-status-label {
+    margin-left: 4px;
+    margin-top: 2px;
+    display: none;
+}
+
+/* ステータス: エラー */
+.fc-status-label--error {
+    color: rgb(255, 77, 77);
+}
+
+/* ステータス: 成功 */
+.fc-status-label--success {
+    color: rgb(77, 204, 77);
+}
+
+/* アクションボタン（JSON 読み込み等） */
+.fc-action-button {
+    margin-top: 4px;
+}

@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using Hidano.FacialControl.Adapters.FileSystem;
 using Hidano.FacialControl.Adapters.Json;
 using Hidano.FacialControl.Adapters.ScriptableObject;
+using Hidano.FacialControl.Editor.Common;
 
 namespace Hidano.FacialControl.Editor.Inspector
 {
@@ -28,6 +29,10 @@ namespace Hidano.FacialControl.Editor.Inspector
         {
             var root = new VisualElement();
 
+            var styleSheet = FacialControlStyles.Load();
+            if (styleSheet != null)
+                root.styleSheets.Add(styleSheet);
+
             // ========================================
             // JSON ファイルパスセクション
             // ========================================
@@ -40,13 +45,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             jsonFoldout.Add(jsonPathField);
 
             var loadButton = new Button(OnLoadJsonClicked) { text = "JSON 読み込み" };
-            loadButton.style.marginTop = 4;
+            loadButton.AddToClassList(FacialControlStyles.ActionButton);
             jsonFoldout.Add(loadButton);
 
             _statusLabel = new Label();
-            _statusLabel.style.marginLeft = 4;
-            _statusLabel.style.marginTop = 2;
-            _statusLabel.style.display = DisplayStyle.None;
+            _statusLabel.AddToClassList(FacialControlStyles.StatusLabel);
             jsonFoldout.Add(_statusLabel);
 
             root.Add(jsonFoldout);
@@ -57,15 +60,15 @@ namespace Hidano.FacialControl.Editor.Inspector
             var infoFoldout = new Foldout { text = ProfileInfoSectionLabel, value = true };
 
             _schemaVersionLabel = new Label("スキーマバージョン: ---");
-            _schemaVersionLabel.style.marginLeft = 4;
+            _schemaVersionLabel.AddToClassList(FacialControlStyles.InfoLabel);
             infoFoldout.Add(_schemaVersionLabel);
 
             _layerCountLabel = new Label("レイヤー数: ---");
-            _layerCountLabel.style.marginLeft = 4;
+            _layerCountLabel.AddToClassList(FacialControlStyles.InfoLabel);
             infoFoldout.Add(_layerCountLabel);
 
             _expressionCountLabel = new Label("Expression 数: ---");
-            _expressionCountLabel.style.marginLeft = 4;
+            _expressionCountLabel.AddToClassList(FacialControlStyles.InfoLabel);
             infoFoldout.Add(_expressionCountLabel);
 
             root.Add(infoFoldout);
@@ -155,9 +158,13 @@ namespace Hidano.FacialControl.Editor.Inspector
                 return;
 
             _statusLabel.text = message;
-            _statusLabel.style.color = isError
-                ? new Color(1f, 0.3f, 0.3f)
-                : new Color(0.3f, 0.8f, 0.3f);
+
+            _statusLabel.RemoveFromClassList(FacialControlStyles.StatusError);
+            _statusLabel.RemoveFromClassList(FacialControlStyles.StatusSuccess);
+            _statusLabel.AddToClassList(isError
+                ? FacialControlStyles.StatusError
+                : FacialControlStyles.StatusSuccess);
+
             _statusLabel.style.display = DisplayStyle.Flex;
         }
     }
