@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="15" result="Passed" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.0800387">
+  <test-suite type="TestSuite" id="1262" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.080039" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1251" name="Hidano.FacialControl.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.PlayMode.dll" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.072186" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="528980" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1252" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.069102" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1253" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.066490" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1254" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.063919" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1255" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.061361" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1257" name="Integration" fullname="Hidano.FacialControl.Tests.PlayMode.Integration" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.058263" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1027" name="EndToEndTests" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.055472" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1040" name="BeforeInitialization_Activate_LogsWarning" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.BeforeInitialization_Activate_LogsWarning" methodname="BeforeInitialization_Activate_LogsWarning" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1158683234" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.008026" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[FacialController が初期化されていません。Activate は無視されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1041" name="BeforeInitialization_GetActiveExpressions_ReturnsEmpty" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.BeforeInitialization_GetActiveExpressions_ReturnsEmpty" methodname="BeforeInitialization_GetActiveExpressions_ReturnsEmpty" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="313011104" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.005006" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1039" name="FallbackLayer_UndefinedLayer_FallsBackToEmotion" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FallbackLayer_UndefinedLayer_FallsBackToEmotion" methodname="FallbackLayer_UndefinedLayer_FallsBackToEmotion" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="86456377" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.010175" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1029" name="FullFlow_ActivateAndDeactivate_ExpressionListEmpty" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_ActivateAndDeactivate_ExpressionListEmpty" methodname="FullFlow_ActivateAndDeactivate_ExpressionListEmpty" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="479883777" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.002876" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1030" name="FullFlow_ActivateMultipleOnSameLastWinsLayer_OnlyLastActive" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_ActivateMultipleOnSameLastWinsLayer_OnlyLastActive" methodname="FullFlow_ActivateMultipleOnSameLastWinsLayer_OnlyLastActive" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1443168325" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001378" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1032" name="FullFlow_BlendMode_DeactivateOne_OtherRemains" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_BlendMode_DeactivateOne_OtherRemains" methodname="FullFlow_BlendMode_DeactivateOne_OtherRemains" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1327664526" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.002031" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1031" name="FullFlow_BlendMode_MultipleExpressionsCoexist" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_BlendMode_MultipleExpressionsCoexist" methodname="FullFlow_BlendMode_MultipleExpressionsCoexist" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1221348553" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001523" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1028" name="FullFlow_LoadProfile_ActivateExpression_ExpressionIsActive" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_LoadProfile_ActivateExpression_ExpressionIsActive" methodname="FullFlow_LoadProfile_ActivateExpression_ExpressionIsActive" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="499256501" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001329" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1033" name="FullFlow_MultiLayer_ExpressionsOnDifferentLayers_BothActive" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_MultiLayer_ExpressionsOnDifferentLayers_BothActive" methodname="FullFlow_MultiLayer_ExpressionsOnDifferentLayers_BothActive" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="734514299" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001431" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1034" name="FullFlow_MultiLayer_LastWinsPerLayer_IndependentExclusion" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.FullFlow_MultiLayer_LastWinsPerLayer_IndependentExclusion" methodname="FullFlow_MultiLayer_LastWinsPerLayer_IndependentExclusion" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="2079883499" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001852" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1038" name="LayerSlots_ExpressionWithOverrides_AppliedToPlayableGraph" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.LayerSlots_ExpressionWithOverrides_AppliedToPlayableGraph" methodname="LayerSlots_ExpressionWithOverrides_AppliedToPlayableGraph" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1780475410" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001455" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1042" name="Lifecycle_DisableAndReenable_CanReinitialize" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.Lifecycle_DisableAndReenable_CanReinitialize" methodname="Lifecycle_DisableAndReenable_CanReinitialize" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1362755561" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.002168" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1036" name="ProfileSwitch_LoadNewProfile_CanActivateNewExpressions" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.ProfileSwitch_LoadNewProfile_CanActivateNewExpressions" methodname="ProfileSwitch_LoadNewProfile_CanActivateNewExpressions" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1073128667" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001804" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1035" name="ProfileSwitch_LoadNewProfile_ClearsActiveExpressions" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.ProfileSwitch_LoadNewProfile_ClearsActiveExpressions" methodname="ProfileSwitch_LoadNewProfile_ClearsActiveExpressions" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="859070227" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001597" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1037" name="ProfileSwitch_ReloadProfile_PreservesProfileData" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests.ProfileSwitch_ReloadProfile_PreservesProfileData" methodname="ProfileSwitch_ReloadProfile_PreservesProfileData" classname="Hidano.FacialControl.Tests.PlayMode.Integration.EndToEndTests" runstate="Runnable" seed="1890365528" result="Passed" start-time="2026-02-03 09:22:55Z" end-time="2026-02-03 09:22:55Z" duration="0.001692" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
