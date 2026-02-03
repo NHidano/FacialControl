@@ -1,17 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Hidano.FacialControl.Application.UseCases;
-using Hidano.FacialControl.Adapters.Json;
-using Hidano.FacialControl.Adapters.ScriptableObject;
-using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
 using Hidano.FacialControl.Editor.Common;
+using Hidano.FacialControl.Editor.Tools;
 
 namespace Hidano.FacialControl.Editor.Windows
 {
@@ -45,8 +42,7 @@ namespace Hidano.FacialControl.Editor.Windows
         private Label _statusLabel;
 
         // 依存
-        private ARKitUseCase _useCase;
-        private IJsonParser _parser;
+        private ARKitEditorService _editorService;
 
         [MenuItem("FacialControl/ARKit 検出ツール", false, 30)]
         public static void ShowWindow()
@@ -58,8 +54,7 @@ namespace Hidano.FacialControl.Editor.Windows
 
         private void OnEnable()
         {
-            _useCase = new ARKitUseCase();
-            _parser = new SystemTextJsonParser();
+            _editorService = new ARKitEditorService();
         }
 
         private void CreateGUI()
@@ -174,10 +169,8 @@ namespace Hidano.FacialControl.Editor.Windows
 
             if (_targetRenderer != null)
             {
-                int blendShapeCount = _targetRenderer.sharedMesh != null
-                    ? _targetRenderer.sharedMesh.blendShapeCount
-                    : 0;
-                _summaryLabel.text = $"BlendShape 数: {blendShapeCount}  |  検出を実行してください。";
+                var blendShapeNames = _editorService.GetBlendShapeNames(_targetRenderer);
+                _summaryLabel.text = $"BlendShape 数: {blendShapeNames.Length}  |  検出を実行してください。";
             }
             else
             {
@@ -198,10 +191,9 @@ namespace Hidano.FacialControl.Editor.Windows
                 return;
             }
 
-            var mesh = _targetRenderer.sharedMesh;
-            int count = mesh.blendShapeCount;
+            var blendShapeNames = _editorService.GetBlendShapeNames(_targetRenderer);
 
-            if (count == 0)
+            if (blendShapeNames.Length == 0)
             {
                 ShowStatus("BlendShape が見つかりません。", isError: true);
                 _hasDetected = false;
@@ -211,16 +203,9 @@ namespace Hidano.FacialControl.Editor.Windows
                 return;
             }
 
-            // BlendShape 名リスト取得
-            var blendShapeNames = new string[count];
-            for (int i = 0; i < count; i++)
-            {
-                blendShapeNames[i] = mesh.GetBlendShapeName(i);
-            }
-
             // 検出実行
-            _detectResult = _useCase.DetectAndGenerate(blendShapeNames);
-            _oscMappings = _useCase.GenerateOscMapping(_detectResult.DetectedNames);
+            _detectResult = _editorService.DetectFromRenderer(_targetRenderer);
+            _oscMappings = _editorService.GenerateOscMapping(_detectResult.DetectedNames);
             _groupedResults = ARKitDetector.GroupByLayer(_detectResult.DetectedNames);
             _hasDetected = true;
 
@@ -385,30 +370,8 @@ namespace Hidano.FacialControl.Editor.Windows
 
             try
             {
-                // デフォルトレイヤー定義を含むプロファイルとして保存
-                var layerNames = new HashSet<string>();
-                for (int i = 0; i < expressions.Length; i++)
-                {
-                    layerNames.Add(expressions[i].Layer);
-                }
-
-                var layers = new List<LayerDefinition>();
-                int priority = 0;
-                foreach (var name in layerNames)
-                {
-                    layers.Add(new LayerDefinition(name, priority, ExclusionMode.LastWins));
-                    priority++;
-                }
-
-                var profile = new FacialProfile("1.0", layers.ToArray(), expressions);
-                var json = _parser.SerializeProfile(profile);
-
-                var dir = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-
-                File.WriteAllText(path, json, System.Text.Encoding.UTF8);
-                ShowStatus($"Expression を保存しました: {Path.GetFileName(path)}", isError: false);
+                _editorService.SaveExpressionsAsProfileJson(expressions, path);
+                ShowStatus($"Expression を保存しました: {System.IO.Path.GetFileName(path)}", isError: false);
             }
             catch (Exception ex)
             {
@@ -459,18 +422,8 @@ namespace Hidano.FacialControl.Editor.Windows
 
             try
             {
-                var oscConfig = new OscConfiguration(
-                    mapping: _oscMappings);
-
-                var config = new FacialControlConfig("1.0", oscConfig);
-                var json = _parser.SerializeConfig(config);
-
-                var dir = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-
-                File.WriteAllText(path, json, System.Text.Encoding.UTF8);
-                ShowStatus($"OSC マッピングを保存しました: {Path.GetFileName(path)}", isError: false);
+                _editorService.SaveOscMappingAsConfigJson(_oscMappings, path);
+                ShowStatus($"OSC マッピングを保存しました: {System.IO.Path.GetFileName(path)}", isError: false);
             }
             catch (Exception ex)
             {
