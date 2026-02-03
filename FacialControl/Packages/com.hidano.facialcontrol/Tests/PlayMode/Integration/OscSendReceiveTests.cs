@@ -10,8 +10,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
     /// <summary>
     /// P07-T03: OSC 送受信テスト。
     /// OscReceiver の初期化、メッセージ処理、アドレスパターン解析、
-    /// ダブルバッファリング動作を検証する。
-    /// 実 UDP 送受信テストは OscSender 実装後に追加。
+    /// ダブルバッファリング動作、および OscSender の送信機能を検証する。
     /// </summary>
     [TestFixture]
     public class OscSendReceiveTests
@@ -436,7 +435,293 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         }
 
         // ================================================================
-        // 実 UDP 送受信テスト（OscSender 実装後に追加予定）
+        // OscSender — 初期化
+        // ================================================================
+
+        [Test]
+        public void OscSender_Initialize_NullMappings_ThrowsArgumentNullException()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+
+            Assert.Throws<System.ArgumentNullException>(() =>
+                sender.Initialize((OscMapping[])null));
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_Initialize_ValidMappings_SetsInitialized()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            var mappings = new[]
+            {
+                new OscMapping("/avatar/parameters/Joy", "Joy", "emotion")
+            };
+
+            sender.Initialize(mappings);
+
+            Assert.IsTrue(sender.IsInitialized);
+            Assert.AreEqual(1, sender.MappingCount);
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_Initialize_WithConfig_SetsPortFromConfig()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            var config = new OscConfiguration(
+                sendPort: 8888,
+                receivePort: 9001,
+                preset: "vrchat",
+                mapping: new[]
+                {
+                    new OscMapping("/avatar/parameters/Joy", "Joy", "emotion"),
+                    new OscMapping("/avatar/parameters/Angry", "Angry", "emotion")
+                });
+
+            sender.Initialize(config);
+
+            Assert.AreEqual(8888, sender.Port);
+            Assert.AreEqual(2, sender.MappingCount);
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_Port_DefaultValue_Is9000()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+
+            Assert.AreEqual(OscConfiguration.DefaultSendPort, sender.Port);
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_Address_DefaultValue_IsLocalhost()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+
+            Assert.AreEqual("127.0.0.1", sender.Address);
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_IsRunning_BeforeStart_ReturnsFalse()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+
+            Assert.IsFalse(sender.IsRunning);
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_SendAll_BeforeInitialize_DoesNotThrow()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+
+            Assert.DoesNotThrow(() => sender.SendAll(new float[] { 0.5f }));
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_SendAll_NullValues_DoesNotThrow()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            var mappings = new[]
+            {
+                new OscMapping("/avatar/parameters/Joy", "Joy", "emotion")
+            };
+            sender.Initialize(mappings);
+
+            Assert.DoesNotThrow(() => sender.SendAll(null));
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [Test]
+        public void OscSender_SendSingle_BeforeInitialize_DoesNotThrow()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+
+            Assert.DoesNotThrow(() => sender.SendSingle(0, 0.5f));
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        // ================================================================
+        // OscSender — StartSending / StopSending
+        // ================================================================
+
+        [UnityTest]
+        public IEnumerator OscSender_StartSending_StartsClient()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            var mappings = new[]
+            {
+                new OscMapping("/avatar/parameters/Joy", "Joy", "emotion")
+            };
+            sender.Initialize(mappings);
+            sender.Port = 19002; // テスト用ポート
+
+            sender.StartSending();
+            yield return null;
+
+            Assert.IsTrue(sender.IsRunning);
+
+            sender.StopSending();
+            yield return null;
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        [UnityTest]
+        public IEnumerator OscSender_StopSending_StopsClient()
+        {
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            var mappings = new[]
+            {
+                new OscMapping("/avatar/parameters/Joy", "Joy", "emotion")
+            };
+            sender.Initialize(mappings);
+            sender.Port = 19003;
+
+            sender.StartSending();
+            yield return null;
+
+            sender.StopSending();
+            yield return null;
+
+            Assert.IsFalse(sender.IsRunning);
+
+            Object.DestroyImmediate(senderObj);
+        }
+
+        // ================================================================
+        // OscSender + OscReceiver — 実 UDP 送受信統合テスト
+        // ================================================================
+
+        [UnityTest]
+        public IEnumerator OscSender_SendAll_ReceivedByOscReceiver()
+        {
+            // Receiver 側のセットアップ
+            _buffer = new OscDoubleBuffer(2);
+            var mappings = new[]
+            {
+                new OscMapping("/avatar/parameters/Joy", "Joy", "emotion"),
+                new OscMapping("/avatar/parameters/Angry", "Angry", "emotion")
+            };
+            _receiver.Port = 19004;
+            _receiver.Initialize(_buffer, mappings);
+            _receiver.StartReceiving();
+
+            yield return new WaitForSeconds(0.2f);
+
+            // Sender 側のセットアップ
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            sender.Address = "127.0.0.1";
+            sender.Port = 19004; // Receiver と同じポート
+            sender.Initialize(mappings);
+            sender.StartSending();
+
+            yield return new WaitForSeconds(0.2f);
+
+            // 送信
+            bool received = false;
+            for (int attempt = 0; attempt < 10; attempt++)
+            {
+                sender.SendAll(new float[] { 0.6f, 0.4f });
+                yield return new WaitForSeconds(0.1f);
+
+                _buffer.Swap();
+                var readBuf = _buffer.GetReadBuffer();
+                if (readBuf[0] > 0.01f)
+                {
+                    received = true;
+                    Assert.AreEqual(0.6f, readBuf[0], 0.01f);
+                    Assert.AreEqual(0.4f, readBuf[1], 0.01f);
+                    break;
+                }
+            }
+
+            Assert.IsTrue(received, "OscSender から送信したメッセージが OscReceiver で受信されませんでした。");
+
+            sender.StopSending();
+            _receiver.StopReceiving();
+            Object.DestroyImmediate(senderObj);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator OscSender_SendSingle_ReceivedByOscReceiver()
+        {
+            // Receiver 側のセットアップ
+            _buffer = new OscDoubleBuffer(2);
+            var mappings = new[]
+            {
+                new OscMapping("/avatar/parameters/Joy", "Joy", "emotion"),
+                new OscMapping("/avatar/parameters/Angry", "Angry", "emotion")
+            };
+            _receiver.Port = 19005;
+            _receiver.Initialize(_buffer, mappings);
+            _receiver.StartReceiving();
+
+            yield return new WaitForSeconds(0.2f);
+
+            // Sender 側のセットアップ
+            var senderObj = new GameObject("OscSenderTest");
+            var sender = senderObj.AddComponent<OscSender>();
+            sender.Address = "127.0.0.1";
+            sender.Port = 19005;
+            sender.Initialize(mappings);
+            sender.StartSending();
+
+            yield return new WaitForSeconds(0.2f);
+
+            // インデックス 1 のみ送信
+            bool received = false;
+            for (int attempt = 0; attempt < 10; attempt++)
+            {
+                sender.SendSingle(1, 0.8f);
+                yield return new WaitForSeconds(0.1f);
+
+                _buffer.Swap();
+                var readBuf = _buffer.GetReadBuffer();
+                if (readBuf[1] > 0.01f)
+                {
+                    received = true;
+                    Assert.AreEqual(0f, readBuf[0], 0.01f); // インデックス 0 は未送信
+                    Assert.AreEqual(0.8f, readBuf[1], 0.01f);
+                    break;
+                }
+            }
+
+            Assert.IsTrue(received, "OscSender.SendSingle で送信したメッセージが受信されませんでした。");
+
+            sender.StopSending();
+            _receiver.StopReceiving();
+            Object.DestroyImmediate(senderObj);
+            yield return null;
+        }
+
+        // ================================================================
+        // OscReceiver — サーバー起動・停止
         // ================================================================
 
         [UnityTest]
