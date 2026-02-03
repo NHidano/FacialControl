@@ -68,6 +68,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             jsonPathField.tooltip = "StreamingAssets からの相対パス";
             jsonFoldout.Add(jsonPathField);
 
+            var jsonPathHelpBox = new HelpBox(
+                "パスは StreamingAssets/ からの相対パスです（例: FacialControl/default_profile.json）",
+                HelpBoxMessageType.Info);
+            jsonFoldout.Add(jsonPathHelpBox);
+
             var loadButton = new Button(OnLoadJsonClicked) { text = "JSON 読み込み" };
             loadButton.AddToClassList(FacialControlStyles.ActionButton);
             jsonFoldout.Add(loadButton);
