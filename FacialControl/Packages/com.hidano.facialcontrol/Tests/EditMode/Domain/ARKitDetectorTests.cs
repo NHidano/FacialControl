@@ -54,11 +54,19 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
         // --- PerfectSync パラメータ定数確認 ---
 
         [Test]
-        public void PerfectSyncNames_IsNotEmpty()
+        public void PerfectSyncNames_Count_Returns13()
         {
             var names = ARKitDetector.PerfectSyncNames;
 
-            Assert.Greater(names.Length, 0);
+            Assert.AreEqual(13, names.Length);
+        }
+
+        [Test]
+        public void PerfectSyncNames_ContainsTongueFlat()
+        {
+            var names = ARKitDetector.PerfectSyncNames;
+
+            Assert.IsTrue(Array.IndexOf(names, "tongueFlat") >= 0);
         }
 
         [Test]

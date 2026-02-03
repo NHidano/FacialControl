@@ -233,11 +233,13 @@ namespace Hidano.FacialControl.Editor.Windows
         {
             int arkitCount = ARKitDetector.DetectARKit(_detectResult.DetectedNames).Length;
             int psCount = ARKitDetector.DetectPerfectSync(_detectResult.DetectedNames).Length;
+            int arkitTotal = ARKitDetector.ARKit52Names.Length;
+            int psTotal = ARKitDetector.PerfectSyncNames.Length;
 
             _summaryLabel.text =
                 $"総 BlendShape: {totalBlendShapes}  |  " +
-                $"ARKit: {arkitCount}  |  " +
-                $"PerfectSync: {psCount}  |  " +
+                $"ARKit: {arkitCount}/{arkitTotal}  |  " +
+                $"PerfectSync 拡張: {psCount}/{psTotal}  |  " +
                 $"合計検出: {_detectResult.DetectedNames.Length}";
         }
 

@@ -98,6 +98,7 @@ namespace Hidano.FacialControl.Domain.Services
             "tongueDown",
             "tongueLeft",
             "tongueRight",
+            "tongueFlat",
             "tongueLongStep1",
             "tongueLongStep2",
             "tongueTwistLeft",
