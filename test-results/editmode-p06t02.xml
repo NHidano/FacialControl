@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="23" result="Passed" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.1341841">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="499" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.134184" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1519" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="499" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.124061" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="424732" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1520" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="499" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.120403" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1521" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="499" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.117939" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1522" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="499" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.115684" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1523" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="499" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.113122" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1526" name="Adapters" fullname="Hidano.FacialControl.Tests.EditMode.Adapters" runstate="Runnable" testcasecount="162" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.076162" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1351" name="AnimationClipCacheTests" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.055216" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1367" name="Clear_AfterClear_ReturnsNewClip" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Clear_AfterClear_ReturnsNewClip" methodname="Clear_AfterClear_ReturnsNewClip" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1190198458" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.011894" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1365" name="Clear_EmptyCache_DoesNotThrow" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Clear_EmptyCache_DoesNotThrow" methodname="Clear_EmptyCache_DoesNotThrow" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="775468136" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000921" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1366" name="Clear_WithEntries_ResetsCountToZero" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Clear_WithEntries_ResetsCountToZero" methodname="Clear_WithEntries_ResetsCountToZero" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1550325275" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.002796" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1353" name="Constructor_CustomCapacity_CreatesWithSpecifiedSize" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Constructor_CustomCapacity_CreatesWithSpecifiedSize" methodname="Constructor_CustomCapacity_CreatesWithSpecifiedSize" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="889809148" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000453" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1352" name="Constructor_DefaultCapacity_Creates16EntryCache" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Constructor_DefaultCapacity_Creates16EntryCache" methodname="Constructor_DefaultCapacity_Creates16EntryCache" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1846053191" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000442" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1355" name="Constructor_NegativeCapacity_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Constructor_NegativeCapacity_ThrowsArgumentOutOfRangeException" methodname="Constructor_NegativeCapacity_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="556753274" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.001847" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1354" name="Constructor_ZeroCapacity_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Constructor_ZeroCapacity_ThrowsArgumentOutOfRangeException" methodname="Constructor_ZeroCapacity_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1634482884" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000357" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1374" name="ContainsKey_AfterEviction_ReturnsFalse" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.ContainsKey_AfterEviction_ReturnsFalse" methodname="ContainsKey_AfterEviction_ReturnsFalse" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1594236206" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000993" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1372" name="ContainsKey_ExistingEntry_ReturnsTrue" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.ContainsKey_ExistingEntry_ReturnsTrue" methodname="ContainsKey_ExistingEntry_ReturnsTrue" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="330413254" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000418" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1373" name="ContainsKey_NonExistingEntry_ReturnsFalse" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.ContainsKey_NonExistingEntry_ReturnsFalse" methodname="ContainsKey_NonExistingEntry_ReturnsFalse" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="71471154" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000388" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1369" name="Dispose_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Dispose_CalledTwice_DoesNotThrow" methodname="Dispose_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="31277253" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000361" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1368" name="Dispose_DoesNotThrow" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.Dispose_DoesNotThrow" methodname="Dispose_DoesNotThrow" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1005398051" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000438" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1362" name="GetOrCreate_AccessRefreshesLru_EvictsCorrectEntry" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_AccessRefreshesLru_EvictsCorrectEntry" methodname="GetOrCreate_AccessRefreshesLru_EvictsCorrectEntry" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1182488020" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000561" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1360" name="GetOrCreate_CacheHit_DoesNotIncrementCount" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_CacheHit_DoesNotIncrementCount" methodname="GetOrCreate_CacheHit_DoesNotIncrementCount" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="621600493" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000309" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1357" name="GetOrCreate_CacheMiss_IncrementsCount" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_CacheMiss_IncrementsCount" methodname="GetOrCreate_CacheMiss_IncrementsCount" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1090095939" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000331" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1363" name="GetOrCreate_CapacityOne_AlwaysReplacesEntry" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_CapacityOne_AlwaysReplacesEntry" methodname="GetOrCreate_CapacityOne_AlwaysReplacesEntry" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1289115040" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000493" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1358" name="GetOrCreate_DifferentIds_CreatesSeparateEntries" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_DifferentIds_CreatesSeparateEntries" methodname="GetOrCreate_DifferentIds_CreatesSeparateEntries" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="521567347" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000244" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1364" name="GetOrCreate_EmptyBlendShapeValues_ReturnsClip" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_EmptyBlendShapeValues_ReturnsClip" methodname="GetOrCreate_EmptyBlendShapeValues_ReturnsClip" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="811965951" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000531" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1361" name="GetOrCreate_ExceedsCapacity_EvictsLeastRecentlyUsed" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_ExceedsCapacity_EvictsLeastRecentlyUsed" methodname="GetOrCreate_ExceedsCapacity_EvictsLeastRecentlyUsed" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="2065922148" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000346" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1356" name="GetOrCreate_FirstCall_ReturnsNonNullAnimationClip" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_FirstCall_ReturnsNonNullAnimationClip" methodname="GetOrCreate_FirstCall_ReturnsNonNullAnimationClip" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="2108152256" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000488" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1371" name="GetOrCreate_NullBlendShapeValues_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_NullBlendShapeValues_ThrowsArgumentNullException" methodname="GetOrCreate_NullBlendShapeValues_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1438867697" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000354" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1370" name="GetOrCreate_NullExpressionId_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_NullExpressionId_ThrowsArgumentNullException" methodname="GetOrCreate_NullExpressionId_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1631626458" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000259" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1359" name="GetOrCreate_SameId_ReturnsCachedClip" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests.GetOrCreate_SameId_ReturnsCachedClip" methodname="GetOrCreate_SameId_ReturnsCachedClip" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AnimationClipCacheTests" runstate="Runnable" seed="1062013216" result="Passed" start-time="2026-02-03 05:55:49Z" end-time="2026-02-03 05:55:49Z" duration="0.000293" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
