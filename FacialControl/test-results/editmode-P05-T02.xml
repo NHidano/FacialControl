@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="21" result="Passed" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.1526698">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="434" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.152670" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1451" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="434" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.147483" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="178772" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1452" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="434" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.146716" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1453" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="434" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.146080" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1454" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="434" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.145255" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1455" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="434" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.144435" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1458" name="Adapters" fullname="Hidano.FacialControl.Tests.EditMode.Adapters" runstate="Runnable" testcasecount="97" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.121317" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1351" name="FileProfileRepositoryTests" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.105850" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1352" name="Constructor_NullParser_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.Constructor_NullParser_ThrowsArgumentNullException" methodname="Constructor_NullParser_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1241022445" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.013224" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1353" name="Constructor_ValidParser_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.Constructor_ValidParser_CreatesInstance" methodname="Constructor_ValidParser_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="588914163" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.002198" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1356" name="LoadProfile_EmptyPath_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_EmptyPath_ThrowsArgumentException" methodname="LoadProfile_EmptyPath_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="188716787" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.001023" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1362" name="LoadProfile_JapaneseFilePath_ReadsCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_JapaneseFilePath_ReadsCorrectly" methodname="LoadProfile_JapaneseFilePath_ReadsCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="841795418" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.005955" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1358" name="LoadProfile_NonExistentFile_ThrowsFileNotFoundException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_NonExistentFile_ThrowsFileNotFoundException" methodname="LoadProfile_NonExistentFile_ThrowsFileNotFoundException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="237430017" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.003367" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1355" name="LoadProfile_NullPath_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_NullPath_ThrowsArgumentNullException" methodname="LoadProfile_NullPath_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="935661245" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.001744" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1360" name="LoadProfile_ParserThrows_PropagatesException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_ParserThrows_PropagatesException" methodname="LoadProfile_ParserThrows_PropagatesException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1822053613" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.007917" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1359" name="LoadProfile_PassesFileContentToParser" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_PassesFileContentToParser" methodname="LoadProfile_PassesFileContentToParser" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="578557404" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.002479" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1361" name="LoadProfile_Utf8Content_ReadsCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_Utf8Content_ReadsCorrectly" methodname="LoadProfile_Utf8Content_ReadsCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="2105373203" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.002389" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1354" name="LoadProfile_ValidFile_ReturnsProfile" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_ValidFile_ReturnsProfile" methodname="LoadProfile_ValidFile_ReturnsProfile" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="166189070" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.002779" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1357" name="LoadProfile_WhitespacePath_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.LoadProfile_WhitespacePath_ThrowsArgumentException" methodname="LoadProfile_WhitespacePath_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1942890391" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.000772" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1372" name="RoundTrip_SaveThenLoad_PreservesProfile" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.RoundTrip_SaveThenLoad_PreservesProfile" methodname="RoundTrip_SaveThenLoad_PreservesProfile" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="987320525" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.009749" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1367" name="SaveProfile_CreatesParentDirectories" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_CreatesParentDirectories" methodname="SaveProfile_CreatesParentDirectories" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="659694290" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.001936" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1365" name="SaveProfile_EmptyPath_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_EmptyPath_ThrowsArgumentException" methodname="SaveProfile_EmptyPath_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1131843759" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.001449" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1371" name="SaveProfile_JapaneseFilePath_WritesCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_JapaneseFilePath_WritesCorrectly" methodname="SaveProfile_JapaneseFilePath_WritesCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1548541075" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.002096" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1364" name="SaveProfile_NullPath_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_NullPath_ThrowsArgumentNullException" methodname="SaveProfile_NullPath_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="2042010491" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.001379" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1368" name="SaveProfile_OverwritesExistingFile" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_OverwritesExistingFile" methodname="SaveProfile_OverwritesExistingFile" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1973733625" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.009227" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1369" name="SaveProfile_SerializerThrows_PropagatesException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_SerializerThrows_PropagatesException" methodname="SaveProfile_SerializerThrows_PropagatesException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="231696753" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.002307" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1370" name="SaveProfile_Utf8Encoding_WritesCorrectly" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_Utf8Encoding_WritesCorrectly" methodname="SaveProfile_Utf8Encoding_WritesCorrectly" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1835354930" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.003414" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1363" name="SaveProfile_ValidPathAndProfile_WritesFile" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_ValidPathAndProfile_WritesFile" methodname="SaveProfile_ValidPathAndProfile_WritesFile" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="1665197887" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.003523" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1366" name="SaveProfile_WhitespacePath_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests.SaveProfile_WhitespacePath_ThrowsArgumentException" methodname="SaveProfile_WhitespacePath_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.FileProfileRepositoryTests" runstate="Runnable" seed="328738545" result="Passed" start-time="2026-02-03 05:12:06Z" end-time="2026-02-03 05:12:06Z" duration="0.001606" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
