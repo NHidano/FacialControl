@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="24" result="Passed" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.0543607">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.054361" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1351" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.048575" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="166932" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1352" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.047088" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1353" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.045850" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1354" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.044816" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1355" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.043745" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1357" name="Application" fullname="Hidano.FacialControl.Tests.EditMode.Application" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.036177" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1269" name="ExpressionUseCaseTests" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.032314" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1274" name="Activate_BlendLayer_AllowsMultipleExpressions" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_BlendLayer_AllowsMultipleExpressions" methodname="Activate_BlendLayer_AllowsMultipleExpressions" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="948959938" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.011064" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1275" name="Activate_DifferentLayers_BothActive" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_DifferentLayers_BothActive" methodname="Activate_DifferentLayers_BothActive" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1556758324" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000328" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1292" name="Activate_JapaneseExpressionName_Works" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_JapaneseExpressionName_Works" methodname="Activate_JapaneseExpressionName_Works" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1825289538" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000308" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1279" name="Activate_LastWinsLayer_MultipleReplacements_OnlyLastRemains" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_LastWinsLayer_MultipleReplacements_OnlyLastRemains" methodname="Activate_LastWinsLayer_MultipleReplacements_OnlyLastRemains" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1905734398" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000237" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1273" name="Activate_LastWinsLayer_ReplacesExistingExpression" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_LastWinsLayer_ReplacesExistingExpression" methodname="Activate_LastWinsLayer_ReplacesExistingExpression" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1662866035" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000217" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1278" name="Activate_MultipleExpressionsInBlendLayer_AllRetained" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_MultipleExpressionsInBlendLayer_AllRetained" methodname="Activate_MultipleExpressionsInBlendLayer_AllRetained" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1057409387" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000238" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1277" name="Activate_SameExpressionTwice_Blend_NoDuplicate" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_SameExpressionTwice_Blend_NoDuplicate" methodname="Activate_SameExpressionTwice_Blend_NoDuplicate" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1875371471" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000308" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1276" name="Activate_SameExpressionTwice_LastWins_NoDuplicate" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_SameExpressionTwice_LastWins_NoDuplicate" methodname="Activate_SameExpressionTwice_LastWins_NoDuplicate" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="735359598" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1280" name="Activate_UndefinedLayer_FallsBackToEmotion" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_UndefinedLayer_FallsBackToEmotion" methodname="Activate_UndefinedLayer_FallsBackToEmotion" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="707605979" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000257" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1272" name="Activate_ValidExpression_AddsToActiveList" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Activate_ValidExpression_AddsToActiveList" methodname="Activate_ValidExpression_AddsToActiveList" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="595337776" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000233" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1293" name="ComplexScenario_ActivateDeactivateAcrossLayers" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.ComplexScenario_ActivateDeactivateAcrossLayers" methodname="ComplexScenario_ActivateDeactivateAcrossLayers" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="706027742" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000442" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1271" name="Constructor_InitiallyNoActiveExpressions" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Constructor_InitiallyNoActiveExpressions" methodname="Constructor_InitiallyNoActiveExpressions" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="146556365" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000189" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1270" name="Constructor_ValidProfile_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Constructor_ValidProfile_CreatesInstance" methodname="Constructor_ValidProfile_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="251938103" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.001108" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1281" name="Deactivate_ActiveExpression_RemovesFromActiveList" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Deactivate_ActiveExpression_RemovesFromActiveList" methodname="Deactivate_ActiveExpression_RemovesFromActiveList" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="2102206024" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000235" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1286" name="Deactivate_ById_RemovesCorrectExpression" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Deactivate_ById_RemovesCorrectExpression" methodname="Deactivate_ById_RemovesCorrectExpression" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1360309426" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1285" name="Deactivate_FromOneLayer_OtherLayersUnaffected" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Deactivate_FromOneLayer_OtherLayersUnaffected" methodname="Deactivate_FromOneLayer_OtherLayersUnaffected" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="2082831083" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000223" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1283" name="Deactivate_NoActiveExpressions_DoesNothing" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Deactivate_NoActiveExpressions_DoesNothing" methodname="Deactivate_NoActiveExpressions_DoesNothing" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1013140836" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000658" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1282" name="Deactivate_NonActiveExpression_DoesNothing" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Deactivate_NonActiveExpression_DoesNothing" methodname="Deactivate_NonActiveExpression_DoesNothing" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="473600275" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000260" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1284" name="Deactivate_OneOfMultipleInBlendLayer_OthersRemain" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.Deactivate_OneOfMultipleInBlendLayer_OthersRemain" methodname="Deactivate_OneOfMultipleInBlendLayer_OthersRemain" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="1019682720" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1288" name="GetActiveExpressions_ModifyingReturnedList_DoesNotAffectInternal" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.GetActiveExpressions_ModifyingReturnedList_DoesNotAffectInternal" methodname="GetActiveExpressions_ModifyingReturnedList_DoesNotAffectInternal" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="481465712" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000209" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1289" name="GetActiveExpressions_MultipleLayersActive_ReturnsAll" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.GetActiveExpressions_MultipleLayersActive_ReturnsAll" methodname="GetActiveExpressions_MultipleLayersActive_ReturnsAll" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="522288318" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000243" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1287" name="GetActiveExpressions_ReturnsDefensiveCopy" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.GetActiveExpressions_ReturnsDefensiveCopy" methodname="GetActiveExpressions_ReturnsDefensiveCopy" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="346796332" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000301" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1290" name="SetProfile_ClearsActiveExpressions" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.SetProfile_ClearsActiveExpressions" methodname="SetProfile_ClearsActiveExpressions" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="941492594" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1291" name="SetProfile_NewProfileLayerRulesApply" fullname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests.SetProfile_NewProfileLayerRulesApply" methodname="SetProfile_NewProfileLayerRulesApply" classname="Hidano.FacialControl.Tests.EditMode.Application.ExpressionUseCaseTests" runstate="Runnable" seed="2022392779" result="Passed" start-time="2026-02-02 18:29:02Z" end-time="2026-02-02 18:29:02Z" duration="0.000283" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

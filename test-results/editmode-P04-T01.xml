@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="29" result="Passed" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.077221">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.077221" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1351" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.070731" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="445700" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1352" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.068238" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1353" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.065908" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1354" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.063326" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1355" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="337" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.060392" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1357" name="Application" fullname="Hidano.FacialControl.Tests.EditMode.Application" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.046759" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1321" name="ProfileUseCaseTests" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" testcasecount="29" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.042058" total="29" passed="29" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1322" name="Constructor_NullRepository_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.Constructor_NullRepository_ThrowsArgumentNullException" methodname="Constructor_NullRepository_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="279012830" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.008172" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1323" name="Constructor_ValidRepository_CreatesInstance" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.Constructor_ValidRepository_CreatesInstance" methodname="Constructor_ValidRepository_CreatesInstance" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="862357938" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.001425" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1345" name="CurrentProfile_AfterLoad_ReturnsLoadedProfile" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.CurrentProfile_AfterLoad_ReturnsLoadedProfile" methodname="CurrentProfile_AfterLoad_ReturnsLoadedProfile" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1909400904" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.003545" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1346" name="CurrentProfile_BeforeLoad_ReturnsNull" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.CurrentProfile_BeforeLoad_ReturnsNull" methodname="CurrentProfile_BeforeLoad_ReturnsNull" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1759780490" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000254" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1337" name="GetExpression_ExistingId_ReturnsExpression" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpression_ExistingId_ReturnsExpression" methodname="GetExpression_ExistingId_ReturnsExpression" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1119851324" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000710" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1338" name="GetExpression_NonExistingId_ReturnsNull" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpression_NonExistingId_ReturnsNull" methodname="GetExpression_NonExistingId_ReturnsNull" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="595993663" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000198" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1340" name="GetExpression_NoProfileLoaded_ThrowsInvalidOperationException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpression_NoProfileLoaded_ThrowsInvalidOperationException" methodname="GetExpression_NoProfileLoaded_ThrowsInvalidOperationException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="113578523" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000250" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1339" name="GetExpression_NullId_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpression_NullId_ThrowsArgumentNullException" methodname="GetExpression_NullId_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1455406886" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000217" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1341" name="GetExpressionsByLayer_ExistingLayer_ReturnsMatchingExpressions" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpressionsByLayer_ExistingLayer_ReturnsMatchingExpressions" methodname="GetExpressionsByLayer_ExistingLayer_ReturnsMatchingExpressions" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="2005325642" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.001501" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1342" name="GetExpressionsByLayer_NoMatchingExpressions_ReturnsEmpty" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpressionsByLayer_NoMatchingExpressions_ReturnsEmpty" methodname="GetExpressionsByLayer_NoMatchingExpressions_ReturnsEmpty" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="98676734" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000198" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1344" name="GetExpressionsByLayer_NoProfileLoaded_ThrowsInvalidOperationException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpressionsByLayer_NoProfileLoaded_ThrowsInvalidOperationException" methodname="GetExpressionsByLayer_NoProfileLoaded_ThrowsInvalidOperationException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1693133584" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000216" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1343" name="GetExpressionsByLayer_NullLayer_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetExpressionsByLayer_NullLayer_ThrowsArgumentNullException" methodname="GetExpressionsByLayer_NullLayer_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1803814099" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000223" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1349" name="GetInvalidLayerReferences_AfterLoad_ReturnsInvalidReferences" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetInvalidLayerReferences_AfterLoad_ReturnsInvalidReferences" methodname="GetInvalidLayerReferences_AfterLoad_ReturnsInvalidReferences" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="123720355" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.001309" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1350" name="GetInvalidLayerReferences_NoProfileLoaded_ThrowsInvalidOperationException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.GetInvalidLayerReferences_NoProfileLoaded_ThrowsInvalidOperationException" methodname="GetInvalidLayerReferences_NoProfileLoaded_ThrowsInvalidOperationException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="654597224" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000451" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1326" name="LoadProfile_EmptyPath_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_EmptyPath_ThrowsArgumentException" methodname="LoadProfile_EmptyPath_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="573910187" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000274" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1348" name="LoadProfile_InvalidLayerReferences_StillLoadsProfile" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_InvalidLayerReferences_StillLoadsProfile" methodname="LoadProfile_InvalidLayerReferences_StillLoadsProfile" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1376014790" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000234" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1347" name="LoadProfile_JapanesePath_ReturnsProfile" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_JapanesePath_ReturnsProfile" methodname="LoadProfile_JapanesePath_ReturnsProfile" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1913029946" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000192" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1332" name="LoadProfile_MultipleExpressions_AllAccessible" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_MultipleExpressions_AllAccessible" methodname="LoadProfile_MultipleExpressions_AllAccessible" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="2070830753" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000231" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1328" name="LoadProfile_NonExistentPath_ThrowsException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_NonExistentPath_ThrowsException" methodname="LoadProfile_NonExistentPath_ThrowsException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1932506883" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000224" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1325" name="LoadProfile_NullPath_ThrowsArgumentNullException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_NullPath_ThrowsArgumentNullException" methodname="LoadProfile_NullPath_ThrowsArgumentNullException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="970769051" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000185" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1333" name="LoadProfile_OverwritesPreviousProfile" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_OverwritesPreviousProfile" methodname="LoadProfile_OverwritesPreviousProfile" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1238079250" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000269" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1330" name="LoadProfile_StoresCurrentPath" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_StoresCurrentPath" methodname="LoadProfile_StoresCurrentPath" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1531011934" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000164" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1329" name="LoadProfile_StoresCurrentProfile" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_StoresCurrentProfile" methodname="LoadProfile_StoresCurrentProfile" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="204654336" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000182" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1331" name="LoadProfile_ValidatesLayerReferences_NoInvalidReferences" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_ValidatesLayerReferences_NoInvalidReferences" methodname="LoadProfile_ValidatesLayerReferences_NoInvalidReferences" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1915192231" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000212" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1324" name="LoadProfile_ValidPath_ReturnsProfile" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_ValidPath_ReturnsProfile" methodname="LoadProfile_ValidPath_ReturnsProfile" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1177002577" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000274" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1327" name="LoadProfile_WhitespacePath_ThrowsArgumentException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.LoadProfile_WhitespacePath_ThrowsArgumentException" methodname="LoadProfile_WhitespacePath_ThrowsArgumentException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="128417135" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000462" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1334" name="ReloadProfile_AfterLoad_ReloadsFromSamePath" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.ReloadProfile_AfterLoad_ReloadsFromSamePath" methodname="ReloadProfile_AfterLoad_ReloadsFromSamePath" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="478087958" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000547" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1335" name="ReloadProfile_NoProfileLoaded_ThrowsInvalidOperationException" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.ReloadProfile_NoProfileLoaded_ThrowsInvalidOperationException" methodname="ReloadProfile_NoProfileLoaded_ThrowsInvalidOperationException" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="194267708" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000205" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1336" name="ReloadProfile_PreservesCurrentPath" fullname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests.ReloadProfile_PreservesCurrentPath" methodname="ReloadProfile_PreservesCurrentPath" classname="Hidano.FacialControl.Tests.EditMode.Application.ProfileUseCaseTests" runstate="Runnable" seed="1301570286" result="Passed" start-time="2026-02-02 18:26:19Z" end-time="2026-02-02 18:26:19Z" duration="0.000199" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
