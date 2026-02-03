@@ -6,6 +6,8 @@
         "Hidano.FacialControl.Application",
         "Hidano.FacialControl.Adapters",
         "Unity.Collections",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "uOSC.Runtime"

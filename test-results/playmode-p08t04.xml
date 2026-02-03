@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="13" result="Passed" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.1728576">
+  <test-suite type="TestSuite" id="1171" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="153" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.172858" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1161" name="Hidano.FacialControl.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.PlayMode.dll" runstate="Runnable" testcasecount="153" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.166067" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="190968" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1162" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="153" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.164336" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1163" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="153" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.162815" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1164" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="153" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.161430" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1165" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="153" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.160036" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1167" name="Adapters" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters" runstate="Runnable" testcasecount="109" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.157722" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1105" name="InputSystemAdapterTests" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.154495" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1117" name="BindExpression_WithoutController_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.BindExpression_WithoutController_DoesNotThrow" methodname="BindExpression_WithoutController_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1628493497" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.057797" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1111" name="ButtonTrigger_DisabledAction_DoesNotActivate" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_DisabledAction_DoesNotActivate" methodname="ButtonTrigger_DisabledAction_DoesNotActivate" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="2011250886" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.026305" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1110" name="ButtonTrigger_MultipleDifferentButtons_ActivatesDifferentExpressions" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_MultipleDifferentButtons_ActivatesDifferentExpressions" methodname="ButtonTrigger_MultipleDifferentButtons_ActivatesDifferentExpressions" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="508662452" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.014307" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1108" name="ButtonTrigger_Press_ActivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_Press_ActivatesExpression" methodname="ButtonTrigger_Press_ActivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1597733629" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004593" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1109" name="ButtonTrigger_PressAgain_DeactivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ButtonTrigger_PressAgain_DeactivatesExpression" methodname="ButtonTrigger_PressAgain_DeactivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1452146868" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.005167" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1118" name="OnDisable_CleansUpBindings" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.OnDisable_CleansUpBindings" methodname="OnDisable_CleansUpBindings" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1896375375" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004524" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1107" name="SetFacialController_Null_DoesNotThrow" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.SetFacialController_Null_DoesNotThrow" methodname="SetFacialController_Null_DoesNotThrow" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1629162445" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.003773" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1106" name="SetFacialController_ValidController_SetsReference" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.SetFacialController_ValidController_SetsReference" methodname="SetFacialController_ValidController_SetsReference" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="46554133" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004759" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1116" name="UnbindAll_RemovesAllBindings" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.UnbindAll_RemovesAllBindings" methodname="UnbindAll_RemovesAllBindings" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="351037498" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004407" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1115" name="UnbindExpression_RemovesBinding" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.UnbindExpression_RemovesBinding" methodname="UnbindExpression_RemovesBinding" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1551643384" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004160" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1112" name="ValueTrigger_FullValue_ActivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ValueTrigger_FullValue_ActivatesExpression" methodname="ValueTrigger_FullValue_ActivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="353691990" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.005093" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1114" name="ValueTrigger_PartialValue_ActivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ValueTrigger_PartialValue_ActivatesExpression" methodname="ValueTrigger_PartialValue_ActivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="1510388033" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004278" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1113" name="ValueTrigger_ZeroValue_DeactivatesExpression" fullname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests.ValueTrigger_ZeroValue_DeactivatesExpression" methodname="ValueTrigger_ZeroValue_DeactivatesExpression" classname="Hidano.FacialControl.Tests.PlayMode.Adapters.InputSystemAdapterTests" runstate="Runnable" seed="625977782" result="Passed" start-time="2026-02-03 07:16:57Z" end-time="2026-02-03 07:16:57Z" duration="0.004378" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

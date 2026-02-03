@@ -6,6 +6,7 @@
         "Hidano.FacialControl.Application",
         "Unity.Animation",
         "Unity.Collections",
+        "Unity.InputSystem",
         "uOSC.Runtime"
     ],
     "includePlatforms": [],
