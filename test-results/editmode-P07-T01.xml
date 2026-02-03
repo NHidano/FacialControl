@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="24" result="Passed" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.1984197">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="567" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.198420" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1590" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="567" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.191907" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="545408" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1591" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="567" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.189638" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1592" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="567" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.188216" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1593" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="567" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.186810" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1594" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="567" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.185451" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1597" name="Adapters" fullname="Hidano.FacialControl.Tests.EditMode.Adapters" runstate="Runnable" testcasecount="230" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.161831" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1416" name="OscDoubleBufferTests" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.155011" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1432" name="ConcurrentWriteAndRead_DoesNotThrow" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.ConcurrentWriteAndRead_DoesNotThrow" methodname="ConcurrentWriteAndRead_DoesNotThrow" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1079417131" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.132277" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1419" name="Constructor_NegativeSize_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Constructor_NegativeSize_ThrowsArgumentOutOfRangeException" methodname="Constructor_NegativeSize_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1757274466" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.001512" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1417" name="Constructor_ValidSize_CreatesBuffer" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Constructor_ValidSize_CreatesBuffer" methodname="Constructor_ValidSize_CreatesBuffer" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="423413051" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.002091" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1418" name="Constructor_ZeroSize_CreatesEmptyBuffer" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Constructor_ZeroSize_CreatesEmptyBuffer" methodname="Constructor_ZeroSize_CreatesEmptyBuffer" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="656041873" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000186" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1434" name="Dispose_CalledTwice_DoesNotThrow" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Dispose_CalledTwice_DoesNotThrow" methodname="Dispose_CalledTwice_DoesNotThrow" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="532951344" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000554" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1433" name="Dispose_DoesNotThrow" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Dispose_DoesNotThrow" methodname="Dispose_DoesNotThrow" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="424642379" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000198" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1428" name="GetReadBuffer_InitialState_ReturnsZeroFilledBuffer" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.GetReadBuffer_InitialState_ReturnsZeroFilledBuffer" methodname="GetReadBuffer_InitialState_ReturnsZeroFilledBuffer" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1487052292" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000408" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1430" name="GetReadBuffer_IsReadOnly" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.GetReadBuffer_IsReadOnly" methodname="GetReadBuffer_IsReadOnly" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="694108241" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000156" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1429" name="GetReadBuffer_ReturnsCorrectLength" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.GetReadBuffer_ReturnsCorrectLength" methodname="GetReadBuffer_ReturnsCorrectLength" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1610757168" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000142" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1438" name="Resize_ClearsExistingData" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Resize_ClearsExistingData" methodname="Resize_ClearsExistingData" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="91758683" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000282" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1435" name="Resize_LargerSize_AllocatesNewSize" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Resize_LargerSize_AllocatesNewSize" methodname="Resize_LargerSize_AllocatesNewSize" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1038688829" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000173" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1439" name="Resize_NegativeSize_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Resize_NegativeSize_ThrowsArgumentOutOfRangeException" methodname="Resize_NegativeSize_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1232446303" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000206" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1437" name="Resize_SameSize_DoesNothing" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Resize_SameSize_DoesNothing" methodname="Resize_SameSize_DoesNothing" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="132202735" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000532" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1436" name="Resize_SmallerSize_AllocatesNewSize" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Resize_SmallerSize_AllocatesNewSize" methodname="Resize_SmallerSize_AllocatesNewSize" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="2038076989" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000197" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1440" name="Resize_WritesWorkAfterResize" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Resize_WritesWorkAfterResize" methodname="Resize_WritesWorkAfterResize" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="79257848" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000172" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1426" name="Swap_ClearsWriteBuffer" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Swap_ClearsWriteBuffer" methodname="Swap_ClearsWriteBuffer" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1240059241" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000173" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1427" name="Swap_MultipleSwaps_CorrectlyAlternates" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Swap_MultipleSwaps_CorrectlyAlternates" methodname="Swap_MultipleSwaps_CorrectlyAlternates" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="565941765" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000187" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1424" name="Swap_WrittenValuesAppearInReadBuffer" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Swap_WrittenValuesAppearInReadBuffer" methodname="Swap_WrittenValuesAppearInReadBuffer" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1684871807" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000162" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1425" name="Swap_WrittenValuesNotVisibleBeforeSwap" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Swap_WrittenValuesNotVisibleBeforeSwap" methodname="Swap_WrittenValuesNotVisibleBeforeSwap" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1055732636" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000157" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1431" name="Write_FromDifferentThread_DoesNotCorruptReadBuffer" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Write_FromDifferentThread_DoesNotCorruptReadBuffer" methodname="Write_FromDifferentThread_DoesNotCorruptReadBuffer" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="198213980" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000651" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1423" name="Write_IndexOutOfRange_ThrowsArgumentOutOfRangeException" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Write_IndexOutOfRange_ThrowsArgumentOutOfRangeException" methodname="Write_IndexOutOfRange_ThrowsArgumentOutOfRangeException" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="300874235" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000270" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1421" name="Write_MultipleValues_StoresAll" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Write_MultipleValues_StoresAll" methodname="Write_MultipleValues_StoresAll" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="416816807" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000178" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1422" name="Write_OverwritesSameIndex_KeepsLatestValue" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Write_OverwritesSameIndex_KeepsLatestValue" methodname="Write_OverwritesSameIndex_KeepsLatestValue" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="359783846" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000152" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1420" name="Write_ValidIndexAndValue_StoresValue" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests.Write_ValidIndexAndValue_StoresValue" methodname="Write_ValidIndexAndValue_StoresValue" classname="Hidano.FacialControl.Tests.EditMode.Adapters.OscDoubleBufferTests" runstate="Runnable" seed="1173569924" result="Passed" start-time="2026-02-03 06:47:45Z" end-time="2026-02-03 06:47:45Z" duration="0.000157" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
