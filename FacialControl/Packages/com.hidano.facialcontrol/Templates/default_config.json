@@ -1,0 +1,30 @@
+{
+    "schemaVersion": "1.0",
+    "osc": {
+        "sendPort": 9000,
+        "receivePort": 9001,
+        "preset": "vrchat",
+        "mapping": [
+            {"oscAddress": "/avatar/parameters/Fcl_ALL_Neutral", "blendShapeName": "Fcl_ALL_Neutral", "layer": "emotion"},
+            {"oscAddress": "/avatar/parameters/Fcl_ALL_Joy", "blendShapeName": "Fcl_ALL_Joy", "layer": "emotion"},
+            {"oscAddress": "/avatar/parameters/Fcl_ALL_Angry", "blendShapeName": "Fcl_ALL_Angry", "layer": "emotion"},
+            {"oscAddress": "/avatar/parameters/Fcl_ALL_Sorrow", "blendShapeName": "Fcl_ALL_Sorrow", "layer": "emotion"},
+            {"oscAddress": "/avatar/parameters/Fcl_ALL_Fun", "blendShapeName": "Fcl_ALL_Fun", "layer": "emotion"},
+            {"oscAddress": "/avatar/parameters/Fcl_ALL_Surprised", "blendShapeName": "Fcl_ALL_Surprised", "layer": "emotion"},
+            {"oscAddress": "/avatar/parameters/Fcl_MTH_A", "blendShapeName": "Fcl_MTH_A", "layer": "lipsync"},
+            {"oscAddress": "/avatar/parameters/Fcl_MTH_I", "blendShapeName": "Fcl_MTH_I", "layer": "lipsync"},
+            {"oscAddress": "/avatar/parameters/Fcl_MTH_U", "blendShapeName": "Fcl_MTH_U", "layer": "lipsync"},
+            {"oscAddress": "/avatar/parameters/Fcl_MTH_E", "blendShapeName": "Fcl_MTH_E", "layer": "lipsync"},
+            {"oscAddress": "/avatar/parameters/Fcl_MTH_O", "blendShapeName": "Fcl_MTH_O", "layer": "lipsync"},
+            {"oscAddress": "/avatar/parameters/Fcl_EYE_Close", "blendShapeName": "Fcl_EYE_Close", "layer": "eye"},
+            {"oscAddress": "/avatar/parameters/Fcl_EYE_Joy", "blendShapeName": "Fcl_EYE_Joy", "layer": "eye"},
+            {"oscAddress": "/avatar/parameters/Fcl_EYE_Angry", "blendShapeName": "Fcl_EYE_Angry", "layer": "eye"},
+            {"oscAddress": "/avatar/parameters/Fcl_EYE_Sorrow", "blendShapeName": "Fcl_EYE_Sorrow", "layer": "eye"},
+            {"oscAddress": "/avatar/parameters/Fcl_EYE_Fun", "blendShapeName": "Fcl_EYE_Fun", "layer": "eye"},
+            {"oscAddress": "/avatar/parameters/Fcl_EYE_Surprised", "blendShapeName": "Fcl_EYE_Surprised", "layer": "eye"}
+        ]
+    },
+    "cache": {
+        "animationClipLruSize": 16
+    }
+}
