@@ -31,6 +31,7 @@ namespace Hidano.FacialControl.Editor.Windows
         private List<Expression> _filteredExpressions = new List<Expression>();
 
         // UI 要素
+        private Button _createProfileButton;
         private ObjectField _profileSOField;
         private TextField _searchField;
         private ScrollView _expressionListView;
@@ -67,6 +68,21 @@ namespace Hidano.FacialControl.Editor.Windows
             var styleSheet = FacialControlStyles.Load();
             if (styleSheet != null)
                 root.styleSheets.Add(styleSheet);
+
+            // ========================================
+            // 新規プロファイル作成ボタン
+            // ========================================
+            var createSection = new VisualElement();
+            createSection.style.paddingLeft = 4;
+            createSection.style.paddingRight = 4;
+            createSection.style.paddingTop = 4;
+            createSection.style.marginBottom = 4;
+
+            _createProfileButton = new Button(OnCreateProfileClicked) { text = "新規プロファイル作成" };
+            _createProfileButton.AddToClassList(FacialControlStyles.ActionButton);
+            createSection.Add(_createProfileButton);
+
+            root.Add(createSection);
 
             // ========================================
             // プロファイル SO 選択セクション
@@ -157,6 +173,22 @@ namespace Hidano.FacialControl.Editor.Windows
             _statusLabel.style.paddingLeft = 4;
             _statusLabel.style.paddingBottom = 4;
             root.Add(_statusLabel);
+        }
+
+        /// <summary>
+        /// 新規プロファイル作成ボタン押下時の処理
+        /// </summary>
+        private void OnCreateProfileClicked()
+        {
+            var dialog = ProfileCreationDialog.ShowDialog();
+            dialog.OnCreated += createdSO =>
+            {
+                // 作成された SO を自動選択
+                _profileSOField.value = createdSO;
+                _profileSO = createdSO;
+                LoadProfile();
+                ShowStatus($"新規プロファイルを作成しました: {createdSO.name}", isError: false);
+            };
         }
 
         /// <summary>
