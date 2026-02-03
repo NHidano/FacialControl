@@ -593,6 +593,128 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters
         }
 
         // ================================================================
+        // PrepareFrame
+        // ================================================================
+
+        [Test]
+        public void PrepareFrame_TransitioningLayer_AdvancesTransition()
+        {
+            var blendShapeNames = new string[] { "BlendA", "BlendB" };
+            var mixerPlayable = FacialControlMixer.Create(_graph, blendShapeNames);
+            var mixer = mixerPlayable.GetBehaviour();
+
+            var layerPlayable = LayerPlayable.Create(_graph, 2, ExclusionMode.LastWins);
+            var layerBehaviour = layerPlayable.GetBehaviour();
+            // 遷移時間 1.0 秒で設定 → 遷移中になる
+            layerBehaviour.SetTargetExpression("expr-1", new float[] { 1.0f, 0.5f }, 1.0f, TransitionCurve.Linear);
+
+            mixer.RegisterLayer("emotion", 0, 1.0f, layerPlayable);
+
+            Assert.IsTrue(layerBehaviour.IsTransitioning);
+
+            // PrepareFrame を deltaTime=0.5 で呼ぶ（直接呼び出し）
+            var frameData = CreateFrameData(0.5f);
+            mixer.PrepareFrame(mixerPlayable, frameData);
+
+            // 遷移が進んでいるはず（0→target の 50%）
+            var output = mixer.OutputWeights;
+            Assert.AreEqual(0.5f, output[0], 0.01f);
+            Assert.AreEqual(0.25f, output[1], 0.01f);
+            Assert.IsTrue(layerBehaviour.IsTransitioning);
+        }
+
+        [Test]
+        public void PrepareFrame_CompletesTransition_OutputMatchesTarget()
+        {
+            var blendShapeNames = new string[] { "BlendA" };
+            var mixerPlayable = FacialControlMixer.Create(_graph, blendShapeNames);
+            var mixer = mixerPlayable.GetBehaviour();
+
+            var layerPlayable = LayerPlayable.Create(_graph, 1, ExclusionMode.LastWins);
+            var layerBehaviour = layerPlayable.GetBehaviour();
+            layerBehaviour.SetTargetExpression("expr-1", new float[] { 0.8f }, 0.5f, TransitionCurve.Linear);
+
+            mixer.RegisterLayer("emotion", 0, 1.0f, layerPlayable);
+
+            // 遷移完了分の deltaTime を渡す
+            var frameData = CreateFrameData(0.5f);
+            mixer.PrepareFrame(mixerPlayable, frameData);
+
+            var output = mixer.OutputWeights;
+            Assert.AreEqual(0.8f, output[0], 0.001f);
+            Assert.IsFalse(layerBehaviour.IsTransitioning);
+        }
+
+        [Test]
+        public void PrepareFrame_MultipleLayers_AllTransitionsAdvanced()
+        {
+            var blendShapeNames = new string[] { "BlendA" };
+            var mixerPlayable = FacialControlMixer.Create(_graph, blendShapeNames);
+            var mixer = mixerPlayable.GetBehaviour();
+
+            // 2 つのレイヤー、どちらも遷移中
+            var layer1 = LayerPlayable.Create(_graph, 1, ExclusionMode.LastWins);
+            layer1.GetBehaviour().SetTargetExpression("e1", new float[] { 1.0f }, 1.0f, TransitionCurve.Linear);
+
+            var layer2 = LayerPlayable.Create(_graph, 1, ExclusionMode.LastWins);
+            layer2.GetBehaviour().SetTargetExpression("e2", new float[] { 0.5f }, 1.0f, TransitionCurve.Linear);
+
+            mixer.RegisterLayer("emotion", 0, 1.0f, layer1);
+            mixer.RegisterLayer("eye", 1, 1.0f, layer2);
+
+            Assert.IsTrue(layer1.GetBehaviour().IsTransitioning);
+            Assert.IsTrue(layer2.GetBehaviour().IsTransitioning);
+
+            var frameData = CreateFrameData(1.0f);
+            mixer.PrepareFrame(mixerPlayable, frameData);
+
+            // 両方の遷移が完了しているはず
+            Assert.IsFalse(layer1.GetBehaviour().IsTransitioning);
+            Assert.IsFalse(layer2.GetBehaviour().IsTransitioning);
+        }
+
+        [Test]
+        public void PrepareFrame_NoTransition_ComputeOutputStillCalled()
+        {
+            var blendShapeNames = new string[] { "BlendA" };
+            var mixerPlayable = FacialControlMixer.Create(_graph, blendShapeNames);
+            var mixer = mixerPlayable.GetBehaviour();
+
+            // 即時遷移（duration=0）
+            var layerPlayable = LayerPlayable.Create(_graph, 1, ExclusionMode.LastWins);
+            layerPlayable.GetBehaviour().SetTargetExpression("expr-1", new float[] { 0.7f }, 0f, TransitionCurve.Linear);
+
+            mixer.RegisterLayer("emotion", 0, 1.0f, layerPlayable);
+
+            var frameData = CreateFrameData(0.016f);
+            mixer.PrepareFrame(mixerPlayable, frameData);
+
+            // ComputeOutput が呼ばれて出力に反映されているはず
+            var output = mixer.OutputWeights;
+            Assert.AreEqual(0.7f, output[0], 0.001f);
+        }
+
+        /// <summary>
+        /// テスト用に FrameData を生成するヘルパー。
+        /// FrameData は struct のため、リフレクションで deltaTime を設定する。
+        /// </summary>
+        private static FrameData CreateFrameData(float deltaTime)
+        {
+            var frameData = new FrameData();
+            // FrameData.deltaTime は読み取り専用プロパティだが、
+            // 内部フィールドにリフレクションでアクセスして設定する
+            var type = typeof(FrameData);
+            var field = type.GetField("m_DeltaTime", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                object boxed = frameData;
+                field.SetValue(boxed, deltaTime);
+                frameData = (FrameData)boxed;
+            }
+            return frameData;
+        }
+
+        // ================================================================
         // レイヤー入力順序の非依存性
         // ================================================================
 

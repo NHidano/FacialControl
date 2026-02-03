@@ -26,6 +26,11 @@ namespace Hidano.FacialControl.Adapters.Playable
         // アクティブな layerSlots（Expression のオーバーライド用）
         private LayerSlot[] _activeLayerSlots;
 
+        // ComputeOutput 用の事前確保バッファ
+        private LayerBlender.LayerInput[] _layerInputBuffer;
+        private float[] _outputBuffer;
+        private float[][] _layerValueBuffers;
+
         private bool _disposed;
 
         /// <summary>
@@ -131,6 +136,25 @@ namespace Hidano.FacialControl.Adapters.Playable
         }
 
         /// <summary>
+        /// PlayableGraph のフレーム準備コールバック。
+        /// 毎フレーム全レイヤーの遷移を進め、最終出力を計算する。
+        /// </summary>
+        public override void PrepareFrame(UnityEngine.Playables.Playable playable, FrameData info)
+        {
+            float deltaTime = info.deltaTime;
+
+            // 全レイヤーの遷移を進める
+            for (int i = 0; i < _layers.Count; i++)
+            {
+                var behaviour = _layers[i].Playable.GetBehaviour();
+                behaviour.UpdateTransition(deltaTime);
+            }
+
+            // レイヤー出力をブレンドして最終出力を計算
+            ComputeOutput();
+        }
+
+        /// <summary>
         /// 全レイヤーの出力をブレンドし、layerSlots オーバーライドを適用して最終出力を計算する。
         /// </summary>
         public void ComputeOutput()
@@ -150,12 +174,8 @@ namespace Hidano.FacialControl.Adapters.Playable
                 return;
             }
 
-            // LayerBlender.LayerInput の配列を構築
-            // レイヤー数は少量（通常 3〜5）のためここでの配列確保は問題なし
-            // （毎フレーム呼び出しの場合は事前確保した配列を再利用すべきだが、
-            //   ComputeOutput は Expression 切り替え等のイベント時に呼ばれる想定）
-            var layerInputs = new LayerBlender.LayerInput[_layers.Count];
-            var outputBuffer = new float[_blendShapeCount];
+            // 事前確保バッファのサイズが合わなければ再確保
+            EnsureBuffers();
 
             for (int i = 0; i < _layers.Count; i++)
             {
@@ -163,33 +183,78 @@ namespace Hidano.FacialControl.Adapters.Playable
                 var layerBehaviour = entry.Playable.GetBehaviour();
                 var layerOutput = layerBehaviour.OutputWeights;
 
-                // NativeArray から float[] にコピー
-                var values = new float[_blendShapeCount];
+                // NativeArray から事前確保 float[] にコピー
+                var values = _layerValueBuffers[i];
                 int copyLen = Math.Min(_blendShapeCount, layerOutput.Length);
                 for (int j = 0; j < copyLen; j++)
                 {
                     values[j] = layerOutput[j];
                 }
+                // 残りをゼロクリア
+                for (int j = copyLen; j < _blendShapeCount; j++)
+                {
+                    values[j] = 0f;
+                }
 
-                layerInputs[i] = new LayerBlender.LayerInput(
+                _layerInputBuffer[i] = new LayerBlender.LayerInput(
                     entry.Priority,
                     entry.Weight,
                     values);
             }
 
+            // 出力バッファをゼロクリア
+            Array.Clear(_outputBuffer, 0, _blendShapeCount);
+
             // Domain サービスでブレンド計算
-            LayerBlender.Blend(layerInputs, outputBuffer);
+            LayerBlender.Blend(_layerInputBuffer, _outputBuffer);
 
             // layerSlots オーバーライド適用
             if (_activeLayerSlots != null && _activeLayerSlots.Length > 0)
             {
-                LayerBlender.ApplyLayerSlotOverrides(_blendShapeNames, _activeLayerSlots, outputBuffer);
+                LayerBlender.ApplyLayerSlotOverrides(_blendShapeNames, _activeLayerSlots, _outputBuffer);
             }
 
             // 結果を NativeArray にコピー
             for (int i = 0; i < _blendShapeCount; i++)
             {
-                _outputWeights[i] = outputBuffer[i];
+                _outputWeights[i] = _outputBuffer[i];
+            }
+        }
+
+        /// <summary>
+        /// ComputeOutput 用の内部バッファを確保・再確保する。
+        /// レイヤー数や BlendShape 数が変わった場合のみ再確保する。
+        /// </summary>
+        private void EnsureBuffers()
+        {
+            int layerCount = _layers.Count;
+
+            if (_outputBuffer == null || _outputBuffer.Length < _blendShapeCount)
+            {
+                _outputBuffer = new float[_blendShapeCount];
+            }
+
+            if (_layerInputBuffer == null || _layerInputBuffer.Length < layerCount)
+            {
+                _layerInputBuffer = new LayerBlender.LayerInput[layerCount];
+            }
+
+            if (_layerValueBuffers == null || _layerValueBuffers.Length < layerCount)
+            {
+                var newBuffers = new float[layerCount][];
+                if (_layerValueBuffers != null)
+                {
+                    Array.Copy(_layerValueBuffers, newBuffers, _layerValueBuffers.Length);
+                }
+                _layerValueBuffers = newBuffers;
+            }
+
+            for (int i = 0; i < layerCount; i++)
+            {
+                if (_layerValueBuffers[i] == null || _layerValueBuffers[i].Length < _blendShapeCount)
+                {
+                    _layerValueBuffers[i] = new float[_blendShapeCount];
+                }
             }
         }
 

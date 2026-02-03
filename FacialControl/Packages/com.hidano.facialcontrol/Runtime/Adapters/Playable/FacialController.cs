@@ -55,6 +55,24 @@ namespace Hidano.FacialControl.Adapters.Playable
         private string[] _blendShapeNames;
         private bool _isInitialized;
 
+        // BlendShape 出力インデックス → (Renderer, Renderer 上の BS index) のマッピング
+        private BlendShapeTarget[][] _blendShapeTargets;
+
+        /// <summary>
+        /// BlendShape の出力先ターゲット情報。
+        /// </summary>
+        private struct BlendShapeTarget
+        {
+            public SkinnedMeshRenderer Renderer;
+            public int RendererBlendShapeIndex;
+
+            public BlendShapeTarget(SkinnedMeshRenderer renderer, int rendererBlendShapeIndex)
+            {
+                Renderer = renderer;
+                RendererBlendShapeIndex = rendererBlendShapeIndex;
+            }
+        }
+
         /// <summary>
         /// 初期化済みかどうか
         /// </summary>
@@ -117,6 +135,30 @@ namespace Hidano.FacialControl.Adapters.Playable
         private void OnDisable()
         {
             Cleanup();
+        }
+
+        private void LateUpdate()
+        {
+            if (!_isInitialized || _graphBuildResult == null || _blendShapeTargets == null)
+                return;
+
+            var mixer = _graphBuildResult.Mixer.GetBehaviour();
+            var output = mixer.OutputWeights;
+
+            int count = Math.Min(output.Length, _blendShapeTargets.Length);
+            for (int i = 0; i < count; i++)
+            {
+                var targets = _blendShapeTargets[i];
+                if (targets == null)
+                    continue;
+
+                float weight = output[i] * 100f; // Unity は 0-100 スケール
+                for (int t = 0; t < targets.Length; t++)
+                {
+                    targets[t].Renderer.SetBlendShapeWeight(
+                        targets[t].RendererBlendShapeIndex, weight);
+                }
+            }
         }
 
         /// <summary>
@@ -308,14 +350,19 @@ namespace Hidano.FacialControl.Adapters.Playable
                 return _skinnedMeshRenderers;
             }
 
-            // 子オブジェクトから自動検索
-            return GetComponentsInChildren<SkinnedMeshRenderer>();
+            // 子オブジェクトから自動検索し、フィールドに保持する
+            _skinnedMeshRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
+            return _skinnedMeshRenderers;
         }
 
-        private static string[] CollectBlendShapeNames(SkinnedMeshRenderer[] renderers)
+        private string[] CollectBlendShapeNames(SkinnedMeshRenderer[] renderers)
         {
             var names = new List<string>();
             var nameSet = new HashSet<string>();
+            // 名前 → 出力インデックスの逆引き
+            var nameToIndex = new Dictionary<string, int>();
+            // 出力インデックス → ターゲットリスト（同名 BS が複数 Renderer に存在する場合）
+            var targetLists = new List<List<BlendShapeTarget>>();
 
             for (int i = 0; i < renderers.Length; i++)
             {
@@ -329,11 +376,31 @@ namespace Hidano.FacialControl.Adapters.Playable
                 for (int j = 0; j < blendShapeCount; j++)
                 {
                     string bsName = mesh.GetBlendShapeName(j);
+
                     if (nameSet.Add(bsName))
                     {
+                        int outputIndex = names.Count;
                         names.Add(bsName);
+                        nameToIndex[bsName] = outputIndex;
+
+                        var list = new List<BlendShapeTarget>();
+                        list.Add(new BlendShapeTarget(renderer, j));
+                        targetLists.Add(list);
+                    }
+                    else
+                    {
+                        // 同名 BS が別の Renderer にも存在する
+                        int outputIndex = nameToIndex[bsName];
+                        targetLists[outputIndex].Add(new BlendShapeTarget(renderer, j));
                     }
                 }
+            }
+
+            // ターゲットマッピングを配列に変換
+            _blendShapeTargets = new BlendShapeTarget[targetLists.Count][];
+            for (int i = 0; i < targetLists.Count; i++)
+            {
+                _blendShapeTargets[i] = targetLists[i].ToArray();
             }
 
             return names.ToArray();

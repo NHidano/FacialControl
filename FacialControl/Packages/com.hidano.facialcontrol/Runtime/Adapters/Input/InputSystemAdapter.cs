@@ -114,7 +114,7 @@ namespace Hidano.FacialControl.Adapters.Input
             entry.IsActive = !entry.IsActive;
             if (entry.IsActive)
             {
-                _facialController.Activate(entry.Expression);
+                　_facialController.Activate(entry.Expression);
             }
             else
             {
