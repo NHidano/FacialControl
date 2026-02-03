@@ -5,6 +5,7 @@
         "Hidano.FacialControl.Domain",
         "Hidano.FacialControl.Application",
         "Hidano.FacialControl.Adapters",
+        "Unity.Collections",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
