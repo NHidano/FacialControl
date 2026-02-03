@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="15" result="Passed" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.0527025">
+  <test-suite type="TestSuite" id="1262" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.052703" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1251" name="Hidano.FacialControl.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.PlayMode.dll" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.045254" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="430004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1252" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.042906" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1253" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.040931" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1254" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.038902" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1255" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="236" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.036869" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1257" name="Integration" fullname="Hidano.FacialControl.Tests.PlayMode.Integration" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.034578" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1111" name="TransitionIntegrationTests" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.032708" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1121" name="Blend_AddMultipleExpressions_ValuesAddedAndClamped" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.Blend_AddMultipleExpressions_ValuesAddedAndClamped" methodname="Blend_AddMultipleExpressions_ValuesAddedAndClamped" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1570919930" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.013642" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1122" name="Blend_RemoveExpression_RecalculatesOutput" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.Blend_RemoveExpression_RecalculatesOutput" methodname="Blend_RemoveExpression_RecalculatesOutput" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1335522101" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000519" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1124" name="Deactivate_WithDuration_TransitionsToZero" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.Deactivate_WithDuration_TransitionsToZero" methodname="Deactivate_WithDuration_TransitionsToZero" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1763046477" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.001345" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1123" name="Deactivate_ZeroDuration_ImmediateReset" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.Deactivate_ZeroDuration_ImmediateReset" methodname="Deactivate_ZeroDuration_ImmediateReset" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="716671178" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000310" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1119" name="EaseIn_TransitionMidpoint_ValueLessThan05" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.EaseIn_TransitionMidpoint_ValueLessThan05" methodname="EaseIn_TransitionMidpoint_ValueLessThan05" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1402686865" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.001856" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1118" name="EaseInOut_TransitionMidpoint_ValueIs05" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.EaseInOut_TransitionMidpoint_ValueIs05" methodname="EaseInOut_TransitionMidpoint_ValueIs05" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="243437533" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000357" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1120" name="EaseOut_TransitionMidpoint_ValueGreaterThan05" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.EaseOut_TransitionMidpoint_ValueGreaterThan05" methodname="EaseOut_TransitionMidpoint_ValueGreaterThan05" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1766496582" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000426" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1114" name="LastWins_LinearTransition_CompleteTransition" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.LastWins_LinearTransition_CompleteTransition" methodname="LastWins_LinearTransition_CompleteTransition" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1534763581" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000333" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1113" name="LastWins_LinearTransition_MidpointValues" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.LastWins_LinearTransition_MidpointValues" methodname="LastWins_LinearTransition_MidpointValues" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="659601010" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000357" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1115" name="LastWins_SequentialExpressions_CrossfadesFromPrevious" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.LastWins_SequentialExpressions_CrossfadesFromPrevious" methodname="LastWins_SequentialExpressions_CrossfadesFromPrevious" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1910693077" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000344" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1112" name="LastWins_ZeroDuration_ImmediateSwitch" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.LastWins_ZeroDuration_ImmediateSwitch" methodname="LastWins_ZeroDuration_ImmediateSwitch" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1376231654" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000333" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1126" name="MixerBlend_PartialLayerWeight_InterpolatedOutput" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.MixerBlend_PartialLayerWeight_InterpolatedOutput" methodname="MixerBlend_PartialLayerWeight_InterpolatedOutput" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="362598240" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.001497" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1125" name="MixerBlend_TwoLayersWithTransition_BlendedOutput" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.MixerBlend_TwoLayersWithTransition_BlendedOutput" methodname="MixerBlend_TwoLayersWithTransition_BlendedOutput" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1535789454" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000367" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1116" name="TransitionInterrupt_DuringTransition_SnapshotsCurrentAndStartsNew" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.TransitionInterrupt_DuringTransition_SnapshotsCurrentAndStartsNew" methodname="TransitionInterrupt_DuringTransition_SnapshotsCurrentAndStartsNew" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1170268054" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000383" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1117" name="TransitionInterrupt_MultipleInterrupts_EachSnapshotsCurrent" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests.TransitionInterrupt_MultipleInterrupts_EachSnapshotsCurrent" methodname="TransitionInterrupt_MultipleInterrupts_EachSnapshotsCurrent" classname="Hidano.FacialControl.Tests.PlayMode.Integration.TransitionIntegrationTests" runstate="Runnable" seed="1032258122" result="Passed" start-time="2026-02-03 09:26:51Z" end-time="2026-02-03 09:26:51Z" duration="0.000326" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
