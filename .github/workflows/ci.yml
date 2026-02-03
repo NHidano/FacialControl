@@ -1,4 +1,4 @@
-# FacialControl CI - EditMode / PlayMode テスト自動実行
+# FacialControl CI - パッケージバリデーション / EditMode / PlayMode テスト自動実行
 name: CI
 
 on:
@@ -10,9 +10,24 @@ on:
 env:
   UNITY_PROJECT_PATH: FacialControl
   TEST_RESULTS_DIR: test-results
+  PACKAGE_PATH: FacialControl/Packages/com.hidano.facialcontrol
 
 jobs:
+  package-validation:
+    name: パッケージバリデーション
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: パッケージバリデーション実行
+        run: |
+          & "./scripts/validate-package.ps1" -PackagePath "${{ env.PACKAGE_PATH }}"
+        shell: pwsh
+
   editmode-tests:
+    needs: package-validation
     name: EditMode テスト
     runs-on: self-hosted
     timeout-minutes: 30
@@ -46,6 +61,7 @@ jobs:
           path: ${{ env.TEST_RESULTS_DIR }}/editmode.xml
 
   playmode-tests:
+    needs: package-validation
     name: PlayMode テスト
     runs-on: self-hosted
     timeout-minutes: 30
