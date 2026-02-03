@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using Hidano.FacialControl.Adapters.FileSystem;
 using Hidano.FacialControl.Adapters.Json;
 using Hidano.FacialControl.Adapters.ScriptableObject;
+using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Editor.Common;
 
 namespace Hidano.FacialControl.Editor.Inspector
@@ -12,18 +13,28 @@ namespace Hidano.FacialControl.Editor.Inspector
     /// <summary>
     /// FacialProfileSO のカスタム Inspector。
     /// UI Toolkit で実装し、JSON ファイルパス表示、JSON 読み込みボタン、
-    /// 簡易プロファイル情報を表示する。
+    /// 簡易プロファイル情報、レイヤー詳細一覧、Expression 詳細一覧を表示する。
     /// </summary>
     [CustomEditor(typeof(FacialProfileSO))]
     public class FacialProfileSOEditor : UnityEditor.Editor
     {
         private const string JsonPathSectionLabel = "JSON ファイル";
         private const string ProfileInfoSectionLabel = "プロファイル情報";
+        private const string LayerDetailSectionLabel = "レイヤー一覧";
+        private const string ExpressionDetailSectionLabel = "Expression 一覧";
 
         private Label _schemaVersionLabel;
         private Label _layerCountLabel;
         private Label _expressionCountLabel;
         private Label _statusLabel;
+
+        private Foldout _layerDetailFoldout;
+        private Foldout _expressionDetailFoldout;
+
+        /// <summary>
+        /// JSON 読み込み成功時にキャッシュされた FacialProfile
+        /// </summary>
+        private FacialProfile? _cachedProfile;
 
         public override VisualElement CreateInspectorGUI()
         {
@@ -73,8 +84,24 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             root.Add(infoFoldout);
 
+            // ========================================
+            // レイヤー詳細セクション
+            // ========================================
+            _layerDetailFoldout = new Foldout { text = LayerDetailSectionLabel, value = false };
+            root.Add(_layerDetailFoldout);
+
+            // ========================================
+            // Expression 詳細セクション
+            // ========================================
+            _expressionDetailFoldout = new Foldout { text = ExpressionDetailSectionLabel, value = false };
+            root.Add(_expressionDetailFoldout);
+
             // 初回更新
-            root.schedule.Execute(UpdateProfileInfo);
+            root.schedule.Execute(() =>
+            {
+                UpdateProfileInfo();
+                TryLoadCachedProfile();
+            });
 
             return root;
         }
@@ -116,13 +143,47 @@ namespace Hidano.FacialControl.Editor.Inspector
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
+                _cachedProfile = profile;
+
                 UpdateProfileInfo();
+                RebuildDetailUI();
                 ShowStatus("JSON 読み込みに成功しました。", isError: false);
             }
             catch (System.Exception ex)
             {
+                _cachedProfile = null;
+                ClearDetailUI();
                 ShowStatus($"読み込みエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[FacialProfileSOEditor] JSON 読み込みエラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Inspector 初回表示時に JSON からプロファイルをキャッシュする
+        /// </summary>
+        private void TryLoadCachedProfile()
+        {
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+                return;
+
+            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+            if (!System.IO.File.Exists(fullPath))
+                return;
+
+            try
+            {
+                var json = System.IO.File.ReadAllText(fullPath, System.Text.Encoding.UTF8);
+                var parser = new SystemTextJsonParser();
+                _cachedProfile = parser.ParseProfile(json);
+                RebuildDetailUI();
+            }
+            catch (System.Exception)
+            {
+                _cachedProfile = null;
             }
         }
 
@@ -147,6 +208,122 @@ namespace Hidano.FacialControl.Editor.Inspector
                 _layerCountLabel.text = $"レイヤー数: {layers}";
             if (_expressionCountLabel != null)
                 _expressionCountLabel.text = $"Expression 数: {expressions}";
+        }
+
+        /// <summary>
+        /// キャッシュされた FacialProfile からレイヤー詳細・Expression 詳細 UI を再構築する
+        /// </summary>
+        private void RebuildDetailUI()
+        {
+            ClearDetailUI();
+
+            if (_cachedProfile == null)
+                return;
+
+            var profile = _cachedProfile.Value;
+            BuildLayerDetailUI(profile);
+            BuildExpressionDetailUI(profile);
+        }
+
+        /// <summary>
+        /// レイヤー詳細・Expression 詳細 UI をクリアする
+        /// </summary>
+        private void ClearDetailUI()
+        {
+            _layerDetailFoldout?.Clear();
+            _expressionDetailFoldout?.Clear();
+        }
+
+        /// <summary>
+        /// レイヤー詳細 UI を構築する
+        /// </summary>
+        private void BuildLayerDetailUI(FacialProfile profile)
+        {
+            if (_layerDetailFoldout == null)
+                return;
+
+            var layerSpan = profile.Layers.Span;
+            if (layerSpan.Length == 0)
+            {
+                var emptyLabel = new Label("レイヤーが定義されていません。");
+                emptyLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                _layerDetailFoldout.Add(emptyLabel);
+                return;
+            }
+
+            for (int i = 0; i < layerSpan.Length; i++)
+            {
+                var layer = layerSpan[i];
+                var container = new VisualElement();
+                container.style.marginLeft = 8;
+                container.style.marginBottom = 4;
+
+                var nameLabel = new Label($"名前: {layer.Name}");
+                nameLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                container.Add(nameLabel);
+
+                var priorityLabel = new Label($"  優先度: {layer.Priority}");
+                priorityLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                container.Add(priorityLabel);
+
+                var modeLabel = new Label($"  排他モード: {layer.ExclusionMode}");
+                modeLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                container.Add(modeLabel);
+
+                _layerDetailFoldout.Add(container);
+            }
+        }
+
+        /// <summary>
+        /// Expression 詳細 UI を構築する
+        /// </summary>
+        private void BuildExpressionDetailUI(FacialProfile profile)
+        {
+            if (_expressionDetailFoldout == null)
+                return;
+
+            var exprSpan = profile.Expressions.Span;
+            if (exprSpan.Length == 0)
+            {
+                var emptyLabel = new Label("Expression が定義されていません。");
+                emptyLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                _expressionDetailFoldout.Add(emptyLabel);
+                return;
+            }
+
+            for (int i = 0; i < exprSpan.Length; i++)
+            {
+                var expr = exprSpan[i];
+                var bsCount = expr.BlendShapeValues.Length;
+                var exprFoldout = new Foldout
+                {
+                    text = $"{expr.Name}  [レイヤー: {expr.Layer} / 遷移: {expr.TransitionDuration:F2}s / BlendShape: {bsCount}]",
+                    value = false
+                };
+                exprFoldout.style.marginLeft = 4;
+
+                // BlendShape 値の一覧を子 Foldout として構築
+                var bsSpan = expr.BlendShapeValues.Span;
+                if (bsSpan.Length > 0)
+                {
+                    for (int j = 0; j < bsSpan.Length; j++)
+                    {
+                        var bs = bsSpan[j];
+                        var rendererText = bs.Renderer != null ? $" ({bs.Renderer})" : "";
+                        var bsLabel = new Label($"  {bs.Name}: {bs.Value:F3}{rendererText}");
+                        bsLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                        exprFoldout.Add(bsLabel);
+                    }
+                }
+                else
+                {
+                    var noBsLabel = new Label("  BlendShape 値なし");
+                    noBsLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                    exprFoldout.Add(noBsLabel);
+                }
+
+                _expressionDetailFoldout.Add(exprFoldout);
+            }
         }
 
         /// <summary>
