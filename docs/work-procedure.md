@@ -1117,6 +1117,115 @@ ProfileManagerWindow（独立 EditorWindow）の機能を FacialProfileSO の In
 - 参照モデルに Scene オブジェクトと Packages フォルダ内アセットを指定できる
 - RendererPaths 検出結果が「JSON に保存」で正しく JSON に含まれる
 
+## P20: Inspector UI 改善 第2弾（フィードバック対応）
+
+### 目的
+
+ユーザーフィードバックに基づき、FacialProfileSO Inspector のレイアウト改善、表記統一、操作性向上、バグ修正を行う。
+
+### 作業内容
+
+#### P20-01: 「参照モデル」の表記を「使用モデル」に変更
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: 「参照モデル」という名称がわかりにくい。実際に使用するモデルであるため「使用モデル」に統一する
+- **変更内容**:
+  - `ReferenceModelSectionLabel` 定数を `"参照モデル"` → `"使用モデル"` に変更
+  - `ObjectField` のラベルを `"参照モデル"` → `"使用モデル"` に変更
+  - `OnDetectRendererPathsClicked()` のエラーメッセージ `"参照モデルが設定されていません。"` → `"使用モデルが設定されていません。"` に変更
+  - コメント・XMLDoc 内の「参照モデル」も「使用モデル」に置換
+
+#### P20-02: 使用モデルセクションを Inspector 最上部に移動
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P20-01
+- **背景**: モデル指定は最初に行う操作であるため、Inspector の最上部に配置すべき
+- **変更内容**:
+  - `CreateInspectorGUI()` 内で使用モデルセクション（`refModelFoldout`）の `root.Add()` を、クローンボタンの直後（現在の位置から移動）に配置
+  - 現在の配置順: クローンボタン → JSON → プロファイル情報 → レイヤー → Expression → +/- ボタン → 参照モデル → JSON に保存
+  - 変更後の配置順: クローンボタン → **使用モデル** → レイヤー → Expression → +/- ボタン → JSON に保存 → JSON ファイル（P20-03 で最下部へ）
+
+#### P20-03: JSON ファイルセクションを Inspector 最下部に移動
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: JSON ファイルパスやインポート/エクスポートは頻繁に操作しないため、最下部に配置して主要な操作を上部に集約する
+- **変更内容**:
+  - `CreateInspectorGUI()` 内で JSON ファイルセクション（`jsonFoldout`）の `root.Add()` を最後に配置
+  - `_statusLabel` は JSON セクション内に維持
+  - 変更後の最終配置順: クローンボタン → 使用モデル → レイヤー → Expression → +/- ボタン → JSON に保存 → JSON ファイル
+
+#### P20-04: プロファイル情報からレイヤー数・Expression 数の表示を削除
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: レイヤー数と Expression 数はそれぞれの一覧を見れば明らかであり、冗長な情報表示を削減する
+- **変更内容**:
+  - `_layerCountLabel` / `_expressionCountLabel` フィールドを削除
+  - `CreateInspectorGUI()` 内の `_layerCountLabel` / `_expressionCountLabel` の生成・追加を削除
+  - `UpdateProfileInfo()` 内の `_layerCountLabel` / `_expressionCountLabel` の更新処理を削除
+  - プロファイル情報セクション（`infoFoldout`）自体はスキーマバージョンが P20-05 で移動するため削除可能
+
+#### P20-05: スキーマバージョンを JSON ファイルセクション近くに移動
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P20-03, P20-04
+- **背景**: スキーマバージョンは日常的に確認する情報ではないため、JSON ファイルセクション（最下部）付近に目立たない形で配置する
+- **変更内容**:
+  - プロファイル情報セクション（`infoFoldout`）を完全に削除（レイヤー数・Expression 数は P20-04 で削除済み）
+  - `_schemaVersionLabel` を JSON ファイルセクション（`jsonFoldout`）内の先頭（`_jsonPathLabel` の上）に移動
+  - スタイルを小さめのフォントや薄いグレーにして目立たない表示にする
+
+#### P20-06: BlendShape 削除時に Expression の Foldout が折りたたまれる不具合を修正
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: BlendShape の「×」ボタンを押すと `SaveProfileAndRebuild()` → `RebuildDetailUI()` が呼ばれ、全 Expression Foldout が `value = false`（折りたたみ）で再構築されるため、操作中の Foldout が閉じてしまう
+- **変更内容**:
+  - `RebuildDetailUI()` 呼び出し前に各 Expression Foldout および子 BlendShape Foldout の開閉状態を保存する仕組みを追加
+  - 方法: `Dictionary<int, bool>` で Expression インデックス → Foldout 開閉状態をキャッシュ。BlendShape Foldout も同様にキャッシュ
+  - `BuildExpressionDetailUI()` で Foldout 生成時にキャッシュされた開閉状態を復元（`exprFoldout.value = cachedState`）
+  - `OnRemoveBlendShapeClicked()` / `OnAddBlendShapeClicked()` / `OnAddExpressionClicked()` / `OnDeleteExpressionClicked()` の全てで開閉状態を保存してから `RebuildDetailUI()` を呼ぶ
+  - `_expressionFoldoutStates`（`Dictionary<int, bool>`）と `_blendShapeFoldoutStates`（`Dictionary<int, bool>`）をクラスフィールドとして追加
+
+#### P20-07: BlendShape 選択ドロップダウンに検索入力ボックスを追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: BlendShape 名が多数（100 以上）ある場合、ドロップダウンからの選択が困難。検索で絞り込めるようにする
+- **変更内容**:
+  - `BuildExpressionDetailUI()` 内の BlendShape 名 `DropdownField` を検索機能付きの UI に置き換え
+  - 実装方法: `DropdownField` の代わりに `TextField`（検索入力）+ フィルタ済みリストの `ListView` または `PopupField` を組み合わせたカスタム UI を構築
+  - 具体的には:
+    - `TextField`（検索ボックス）を配置。プレースホルダーテキスト: `"BlendShape を検索..."`
+    - 入力値で `allBlendShapeNames` を部分一致フィルタし、結果リストを `DropdownField` の `choices` に動的反映
+    - 検索テキストが空の場合は全候補を表示
+  - BlendShape 追加セクション（`addBsDropdown`）にも同様の検索入力を追加
+
+#### P20-08: レイヤー優先度をドラッグ順序で設定し、数値はラベル表示のみに変更
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: 優先度を数字で手入力するのは直感的でない。リストの上下順（表示順）で優先度を決定し、結果の数値だけ表示する方が操作しやすい
+- **変更内容**:
+  - `BuildLayerDetailUI()` の各レイヤーに対する `IntegerField`（優先度入力）を `Label`（優先度表示のみ）に変更
+  - 優先度値はリスト内の位置（上から 0, 1, 2, ...）で自動設定
+  - 各レイヤー行に上下移動ボタン（`▲` / `▼`）を追加
+  - 上下移動ボタン押下時に `_layerEdits` リスト内の要素を入れ替え、UI を再構築
+  - `LayerEditData.Priority` は上下移動後にリスト位置から自動算出
+  - `RebuildProfileFromEdits()` 内で `_layerEdits` のインデックスをそのまま `Priority` として使用
+
+#### P20-09: JSON 読み込みボタンを削除
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: Inspector 表示時に `TryLoadCachedProfile()` で自動読み込みしており、インポート機能も別途あるため、手動の「JSON 読み込み」ボタンは不要
+- **変更内容**:
+  - `CreateInspectorGUI()` 内の `loadButton`（`"JSON 読み込み"` ボタン）の生成・追加を削除
+  - `OnLoadJsonClicked()` メソッドは削除せず内部メソッドとして維持（`TryLoadCachedProfile()` やインポート処理で間接的に使用される可能性があるため）
+  - `OnLoadJsonClicked()` が他から呼ばれていない場合は合わせて削除
+
+### テスト
+- 手動検証中心（Inspector のレイアウト・操作確認）
+- 既存テスト（`ProfileEditSaveTests`、`ProfileBlendShapeAddRemoveTests` 等）が引き続き Green であること
+
+### 完了基準
+- 「参照モデル」の表記が全て「使用モデル」に統一されている
+- Inspector の最上部に使用モデルセクションが表示される
+- JSON ファイルセクションが Inspector の最下部に表示される
+- レイヤー数・Expression 数の冗長な表示が削除されている
+- スキーマバージョンが JSON ファイルセクション付近に目立たない形で表示されている
+- BlendShape 削除後も操作中の Foldout が展開されたまま維持される
+- BlendShape 選択ドロップダウンで検索による絞り込みができる
+- レイヤーの優先度がリストの上下順で決定され、数値はラベルで表示される
+- JSON 読み込みボタンが削除されている
+- 既存テストが全て Green
+
 ---
 
 ## フェーズ間の依存関係
@@ -1138,6 +1247,8 @@ P00 (基盤)
           │                                            └→ P18 (Inspector 一本化)
           │                                                    │
           │                                                    └→ P19 (Inspector UI 改善)
+          │                                                            │
+          │                                                            └→ P20 (Inspector UI 改善 第2弾)
           └→ P13 (テンプレート) ←── P05 の後でも可
               └→ P14 (統合・性能テスト) ←── P06〜P08 完了後
                   └→ P15 (ドキュメント)
@@ -1151,6 +1262,7 @@ P00 (基盤)
 - P17 は P09 / P10 / P12 / P13 完了後に着手可能（P17-01〜P17-06 は並行着手可能、ただし P17-03 は P17-02 に依存。P17-07〜P17-12 は P17-07 → P17-08/P17-09 → P17-10 → P17-11 → P17-12 の順で依存）
 - P18 は P17 完了後に着手可能（P18-01〜P18-05 は並行着手可能、P18-06 は P18-01〜P18-05 完了後、P18-07 は P18-06 完了後）
 - P19 は P18 完了後に着手可能（P19-01/P19-06〜P19-10 は並行着手可能、P19-02 → P19-03 → P19-04 の順で依存、P19-02 → P19-05 の依存あり）
+- P20 は P19 完了後に着手可能（P20-01 → P20-02 の依存あり、P20-03/P20-04 → P20-05 の依存あり、それ以外の P20-06〜P20-09 は並行着手可能）
 
 ---
 
@@ -1180,8 +1292,9 @@ P00 (基盤)
 | P17 | Editor 改善・テンプレート拡充 | P09, P10, P12, P13 |
 | P18 | プロファイル管理を Inspector に一本化 | P17 |
 | P19 | Inspector UI 改善（フィードバック対応） | P18 |
+| P20 | Inspector UI 改善 第2弾（フィードバック対応） | P19 |
 
-### 作業項目一覧（全 98 項目）
+### 作業項目一覧（全 107 項目）
 
 | ID | 作業項目 |
 |----|---------|
@@ -1281,6 +1394,15 @@ P00 (基盤)
 | P19-08 | ARKit 検出ツールのボタン表示崩れを修正 |
 | P19-09 | 参照モデルの ObjectField で Scene オブジェクトを選択可能にする |
 | P19-10 | RendererPaths 検出結果の JSON 保存を修正 |
+| P20-01 | 「参照モデル」の表記を「使用モデル」に変更 |
+| P20-02 | 使用モデルセクションを Inspector 最上部に移動 |
+| P20-03 | JSON ファイルセクションを Inspector 最下部に移動 |
+| P20-04 | プロファイル情報からレイヤー数・Expression 数の表示を削除 |
+| P20-05 | スキーマバージョンを JSON ファイルセクション近くに移動 |
+| P20-06 | BlendShape 削除時に Expression の Foldout が折りたたまれる不具合を修正 |
+| P20-07 | BlendShape 選択ドロップダウンに検索入力ボックスを追加 |
+| P20-08 | レイヤー優先度をドラッグ順序で設定し数値はラベル表示のみに変更 |
+| P20-09 | JSON 読み込みボタンを削除 |
 
 ### テスト一覧（全 42 項目）
 

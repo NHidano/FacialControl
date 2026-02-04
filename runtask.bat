@@ -1,7 +1,0 @@
-@echo off
-for /f "usebackq delims=" %%T in ("tasks.txt") do @(
-  echo === START %%T ===
-  claude -p "Execute only this single task (%%T) according to the instructions in work_procedure.md. Before starting, output the task name (%%T). After completing the task, run UnityTestRunner to verify the result. If any file changes exist, run git add -A and then commit with the message \"task %%T\". Finally, output only OK or FAIL. tasks.txt is a user-managed file and must not be modified. After outputting OK or FAIL, complete the session without waiting for user input." --max-turns 120 --verbose <nul 2>&1
-  echo === END %%T (waiting 180s) ===
-  ping -n 181 127.0.0.1 >nul
-) >> claude_run.log 2>&1
