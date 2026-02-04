@@ -27,15 +27,22 @@ namespace Hidano.FacialControl.Domain.Models
         public ReadOnlyMemory<Expression> Expressions { get; }
 
         /// <summary>
+        /// SkinnedMeshRenderer のヒエラルキーパス配列（モデルルートからの相対パス）
+        /// </summary>
+        public ReadOnlyMemory<string> RendererPaths { get; }
+
+        /// <summary>
         /// 表情設定プロファイルを生成する。配列パラメータは防御的コピーされる。
         /// </summary>
         /// <param name="schemaVersion">JSON スキーマバージョン（空文字不可）</param>
         /// <param name="layers">レイヤー定義の配列。null の場合は空配列</param>
         /// <param name="expressions">Expression の配列。null の場合は空配列</param>
+        /// <param name="rendererPaths">SkinnedMeshRenderer パスの配列。null の場合は空配列</param>
         public FacialProfile(
             string schemaVersion,
             LayerDefinition[] layers = null,
-            Expression[] expressions = null)
+            Expression[] expressions = null,
+            string[] rendererPaths = null)
         {
             if (schemaVersion == null)
                 throw new ArgumentNullException(nameof(schemaVersion));
@@ -65,6 +72,17 @@ namespace Hidano.FacialControl.Domain.Models
             else
             {
                 Expressions = Array.Empty<Expression>();
+            }
+
+            if (rendererPaths != null)
+            {
+                var pathsCopy = new string[rendererPaths.Length];
+                Array.Copy(rendererPaths, pathsCopy, rendererPaths.Length);
+                RendererPaths = pathsCopy;
+            }
+            else
+            {
+                RendererPaths = Array.Empty<string>();
             }
         }
 

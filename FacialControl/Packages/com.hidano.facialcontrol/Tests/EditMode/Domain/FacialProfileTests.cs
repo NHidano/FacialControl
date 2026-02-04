@@ -397,5 +397,64 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
 
             Assert.Throws<ArgumentNullException>(() => profile.FindLayerByName(null));
         }
+
+        // --- RendererPaths ---
+
+        [Test]
+        public void Constructor_WithRendererPaths_StoresPaths()
+        {
+            var paths = new[] { "Armature/Body", "Armature/Face" };
+
+            var profile = new FacialProfile("1.0", CreateDefaultLayers(), null, paths);
+
+            Assert.AreEqual(2, profile.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", profile.RendererPaths.Span[0]);
+            Assert.AreEqual("Armature/Face", profile.RendererPaths.Span[1]);
+        }
+
+        [Test]
+        public void Constructor_NullRendererPaths_TreatedAsEmpty()
+        {
+            var profile = new FacialProfile("1.0", CreateDefaultLayers(), null, null);
+
+            Assert.AreEqual(0, profile.RendererPaths.Length);
+        }
+
+        [Test]
+        public void Constructor_DefaultRendererPaths_IsEmpty()
+        {
+            var profile = new FacialProfile("1.0", CreateDefaultLayers());
+
+            Assert.AreEqual(0, profile.RendererPaths.Length);
+        }
+
+        [Test]
+        public void RendererPaths_IsDefensiveCopy_OriginalArrayModificationDoesNotAffect()
+        {
+            var paths = new[] { "Armature/Body", "Armature/Face" };
+            var profile = new FacialProfile("1.0", CreateDefaultLayers(), null, paths);
+
+            paths[0] = "Modified/Path";
+
+            Assert.AreEqual("Armature/Body", profile.RendererPaths.Span[0]);
+        }
+
+        [Test]
+        public void Constructor_EmptyRendererPaths_CreatesInstance()
+        {
+            var profile = new FacialProfile("1.0", CreateDefaultLayers(), null, Array.Empty<string>());
+
+            Assert.AreEqual(0, profile.RendererPaths.Length);
+        }
+
+        [Test]
+        public void Constructor_ThreeArguments_BackwardCompatible()
+        {
+            var profile = new FacialProfile("1.0", CreateDefaultLayers(), new[] { CreateExpression() });
+
+            Assert.AreEqual(3, profile.Layers.Length);
+            Assert.AreEqual(1, profile.Expressions.Length);
+            Assert.AreEqual(0, profile.RendererPaths.Length);
+        }
     }
 }
