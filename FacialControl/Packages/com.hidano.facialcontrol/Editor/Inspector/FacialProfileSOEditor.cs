@@ -117,6 +117,10 @@ namespace Hidano.FacialControl.Editor.Inspector
             // ========================================
             // Expression 詳細セクション
             // ========================================
+            var addExpressionButton = new Button(OnAddExpressionClicked) { text = "Expression 追加" };
+            addExpressionButton.AddToClassList(FacialControlStyles.ActionButton);
+            root.Add(addExpressionButton);
+
             _expressionDetailFoldout = new Foldout { text = ExpressionDetailSectionLabel, value = false };
             root.Add(_expressionDetailFoldout);
 
@@ -263,6 +267,84 @@ namespace Hidano.FacialControl.Editor.Inspector
             {
                 ShowStatus($"保存エラー: {ex.Message}", isError: true);
                 Debug.LogError($"[FacialProfileSOEditor] JSON 保存エラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Expression 追加ボタン押下時の処理。
+        /// デフォルト値で新規 Expression を作成し、JSON 自動保存 → UI 再構築を行う。
+        /// </summary>
+        private void OnAddExpressionClicked()
+        {
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            if (_cachedProfile == null)
+            {
+                ShowStatus("プロファイルが読み込まれていません。先に JSON を読み込んでください。", isError: true);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                ShowStatus("JSON ファイルパスが設定されていません。", isError: true);
+                return;
+            }
+
+            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+            var originalProfile = _cachedProfile.Value;
+
+            // 先頭レイヤー名を取得（レイヤーがない場合は "emotion"）
+            var layerSpan = originalProfile.Layers.Span;
+            string defaultLayer = layerSpan.Length > 0 ? layerSpan[0].Name : "emotion";
+
+            // 新規 Expression を作成
+            var newExpression = new Expression(
+                Guid.NewGuid().ToString(),
+                "New Expression",
+                defaultLayer);
+
+            // 既存 Expression 配列に追加
+            var existingExpressions = originalProfile.Expressions.ToArray();
+            var newExpressions = new Expression[existingExpressions.Length + 1];
+            Array.Copy(existingExpressions, newExpressions, existingExpressions.Length);
+            newExpressions[existingExpressions.Length] = newExpression;
+
+            // 新しいプロファイルを構築
+            var newProfile = new FacialProfile(
+                originalProfile.SchemaVersion,
+                originalProfile.Layers.ToArray(),
+                newExpressions,
+                originalProfile.RendererPaths.ToArray());
+
+            try
+            {
+                Undo.RecordObject(so, "Expression 追加");
+
+                // JSON 自動保存
+                var parser = new SystemTextJsonParser();
+                var json = parser.SerializeProfile(newProfile);
+                System.IO.File.WriteAllText(fullPath, json, System.Text.Encoding.UTF8);
+
+                // キャッシュ更新
+                _cachedProfile = newProfile;
+
+                // SO の表示用フィールドを同期更新
+                so.SchemaVersion = newProfile.SchemaVersion;
+                so.LayerCount = newProfile.Layers.Length;
+                so.ExpressionCount = newProfile.Expressions.Length;
+                EditorUtility.SetDirty(so);
+                serializedObject.Update();
+
+                UpdateProfileInfo();
+                RebuildDetailUI();
+                ShowStatus("Expression を追加しました。", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Expression 追加エラー: {ex.Message}", isError: true);
+                Debug.LogError($"[FacialProfileSOEditor] Expression 追加エラー: {ex}");
             }
         }
 
