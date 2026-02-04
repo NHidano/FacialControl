@@ -93,6 +93,23 @@ namespace Hidano.FacialControl.Editor.Inspector
             loadButton.AddToClassList(FacialControlStyles.ActionButton);
             jsonFoldout.Add(loadButton);
 
+            // インポート・エクスポートボタン
+            var importExportContainer = new VisualElement();
+            importExportContainer.style.flexDirection = FlexDirection.Row;
+            importExportContainer.style.marginTop = 4;
+
+            var importButton = new Button(OnImportClicked) { text = "インポート" };
+            importButton.AddToClassList(FacialControlStyles.ActionButton);
+            importButton.style.flexGrow = 1;
+            importExportContainer.Add(importButton);
+
+            var exportButton = new Button(OnExportClicked) { text = "エクスポート" };
+            exportButton.AddToClassList(FacialControlStyles.ActionButton);
+            exportButton.style.flexGrow = 1;
+            importExportContainer.Add(exportButton);
+
+            jsonFoldout.Add(importExportContainer);
+
             _statusLabel = new Label();
             _statusLabel.AddToClassList(FacialControlStyles.StatusLabel);
             jsonFoldout.Add(_statusLabel);
@@ -228,6 +245,94 @@ namespace Hidano.FacialControl.Editor.Inspector
                 ClearDetailUI();
                 ShowStatus($"読み込みエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[FacialProfileSOEditor] JSON 読み込みエラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// インポートボタン押下時の処理。
+        /// 外部 JSON ファイルを選択し、パースして SO の JSON パスへ保存、UI を更新する。
+        /// </summary>
+        private void OnImportClicked()
+        {
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                ShowStatus("JSON ファイルパスが設定されていません。インポート先を指定してください。", isError: true);
+                return;
+            }
+
+            var importPath = EditorUtility.OpenFilePanel("プロファイル JSON のインポート", "", "json");
+            if (string.IsNullOrEmpty(importPath))
+                return;
+
+            try
+            {
+                var json = System.IO.File.ReadAllText(importPath, System.Text.Encoding.UTF8);
+                var parser = new SystemTextJsonParser();
+                var profile = parser.ParseProfile(json);
+
+                Undo.RecordObject(so, "プロファイルインポート");
+
+                // SO の JSON パスへ保存
+                var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+                var directory = System.IO.Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
+                {
+                    System.IO.Directory.CreateDirectory(directory);
+                }
+                System.IO.File.WriteAllText(fullPath, json, System.Text.Encoding.UTF8);
+
+                // SO の表示用フィールドを同期更新
+                var mapper = new FacialProfileMapper(
+                    new FileProfileRepository(parser));
+                mapper.UpdateSO(so, profile);
+                EditorUtility.SetDirty(so);
+                serializedObject.Update();
+
+                _cachedProfile = profile;
+
+                UpdateProfileInfo();
+                RebuildDetailUI();
+                ShowStatus($"インポートしました: {System.IO.Path.GetFileName(importPath)}", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"インポートエラー: {ex.Message}", isError: true);
+                Debug.LogError($"[FacialProfileSOEditor] インポートエラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// エクスポートボタン押下時の処理。
+        /// 現在のプロファイルをシリアライズして外部 JSON ファイルに書き出す。
+        /// </summary>
+        private void OnExportClicked()
+        {
+            if (_cachedProfile == null)
+            {
+                ShowStatus("プロファイルが読み込まれていません。先に JSON を読み込んでください。", isError: true);
+                return;
+            }
+
+            var exportPath = EditorUtility.SaveFilePanel("プロファイル JSON のエクスポート", "", "profile.json", "json");
+            if (string.IsNullOrEmpty(exportPath))
+                return;
+
+            try
+            {
+                var parser = new SystemTextJsonParser();
+                var json = parser.SerializeProfile(_cachedProfile.Value);
+                System.IO.File.WriteAllText(exportPath, json, System.Text.Encoding.UTF8);
+
+                ShowStatus($"エクスポートしました: {System.IO.Path.GetFileName(exportPath)}", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"エクスポートエラー: {ex.Message}", isError: true);
+                Debug.LogError($"[FacialProfileSOEditor] エクスポートエラー: {ex}");
             }
         }
 
