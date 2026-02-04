@@ -761,5 +761,97 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
         {
             Assert.IsInstanceOf<Hidano.FacialControl.Domain.Interfaces.IJsonParser>(_parser);
         }
+
+        // ================================================================
+        // P17-T04: rendererPaths の parse / serialize
+        // ================================================================
+
+        [Test]
+        public void ParseProfile_WithRendererPaths_ParsesCorrectly()
+        {
+            var json = @"{
+                ""schemaVersion"":""1.0"",
+                ""rendererPaths"":[""Armature/Body"",""Armature/Head""],
+                ""layers"":[],
+                ""expressions"":[]
+            }";
+
+            var profile = _parser.ParseProfile(json);
+
+            Assert.AreEqual(2, profile.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", profile.RendererPaths.Span[0]);
+            Assert.AreEqual("Armature/Head", profile.RendererPaths.Span[1]);
+        }
+
+        [Test]
+        public void ParseProfile_WithoutRendererPaths_DefaultsToEmptyArray()
+        {
+            var json = @"{""schemaVersion"":""1.0"",""layers"":[],""expressions"":[]}";
+
+            var profile = _parser.ParseProfile(json);
+
+            Assert.AreEqual(0, profile.RendererPaths.Length);
+        }
+
+        [Test]
+        public void ParseProfile_EmptyRendererPaths_ReturnsEmptyArray()
+        {
+            var json = @"{
+                ""schemaVersion"":""1.0"",
+                ""rendererPaths"":[],
+                ""layers"":[],
+                ""expressions"":[]
+            }";
+
+            var profile = _parser.ParseProfile(json);
+
+            Assert.AreEqual(0, profile.RendererPaths.Length);
+        }
+
+        [Test]
+        public void SerializeProfile_WithRendererPaths_RoundTrip_PreservesPaths()
+        {
+            var rendererPaths = new[] { "Armature/Body", "Armature/Face" };
+            var profile = new FacialProfile("1.0", null, null, rendererPaths);
+
+            var json = _parser.SerializeProfile(profile);
+            var reparsed = _parser.ParseProfile(json);
+
+            Assert.AreEqual(2, reparsed.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", reparsed.RendererPaths.Span[0]);
+            Assert.AreEqual("Armature/Face", reparsed.RendererPaths.Span[1]);
+        }
+
+        [Test]
+        public void SerializeProfile_WithoutRendererPaths_RoundTrip_ReturnsEmptyArray()
+        {
+            var profile = new FacialProfile("1.0");
+
+            var json = _parser.SerializeProfile(profile);
+            var reparsed = _parser.ParseProfile(json);
+
+            Assert.AreEqual(0, reparsed.RendererPaths.Length);
+        }
+
+        [Test]
+        public void SerializeProfile_RendererPathsInJson_ContainsField()
+        {
+            var rendererPaths = new[] { "Armature/Body" };
+            var profile = new FacialProfile("1.0", null, null, rendererPaths);
+
+            var json = _parser.SerializeProfile(profile);
+
+            Assert.IsTrue(json.Contains("\"rendererPaths\""));
+            Assert.IsTrue(json.Contains("Armature/Body"));
+        }
+
+        [Test]
+        public void ParseProfile_SampleProfileJson_RendererPaths_ParsesCorrectly()
+        {
+            var profile = _parser.ParseProfile(JsonSchemaDefinition.SampleProfileJson);
+
+            Assert.AreEqual(1, profile.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", profile.RendererPaths.Span[0]);
+        }
     }
 }

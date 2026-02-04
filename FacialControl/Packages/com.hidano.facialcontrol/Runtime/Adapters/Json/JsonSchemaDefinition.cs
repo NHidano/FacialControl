@@ -28,6 +28,9 @@ namespace Hidano.FacialControl.Adapters.Json
             /// <summary>expressions フィールド名</summary>
             public const string Expressions = "expressions";
 
+            /// <summary>rendererPaths フィールド名</summary>
+            public const string RendererPaths = "rendererPaths";
+
             /// <summary>
             /// レイヤー定義のフィールド名
             /// </summary>
@@ -222,6 +225,7 @@ namespace Hidano.FacialControl.Adapters.Json
         /// </summary>
         public const string SampleProfileJson = @"{
     ""schemaVersion"": ""1.0"",
+    ""rendererPaths"": [""Armature/Body""],
     ""layers"": [
         {""name"": ""emotion"", ""priority"": 0, ""exclusionMode"": ""lastWins""},
         {""name"": ""lipsync"", ""priority"": 1, ""exclusionMode"": ""blend""},

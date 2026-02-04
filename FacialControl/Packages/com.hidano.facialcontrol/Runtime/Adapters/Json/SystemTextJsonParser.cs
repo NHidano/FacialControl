@@ -100,7 +100,16 @@ namespace Hidano.FacialControl.Adapters.Json
         {
             var layers = ConvertLayers(dto.layers);
             var expressions = ConvertExpressions(dto.expressions);
-            return new FacialProfile(dto.schemaVersion, layers, expressions);
+            var rendererPaths = ConvertRendererPaths(dto.rendererPaths);
+            return new FacialProfile(dto.schemaVersion, layers, expressions, rendererPaths);
+        }
+
+        private static string[] ConvertRendererPaths(List<string> paths)
+        {
+            if (paths == null || paths.Count == 0)
+                return null;
+
+            return paths.ToArray();
         }
 
         private static LayerDefinition[] ConvertLayers(List<LayerDto> dtos)
@@ -238,8 +247,15 @@ namespace Hidano.FacialControl.Adapters.Json
             {
                 schemaVersion = profile.SchemaVersion,
                 layers = new List<LayerDto>(),
-                expressions = new List<ExpressionDto>()
+                expressions = new List<ExpressionDto>(),
+                rendererPaths = new List<string>()
             };
+
+            var rendererPathsSpan = profile.RendererPaths.Span;
+            for (int i = 0; i < rendererPathsSpan.Length; i++)
+            {
+                dto.rendererPaths.Add(rendererPathsSpan[i]);
+            }
 
             var layerSpan = profile.Layers.Span;
             for (int i = 0; i < layerSpan.Length; i++)
@@ -433,6 +449,7 @@ namespace Hidano.FacialControl.Adapters.Json
             public string schemaVersion;
             public List<LayerDto> layers;
             public List<ExpressionDto> expressions;
+            public List<string> rendererPaths;
         }
 
         [Serializable]
