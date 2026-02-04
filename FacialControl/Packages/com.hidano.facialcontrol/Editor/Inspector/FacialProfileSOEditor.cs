@@ -676,16 +676,30 @@ namespace Hidano.FacialControl.Editor.Inspector
                 if (editMap.TryGetValue(i, out var editData))
                 {
                     // 編集データがある場合は反映
-                    // BlendShape 名の編集が行われている場合は反映
-                    if (editData.BlendShapeNameEdits != null && blendShapes != null)
+                    if (blendShapes != null)
                     {
-                        for (int j = 0; j < blendShapes.Length && j < editData.BlendShapeNameEdits.Length; j++)
+                        for (int j = 0; j < blendShapes.Length; j++)
                         {
-                            if (blendShapes[j].Name != editData.BlendShapeNameEdits[j])
+                            var newName = blendShapes[j].Name;
+                            var newValue = blendShapes[j].Value;
+
+                            // BlendShape 名の編集が行われている場合は反映
+                            if (editData.BlendShapeNameEdits != null && j < editData.BlendShapeNameEdits.Length)
+                            {
+                                newName = editData.BlendShapeNameEdits[j];
+                            }
+
+                            // BlendShape Weight 値の編集が行われている場合は反映
+                            if (editData.BlendShapeValueEdits != null && j < editData.BlendShapeValueEdits.Length)
+                            {
+                                newValue = editData.BlendShapeValueEdits[j];
+                            }
+
+                            if (newName != blendShapes[j].Name || Math.Abs(newValue - blendShapes[j].Value) > float.Epsilon)
                             {
                                 blendShapes[j] = new BlendShapeMapping(
-                                    editData.BlendShapeNameEdits[j],
-                                    blendShapes[j].Value,
+                                    newName,
+                                    newValue,
                                     blendShapes[j].Renderer);
                             }
                         }
@@ -973,22 +987,30 @@ namespace Hidano.FacialControl.Editor.Inspector
                         editData.BlendShapeNameEdits = nameEdits;
                     }
 
+                    // BlendShape Weight 編集データを初期化
+                    var valueEdits = new float[bsSpan.Length];
+                    for (int j = 0; j < bsSpan.Length; j++)
+                    {
+                        valueEdits[j] = bsSpan[j].Value;
+                    }
+                    editData.BlendShapeValueEdits = valueEdits;
+
                     for (int j = 0; j < bsSpan.Length; j++)
                     {
                         var bs = bsSpan[j];
                         var rendererText = bs.Renderer != null ? $" ({bs.Renderer})" : "";
 
+                        var bsContainer = new VisualElement();
+                        bsContainer.style.flexDirection = FlexDirection.Row;
+                        bsContainer.style.alignItems = Align.Center;
+                        bsContainer.style.marginLeft = 8;
+
+                        var capturedExprIndex = capturedIndex;
+                        var capturedBsIndex = j;
+
                         if (hasReferenceModel)
                         {
                             // ドロップダウンで BlendShape 名を選択可能
-                            var bsContainer = new VisualElement();
-                            bsContainer.style.flexDirection = FlexDirection.Row;
-                            bsContainer.style.alignItems = Align.Center;
-                            bsContainer.style.marginLeft = 8;
-
-                            var capturedExprIndex = capturedIndex;
-                            var capturedBsIndex = j;
-
                             var dropdownChoices = new List<string>(allBlendShapeNames);
                             var initialIndex = dropdownChoices.IndexOf(bs.Name);
                             if (initialIndex < 0)
@@ -1013,20 +1035,64 @@ namespace Hidano.FacialControl.Editor.Inspector
                                 }
                             });
                             bsContainer.Add(dropdown);
-
-                            var valueLabel = new Label($": {bs.Value:F3}{rendererText}");
-                            valueLabel.AddToClassList(FacialControlStyles.InfoLabel);
-                            bsContainer.Add(valueLabel);
-
-                            bsFoldout.Add(bsContainer);
                         }
                         else
                         {
-                            // 従来通り Label で読み取り専用表示
-                            var bsLabel = new Label($"  {bs.Name}: {bs.Value:F3}{rendererText}");
-                            bsLabel.AddToClassList(FacialControlStyles.InfoLabel);
-                            bsFoldout.Add(bsLabel);
+                            // 参照モデル未設定時は BlendShape 名を Label で表示
+                            var nameLabel = new Label($"  {bs.Name}");
+                            nameLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                            nameLabel.style.minWidth = 120;
+                            bsContainer.Add(nameLabel);
                         }
+
+                        // Weight 値: Slider + FloatField
+                        var slider = new Slider(0f, 1f) { value = bs.Value };
+                        slider.style.flexGrow = 1;
+                        slider.style.minWidth = 80;
+                        slider.RegisterValueChangedCallback(evt =>
+                        {
+                            if (capturedExprIndex < _expressionEdits.Count)
+                            {
+                                var edits = _expressionEdits[capturedExprIndex].BlendShapeValueEdits;
+                                if (edits != null && capturedBsIndex < edits.Length)
+                                {
+                                    edits[capturedBsIndex] = evt.newValue;
+                                }
+                            }
+                        });
+                        bsContainer.Add(slider);
+
+                        var floatField = new FloatField() { value = bs.Value };
+                        floatField.style.width = 60;
+                        floatField.RegisterValueChangedCallback(evt =>
+                        {
+                            var clamped = Math.Clamp(evt.newValue, 0f, 1f);
+                            if (capturedExprIndex < _expressionEdits.Count)
+                            {
+                                var edits = _expressionEdits[capturedExprIndex].BlendShapeValueEdits;
+                                if (edits != null && capturedBsIndex < edits.Length)
+                                {
+                                    edits[capturedBsIndex] = clamped;
+                                }
+                            }
+                            // Slider と同期
+                            slider.SetValueWithoutNotify(clamped);
+                        });
+                        // Slider 変更時に FloatField も同期
+                        slider.RegisterValueChangedCallback(evt =>
+                        {
+                            floatField.SetValueWithoutNotify(evt.newValue);
+                        });
+                        bsContainer.Add(floatField);
+
+                        if (!string.IsNullOrEmpty(rendererText))
+                        {
+                            var rendererLabel = new Label(rendererText);
+                            rendererLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                            bsContainer.Add(rendererLabel);
+                        }
+
+                        bsFoldout.Add(bsContainer);
                     }
 
                     exprFoldout.Add(bsFoldout);
@@ -1278,6 +1344,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             /// BlendShape 名の編集データ。null の場合は元データを維持。
             /// </summary>
             public string[] BlendShapeNameEdits;
+
+            /// <summary>
+            /// BlendShape Weight 値の編集データ。null の場合は元データを維持。
+            /// </summary>
+            public float[] BlendShapeValueEdits;
 
             public ExpressionEditData(string id, string name, string layer, float transitionDuration, int originalIndex)
             {
