@@ -73,6 +73,25 @@ namespace Hidano.FacialControl.Editor.Inspector
         private readonly Dictionary<int, bool> _blendShapeFoldoutStates = new Dictionary<int, bool>();
 
         /// <summary>
+        /// Scene オブジェクト参照の一時保持用（非シリアライズ、セッション中のみ有効）
+        /// </summary>
+        private GameObject _sceneReferenceModel;
+
+        /// <summary>
+        /// アクティブな使用モデル。アセット参照（Prefab 等）があればそちらを優先、なければ Scene オブジェクトを返す。
+        /// </summary>
+        private GameObject ActiveReferenceModel
+        {
+            get
+            {
+                var so = target as FacialProfileSO;
+                if (so != null && so.ReferenceModel != null)
+                    return so.ReferenceModel;
+                return _sceneReferenceModel;
+            }
+        }
+
+        /// <summary>
         /// Undo/Redo コールバックの登録を解除する
         /// </summary>
         private void OnDisable()
@@ -97,12 +116,54 @@ namespace Hidano.FacialControl.Editor.Inspector
             // ========================================
             var refModelFoldout = new Foldout { text = ReferenceModelSectionLabel, value = true };
 
+            var so1 = target as FacialProfileSO;
             var refModelField = new ObjectField("使用モデル")
             {
                 objectType = typeof(GameObject),
-                allowSceneObjects = true
+                allowSceneObjects = true,
+                tooltip = "Hierarchy 上のオブジェクトはセッション中のみ有効です"
             };
-            refModelField.BindProperty(serializedObject.FindProperty("_referenceModel"));
+            // 初期値: アセット参照 → Scene 参照の優先順
+            refModelField.value = so1 != null && so1.ReferenceModel != null ? so1.ReferenceModel : _sceneReferenceModel;
+            refModelField.RegisterValueChangedCallback(evt =>
+            {
+                var soRef = target as FacialProfileSO;
+                if (soRef == null)
+                    return;
+
+                var newObj = evt.newValue as GameObject;
+                if (newObj == null)
+                {
+                    // null に設定された場合は両方クリア
+                    Undo.RecordObject(soRef, "使用モデル変更");
+                    soRef.ReferenceModel = null;
+                    EditorUtility.SetDirty(soRef);
+                    _sceneReferenceModel = null;
+                }
+                else if (EditorUtility.IsPersistent(newObj))
+                {
+                    // アセット参照（Prefab 等）→ SerializedProperty に保存
+                    Undo.RecordObject(soRef, "使用モデル変更");
+                    soRef.ReferenceModel = newObj;
+                    EditorUtility.SetDirty(soRef);
+                    _sceneReferenceModel = null;
+                }
+                else
+                {
+                    // Scene オブジェクト → 一時フィールドに保存
+                    _sceneReferenceModel = newObj;
+                    // SO 側の参照はクリア（Scene 参照は保持できないため）
+                    if (soRef.ReferenceModel != null)
+                    {
+                        Undo.RecordObject(soRef, "使用モデル変更");
+                        soRef.ReferenceModel = null;
+                        EditorUtility.SetDirty(soRef);
+                    }
+                }
+
+                UpdateRendererPathsDisplay();
+                RebuildDetailUI();
+            });
             refModelFoldout.Add(refModelField);
 
             var detectButton = new Button(OnDetectRendererPathsClicked) { text = "RendererPaths 自動検出" };
@@ -1226,7 +1287,7 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                     // 使用モデルが設定されている場合は BlendShape 名をドロップダウンで選択可能にする
                     var so = target as FacialProfileSO;
-                    var allBlendShapeNames = (so != null) ? CollectBlendShapeNames(so.ReferenceModel) : null;
+                    var allBlendShapeNames = CollectBlendShapeNames(ActiveReferenceModel);
                     var hasReferenceModel = allBlendShapeNames != null && allBlendShapeNames.Count > 0;
 
                     if (hasReferenceModel && bsSpan.Length > 0)
@@ -1457,20 +1518,21 @@ namespace Hidano.FacialControl.Editor.Inspector
             if (so == null)
                 return;
 
-            if (so.ReferenceModel == null)
+            var activeModel = ActiveReferenceModel;
+            if (activeModel == null)
             {
                 ShowStatus("使用モデルが設定されていません。", isError: true);
                 return;
             }
 
-            var renderers = so.ReferenceModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            var renderers = activeModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
             if (renderers.Length == 0)
             {
                 ShowStatus("使用モデルに SkinnedMeshRenderer が見つかりません。", isError: true);
                 return;
             }
 
-            var rootTransform = so.ReferenceModel.transform;
+            var rootTransform = activeModel.transform;
             var paths = new string[renderers.Length];
             for (int i = 0; i < renderers.Length; i++)
             {
@@ -1542,7 +1604,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             _rendererPathsContainer.Add(headerLabel);
 
             // 使用モデルがある場合は BlendShape 数も表示
-            GameObject refModel = so.ReferenceModel;
+            GameObject refModel = ActiveReferenceModel;
 
             for (int i = 0; i < paths.Length; i++)
             {
