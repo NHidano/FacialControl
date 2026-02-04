@@ -15,6 +15,33 @@ MonoBehaviour:
   _jsonFilePath: FacialControl/default_profile.json
   _schemaVersion: 1.0
   _layerCount: 3
-  _expressionCount: 5
-  _rendererPaths: []
-  _referenceModel: {fileID: 0}
+  _expressionCount: 4
+  _rendererPaths:
+  - Body
+  _undoJsonSnapshot: "{\n    \"schemaVersion\": \"1.0\",\n    \"layers\": [\n       
+    {\n            \"name\": \"emotion\",\n            \"priority\": 0,\n           
+    \"exclusionMode\": \"lastWins\"\n        },\n        {\n            \"name\":
+    \"lipsync\",\n            \"priority\": 1,\n            \"exclusionMode\": \"blend\"\n       
+    },\n        {\n            \"name\": \"eye\",\n            \"priority\": 2,\n           
+    \"exclusionMode\": \"lastWins\"\n        }\n    ],\n    \"expressions\": [\n       
+    {\n            \"id\": \"00000000-0000-0000-0000-000000000001\",\n           
+    \"name\": \"default\",\n            \"layer\": \"emotion\",\n            \"transitionDuration\":
+    0.25,\n            \"transitionCurve\": {\n                \"type\": \"linear\",\n               
+    \"keys\": []\n            },\n            \"blendShapeValues\": [],\n           
+    \"layerSlots\": []\n        },\n        {\n            \"id\": \"00000000-0000-0000-0000-000000000002\",\n           
+    \"name\": \"blink\",\n            \"layer\": \"eye\",\n            \"transitionDuration\":
+    0.07999999821186066,\n            \"transitionCurve\": {\n                \"type\":
+    \"linear\",\n                \"keys\": []\n            },\n            \"blendShapeValues\":
+    [\n                {\n                    \"name\": \"\u307E\u3070\u305F\u304D\",\n                   
+    \"value\": 1.0,\n                    \"renderer\": \"\"\n                }\n           
+    ],\n            \"layerSlots\": []\n        },\n        {\n            \"id\":
+    \"00000000-0000-0000-0000-000000000003\",\n            \"name\": \"gaze_follow\",\n           
+    \"layer\": \"eye\",\n            \"transitionDuration\": 0.25,\n            \"transitionCurve\":
+    {\n                \"type\": \"linear\",\n                \"keys\": []\n           
+    },\n            \"blendShapeValues\": [],\n            \"layerSlots\": []\n       
+    },\n        {\n            \"id\": \"00000000-0000-0000-0000-000000000004\",\n           
+    \"name\": \"gaze_camera\",\n            \"layer\": \"eye\",\n            \"transitionDuration\":
+    0.25,\n            \"transitionCurve\": {\n                \"type\": \"linear\",\n               
+    \"keys\": []\n            },\n            \"blendShapeValues\": [],\n           
+    \"layerSlots\": []\n        }\n    ],\n    \"rendererPaths\": []\n}"
+  _referenceModel: {fileID: 919132149155446097, guid: 9c07cd4e1ef6a2a49a1c212c15237ef8, type: 3}

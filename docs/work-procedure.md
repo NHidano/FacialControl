@@ -1228,6 +1228,67 @@ ProfileManagerWindow（独立 EditorWindow）の機能を FacialProfileSO の In
 
 ---
 
+## P21: Inspector・Editor 改善 第3弾（フィードバック対応）
+
+### 目的
+
+ARKit 検出ツールの JSON 保存後処理の改善、Inspector のインポート・クローン周りの UX 改善、使用モデルの Hierarchy 対応を行う。
+
+### 作業内容
+
+#### P21-01: ARKit 検出ツールで JSON 保存後に AssetDatabase.Refresh を実行
+- **対象ファイル**: `Editor/Windows/ARKitDetectorWindow.cs`
+- **背景**: ARKit 検出ツールで Expression JSON や OSC Config JSON を StreamingAssets 等に保存した後、`AssetDatabase.Refresh()` が呼ばれないため Unity Editor がファイルの追加・変更を認識しない。保存先が Assets フォルダ配下の場合、Project ウィンドウに反映されず手動 Refresh が必要になる
+- **変更内容**:
+  - `OnGenerateExpressionsClicked()` の JSON 保存成功後（`ShowStatus` の前）に `AssetDatabase.Refresh()` を追加
+  - `OnGenerateOscClicked()` の JSON 保存成功後（`ShowStatus` の前）に `AssetDatabase.Refresh()` を追加
+  - 保存先がプロジェクト外の場合も副作用はないため、無条件で呼ぶ
+
+#### P21-02: JSON インポートで JsonFilePath 未設定時もファイル選択ダイアログを表示
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: 現在の `OnImportClicked()` は `so.JsonFilePath` が未設定の場合にエラーメッセージを表示してファイル選択ダイアログを開かずに return する（305〜315 行目）。新規作成した SO に対して外部 JSON をインポートしたいケースでダイアログが開かない
+- **変更内容**:
+  - `OnImportClicked()` 先頭の `JsonFilePath` 空チェック（311〜315 行目）を削除し、常にファイル選択ダイアログを開く
+  - ファイル選択後のパース成功時:
+    - `so.JsonFilePath` が設定済みの場合: 従来通り StreamingAssets 配下の該当パスへ JSON を書き出し、SO を更新
+    - `so.JsonFilePath` が未設定の場合: JSON ファイルの書き出しをスキップし、パース結果で SO のフィールドのみを更新（`mapper.UpdateSO()` と `_cachedProfile` の更新は実行する）
+  - ステータス表示を分岐: 書き出しを行った場合は `"インポートしました: {filename}"`、SO 更新のみの場合は `"インポートしました（JSON ファイル書き出しはスキップ）: {filename}"`
+
+#### P21-03: クローン作成ボタンを削除
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: プロファイルのクローンは Unity 標準のアセット複製（Ctrl+D）で代替できるため、専用ボタンは不要
+- **変更内容**:
+  - `_cloneProfileButton` フィールド宣言（53 行目付近）を削除
+  - `CreateInspectorGUI()` 内のクローンボタン生成・`root.Add()` 処理（101〜107 行目付近）を削除
+  - `OnCloneProfileClicked()` メソッド全体（396〜479 行目付近）を削除
+  - `UpdateProfileInfo()` 等で `_cloneProfileButton.SetEnabled()` を呼んでいる箇所（1005〜1006、1034〜1035 行目付近）を削除
+  - Inspector の配置順が変更: 使用モデル → レイヤー → Expression → +/- ボタン → JSON に保存 → JSON ファイル
+
+#### P21-04: 使用モデルに Hierarchy 上の GameObject をアタッチ可能にする
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`, `Runtime/Adapters/ScriptableObject/FacialProfileSO.cs`
+- **背景**: `FacialProfileSO._referenceModel` は ScriptableObject の `[SerializeField]` フィールドであるため、Hierarchy 上の Scene オブジェクトへの参照はドメインリロードやエディタ再起動で失われる。`allowSceneObjects = true` は設定済みだが、`BindProperty` による SerializedProperty バインディングでは Scene オブジェクトが正しく保持されないケースがある
+- **変更内容**:
+  - `FacialProfileSOEditor` に非シリアライズのエディタ専用フィールド `private GameObject _sceneReferenceModel` を追加（Scene オブジェクト参照の一時保持用）
+  - 使用モデルの `ObjectField` を `BindProperty` から `RegisterValueChangedCallback` に切り替え:
+    - 値変更時にアセット参照（Prefab 等）なら `so.ReferenceModel` に保存、Scene オブジェクトなら `_sceneReferenceModel` に保存
+    - ObjectField の初期値は `so.ReferenceModel ?? _sceneReferenceModel` で設定
+  - `OnDetectRendererPathsClicked()` 等の使用モデル参照箇所で `so.ReferenceModel ?? _sceneReferenceModel` を使用するヘルパープロパティ `ActiveReferenceModel` を追加
+  - `allowSceneObjects = true` は維持
+  - Scene オブジェクト参照はセッション中のみ有効であることを Inspector のツールチップで明示（例: `"Hierarchy 上のオブジェクトはセッション中のみ有効です"`）
+
+### テスト
+- 手動検証中心（Editor 操作確認）
+- 既存テスト（`ProfileEditSaveTests`、`ProfileBlendShapeAddRemoveTests`、`RendererPathsCacheUpdateTests` 等）が引き続き Green であること
+
+### 完了基準
+- ARKit 検出ツールで JSON 保存後に Project ウィンドウへファイルが即時反映される
+- JsonFilePath 未設定の SO でもインポートボタンでファイル選択ダイアログが表示される
+- クローン作成ボタンが Inspector から削除されている
+- Hierarchy 上の GameObject を使用モデルにドラッグ＆ドロップでき、RendererPaths 自動検出が動作する
+- 既存テストが全て Green
+
+---
+
 ## フェーズ間の依存関係
 
 ```
@@ -1249,6 +1310,8 @@ P00 (基盤)
           │                                                    └→ P19 (Inspector UI 改善)
           │                                                            │
           │                                                            └→ P20 (Inspector UI 改善 第2弾)
+          │                                                                    │
+          │                                                                    └→ P21 (Inspector・Editor 改善 第3弾)
           └→ P13 (テンプレート) ←── P05 の後でも可
               └→ P14 (統合・性能テスト) ←── P06〜P08 完了後
                   └→ P15 (ドキュメント)
@@ -1263,6 +1326,7 @@ P00 (基盤)
 - P18 は P17 完了後に着手可能（P18-01〜P18-05 は並行着手可能、P18-06 は P18-01〜P18-05 完了後、P18-07 は P18-06 完了後）
 - P19 は P18 完了後に着手可能（P19-01/P19-06〜P19-10 は並行着手可能、P19-02 → P19-03 → P19-04 の順で依存、P19-02 → P19-05 の依存あり）
 - P20 は P19 完了後に着手可能（P20-01 → P20-02 の依存あり、P20-03/P20-04 → P20-05 の依存あり、それ以外の P20-06〜P20-09 は並行着手可能）
+- P21 は P20 完了後に着手可能（P21-01〜P21-04 は全て並行着手可能）
 
 ---
 
@@ -1293,8 +1357,9 @@ P00 (基盤)
 | P18 | プロファイル管理を Inspector に一本化 | P17 |
 | P19 | Inspector UI 改善（フィードバック対応） | P18 |
 | P20 | Inspector UI 改善 第2弾（フィードバック対応） | P19 |
+| P21 | Inspector・Editor 改善 第3弾（フィードバック対応） | P20 |
 
-### 作業項目一覧（全 107 項目）
+### 作業項目一覧（全 111 項目）
 
 | ID | 作業項目 |
 |----|---------|
@@ -1403,6 +1468,10 @@ P00 (基盤)
 | P20-07 | BlendShape 選択ドロップダウンに検索入力ボックスを追加 |
 | P20-08 | レイヤー優先度をドラッグ順序で設定し数値はラベル表示のみに変更 |
 | P20-09 | JSON 読み込みボタンを削除 |
+| P21-01 | ARKit 検出ツールで JSON 保存後に AssetDatabase.Refresh を実行 |
+| P21-02 | JSON インポートで JsonFilePath 未設定時もファイル選択ダイアログを表示 |
+| P21-03 | クローン作成ボタンを削除 |
+| P21-04 | 使用モデルに Hierarchy 上の GameObject をアタッチ可能にする |
 
 ### テスト一覧（全 42 項目）
 
