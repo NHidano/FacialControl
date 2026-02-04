@@ -36,7 +36,7 @@
 - 3D キャラクターの表情をリアルタイムに制御するシステムという理解で合っていますか？
 
 **回答**:
-- ライブラリ（開発者向けアセット）である。OpenUPM へのリリースを想定している。
+- ライブラリ（開発者向けアセット）である。npmjs.com へのリリースを想定している。
 - 3D キャラクターの表情をリアルタイムに制御するシステムという理解で合っている。
 
 **決定日**: 2026-01-28
@@ -602,7 +602,7 @@
   - `Editor/` — Editor 拡張（UI Toolkit）
   - 各レイヤーは asmdef で依存方向を強制する。
 - C# 名前空間のルート: `Hidano.FacialControl`（例: `Hidano.FacialControl.Domain`、`Hidano.FacialControl.Application`）
-- OpenUPM パッケージ名: `com.hidano.facialcontrol`
+- npm パッケージ名: `com.hidano.facialcontrol`
 
 **決定日**: 2026-02-02
 
@@ -620,7 +620,7 @@
 - 依存パッケージ（lilToon、MagicaCloth2）のライセンスとの整合性は確認済みですか？
 
 **回答**:
-- MIT ライセンスを採用する。商用利用可。OpenUPM で最も一般的なライセンス。
+- MIT ライセンスを採用する。商用利用可。npm で最も一般的なライセンス。
 - lilToon、MagicaCloth2 はリリースパッケージには含めないため、ライセンスの整合性は問題ない。
 
 **決定日**: 2026-02-02

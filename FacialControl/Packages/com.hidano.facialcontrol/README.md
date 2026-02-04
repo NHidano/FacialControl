@@ -25,7 +25,7 @@ FacialControl は、VTuber 配信用フェイシャルキャプチャ連動や G
 
 ## インストール
 
-### OpenUPM 経由（推奨）
+### npm レジストリ経由（推奨）
 
 `Packages/manifest.json` に以下を追加してください。
 
@@ -33,8 +33,8 @@ FacialControl は、VTuber 配信用フェイシャルキャプチャ連動や G
 {
     "scopedRegistries": [
         {
-            "name": "OpenUPM",
-            "url": "https://package.openupm.com",
+            "name": "npmjs",
+            "url": "https://registry.npmjs.org",
             "scopes": [
                 "com.hidano"
             ]

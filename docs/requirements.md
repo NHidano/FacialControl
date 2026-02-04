@@ -24,7 +24,7 @@
 
 ### 1.1 目的
 
-FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）である。OpenUPM でのパッケージ配布を想定する。
+FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）である。npmjs.com でのパッケージ配布を想定する。
 
 ### 1.2 背景
 
@@ -501,7 +501,7 @@ JSON (FacialProfile)
 | パッケージ名 | `com.hidano.facialcontrol` |
 | C# 名前空間 | `Hidano.FacialControl`（例: `Hidano.FacialControl.Domain`） |
 | ライセンス | MIT |
-| 配布先 | OpenUPM |
+| 配布先 | npmjs.com |
 | uOsc | 自前フォーク `com.hidano.uosc` を必須依存として npmjs.com から取得 |
 
 ---

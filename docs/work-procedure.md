@@ -722,8 +722,8 @@ GitHub Actions による自動テスト・リリースパイプラインを構�
 - asmdef の依存方向チェック
 - .meta ファイルの整合性チェック
 
-#### P16-03: OpenUPM 登録準備
-- OpenUPM 登録用設定
+#### P16-03: npmjs.com 公開準備
+- npmjs.com 公開用設定
 - uOsc フォーク（`com.hidano.uosc`）のリリース確認
 
 #### P16-04: バージョンタグ
@@ -732,7 +732,7 @@ GitHub Actions による自動テスト・リリースパイプラインを構�
 ### 完了基準
 - CI で全テストが自動実行される
 - パッケージバリデーションが通る
-- OpenUPM から `com.hidano.facialcontrol` がインストールできる
+- npmjs.com から `com.hidano.facialcontrol` がインストールできる
 
 ---
 
@@ -966,7 +966,7 @@ P00 (基盤)
 | P15-04 | パッケージ README.md / CHANGELOG.md |
 | P16-01 | GitHub Actions ワークフロー |
 | P16-02 | パッケージバリデーション |
-| P16-03 | OpenUPM 登録準備 |
+| P16-03 | npmjs.com 公開準備 |
 | P16-04 | バージョンタグ |
 | P17-01 | ProfileManagerWindow にプロファイル新規作成機能を追加 |
 | P17-02 | FacialProfileSOEditor に JSON 内詳細情報の表示を追加 |

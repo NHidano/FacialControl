@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）。OpenUPM へのリリースを想定。主なユースケースは VTuber 配信用フェイシャルキャプチャ連動と、GUI エディタでの AnimationClip 作成支援。ターゲットユーザーは Unity エンジニア。
+FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）。npmjs.com へのリリースを想定。主なユースケースは VTuber 配信用フェイシャルキャプチャ連動と、GUI エディタでの AnimationClip 作成支援。ターゲットユーザーは Unity エンジニア。
 
 ## 重要なドキュメント
 

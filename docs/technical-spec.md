@@ -860,7 +860,7 @@ com.hidano.facialcontrol/
 | 18 | サムネイル | 手動ボタンで生成 | 対象モデル指定が必要 |
 | 19 | Curve シリアライズ | キーフレーム配列そのまま JSON 化 | Keyframe 全フィールド保持 |
 | 20 | 検索 | 名前検索のみ | レイヤーフィルターは将来 |
-| 21 | uOsc 同梱 | package.json 依存定義 | OpenUPM 登録確認要 |
+| 21 | uOsc 同梱 | package.json 依存定義 | npmjs.com 公開確認要 |
 | 22 | コントローラー | キャラクターごとにコンポーネント | グローバルマネージャーは別途 |
 | 23 | UDP ポート | デフォルト VRChat 標準 + ユーザー設定可 | Inspector / JSON で変更 |
 | 24 | PlayableGraph 構成 | 1 Graph / キャラクター + レイヤー分ノード | AnimationLayerMixerPlayable |
