@@ -9,6 +9,7 @@ using Hidano.FacialControl.Adapters.Json;
 using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Editor.Common;
+using Hidano.FacialControl.Editor.Windows;
 
 namespace Hidano.FacialControl.Editor.Inspector
 {
@@ -72,6 +73,14 @@ namespace Hidano.FacialControl.Editor.Inspector
             var styleSheet = FacialControlStyles.Load();
             if (styleSheet != null)
                 root.styleSheets.Add(styleSheet);
+
+            // ========================================
+            // 新規プロファイル作成ボタン
+            // ========================================
+            var createProfileButton = new Button(OnCreateNewProfileClicked) { text = "新規プロファイル作成" };
+            createProfileButton.AddToClassList(FacialControlStyles.ActionButton);
+            createProfileButton.style.marginBottom = 8;
+            root.Add(createProfileButton);
 
             // ========================================
             // JSON ファイルパスセクション
@@ -334,6 +343,39 @@ namespace Hidano.FacialControl.Editor.Inspector
                 ShowStatus($"エクスポートエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[FacialProfileSOEditor] エクスポートエラー: {ex}");
             }
+        }
+
+        /// <summary>
+        /// 新規プロファイル作成ボタン押下時の処理。
+        /// ProfileCreationDialog を表示し、作成完了後に Inspector を自動更新する。
+        /// </summary>
+        private void OnCreateNewProfileClicked()
+        {
+            var dialog = ProfileCreationDialog.ShowDialog();
+            dialog.OnCreated += OnProfileCreated;
+        }
+
+        /// <summary>
+        /// ProfileCreationDialog でプロファイル作成完了時のコールバック。
+        /// Inspector を自動更新する。
+        /// </summary>
+        private void OnProfileCreated(FacialProfileSO createdSo)
+        {
+            // 現在の Inspector のターゲット SO の JSON を再読み込みして更新
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            // JSON パスが設定されていれば再読み込み
+            if (!string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                serializedObject.Update();
+                UpdateProfileInfo();
+                TryLoadCachedProfile();
+                UpdateRendererPathsDisplay();
+            }
+
+            ShowStatus("新規プロファイルが作成されました。", isError: false);
         }
 
         /// <summary>
