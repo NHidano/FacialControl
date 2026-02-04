@@ -69,6 +69,7 @@ namespace Hidano.FacialControl.Editor.Windows
             // 対象モデル選択セクション
             // ========================================
             var targetSection = new VisualElement();
+            targetSection.style.flexShrink = 0;
             targetSection.style.marginBottom = 4;
             targetSection.style.paddingLeft = 4;
             targetSection.style.paddingRight = 4;
@@ -89,12 +90,14 @@ namespace Hidano.FacialControl.Editor.Windows
             // ========================================
             var actionSection = new VisualElement();
             actionSection.style.flexDirection = FlexDirection.Row;
+            actionSection.style.flexShrink = 0;
             actionSection.style.paddingLeft = 4;
             actionSection.style.paddingRight = 4;
             actionSection.style.marginBottom = 4;
 
             _detectButton = new Button(OnDetectClicked) { text = "検出実行" };
             _detectButton.AddToClassList(FacialControlStyles.ActionButton);
+            _detectButton.style.minHeight = 24;
             _detectButton.SetEnabled(false);
             actionSection.Add(_detectButton);
 
@@ -105,6 +108,7 @@ namespace Hidano.FacialControl.Editor.Windows
             // ========================================
             _summaryLabel = new Label("SkinnedMeshRenderer を選択してください。");
             _summaryLabel.AddToClassList(FacialControlStyles.InfoLabel);
+            _summaryLabel.style.flexShrink = 0;
             _summaryLabel.style.paddingLeft = 4;
             _summaryLabel.style.paddingRight = 4;
             _summaryLabel.style.marginBottom = 4;
@@ -124,6 +128,7 @@ namespace Hidano.FacialControl.Editor.Windows
             // ========================================
             var generateSection = new VisualElement();
             generateSection.style.flexDirection = FlexDirection.Row;
+            generateSection.style.flexShrink = 0;
             generateSection.style.paddingLeft = 4;
             generateSection.style.paddingRight = 4;
             generateSection.style.marginTop = 4;
@@ -131,11 +136,13 @@ namespace Hidano.FacialControl.Editor.Windows
 
             _generateExpressionsButton = new Button(OnGenerateExpressionsClicked) { text = "Expression 生成" };
             _generateExpressionsButton.AddToClassList(FacialControlStyles.ActionButton);
+            _generateExpressionsButton.style.minHeight = 24;
             _generateExpressionsButton.SetEnabled(false);
             generateSection.Add(_generateExpressionsButton);
 
             _generateOscButton = new Button(OnGenerateOscClicked) { text = "OSC マッピング生成" };
             _generateOscButton.AddToClassList(FacialControlStyles.ActionButton);
+            _generateOscButton.style.minHeight = 24;
             _generateOscButton.style.marginLeft = 4;
             _generateOscButton.SetEnabled(false);
             generateSection.Add(_generateOscButton);
@@ -147,6 +154,7 @@ namespace Hidano.FacialControl.Editor.Windows
             // ========================================
             _statusLabel = new Label();
             _statusLabel.AddToClassList(FacialControlStyles.StatusLabel);
+            _statusLabel.style.flexShrink = 0;
             _statusLabel.style.paddingLeft = 4;
             _statusLabel.style.paddingBottom = 4;
             root.Add(_statusLabel);
