@@ -14,7 +14,7 @@ namespace Hidano.FacialControl.Editor.Inspector
 {
     /// <summary>
     /// FacialProfileSO のカスタム Inspector。
-    /// UI Toolkit で実装し、JSON ファイルパス表示、JSON 読み込みボタン、
+    /// UI Toolkit で実装し、JSON ファイルパス表示、
     /// レイヤー詳細一覧、Expression 詳細一覧を表示する。
     /// P17-03: レイヤー・Expression のインライン編集と JSON 上書き保存機能を提供する。
     /// </summary>
@@ -152,10 +152,6 @@ namespace Hidano.FacialControl.Editor.Inspector
                 "パスは StreamingAssets/ からの相対パスです（例: FacialControl/default_profile.json）",
                 HelpBoxMessageType.Info);
             jsonFoldout.Add(jsonPathHelpBox);
-
-            var loadButton = new Button(OnLoadJsonClicked) { text = "JSON 読み込み" };
-            loadButton.AddToClassList(FacialControlStyles.ActionButton);
-            jsonFoldout.Add(loadButton);
 
             // インポート・エクスポートボタン
             var importExportContainer = new VisualElement();
@@ -300,62 +296,6 @@ namespace Hidano.FacialControl.Editor.Inspector
         private void UpdateUndoJsonSnapshotAfterSave(FacialProfileSO so, string newJson)
         {
             so.UndoJsonSnapshot = newJson;
-        }
-
-        /// <summary>
-        /// JSON 読み込みボタン押下時の処理。
-        /// JSON ファイルを読み込み、SO の表示用フィールドを更新する。
-        /// </summary>
-        private void OnLoadJsonClicked()
-        {
-            var so = target as FacialProfileSO;
-            if (so == null)
-                return;
-
-            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
-            {
-                ShowStatus("JSON ファイルパスが設定されていません。", isError: true);
-                return;
-            }
-
-            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
-            if (!System.IO.File.Exists(fullPath))
-            {
-                ShowStatus($"ファイルが見つかりません: {fullPath}", isError: true);
-                return;
-            }
-
-            try
-            {
-                var json = System.IO.File.ReadAllText(fullPath, System.Text.Encoding.UTF8);
-                var parser = new SystemTextJsonParser();
-                var profile = parser.ParseProfile(json);
-
-                var mapper = new FacialProfileMapper(
-                    new FileProfileRepository(parser));
-
-                StoreUndoJsonSnapshot(so);
-                Undo.RecordObject(so, "JSON 読み込み");
-                mapper.UpdateSO(so, profile);
-                UpdateUndoJsonSnapshotAfterSave(so, json);
-                EditorUtility.SetDirty(so);
-                serializedObject.Update();
-
-                _cachedProfile = profile;
-
-                UpdateProfileInfo();
-                RebuildDetailUI();
-                ShowStatus("JSON 読み込みに成功しました。", isError: false);
-            }
-            catch (Exception ex)
-            {
-                _cachedProfile = null;
-                ClearDetailUI();
-                if (_cloneProfileButton != null)
-                    _cloneProfileButton.SetEnabled(false);
-                ShowStatus($"読み込みエラー: {ex.Message}", isError: true);
-                Debug.LogError($"[FacialProfileSOEditor] JSON 読み込みエラー: {ex}");
-            }
         }
 
         /// <summary>
