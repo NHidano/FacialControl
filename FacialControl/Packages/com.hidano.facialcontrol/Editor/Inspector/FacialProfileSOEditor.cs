@@ -929,12 +929,12 @@ namespace Hidano.FacialControl.Editor.Inspector
         {
             var originalProfile = _cachedProfile.Value;
 
-            // レイヤー再構築
+            // レイヤー再構築（優先度はリスト位置から自動算出）
             var layers = new LayerDefinition[_layerEdits.Count];
             for (int i = 0; i < _layerEdits.Count; i++)
             {
                 var edit = _layerEdits[i];
-                layers[i] = new LayerDefinition(edit.Name, edit.Priority, edit.ExclusionMode);
+                layers[i] = new LayerDefinition(edit.Name, i, edit.ExclusionMode);
             }
 
             // Expression 再構築
@@ -1175,7 +1175,8 @@ namespace Hidano.FacialControl.Editor.Inspector
             for (int i = 0; i < layerSpan.Length; i++)
             {
                 var layer = layerSpan[i];
-                var editData = new LayerEditData(layer.Name, layer.Priority, layer.ExclusionMode);
+                // 優先度はリスト位置から自動算出
+                var editData = new LayerEditData(layer.Name, i, layer.ExclusionMode);
                 _layerEdits.Add(editData);
 
                 var container = new VisualElement();
@@ -1183,6 +1184,26 @@ namespace Hidano.FacialControl.Editor.Inspector
                 container.style.marginBottom = 4;
 
                 var capturedIndex = i;
+
+                // 上下移動ボタン行
+                var moveButtonRow = new VisualElement();
+                moveButtonRow.style.flexDirection = FlexDirection.Row;
+                moveButtonRow.style.justifyContent = Justify.FlexEnd;
+                moveButtonRow.style.marginBottom = 2;
+
+                var moveUpButton = new Button(() => OnMoveLayerUp(capturedIndex)) { text = "▲" };
+                moveUpButton.style.width = 24;
+                moveUpButton.style.height = 20;
+                moveUpButton.SetEnabled(i > 0);
+                moveButtonRow.Add(moveUpButton);
+
+                var moveDownButton = new Button(() => OnMoveLayerDown(capturedIndex)) { text = "▼" };
+                moveDownButton.style.width = 24;
+                moveDownButton.style.height = 20;
+                moveDownButton.SetEnabled(i < layerSpan.Length - 1);
+                moveButtonRow.Add(moveDownButton);
+
+                container.Add(moveButtonRow);
 
                 // 名前: TextField
                 var nameField = new TextField("名前") { value = layer.Name };
@@ -1193,14 +1214,10 @@ namespace Hidano.FacialControl.Editor.Inspector
                 });
                 container.Add(nameField);
 
-                // 優先度: IntegerField
-                var priorityField = new IntegerField("優先度") { value = layer.Priority };
-                priorityField.RegisterValueChangedCallback(evt =>
-                {
-                    if (capturedIndex < _layerEdits.Count)
-                        _layerEdits[capturedIndex].Priority = evt.newValue;
-                });
-                container.Add(priorityField);
+                // 優先度: Label（リスト位置から自動算出、読み取り専用）
+                var priorityLabel = new Label($"優先度: {i}");
+                priorityLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                container.Add(priorityLabel);
 
                 // 排他モード: EnumField
                 var modeField = new EnumField("排他モード", layer.ExclusionMode);
@@ -1213,6 +1230,63 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                 _layerDetailFoldout.Add(container);
             }
+        }
+
+        /// <summary>
+        /// レイヤーを上に移動する
+        /// </summary>
+        private void OnMoveLayerUp(int index)
+        {
+            if (index <= 0 || _cachedProfile == null)
+                return;
+
+            SwapLayersAndRebuild(index, index - 1);
+        }
+
+        /// <summary>
+        /// レイヤーを下に移動する
+        /// </summary>
+        private void OnMoveLayerDown(int index)
+        {
+            if (_cachedProfile == null)
+                return;
+
+            var layerCount = _cachedProfile.Value.Layers.Length;
+            if (index >= layerCount - 1)
+                return;
+
+            SwapLayersAndRebuild(index, index + 1);
+        }
+
+        /// <summary>
+        /// レイヤーの順序を入れ替え、_cachedProfile を更新して UI を再構築する
+        /// </summary>
+        private void SwapLayersAndRebuild(int indexA, int indexB)
+        {
+            var so = target as FacialProfileSO;
+            if (so == null || _cachedProfile == null)
+                return;
+
+            var originalProfile = _cachedProfile.Value;
+            var layers = originalProfile.Layers.ToArray();
+
+            // 要素を入れ替え
+            (layers[indexA], layers[indexB]) = (layers[indexB], layers[indexA]);
+
+            // 優先度をリスト位置から再算出
+            for (int i = 0; i < layers.Length; i++)
+            {
+                layers[i] = new LayerDefinition(layers[i].Name, i, layers[i].ExclusionMode);
+            }
+
+            var newProfile = new FacialProfile(
+                originalProfile.SchemaVersion,
+                layers,
+                originalProfile.Expressions.ToArray(),
+                originalProfile.RendererPaths.ToArray());
+
+            _cachedProfile = newProfile;
+            RebuildDetailUI();
         }
 
         /// <summary>
