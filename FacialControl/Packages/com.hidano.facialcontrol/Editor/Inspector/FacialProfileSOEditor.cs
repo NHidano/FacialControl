@@ -640,6 +640,132 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
+        /// BlendShape 追加ボタン押下時の処理。
+        /// 指定 Expression に BlendShape を追加し、_cachedProfile を即時更新、JSON 自動保存 → UI 再構築を行う。
+        /// </summary>
+        private void OnAddBlendShapeClicked(int expressionIndex, string blendShapeName, float weight)
+        {
+            var so = target as FacialProfileSO;
+            if (so == null || _cachedProfile == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                ShowStatus("JSON ファイルパスが設定されていません。", isError: true);
+                return;
+            }
+
+            var originalProfile = _cachedProfile.Value;
+            var existingExpressions = originalProfile.Expressions.ToArray();
+            if (expressionIndex < 0 || expressionIndex >= existingExpressions.Length)
+                return;
+
+            var expr = existingExpressions[expressionIndex];
+            var existingBs = expr.BlendShapeValues.ToArray();
+            var newBs = new BlendShapeMapping[existingBs.Length + 1];
+            Array.Copy(existingBs, newBs, existingBs.Length);
+            newBs[existingBs.Length] = new BlendShapeMapping(
+                string.IsNullOrEmpty(blendShapeName) ? "new_blendshape" : blendShapeName,
+                weight);
+
+            existingExpressions[expressionIndex] = new Expression(
+                expr.Id, expr.Name, expr.Layer, expr.TransitionDuration,
+                expr.TransitionCurve, newBs, expr.LayerSlots.ToArray());
+
+            var newProfile = new FacialProfile(
+                originalProfile.SchemaVersion,
+                originalProfile.Layers.ToArray(),
+                existingExpressions,
+                originalProfile.RendererPaths.ToArray());
+
+            SaveProfileAndRebuild(so, newProfile, "BlendShape 追加");
+        }
+
+        /// <summary>
+        /// BlendShape 削除ボタン押下時の処理。
+        /// 指定 Expression から指定インデックスの BlendShape を削除し、_cachedProfile を即時更新、JSON 自動保存 → UI 再構築を行う。
+        /// </summary>
+        private void OnRemoveBlendShapeClicked(int expressionIndex, int blendShapeIndex)
+        {
+            var so = target as FacialProfileSO;
+            if (so == null || _cachedProfile == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                ShowStatus("JSON ファイルパスが設定されていません。", isError: true);
+                return;
+            }
+
+            var originalProfile = _cachedProfile.Value;
+            var existingExpressions = originalProfile.Expressions.ToArray();
+            if (expressionIndex < 0 || expressionIndex >= existingExpressions.Length)
+                return;
+
+            var expr = existingExpressions[expressionIndex];
+            var existingBs = expr.BlendShapeValues.ToArray();
+            if (blendShapeIndex < 0 || blendShapeIndex >= existingBs.Length)
+                return;
+
+            var newBs = new BlendShapeMapping[existingBs.Length - 1];
+            int destIdx = 0;
+            for (int i = 0; i < existingBs.Length; i++)
+            {
+                if (i != blendShapeIndex)
+                {
+                    newBs[destIdx] = existingBs[i];
+                    destIdx++;
+                }
+            }
+
+            existingExpressions[expressionIndex] = new Expression(
+                expr.Id, expr.Name, expr.Layer, expr.TransitionDuration,
+                expr.TransitionCurve, newBs, expr.LayerSlots.ToArray());
+
+            var newProfile = new FacialProfile(
+                originalProfile.SchemaVersion,
+                originalProfile.Layers.ToArray(),
+                existingExpressions,
+                originalProfile.RendererPaths.ToArray());
+
+            SaveProfileAndRebuild(so, newProfile, "BlendShape 削除");
+        }
+
+        /// <summary>
+        /// プロファイルを保存してキャッシュ・UI を更新する共通処理
+        /// </summary>
+        private void SaveProfileAndRebuild(FacialProfileSO so, FacialProfile newProfile, string undoMessage)
+        {
+            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+
+            try
+            {
+                Undo.RecordObject(so, undoMessage);
+
+                var parser = new SystemTextJsonParser();
+                var json = parser.SerializeProfile(newProfile);
+                System.IO.File.WriteAllText(fullPath, json, System.Text.Encoding.UTF8);
+
+                _cachedProfile = newProfile;
+
+                so.SchemaVersion = newProfile.SchemaVersion;
+                so.LayerCount = newProfile.Layers.Length;
+                so.ExpressionCount = newProfile.Expressions.Length;
+                EditorUtility.SetDirty(so);
+                serializedObject.Update();
+
+                UpdateProfileInfo();
+                RebuildDetailUI();
+                ShowStatus($"{undoMessage}しました。", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"{undoMessage}エラー: {ex.Message}", isError: true);
+                Debug.LogError($"[FacialProfileSOEditor] {undoMessage}エラー: {ex}");
+            }
+        }
+
+        /// <summary>
         /// 編集データから FacialProfile を再構築する
         /// </summary>
         private FacialProfile RebuildProfileFromEdits()
@@ -705,13 +831,27 @@ namespace Hidano.FacialControl.Editor.Inspector
                         }
                     }
 
+                    // 削除された BlendShape を除外し、追加された BlendShape を結合
+                    var finalBlendShapes = new List<BlendShapeMapping>();
+                    if (blendShapes != null)
+                    {
+                        for (int j = 0; j < blendShapes.Length; j++)
+                        {
+                            if (!editData.RemovedBlendShapeIndices.Contains(j))
+                            {
+                                finalBlendShapes.Add(blendShapes[j]);
+                            }
+                        }
+                    }
+                    finalBlendShapes.AddRange(editData.AddedBlendShapes);
+
                     expressions[i] = new Expression(
                         editData.Id,
                         editData.Name,
                         editData.Layer,
                         editData.TransitionDuration,
                         transitionCurve,
-                        blendShapes,
+                        finalBlendShapes.ToArray(),
                         layerSlots);
                 }
                 else
@@ -963,7 +1103,6 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                 // BlendShape 値の一覧
                 var bsSpan = expr.BlendShapeValues.Span;
-                if (bsSpan.Length > 0)
                 {
                     var bsFoldout = new Foldout
                     {
@@ -976,7 +1115,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                     var allBlendShapeNames = (so != null) ? CollectBlendShapeNames(so.ReferenceModel) : null;
                     var hasReferenceModel = allBlendShapeNames != null && allBlendShapeNames.Count > 0;
 
-                    if (hasReferenceModel)
+                    if (hasReferenceModel && bsSpan.Length > 0)
                     {
                         // BlendShape 名編集データを初期化
                         var nameEdits = new string[bsSpan.Length];
@@ -987,13 +1126,18 @@ namespace Hidano.FacialControl.Editor.Inspector
                         editData.BlendShapeNameEdits = nameEdits;
                     }
 
-                    // BlendShape Weight 編集データを初期化
-                    var valueEdits = new float[bsSpan.Length];
-                    for (int j = 0; j < bsSpan.Length; j++)
+                    if (bsSpan.Length > 0)
                     {
-                        valueEdits[j] = bsSpan[j].Value;
+                        // BlendShape Weight 編集データを初期化
+                        var valueEdits = new float[bsSpan.Length];
+                        for (int j = 0; j < bsSpan.Length; j++)
+                        {
+                            valueEdits[j] = bsSpan[j].Value;
+                        }
+                        editData.BlendShapeValueEdits = valueEdits;
                     }
-                    editData.BlendShapeValueEdits = valueEdits;
+
+                    var capturedOriginalExprIndex = i;
 
                     for (int j = 0; j < bsSpan.Length; j++)
                     {
@@ -1092,16 +1236,68 @@ namespace Hidano.FacialControl.Editor.Inspector
                             bsContainer.Add(rendererLabel);
                         }
 
+                        // × 削除ボタン
+                        var capturedOrigExprIdx = capturedOriginalExprIndex;
+                        var capturedBsIdx = capturedBsIndex;
+                        var removeBtn = new Button(() => OnRemoveBlendShapeClicked(capturedOrigExprIdx, capturedBsIdx))
+                        {
+                            text = "×"
+                        };
+                        removeBtn.style.width = 20;
+                        removeBtn.style.height = 20;
+                        removeBtn.style.marginLeft = 2;
+                        bsContainer.Add(removeBtn);
+
                         bsFoldout.Add(bsContainer);
                     }
 
+                    // BlendShape 追加ボタン
+                    var addBsContainer = new VisualElement();
+                    addBsContainer.style.flexDirection = FlexDirection.Row;
+                    addBsContainer.style.alignItems = Align.Center;
+                    addBsContainer.style.marginLeft = 8;
+                    addBsContainer.style.marginTop = 4;
+
+                    var capturedAddExprIndex = capturedOriginalExprIndex;
+
+                    if (hasReferenceModel)
+                    {
+                        var addBsDropdown = new DropdownField(
+                            new List<string>(allBlendShapeNames),
+                            0);
+                        addBsDropdown.style.flexGrow = 1;
+                        addBsContainer.Add(addBsDropdown);
+
+                        var addBsButton = new Button(() =>
+                        {
+                            OnAddBlendShapeClicked(capturedAddExprIndex, addBsDropdown.value, 0f);
+                        })
+                        {
+                            text = "BlendShape 追加"
+                        };
+                        addBsButton.AddToClassList(FacialControlStyles.ActionButton);
+                        addBsContainer.Add(addBsButton);
+                    }
+                    else
+                    {
+                        var addBsTextField = new TextField() { value = "new_blendshape" };
+                        addBsTextField.style.flexGrow = 1;
+                        addBsContainer.Add(addBsTextField);
+
+                        var addBsButton = new Button(() =>
+                        {
+                            OnAddBlendShapeClicked(capturedAddExprIndex, addBsTextField.value, 0f);
+                        })
+                        {
+                            text = "BlendShape 追加"
+                        };
+                        addBsButton.AddToClassList(FacialControlStyles.ActionButton);
+                        addBsContainer.Add(addBsButton);
+                    }
+
+                    bsFoldout.Add(addBsContainer);
+
                     exprFoldout.Add(bsFoldout);
-                }
-                else
-                {
-                    var noBsLabel = new Label("  BlendShape 値なし");
-                    noBsLabel.AddToClassList(FacialControlStyles.InfoLabel);
-                    exprFoldout.Add(noBsLabel);
                 }
 
                 _expressionDetailFoldout.Add(exprFoldout);
@@ -1350,6 +1546,16 @@ namespace Hidano.FacialControl.Editor.Inspector
             /// </summary>
             public float[] BlendShapeValueEdits;
 
+            /// <summary>
+            /// 追加された BlendShape のリスト
+            /// </summary>
+            public List<BlendShapeMapping> AddedBlendShapes;
+
+            /// <summary>
+            /// 削除された BlendShape のインデックスリスト（元の配列内でのインデックス）
+            /// </summary>
+            public HashSet<int> RemovedBlendShapeIndices;
+
             public ExpressionEditData(string id, string name, string layer, float transitionDuration, int originalIndex)
             {
                 Id = id;
@@ -1357,6 +1563,8 @@ namespace Hidano.FacialControl.Editor.Inspector
                 Layer = layer;
                 TransitionDuration = transitionDuration;
                 OriginalIndex = originalIndex;
+                AddedBlendShapes = new List<BlendShapeMapping>();
+                RemovedBlendShapeIndices = new HashSet<int>();
             }
         }
     }
