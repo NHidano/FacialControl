@@ -298,6 +298,21 @@ namespace Hidano.FacialControl.Editor.Inspector
                     blendShapes = orig.BlendShapeValues.ToArray();
                     layerSlots = orig.LayerSlots.ToArray();
                     transitionCurve = orig.TransitionCurve;
+
+                    // BlendShape 名の編集が行われている場合は反映
+                    if (edit.BlendShapeNameEdits != null && blendShapes != null)
+                    {
+                        for (int j = 0; j < blendShapes.Length && j < edit.BlendShapeNameEdits.Length; j++)
+                        {
+                            if (blendShapes[j].Name != edit.BlendShapeNameEdits[j])
+                            {
+                                blendShapes[j] = new BlendShapeMapping(
+                                    edit.BlendShapeNameEdits[j],
+                                    blendShapes[j].Value,
+                                    blendShapes[j].Renderer);
+                            }
+                        }
+                    }
                 }
 
                 expressions[i] = new Expression(
@@ -534,7 +549,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 });
                 exprFoldout.Add(durationField);
 
-                // BlendShape 値の一覧（読み取り専用）
+                // BlendShape 値の一覧
                 var bsSpan = expr.BlendShapeValues.Span;
                 if (bsSpan.Length > 0)
                 {
@@ -544,13 +559,76 @@ namespace Hidano.FacialControl.Editor.Inspector
                         value = false
                     };
 
+                    // 参照モデルが設定されている場合は BlendShape 名をドロップダウンで選択可能にする
+                    var so = target as FacialProfileSO;
+                    var allBlendShapeNames = (so != null) ? CollectBlendShapeNames(so.ReferenceModel) : null;
+                    var hasReferenceModel = allBlendShapeNames != null && allBlendShapeNames.Count > 0;
+
+                    if (hasReferenceModel)
+                    {
+                        // BlendShape 名編集データを初期化
+                        var nameEdits = new string[bsSpan.Length];
+                        for (int j = 0; j < bsSpan.Length; j++)
+                        {
+                            nameEdits[j] = bsSpan[j].Name;
+                        }
+                        editData.BlendShapeNameEdits = nameEdits;
+                    }
+
                     for (int j = 0; j < bsSpan.Length; j++)
                     {
                         var bs = bsSpan[j];
                         var rendererText = bs.Renderer != null ? $" ({bs.Renderer})" : "";
-                        var bsLabel = new Label($"  {bs.Name}: {bs.Value:F3}{rendererText}");
-                        bsLabel.AddToClassList(FacialControlStyles.InfoLabel);
-                        bsFoldout.Add(bsLabel);
+
+                        if (hasReferenceModel)
+                        {
+                            // ドロップダウンで BlendShape 名を選択可能
+                            var bsContainer = new VisualElement();
+                            bsContainer.style.flexDirection = FlexDirection.Row;
+                            bsContainer.style.alignItems = Align.Center;
+                            bsContainer.style.marginLeft = 8;
+
+                            var capturedExprIndex = capturedIndex;
+                            var capturedBsIndex = j;
+
+                            var dropdownChoices = new List<string>(allBlendShapeNames);
+                            var initialIndex = dropdownChoices.IndexOf(bs.Name);
+                            if (initialIndex < 0)
+                            {
+                                // 参照モデルに存在しない BlendShape 名は選択肢に追加
+                                dropdownChoices.Insert(0, bs.Name);
+                                initialIndex = 0;
+                            }
+                            var dropdown = new DropdownField(
+                                dropdownChoices,
+                                initialIndex);
+                            dropdown.style.flexGrow = 1;
+                            dropdown.RegisterValueChangedCallback(evt =>
+                            {
+                                if (capturedExprIndex < _expressionEdits.Count)
+                                {
+                                    var edits = _expressionEdits[capturedExprIndex].BlendShapeNameEdits;
+                                    if (edits != null && capturedBsIndex < edits.Length)
+                                    {
+                                        edits[capturedBsIndex] = evt.newValue;
+                                    }
+                                }
+                            });
+                            bsContainer.Add(dropdown);
+
+                            var valueLabel = new Label($": {bs.Value:F3}{rendererText}");
+                            valueLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                            bsContainer.Add(valueLabel);
+
+                            bsFoldout.Add(bsContainer);
+                        }
+                        else
+                        {
+                            // 従来通り Label で読み取り専用表示
+                            var bsLabel = new Label($"  {bs.Name}: {bs.Value:F3}{rendererText}");
+                            bsLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                            bsFoldout.Add(bsLabel);
+                        }
                     }
 
                     exprFoldout.Add(bsFoldout);
@@ -714,6 +792,40 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
+        /// 参照モデルの全 SkinnedMeshRenderer から BlendShape 名を収集する（重複排除、ソート済み）。
+        /// 参照モデルが null の場合は null を返す。
+        /// </summary>
+        private static List<string> CollectBlendShapeNames(GameObject referenceModel)
+        {
+            if (referenceModel == null)
+                return null;
+
+            var renderers = referenceModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            if (renderers.Length == 0)
+                return null;
+
+            var nameSet = new HashSet<string>();
+            foreach (var smr in renderers)
+            {
+                if (smr.sharedMesh == null)
+                    continue;
+
+                var mesh = smr.sharedMesh;
+                for (int i = 0; i < mesh.blendShapeCount; i++)
+                {
+                    nameSet.Add(mesh.GetBlendShapeName(i));
+                }
+            }
+
+            if (nameSet.Count == 0)
+                return null;
+
+            var sorted = new List<string>(nameSet);
+            sorted.Sort(StringComparer.Ordinal);
+            return sorted;
+        }
+
+        /// <summary>
         /// ステータスメッセージを表示する
         /// </summary>
         private void ShowStatus(string message, bool isError)
@@ -758,6 +870,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             public string Name;
             public string Layer;
             public float TransitionDuration;
+
+            /// <summary>
+            /// BlendShape 名の編集データ。null の場合は元データを維持。
+            /// </summary>
+            public string[] BlendShapeNameEdits;
 
             public ExpressionEditData(string id, string name, string layer, float transitionDuration)
             {
