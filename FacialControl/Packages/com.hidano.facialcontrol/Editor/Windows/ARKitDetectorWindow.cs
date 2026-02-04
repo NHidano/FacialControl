@@ -236,11 +236,22 @@ namespace Hidano.FacialControl.Editor.Windows
             int arkitTotal = ARKitDetector.ARKit52Names.Length;
             int psTotal = ARKitDetector.PerfectSyncNames.Length;
 
+            // PerfectSync 対応 = ARKit 52 + 拡張 13 の全 65 パラメータを持つモデル
+            bool isPerfectSyncCompatible = arkitCount == arkitTotal && psCount == psTotal;
+            string compatStatus = isPerfectSyncCompatible
+                ? "PerfectSync 対応"
+                : arkitCount == arkitTotal
+                    ? "ARKit 52 対応"
+                    : arkitCount > 0
+                        ? "ARKit 部分対応"
+                        : "未対応";
+
             _summaryLabel.text =
                 $"総 BlendShape: {totalBlendShapes}  |  " +
                 $"ARKit: {arkitCount}/{arkitTotal}  |  " +
                 $"PerfectSync 拡張: {psCount}/{psTotal}  |  " +
-                $"合計検出: {_detectResult.DetectedNames.Length}";
+                $"合計検出: {_detectResult.DetectedNames.Length}  |  " +
+                $"判定: {compatStatus}";
         }
 
         /// <summary>
