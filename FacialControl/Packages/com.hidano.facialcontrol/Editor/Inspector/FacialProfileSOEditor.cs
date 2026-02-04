@@ -25,6 +25,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         private const string ProfileInfoSectionLabel = "プロファイル情報";
         private const string LayerDetailSectionLabel = "レイヤー一覧";
         private const string ExpressionDetailSectionLabel = "Expression 一覧";
+        private const string ReferenceModelSectionLabel = "参照モデル";
 
         private Label _schemaVersionLabel;
         private Label _layerCountLabel;
@@ -33,6 +34,11 @@ namespace Hidano.FacialControl.Editor.Inspector
 
         private Foldout _layerDetailFoldout;
         private Foldout _expressionDetailFoldout;
+
+        /// <summary>
+        /// 参照モデルセクションの RendererPaths 一覧表示コンテナ
+        /// </summary>
+        private VisualElement _rendererPathsContainer;
 
         /// <summary>
         /// JSON 読み込み成功時にキャッシュされた FacialProfile
@@ -115,6 +121,29 @@ namespace Hidano.FacialControl.Editor.Inspector
             root.Add(_expressionDetailFoldout);
 
             // ========================================
+            // 参照モデルセクション
+            // ========================================
+            var refModelFoldout = new Foldout { text = ReferenceModelSectionLabel, value = true };
+
+            var refModelField = new ObjectField("参照モデル")
+            {
+                objectType = typeof(GameObject),
+                allowSceneObjects = false
+            };
+            refModelField.BindProperty(serializedObject.FindProperty("_referenceModel"));
+            refModelFoldout.Add(refModelField);
+
+            var detectButton = new Button(OnDetectRendererPathsClicked) { text = "RendererPaths 自動検出" };
+            detectButton.AddToClassList(FacialControlStyles.ActionButton);
+            refModelFoldout.Add(detectButton);
+
+            _rendererPathsContainer = new VisualElement();
+            _rendererPathsContainer.style.marginLeft = 8;
+            refModelFoldout.Add(_rendererPathsContainer);
+
+            root.Add(refModelFoldout);
+
+            // ========================================
             // JSON に保存ボタン
             // ========================================
             var saveButton = new Button(OnSaveJsonClicked) { text = "JSON に保存" };
@@ -126,6 +155,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             {
                 UpdateProfileInfo();
                 TryLoadCachedProfile();
+                UpdateRendererPathsDisplay();
             });
 
             return root;
@@ -280,7 +310,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                     layerSlots);
             }
 
-            return new FacialProfile(originalProfile.SchemaVersion, layers, expressions);
+            return new FacialProfile(originalProfile.SchemaVersion, layers, expressions, originalProfile.RendererPaths.ToArray());
         }
 
         /// <summary>
@@ -567,6 +597,120 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// 参照モデルから RendererPaths を自動検出する。
+        /// 全 SkinnedMeshRenderer のモデルルートからの相対パスを算出し、SO に設定する。
+        /// </summary>
+        private void OnDetectRendererPathsClicked()
+        {
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            if (so.ReferenceModel == null)
+            {
+                ShowStatus("参照モデルが設定されていません。", isError: true);
+                return;
+            }
+
+            var renderers = so.ReferenceModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            if (renderers.Length == 0)
+            {
+                ShowStatus("参照モデルに SkinnedMeshRenderer が見つかりません。", isError: true);
+                return;
+            }
+
+            var rootTransform = so.ReferenceModel.transform;
+            var paths = new string[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                paths[i] = GetRelativePath(rootTransform, renderers[i].transform);
+            }
+
+            Undo.RecordObject(so, "RendererPaths 自動検出");
+            so.RendererPaths = paths;
+            EditorUtility.SetDirty(so);
+
+            UpdateRendererPathsDisplay();
+            ShowStatus($"RendererPaths を検出しました: {paths.Length} 件", isError: false);
+        }
+
+        /// <summary>
+        /// ルート Transform からターゲット Transform への相対パスを算出する
+        /// </summary>
+        private static string GetRelativePath(Transform root, Transform target)
+        {
+            if (target == root)
+                return "";
+
+            var parts = new System.Collections.Generic.List<string>();
+            var current = target;
+            while (current != null && current != root)
+            {
+                parts.Add(current.name);
+                current = current.parent;
+            }
+
+            parts.Reverse();
+            return string.Join("/", parts);
+        }
+
+        /// <summary>
+        /// RendererPaths 一覧表示を更新する
+        /// </summary>
+        private void UpdateRendererPathsDisplay()
+        {
+            if (_rendererPathsContainer == null)
+                return;
+
+            _rendererPathsContainer.Clear();
+
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            var paths = so.RendererPaths;
+            if (paths == null || paths.Length == 0)
+            {
+                var emptyLabel = new Label("RendererPaths が設定されていません。");
+                emptyLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                _rendererPathsContainer.Add(emptyLabel);
+                return;
+            }
+
+            var headerLabel = new Label($"RendererPaths ({paths.Length} 件)");
+            headerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            headerLabel.style.marginBottom = 4;
+            _rendererPathsContainer.Add(headerLabel);
+
+            // 参照モデルがある場合は BlendShape 数も表示
+            GameObject refModel = so.ReferenceModel;
+
+            for (int i = 0; i < paths.Length; i++)
+            {
+                int blendShapeCount = 0;
+                if (refModel != null)
+                {
+                    var rendererTransform = refModel.transform.Find(paths[i]);
+                    if (rendererTransform != null)
+                    {
+                        var smr = rendererTransform.GetComponent<SkinnedMeshRenderer>();
+                        if (smr != null && smr.sharedMesh != null)
+                        {
+                            blendShapeCount = smr.sharedMesh.blendShapeCount;
+                        }
+                    }
+                }
+
+                string displayText = refModel != null
+                    ? $"  {paths[i]}  (BlendShape: {blendShapeCount})"
+                    : $"  {paths[i]}";
+                var pathLabel = new Label(displayText);
+                pathLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                _rendererPathsContainer.Add(pathLabel);
+            }
         }
 
         /// <summary>

@@ -629,7 +629,8 @@ namespace Hidano.FacialControl.Editor.Tools
             _currentProfile = new FacialProfile(
                 _currentProfile.SchemaVersion,
                 layers,
-                expressions.ToArray());
+                expressions.ToArray(),
+                ToArray(_currentProfile.RendererPaths));
 
             // JSON 保存
             try
