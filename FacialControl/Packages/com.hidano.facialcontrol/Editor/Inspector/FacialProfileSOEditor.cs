@@ -37,6 +37,11 @@ namespace Hidano.FacialControl.Editor.Inspector
         private Foldout _expressionDetailFoldout;
 
         /// <summary>
+        /// JSON ファイルパス表示用の読み取り専用 Label
+        /// </summary>
+        private Label _jsonPathLabel;
+
+        /// <summary>
         /// 参照モデルセクションの RendererPaths 一覧表示コンテナ
         /// </summary>
         private VisualElement _rendererPathsContainer;
@@ -87,11 +92,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             // ========================================
             var jsonFoldout = new Foldout { text = JsonPathSectionLabel, value = true };
 
-            var jsonPathField = new PropertyField(
-                serializedObject.FindProperty("_jsonFilePath"),
-                "JSON ファイルパス");
-            jsonPathField.tooltip = "StreamingAssets からの相対パス";
-            jsonFoldout.Add(jsonPathField);
+            var so0 = target as FacialProfileSO;
+            _jsonPathLabel = new Label($"JSON ファイルパス: {(so0 != null && !string.IsNullOrEmpty(so0.JsonFilePath) ? so0.JsonFilePath : "---")}");
+            _jsonPathLabel.tooltip = "StreamingAssets からの相対パス";
+            _jsonPathLabel.AddToClassList(FacialControlStyles.InfoLabel);
+            jsonFoldout.Add(_jsonPathLabel);
 
             var jsonPathHelpBox = new HelpBox(
                 "パスは StreamingAssets/ からの相対パスです（例: FacialControl/default_profile.json）",
@@ -742,6 +747,13 @@ namespace Hidano.FacialControl.Editor.Inspector
             var so = target as FacialProfileSO;
             if (so == null)
                 return;
+
+            // JSON ファイルパス表示を更新
+            if (_jsonPathLabel != null)
+            {
+                string pathText = !string.IsNullOrEmpty(so.JsonFilePath) ? so.JsonFilePath : "---";
+                _jsonPathLabel.text = $"JSON ファイルパス: {pathText}";
+            }
 
             string version = !string.IsNullOrEmpty(so.SchemaVersion)
                 ? so.SchemaVersion
