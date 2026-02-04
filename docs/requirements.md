@@ -90,7 +90,7 @@ Unity エンジニア（開発者）。本プロジェクトはライブラリ�
 | FR-005 | 入力デバイス制御 | InputSystem によるコントローラ / キーボードからの Expression 切り替え |
 | FR-006 | ARKit / PerfectSync 対応 | ARKit 52 ブレンドシェイプ・PerfectSync の自動検出と Expression 自動生成 |
 | FR-007 | リップシンク連携 | 外部リップシンクプラグインからの入力受付インターフェース |
-| FR-008 | Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援 |
+| FR-008 | Editor 拡張 | Inspector カスタマイズ（プロファイル管理・Expression CRUD・検索・インポート/エクスポート統合）、Expression 作成支援 |
 | FR-009 | JSON インポート / エクスポート | プロファイルの JSON 形式での入出力 |
 
 ### 3.2 機能詳細
@@ -310,8 +310,7 @@ UI Toolkit で実装する Editor 専用の拡張機能群。ランタイム UI 
 
 | 機能 | 説明 |
 |------|------|
-| Inspector カスタマイズ | FacialController コンポーネント（プロファイル SO 参照、Renderer リスト）の編集 UI |
-| プロファイル管理ウィンドウ | EditorWindow によるプロファイル内の Expression 一覧表示、名前検索、プレビュー機能。データソースはプロファイル JSON |
+| Inspector カスタマイズ | FacialController コンポーネントの編集 UI + FacialProfileSO Inspector でのプロファイル管理（Expression の追加・編集・削除・検索、JSON インポート/エクスポート、新規プロファイル作成）。データソースはプロファイル JSON |
 | Expression 作成支援ツール | 専用プレビューウィンドウ（Scene とは独立）で 3D モデルを表示し、BlendShape スライダーでリアルタイムプレビューしながら Expression を作成。Scene オブジェクトと Prefab/FBX の両方から対象モデルを指定可能。プレビューは値変更毎に即座更新 |
 | JSON インポート / エクスポート | プロファイル JSON の入出力。SO と JSON の同期は手動エクスポートのみ |
 | ARKit 検出ツール | BlendShape スキャン + Expression / OSC マッピング自動生成 |

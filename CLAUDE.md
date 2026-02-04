@@ -88,10 +88,8 @@ Editor/                 # Editor 拡張（UI Toolkit）
 
 ### Editor 拡張
 
-- Inspector カスタマイズ（プロファイル編集 UI）
-- 表情プロファイル管理ウィンドウ（EditorWindow）
+- Inspector カスタマイズ（FacialProfileSO Inspector でプロファイル管理を一元化: Expression の追加・編集・削除・検索、JSON インポート/エクスポート、新規プロファイル作成）
 - AnimationClip 作成支援ツール（専用プレビューウィンドウで BlendShape スライダー操作）
-- JSON インポート / エクスポート
 - UI Toolkit で実装。ランタイム UI は提供しない
 
 ### 入力システム
