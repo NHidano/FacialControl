@@ -200,7 +200,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             var refModelField = new ObjectField("参照モデル")
             {
                 objectType = typeof(GameObject),
-                allowSceneObjects = false
+                allowSceneObjects = true
             };
             refModelField.BindProperty(serializedObject.FindProperty("_referenceModel"));
             refModelFoldout.Add(refModelField);
