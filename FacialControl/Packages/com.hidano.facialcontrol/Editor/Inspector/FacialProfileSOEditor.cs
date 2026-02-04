@@ -22,14 +22,11 @@ namespace Hidano.FacialControl.Editor.Inspector
     public class FacialProfileSOEditor : UnityEditor.Editor
     {
         private const string JsonPathSectionLabel = "JSON ファイル";
-        private const string ProfileInfoSectionLabel = "プロファイル情報";
         private const string LayerDetailSectionLabel = "レイヤー一覧";
         private const string ExpressionDetailSectionLabel = "Expression 一覧";
         private const string ReferenceModelSectionLabel = "使用モデル";
 
         private Label _schemaVersionLabel;
-        private Label _layerCountLabel;
-        private Label _expressionCountLabel;
         private Label _statusLabel;
 
         private Foldout _layerDetailFoldout;
@@ -162,25 +159,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             _statusLabel = new Label();
             _statusLabel.AddToClassList(FacialControlStyles.StatusLabel);
             jsonFoldout.Add(_statusLabel);
-
-            // ========================================
-            // プロファイル情報セクション（読み取り専用）
-            // ========================================
-            var infoFoldout = new Foldout { text = ProfileInfoSectionLabel, value = true };
-
-            _schemaVersionLabel = new Label("スキーマバージョン: ---");
-            _schemaVersionLabel.AddToClassList(FacialControlStyles.InfoLabel);
-            infoFoldout.Add(_schemaVersionLabel);
-
-            _layerCountLabel = new Label("レイヤー数: ---");
-            _layerCountLabel.AddToClassList(FacialControlStyles.InfoLabel);
-            infoFoldout.Add(_layerCountLabel);
-
-            _expressionCountLabel = new Label("Expression 数: ---");
-            _expressionCountLabel.AddToClassList(FacialControlStyles.InfoLabel);
-            infoFoldout.Add(_expressionCountLabel);
-
-            root.Add(infoFoldout);
 
             // ========================================
             // レイヤー詳細セクション
@@ -1090,15 +1068,9 @@ namespace Hidano.FacialControl.Editor.Inspector
             string version = !string.IsNullOrEmpty(so.SchemaVersion)
                 ? so.SchemaVersion
                 : "---";
-            int layers = so.LayerCount;
-            int expressions = so.ExpressionCount;
 
             if (_schemaVersionLabel != null)
                 _schemaVersionLabel.text = $"スキーマバージョン: {version}";
-            if (_layerCountLabel != null)
-                _layerCountLabel.text = $"レイヤー数: {layers}";
-            if (_expressionCountLabel != null)
-                _expressionCountLabel.text = $"Expression 数: {expressions}";
 
             // クローンボタンの有効/無効をキャッシュ状態に同期
             if (_cloneProfileButton != null)
