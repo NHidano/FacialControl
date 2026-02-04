@@ -41,6 +41,16 @@ namespace Hidano.FacialControl.Editor.Inspector
         private VisualElement _rendererPathsContainer;
 
         /// <summary>
+        /// Expression 検索フィルタの TextField
+        /// </summary>
+        private TextField _searchField;
+
+        /// <summary>
+        /// 現在の検索テキスト
+        /// </summary>
+        private string _searchText = "";
+
+        /// <summary>
         /// JSON 読み込み成功時にキャッシュされた FacialProfile
         /// </summary>
         private FacialProfile? _cachedProfile;
@@ -120,6 +130,10 @@ namespace Hidano.FacialControl.Editor.Inspector
             var addExpressionButton = new Button(OnAddExpressionClicked) { text = "Expression 追加" };
             addExpressionButton.AddToClassList(FacialControlStyles.ActionButton);
             root.Add(addExpressionButton);
+
+            _searchField = new TextField("検索");
+            _searchField.RegisterValueChangedCallback(OnSearchTextChanged);
+            root.Add(_searchField);
 
             _expressionDetailFoldout = new Foldout { text = ExpressionDetailSectionLabel, value = false };
             root.Add(_expressionDetailFoldout);
@@ -443,6 +457,29 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
+        /// 検索テキスト変更時の処理。
+        /// Expression 一覧を検索テキストでフィルタリングして再構築する。
+        /// </summary>
+        private void OnSearchTextChanged(ChangeEvent<string> evt)
+        {
+            _searchText = evt.newValue ?? "";
+            RebuildExpressionDetailUI();
+        }
+
+        /// <summary>
+        /// Expression 詳細 UI のみを再構築する（検索フィルタ変更時用）
+        /// </summary>
+        private void RebuildExpressionDetailUI()
+        {
+            if (_expressionDetailFoldout == null || _cachedProfile == null)
+                return;
+
+            _expressionDetailFoldout.Clear();
+            _expressionEdits.Clear();
+            BuildExpressionDetailUI(_cachedProfile.Value);
+        }
+
+        /// <summary>
         /// 編集データから FacialProfile を再構築する
         /// </summary>
         private FacialProfile RebuildProfileFromEdits()
@@ -458,47 +495,64 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
 
             // Expression 再構築
+            // 検索フィルタ中は _expressionEdits が全 Expression を含まない可能性がある。
+            // OriginalIndex を使って編集済みデータと元データを正しくマージする。
             var originalExpressions = originalProfile.Expressions.Span;
-            var expressions = new Expression[_expressionEdits.Count];
-            for (int i = 0; i < _expressionEdits.Count; i++)
+
+            // 編集データを OriginalIndex でルックアップするマップを構築
+            var editMap = new Dictionary<int, ExpressionEditData>();
+            foreach (var edit in _expressionEdits)
             {
-                var edit = _expressionEdits[i];
-                // BlendShapeValues と LayerSlots は元のデータを維持
-                BlendShapeMapping[] blendShapes = null;
-                LayerSlot[] layerSlots = null;
-                TransitionCurve transitionCurve = default;
+                editMap[edit.OriginalIndex] = edit;
+            }
 
-                if (i < originalExpressions.Length)
+            var expressions = new Expression[originalExpressions.Length];
+            for (int i = 0; i < originalExpressions.Length; i++)
+            {
+                var orig = originalExpressions[i];
+                var blendShapes = orig.BlendShapeValues.ToArray();
+                var layerSlots = orig.LayerSlots.ToArray();
+                var transitionCurve = orig.TransitionCurve;
+
+                if (editMap.TryGetValue(i, out var editData))
                 {
-                    var orig = originalExpressions[i];
-                    blendShapes = orig.BlendShapeValues.ToArray();
-                    layerSlots = orig.LayerSlots.ToArray();
-                    transitionCurve = orig.TransitionCurve;
-
+                    // 編集データがある場合は反映
                     // BlendShape 名の編集が行われている場合は反映
-                    if (edit.BlendShapeNameEdits != null && blendShapes != null)
+                    if (editData.BlendShapeNameEdits != null && blendShapes != null)
                     {
-                        for (int j = 0; j < blendShapes.Length && j < edit.BlendShapeNameEdits.Length; j++)
+                        for (int j = 0; j < blendShapes.Length && j < editData.BlendShapeNameEdits.Length; j++)
                         {
-                            if (blendShapes[j].Name != edit.BlendShapeNameEdits[j])
+                            if (blendShapes[j].Name != editData.BlendShapeNameEdits[j])
                             {
                                 blendShapes[j] = new BlendShapeMapping(
-                                    edit.BlendShapeNameEdits[j],
+                                    editData.BlendShapeNameEdits[j],
                                     blendShapes[j].Value,
                                     blendShapes[j].Renderer);
                             }
                         }
                     }
-                }
 
-                expressions[i] = new Expression(
-                    edit.Id,
-                    edit.Name,
-                    edit.Layer,
-                    edit.TransitionDuration,
-                    transitionCurve,
-                    blendShapes,
-                    layerSlots);
+                    expressions[i] = new Expression(
+                        editData.Id,
+                        editData.Name,
+                        editData.Layer,
+                        editData.TransitionDuration,
+                        transitionCurve,
+                        blendShapes,
+                        layerSlots);
+                }
+                else
+                {
+                    // 編集データがない場合は元データを維持
+                    expressions[i] = new Expression(
+                        orig.Id,
+                        orig.Name,
+                        orig.Layer,
+                        orig.TransitionDuration,
+                        transitionCurve,
+                        blendShapes,
+                        layerSlots);
+                }
             }
 
             return new FacialProfile(originalProfile.SchemaVersion, layers, expressions, originalProfile.RendererPaths.ToArray());
@@ -674,9 +728,18 @@ namespace Hidano.FacialControl.Editor.Inspector
             for (int i = 0; i < exprSpan.Length; i++)
             {
                 var expr = exprSpan[i];
+
+                // 検索フィルタ: 名前の部分一致（大文字小文字区別なし）
+                if (!string.IsNullOrEmpty(_searchText) &&
+                    expr.Name.IndexOf(_searchText, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
                 var editData = new ExpressionEditData(
-                    expr.Id, expr.Name, expr.Layer, expr.TransitionDuration);
+                    expr.Id, expr.Name, expr.Layer, expr.TransitionDuration, i);
                 _expressionEdits.Add(editData);
+                var editListIndex = _expressionEdits.Count - 1;
 
                 var bsCount = expr.BlendShapeValues.Length;
                 var exprFoldout = new Foldout
@@ -686,7 +749,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 };
                 exprFoldout.style.marginLeft = 4;
 
-                var capturedIndex = i;
+                var capturedIndex = editListIndex;
                 var capturedFoldout = exprFoldout;
 
                 // 名前: TextField
@@ -828,6 +891,14 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                 _expressionDetailFoldout.Add(exprFoldout);
             }
+
+            // 検索フィルタで全件除外された場合のメッセージ
+            if (_expressionEdits.Count == 0 && !string.IsNullOrEmpty(_searchText))
+            {
+                var noMatchLabel = new Label($"「{_searchText}」に一致する Expression がありません。");
+                noMatchLabel.AddToClassList(FacialControlStyles.InfoLabel);
+                _expressionDetailFoldout.Add(noMatchLabel);
+            }
         }
 
         /// <summary>
@@ -841,7 +912,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             var edit = _expressionEdits[index];
             var originalProfile = _cachedProfile.Value;
             var exprSpan = originalProfile.Expressions.Span;
-            int bsCount = index < exprSpan.Length ? exprSpan[index].BlendShapeValues.Length : 0;
+            int bsCount = edit.OriginalIndex < exprSpan.Length ? exprSpan[edit.OriginalIndex].BlendShapeValues.Length : 0;
 
             foldout.text = $"{edit.Name}  [レイヤー: {edit.Layer} / 遷移: {edit.TransitionDuration:F2}s / BlendShape: {bsCount}]";
         }
@@ -1058,16 +1129,22 @@ namespace Hidano.FacialControl.Editor.Inspector
             public float TransitionDuration;
 
             /// <summary>
+            /// オリジナルの Expression 配列内でのインデックス
+            /// </summary>
+            public int OriginalIndex;
+
+            /// <summary>
             /// BlendShape 名の編集データ。null の場合は元データを維持。
             /// </summary>
             public string[] BlendShapeNameEdits;
 
-            public ExpressionEditData(string id, string name, string layer, float transitionDuration)
+            public ExpressionEditData(string id, string name, string layer, float transitionDuration, int originalIndex)
             {
                 Id = id;
                 Name = name;
                 Layer = layer;
                 TransitionDuration = transitionDuration;
+                OriginalIndex = originalIndex;
             }
         }
     }
