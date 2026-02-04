@@ -828,9 +828,60 @@ GitHub Actions による自動テスト・リリースパイプラインを構�
   - BlendShape 名の命名規則がモデル間で異なる場合、検出ロジックの調整を検討
   - 検出ロジックに修正が入る場合は既存テスト（P03-T04: `ARKitDetectorTests`）と合わせて更新
 
+#### P17-07: FacialProfile に RendererPaths を追加
+- **対象ファイル**: `Runtime/Domain/Models/FacialProfile.cs`
+- コンストラクタに 4 番目のオプション引数 `string[] rendererPaths = null` を追加
+- `ReadOnlyMemory<string> RendererPaths` プロパティ追加（防御的コピー、Layers/Expressions と同じパターン）
+- 既存の 3 引数以下の呼び出しは全て後方互換（デフォルト値 `null` → 空配列）
+
+#### P17-08: JSON パーサーに rendererPaths の parse/serialize を追加
+- **対象ファイル**: `Runtime/Adapters/Json/SystemTextJsonParser.cs`, `Runtime/Adapters/Json/JsonSchemaDefinition.cs`
+- **依存**: P17-07
+- `ProfileDto` に `public List<string> rendererPaths;` フィールド追加
+- `ConvertToProfile()` で `rendererPaths` を変換して `FacialProfile` コンストラクタに渡す
+- `ConvertToProfileDto()` で `RendererPaths` を DTO にセット
+- `JsonSchemaDefinition.Profile.RendererPaths` 定数追加
+- `SampleProfileJson` に `"rendererPaths": ["Armature/Body"]` を追加
+- 後方互換: `rendererPaths` フィールド欠損の既存 JSON は空配列として処理（`JsonUtility` は欠損フィールドを `null` にするため）
+- スキーマバージョン "1.0" 据え置き（後方互換な追加のため）
+
+#### P17-09: FacialProfileSO に RendererPaths と参照モデルフィールドを追加
+- **対象ファイル**: `Runtime/Adapters/ScriptableObject/FacialProfileSO.cs`
+- **依存**: P17-07
+- `string[] _rendererPaths` SerializeField + `RendererPaths` プロパティ追加
+- `GameObject _referenceModel` SerializeField（`#if UNITY_EDITOR` ガード）+ `ReferenceModel` プロパティ追加
+- `_referenceModel` は Editor 専用: Inspector で BlendShape 名取得に使用。JSON には含まない
+
+#### P17-10: FacialProfileMapper に RendererPaths 同期を追加
+- **対象ファイル**: `Runtime/Adapters/ScriptableObject/FacialProfileMapper.cs`
+- **依存**: P17-07, P17-09
+- `UpdateSO()` に `profile.RendererPaths` → `so.RendererPaths` の同期処理を追加
+
+#### P17-11: FacialProfileSOEditor に参照モデル指定と RendererPaths 自動検出を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`, `Editor/Tools/ExpressionCreatorWindow.cs`
+- **依存**: P17-08, P17-09, P17-10
+- **参照モデルセクション**:
+  - `ObjectField`（`typeof(GameObject)`, `allowSceneObjects = false`）で Prefab/FBX を指定
+  - 「RendererPaths 自動検出」ボタン: 参照モデルの全 SkinnedMeshRenderer のヒエラルキーパス（モデルルートからの相対パス）を算出
+  - RendererPaths 一覧表示（パス + BlendShape 数）
+- **RendererPaths 保持**:
+  - `RebuildProfileFromEdits()` で `originalProfile.RendererPaths.ToArray()` を 4 番目引数に渡す
+  - `ExpressionCreatorWindow.OnSaveExpressionClicked()` でも同様に RendererPaths を保持
+
+#### P17-12: FacialProfileSOEditor の BlendShape 値表示を DropdownField に変更
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P17-11
+- `BuildExpressionDetailUI()` 内の BlendShape 名表示を条件分岐:
+  - 参照モデル設定済み → BlendShape 名を `DropdownField` で選択可能に
+  - 参照モデル未設定 → 従来通り `Label` で読み取り専用表示
+- ドロップダウンの選択肢は参照モデルの全 SkinnedMeshRenderer から収集した BlendShape 名（重複排除、ソート済み）
+
 ### テスト（EditMode/）
 - **P17-T01**: `ProfileCreationTests` — 新規プロファイル JSON 生成の検証（デフォルトレイヤー構成、空 Expression リスト、スキーマバージョン "1.0"）
 - **P17-T02**: `ProfileEditSaveTests` — レイヤー編集・Expression 編集後の JSON 上書き保存ラウンドトリップ検証（パース → 編集 → シリアライズ → 再パースで値が一致）
+- **P17-T03**: `FacialProfileRendererPathsTests` — 既存 `FacialProfileTests.cs` に追加。RendererPaths の構築、防御的コピー、null → 空配列のデフォルト値
+- **P17-T04**: `SystemTextJsonParserRendererPathsTests` — 既存 `SystemTextJsonParserTests.cs` に追加。rendererPaths の parse / serialize ラウンドトリップ、`rendererPaths` 欠損 JSON の後方互換
+- **P17-T05**: `FacialProfileMapperRendererPathsTests` — 既存 `FacialProfileMapperTests.cs` に追加。RendererPaths の SO ↔ Profile 同期
 
 ### 完了基準
 - 新規プロファイルが UI から作成でき、有効な JSON として StreamingAssets に保存される
@@ -839,6 +890,72 @@ GitHub Actions による自動テスト・リリースパイプラインを構�
 - JSONPath の説明が Inspector 上で `HelpBox` として視覚的に確認できる
 - Xbox コントローラの A/B/X/Y/LB/RB が Trigger5〜10 に割り当てられる
 - ARKit / PerfectSync の検出結果がサンプルモデルの実態と一致する
+- FacialProfile に RendererPaths が保持され、JSON ラウンドトリップで値が保存・復元される
+- SO Inspector で参照モデルを設定し、RendererPaths を自動検出できる
+- BlendShape 名がドロップダウンから選択できる（参照モデル設定時）
+
+## P18: プロファイル管理を Inspector に一本化
+
+### 目的
+
+ProfileManagerWindow（独立 EditorWindow）の機能を FacialProfileSO の Inspector に統合し、プロファイル編集の入口を一本化する。ProfileManagerWindow は削除する。
+
+### 作業内容
+
+#### P18-01: Inspector に Expression 追加機能を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- Expression 一覧セクション上部に「Expression 追加」ボタンを設置
+- デフォルト値（名前="New Expression"、先頭レイヤー）で新規 Expression を作成
+- 作成後に JSON 自動保存 → UI 再構築
+- Undo 対応
+
+#### P18-02: Inspector に Expression 削除機能を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- 各 Expression の Foldout 内に「削除」ボタンを設置
+- 確認ダイアログ表示後に削除
+- 削除後に JSON 自動保存 → UI 再構築
+- Undo 対応
+
+#### P18-03: Inspector に Expression 検索フィルタを追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- Expression 一覧セクション上部に検索 TextField を設置
+- 名前の部分一致（大文字小文字区別なし）でフィルタリング
+- 検索テキスト変更時に即座に表示更新
+
+#### P18-04: Inspector にインポート・エクスポート機能を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- JSON ファイルセクションに「インポート」「エクスポート」ボタンを追加
+- インポート: `EditorUtility.OpenFilePanel` → パース → SO の JSON パスへ保存 → UI 更新
+- エクスポート: `EditorUtility.SaveFilePanel` → 現在のプロファイルをシリアライズして書き出し
+- Undo 対応
+
+#### P18-05: Inspector に新規プロファイル作成ボタンを追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- Inspector 上部に「新規プロファイル作成」ボタンを設置
+- 既存の `ProfileCreationDialog` を呼び出す
+- 作成完了後に Inspector を自動更新
+
+#### P18-06: ProfileManagerWindow・ExpressionEditDialog を削除
+- **対象ファイル**: `Editor/Windows/ProfileManagerWindow.cs`（削除）
+- 対応する `.meta` ファイルを削除
+- `MenuItem "FacialControl/プロファイル管理"` が消滅することを確認
+
+#### P18-07: 要件ドキュメント・CLAUDE.md を更新
+- **対象ファイル**: `docs/requirements.md`, `CLAUDE.md`
+- `requirements.md` FR-008 の「プロファイル管理ウィンドウ」行を Inspector 統合に修正
+- `CLAUDE.md` の Editor 拡張セクションから「表情プロファイル管理ウィンドウ（EditorWindow）」を削除し、Inspector カスタマイズの説明を更新
+
+### テスト
+- 手動検証中心（Inspector の操作確認）
+- 既存の `ProfileCreationTests`・`ProfileEditSaveTests` が引き続き Green であること
+
+### 完了基準
+- FacialProfileSO の Inspector から Expression の追加・編集・削除・検索ができる
+- Inspector から JSON のインポート・エクスポートができる
+- Inspector から新規プロファイルを作成できる
+- `ProfileManagerWindow` が完全に削除されている
+- 既存テストが全て Green
+- 要件ドキュメントが実態と一致している
 
 ---
 
@@ -855,9 +972,10 @@ P00 (基盤)
           │       ├→ P07 (OSC 通信)
           │       └→ P08 (SO / Input / Controller)
           │           ├→ P09 (Inspector) ─────┐
-          │           ├→ P10 (プロファイル管理) ┼→ P17 (Editor 改善・テンプレート拡充)
-          │           ├→ P11 (Expression 作成) │
-          │           └→ P12 (ARKit 検出) ────┘
+          │           ├→ P10 (プロファイル管理) ┼→ P17 (Editor 改善)
+          │           ├→ P11 (Expression 作成) │       │
+          │           └→ P12 (ARKit 検出) ────┘       │
+          │                                            └→ P18 (Inspector 一本化)
           └→ P13 (テンプレート) ←── P05 の後でも可
               └→ P14 (統合・性能テスト) ←── P06〜P08 完了後
                   └→ P15 (ドキュメント)
@@ -868,7 +986,8 @@ P00 (基盤)
 - P05 / P06 / P07 / P08 は P04 完了後に並行着手可能
 - P09 / P10 / P11 / P12 は P08 完了後に並行着手可能
 - P13 は P05 完了後ならいつでも着手可能
-- P17 は P09 / P10 / P12 / P13 完了後に着手可能（P17-01〜P17-06 は並行着手可能、ただし P17-03 は P17-02 に依存）
+- P17 は P09 / P10 / P12 / P13 完了後に着手可能（P17-01〜P17-06 は並行着手可能、ただし P17-03 は P17-02 に依存。P17-07〜P17-12 は P17-07 → P17-08/P17-09 → P17-10 → P17-11 → P17-12 の順で依存）
+- P18 は P17 完了後に着手可能（P18-01〜P18-05 は並行着手可能、P18-06 は P18-01〜P18-05 完了後、P18-07 は P18-06 完了後）
 
 ---
 
@@ -896,8 +1015,9 @@ P00 (基盤)
 | P15 | ドキュメント | P14 |
 | P16 | CI/CD・リリース準備 | P15 |
 | P17 | Editor 改善・テンプレート拡充 | P09, P10, P12, P13 |
+| P18 | プロファイル管理を Inspector に一本化 | P17 |
 
-### 作業項目一覧（全 75 項目）
+### 作業項目一覧（全 88 項目）
 
 | ID | 作業項目 |
 |----|---------|
@@ -974,8 +1094,21 @@ P00 (基盤)
 | P17-04 | FacialProfileSOEditor に JSONPath の説明を明記 |
 | P17-05 | InputActions テンプレートに Xbox コントローラのバインディングを追加 |
 | P17-06 | ARKit / PerfectSync 検出仕様の調査と修正 |
+| P17-07 | FacialProfile に RendererPaths を追加 |
+| P17-08 | JSON パーサーに rendererPaths の parse/serialize を追加 |
+| P17-09 | FacialProfileSO に RendererPaths と参照モデルフィールドを追加 |
+| P17-10 | FacialProfileMapper に RendererPaths 同期を追加 |
+| P17-11 | FacialProfileSOEditor に参照モデル指定と RendererPaths 自動検出を追加 |
+| P17-12 | FacialProfileSOEditor の BlendShape 値表示を DropdownField に変更 |
+| P18-01 | Inspector に Expression 追加機能を追加 |
+| P18-02 | Inspector に Expression 削除機能を追加 |
+| P18-03 | Inspector に Expression 検索フィルタを追加 |
+| P18-04 | Inspector にインポート・エクスポート機能を追加 |
+| P18-05 | Inspector に新規プロファイル作成ボタンを追加 |
+| P18-06 | ProfileManagerWindow・ExpressionEditDialog を削除 |
+| P18-07 | 要件ドキュメント・CLAUDE.md を更新 |
 
-### テスト一覧（全 36 項目）
+### テスト一覧（全 39 項目）
 
 | ID | テスト名 |
 |----|---------|
@@ -1015,6 +1148,10 @@ P00 (基盤)
 | P14-T06 | MultiCharacterPerformanceTests |
 | P17-T01 | ProfileCreationTests |
 | P17-T02 | ProfileEditSaveTests |
+| P17-T03 | FacialProfileRendererPathsTests |
+| P17-T04 | SystemTextJsonParserRendererPathsTests |
+| P17-T05 | FacialProfileMapperRendererPathsTests |
+
 
 ---
 
@@ -1035,3 +1172,10 @@ P00 (基盤)
 - [ ] package.json バリデーション通過
 - [ ] CI 全テスト通過
 - [ ] CHANGELOG.md 記載
+
+---
+
+## 未整理メモ
+
+- FacialControlDefaultActions.inputactions は Hierarchy 上でどのように適用すればよいですか？
+- ARKit 検出ツールで検出ボタンを押すと、実行後に検出ボタンの UI が潰れる
