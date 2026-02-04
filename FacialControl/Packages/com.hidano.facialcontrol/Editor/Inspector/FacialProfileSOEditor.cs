@@ -66,8 +66,20 @@ namespace Hidano.FacialControl.Editor.Inspector
         /// </summary>
         private readonly List<ExpressionEditData> _expressionEdits = new List<ExpressionEditData>();
 
+        /// <summary>
+        /// Undo/Redo コールバックの登録を解除する
+        /// </summary>
+        private void OnDisable()
+        {
+            Undo.undoRedoPerformed -= OnUndoRedoPerformed;
+        }
+
         public override VisualElement CreateInspectorGUI()
         {
+            // Undo/Redo コールバックを登録
+            Undo.undoRedoPerformed -= OnUndoRedoPerformed;
+            Undo.undoRedoPerformed += OnUndoRedoPerformed;
+
             var root = new VisualElement();
 
             var styleSheet = FacialControlStyles.Load();
@@ -217,6 +229,76 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
+        /// Undo/Redo 発火時のコールバック。
+        /// SO の _undoJsonSnapshot に保持されている JSON 文字列を JSON ファイルに書き戻し、
+        /// _cachedProfile と UI を同期する。
+        /// </summary>
+        private void OnUndoRedoPerformed()
+        {
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            var jsonSnapshot = so.UndoJsonSnapshot;
+            if (string.IsNullOrEmpty(jsonSnapshot))
+                return;
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+                return;
+
+            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+
+            try
+            {
+                // JSON ファイルに書き戻し
+                var directory = System.IO.Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
+                {
+                    System.IO.Directory.CreateDirectory(directory);
+                }
+                System.IO.File.WriteAllText(fullPath, jsonSnapshot, System.Text.Encoding.UTF8);
+
+                // キャッシュを再構築
+                var parser = new SystemTextJsonParser();
+                _cachedProfile = parser.ParseProfile(jsonSnapshot);
+
+                // UI を更新
+                serializedObject.Update();
+                UpdateProfileInfo();
+                RebuildDetailUI();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FacialProfileSOEditor] Undo/Redo 復元エラー: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// 操作前に現在の JSON 文字列をスナップショットとして SO に保持する。
+        /// Undo.RecordObject の前に呼び出すこと。
+        /// </summary>
+        private void StoreUndoJsonSnapshot(FacialProfileSO so)
+        {
+            if (so == null || string.IsNullOrWhiteSpace(so.JsonFilePath))
+                return;
+
+            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+            if (System.IO.File.Exists(fullPath))
+            {
+                so.UndoJsonSnapshot = System.IO.File.ReadAllText(fullPath, System.Text.Encoding.UTF8);
+            }
+        }
+
+        /// <summary>
+        /// 操作後に新しい JSON 文字列をスナップショットとして SO に保持する。
+        /// Undo.RecordObject の後、EditorUtility.SetDirty の前に呼び出す。
+        /// </summary>
+        private void UpdateUndoJsonSnapshotAfterSave(FacialProfileSO so, string newJson)
+        {
+            so.UndoJsonSnapshot = newJson;
+        }
+
+        /// <summary>
         /// JSON 読み込みボタン押下時の処理。
         /// JSON ファイルを読み込み、SO の表示用フィールドを更新する。
         /// </summary>
@@ -248,8 +330,10 @@ namespace Hidano.FacialControl.Editor.Inspector
                 var mapper = new FacialProfileMapper(
                     new FileProfileRepository(parser));
 
+                StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, "JSON 読み込み");
                 mapper.UpdateSO(so, profile);
+                UpdateUndoJsonSnapshotAfterSave(so, json);
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -294,6 +378,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 var parser = new SystemTextJsonParser();
                 var profile = parser.ParseProfile(json);
 
+                StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, "プロファイルインポート");
 
                 // SO の JSON パスへ保存
@@ -309,6 +394,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 var mapper = new FacialProfileMapper(
                     new FileProfileRepository(parser));
                 mapper.UpdateSO(so, profile);
+                UpdateUndoJsonSnapshotAfterSave(so, json);
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -415,6 +501,7 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             try
             {
+                StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, "JSON に保存");
 
                 var profile = RebuildProfileFromEdits();
@@ -429,6 +516,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 so.SchemaVersion = profile.SchemaVersion;
                 so.LayerCount = profile.Layers.Length;
                 so.ExpressionCount = profile.Expressions.Length;
+                UpdateUndoJsonSnapshotAfterSave(so, json);
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -492,6 +580,7 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             try
             {
+                StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, "Expression 追加");
 
                 // JSON 自動保存
@@ -506,6 +595,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 so.SchemaVersion = newProfile.SchemaVersion;
                 so.LayerCount = newProfile.Layers.Length;
                 so.ExpressionCount = newProfile.Expressions.Length;
+                UpdateUndoJsonSnapshotAfterSave(so, json);
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -586,6 +676,7 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             try
             {
+                StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, "Expression 削除");
 
                 // JSON 自動保存
@@ -600,6 +691,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 so.SchemaVersion = newProfile.SchemaVersion;
                 so.LayerCount = newProfile.Layers.Length;
                 so.ExpressionCount = newProfile.Expressions.Length;
+                UpdateUndoJsonSnapshotAfterSave(so, json);
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -740,6 +832,7 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             try
             {
+                StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, undoMessage);
 
                 var parser = new SystemTextJsonParser();
@@ -751,6 +844,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 so.SchemaVersion = newProfile.SchemaVersion;
                 so.LayerCount = newProfile.Layers.Length;
                 so.ExpressionCount = newProfile.Expressions.Length;
+                UpdateUndoJsonSnapshotAfterSave(so, json);
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -892,6 +986,14 @@ namespace Hidano.FacialControl.Editor.Inspector
                 var json = System.IO.File.ReadAllText(fullPath, System.Text.Encoding.UTF8);
                 var parser = new SystemTextJsonParser();
                 _cachedProfile = parser.ParseProfile(json);
+
+                // 初回読み込み時にスナップショットを初期化（未設定の場合のみ）
+                if (string.IsNullOrEmpty(so.UndoJsonSnapshot))
+                {
+                    so.UndoJsonSnapshot = json;
+                    EditorUtility.SetDirty(so);
+                }
+
                 RebuildDetailUI();
             }
             catch (Exception)

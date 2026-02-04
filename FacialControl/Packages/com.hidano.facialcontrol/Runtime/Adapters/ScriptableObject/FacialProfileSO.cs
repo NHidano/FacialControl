@@ -48,6 +48,14 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
         [SerializeField]
         private string[] _rendererPaths;
 
+        /// <summary>
+        /// Undo/Redo 用の JSON 文字列。操作前の JSON 全体を保持し、
+        /// Undo 発火時にこの値を JSON ファイルに書き戻す。
+        /// </summary>
+        [HideInInspector]
+        [SerializeField]
+        private string _undoJsonSnapshot;
+
 #if UNITY_EDITOR
         /// <summary>
         /// 参照モデル（Editor 専用）。Inspector で BlendShape 名取得に使用する。
@@ -101,6 +109,15 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
         {
             get => _rendererPaths;
             set => _rendererPaths = value;
+        }
+
+        /// <summary>
+        /// Undo/Redo 用の JSON 文字列スナップショット
+        /// </summary>
+        public string UndoJsonSnapshot
+        {
+            get => _undoJsonSnapshot;
+            set => _undoJsonSnapshot = value;
         }
 
 #if UNITY_EDITOR
