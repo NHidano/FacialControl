@@ -68,6 +68,16 @@ namespace Hidano.FacialControl.Editor.Inspector
         private readonly List<ExpressionEditData> _expressionEdits = new List<ExpressionEditData>();
 
         /// <summary>
+        /// Expression Foldout の開閉状態キャッシュ（インデックス → 開閉状態）
+        /// </summary>
+        private readonly Dictionary<int, bool> _expressionFoldoutStates = new Dictionary<int, bool>();
+
+        /// <summary>
+        /// BlendShape Foldout の開閉状態キャッシュ（Expression インデックス → 開閉状態）
+        /// </summary>
+        private readonly Dictionary<int, bool> _blendShapeFoldoutStates = new Dictionary<int, bool>();
+
+        /// <summary>
         /// Undo/Redo コールバックの登録を解除する
         /// </summary>
         private void OnDisable()
@@ -1086,10 +1096,42 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
+        /// 現在の Expression Foldout および BlendShape Foldout の開閉状態を保存する
+        /// </summary>
+        private void SaveFoldoutStates()
+        {
+            _expressionFoldoutStates.Clear();
+            _blendShapeFoldoutStates.Clear();
+
+            if (_expressionDetailFoldout == null)
+                return;
+
+            for (int i = 0; i < _expressionDetailFoldout.childCount; i++)
+            {
+                var child = _expressionDetailFoldout[i];
+                if (child is Foldout exprFoldout)
+                {
+                    _expressionFoldoutStates[i] = exprFoldout.value;
+
+                    // 子要素から BlendShape Foldout を探す
+                    foreach (var grandChild in exprFoldout.Children())
+                    {
+                        if (grandChild is Foldout bsFoldout && bsFoldout.text.StartsWith("BlendShape 値"))
+                        {
+                            _blendShapeFoldoutStates[i] = bsFoldout.value;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// キャッシュされた FacialProfile からレイヤー詳細・Expression 詳細 UI を再構築する
         /// </summary>
         private void RebuildDetailUI()
         {
+            SaveFoldoutStates();
             ClearDetailUI();
 
             if (_cachedProfile == null)
@@ -1210,10 +1252,11 @@ namespace Hidano.FacialControl.Editor.Inspector
                 var editListIndex = _expressionEdits.Count - 1;
 
                 var bsCount = expr.BlendShapeValues.Length;
+                var exprFoldoutValue = _expressionFoldoutStates.TryGetValue(i, out var savedExprState) && savedExprState;
                 var exprFoldout = new Foldout
                 {
                     text = $"{expr.Name}  [レイヤー: {expr.Layer} / 遷移: {expr.TransitionDuration:F2}s / BlendShape: {bsCount}]",
-                    value = false
+                    value = exprFoldoutValue
                 };
                 exprFoldout.style.marginLeft = 4;
 
@@ -1259,10 +1302,11 @@ namespace Hidano.FacialControl.Editor.Inspector
                 // BlendShape 値の一覧
                 var bsSpan = expr.BlendShapeValues.Span;
                 {
+                    var bsFoldoutValue = _blendShapeFoldoutStates.TryGetValue(i, out var savedBsState) && savedBsState;
                     var bsFoldout = new Foldout
                     {
                         text = $"BlendShape 値 ({bsSpan.Length})",
-                        value = false
+                        value = bsFoldoutValue
                     };
 
                     // 使用モデルが設定されている場合は BlendShape 名をドロップダウンで選択可能にする
