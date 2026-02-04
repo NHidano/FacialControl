@@ -15,4 +15,6 @@ MonoBehaviour:
   _jsonFilePath: FacialControl/default_profile.json
   _schemaVersion: 1.0
   _layerCount: 3
-  _expressionCount: 4
+  _expressionCount: 5
+  _rendererPaths: []
+  _referenceModel: {fileID: 0}

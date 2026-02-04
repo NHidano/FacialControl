@@ -1,9 +1,21 @@
-{
+﻿{
     "schemaVersion": "1.0",
     "layers": [
-        {"name": "emotion", "priority": 0, "exclusionMode": "lastWins"},
-        {"name": "lipsync", "priority": 1, "exclusionMode": "blend"},
-        {"name": "eye", "priority": 2, "exclusionMode": "lastWins"}
+        {
+            "name": "emotion",
+            "priority": 0,
+            "exclusionMode": "lastWins"
+        },
+        {
+            "name": "lipsync",
+            "priority": 1,
+            "exclusionMode": "blend"
+        },
+        {
+            "name": "eye",
+            "priority": 2,
+            "exclusionMode": "lastWins"
+        }
     ],
     "expressions": [
         {
@@ -12,7 +24,8 @@
             "layer": "emotion",
             "transitionDuration": 0.25,
             "transitionCurve": {
-                "type": "linear"
+                "type": "linear",
+                "keys": []
             },
             "blendShapeValues": [],
             "layerSlots": []
@@ -21,12 +34,17 @@
             "id": "00000000-0000-0000-0000-000000000002",
             "name": "blink",
             "layer": "eye",
-            "transitionDuration": 0.08,
+            "transitionDuration": 0.07999999821186066,
             "transitionCurve": {
-                "type": "linear"
+                "type": "linear",
+                "keys": []
             },
             "blendShapeValues": [
-                {"name": "まばたき", "value": 1.0}
+                {
+                    "name": "まばたき",
+                    "value": 1.0,
+                    "renderer": ""
+                }
             ],
             "layerSlots": []
         },
@@ -36,7 +54,8 @@
             "layer": "eye",
             "transitionDuration": 0.25,
             "transitionCurve": {
-                "type": "linear"
+                "type": "linear",
+                "keys": []
             },
             "blendShapeValues": [],
             "layerSlots": []
@@ -47,10 +66,12 @@
             "layer": "eye",
             "transitionDuration": 0.25,
             "transitionCurve": {
-                "type": "linear"
+                "type": "linear",
+                "keys": []
             },
             "blendShapeValues": [],
             "layerSlots": []
         }
-    ]
+    ],
+    "rendererPaths": []
 }

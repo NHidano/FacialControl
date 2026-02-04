@@ -959,6 +959,166 @@ ProfileManagerWindow（独立 EditorWindow）の機能を FacialProfileSO の In
 
 ---
 
+## P19: Inspector UI 改善（フィードバック対応）
+
+### 目的
+
+プロトタイプ段階のユーザーフィードバックに基づき、FacialProfileSO Inspector の操作性向上、入力デバイス対応拡充、バグ修正を行う。
+
+### 作業内容
+
+#### P19-01: JSON ファイルパスを読み取り専用表示に変更
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: インポート機能が実装済みのため、ファイルパスの手動テキスト入力は不要。読み込んだファイルのパスを表示するだけで十分
+- **変更内容**:
+  - `_jsonFilePath` の `PropertyField`（テキスト入力可能）を読み取り専用の `Label` に変更
+  - インポート / JSON 読み込み成功時にパスを Label に反映
+  - 既存の `HelpBox`（"パスは StreamingAssets/ からの相対パスです"）は維持
+
+#### P19-02: Expression の追加/削除を Unity 標準 List UI に置き換え
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: 現在のカスタムボタン方式は直感的でない。Unity エンジニアが慣れている標準の配列/List 操作 UI を使用する
+- **変更内容**:
+  - 現在の「Expression 追加」ボタン + 各 Expression 内「削除」ボタンを撤去
+  - Unity 標準の List 操作 UI パターン（`+` / `-` ボタン、または `ListView` のリオーダー対応）に置き換え
+  - Expression 検索機能（`_searchField`）はオミット（List UI との干渉を回避）
+  - 各 Expression の Foldout 内の編集フィールド（名前、レイヤー、遷移時間）は維持
+- **実装方針**:
+  - UI Toolkit の `ListView` もしくは手動の `+` / `-` ボタン付きリスト構造を採用
+  - Expression の追加/削除後は JSON 自動保存 → UI 再構築の既存フローを維持
+
+#### P19-03: Expression 内 BlendShape の Weight 値編集を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P19-02
+- **背景**: 現在 BlendShape の Weight 値は `Label`（読み取り専用）で表示されており、Inspector だけで Expression を完結して編集できない
+- **変更内容**:
+  - BlendShape の Weight 値表示を `Label` → `Slider`（0〜1 範囲）+ `FloatField` に変更
+  - `ExpressionEditData` に `float[] BlendShapeValueEdits` フィールドを追加
+  - `RebuildProfileFromEdits()` で Weight 編集値を反映（BlendShapeNameEdits と同様のパターン）
+  - 値変更時に即座に `ExpressionEditData` を更新
+
+#### P19-04: Expression 内 BlendShape の追加・削除機能を追加
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P19-03
+- **背景**: Expression に BlendShape を Inspector から追加・削除できないと、JSON 手動編集が必須になる
+- **変更内容**:
+  - BlendShape 一覧セクション内に「BlendShape 追加」ボタンを設置
+  - 追加時: 参照モデル設定済みならドロップダウンで BlendShape 名選択、未設定なら TextField で名前入力。Weight 初期値は 0
+  - 各 BlendShape 行に「×」（削除）ボタンを設置
+  - 追加/削除後は `_cachedProfile` を即時更新し、JSON 自動保存 → UI 再構築
+
+#### P19-05: Expression の追加/削除の Undo を修正
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **依存**: P19-02
+- **背景**: `Undo.RecordObject()` で SO の表示用フィールド変更を記録しているが、実データは JSON ファイルに書き込まれるため Undo 操作で JSON が元に戻らない
+- **変更内容**:
+  - `Undo.undoRedoPerformed` コールバックを登録し、Undo/Redo 発火時に SO の JSON パスから JSON を再読み込み → `_cachedProfile` を再構築 → UI を更新するフローを実装
+  - Undo 対象データとして、JSON 文字列自体を SO の SerializeField（`[HideInInspector]` 付き）に保持することを検討
+  - 代替案: Undo 前の JSON 文字列をスタックに保持し、Undo 発火時に復元書き込み
+- **実装方針**:
+  - シンプルな方式として、操作前に JSON 文字列全体を `Undo.RecordObject()` の対象フィールドに保持
+  - Undo 発火時にそのフィールドの JSON 文字列を JSON ファイルに書き戻し、`_cachedProfile` と UI を同期
+
+#### P19-06: 新規プロファイル作成ボタンをクローン機能に置き換え
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: Inspector 上の「新規プロファイル作成」ボタンは文脈にそぐわない。既存プロファイルのクローン作成のほうが実用的
+- **変更内容**:
+  - 「新規プロファイル作成」ボタン → 「プロファイルのクローンを作成」ボタンに変更
+  - 処理フロー:
+    1. `EditorUtility.SaveFilePanel` で保存先を選択（デフォルトファイル名: `{元のプロファイル名}_copy.json`）
+    2. 現在の `_cachedProfile` をシリアライズして新しい JSON ファイルに保存
+    3. `AssetDatabase.CreateAsset()` で新しい `FacialProfileSO` を生成
+    4. 新しい SO の `_jsonFilePath` を保存先相対パスに設定
+    5. 作成した SO を Selection に設定して Inspector で開く
+  - `_cachedProfile` が null の場合はボタンを無効化（プロファイル未読み込み時）
+
+#### P19-07: Xbox コントローラに LT/RT バインディングを追加（Value タイプ）
+- **対象ファイル**:
+  - `Runtime/Adapters/Input/FacialControlDefaultActions.inputactions`
+  - `Templates/default_inputactions.inputactions`
+- **背景**: P17-05 で LT/RT はスコープ外としていたが、対応が必要
+- **変更内容**:
+  - Trigger11, Trigger12 のアクション定義を追加
+  - **重要**: `"type": "Value"`, `"expectedControlType": "Axis"` とする（Button ではなく 0〜1 の連続値）
+
+  | ボタン | InputSystem パス | 割り当て先 | タイプ |
+  |--------|-----------------|-----------|--------|
+  | LT | `<Gamepad>/leftTrigger` | Trigger11 | Value (Axis) |
+  | RT | `<Gamepad>/rightTrigger` | Trigger12 | Value (Axis) |
+
+  - 両ファイルに同一のアクション定義・バインディングを追加
+  - `InputSystemAdapter` は既に Value タイプ対応済み（`action.type == InputActionType.Button` で分岐）のため変更不要
+
+#### P19-08: ARKit 検出ツールのボタン表示崩れを修正
+- **対象ファイル**: `Editor/Windows/ARKitDetectorWindow.cs`
+- **背景**: 検出実行後に各ボタンの見た目が潰れる（UI レイアウト崩れ）
+- **調査ポイント**:
+  - 検出結果の `ScrollView`（`flexGrow = 1`）が生成ボタンセクションの領域を圧迫している可能性
+  - `actionSection` / `generateSection` の `flexShrink` が未設定のためレイアウト計算で縮小される可能性
+- **想定される修正**:
+  - ボタンセクション（`actionSection`, `generateSection`）に `flexShrink = 0` を設定
+  - ボタンに `minHeight` を設定して潰れを防止
+  - `ScrollView` のサイズ制約を適切に設定
+
+#### P19-09: 参照モデルの ObjectField で Scene オブジェクトと Packages フォルダを選択可能にする
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: 現在 `allowSceneObjects = false` のため、Packages フォルダ内の FBX から Hierarchy に配置した GameObject を選択できない
+- **変更内容**:
+  - `ObjectField` の `allowSceneObjects` を `true` に変更
+  - これにより Hierarchy 上の GameObject（Packages フォルダの FBX を配置したもの含む）を選択可能になる
+  - Scene オブジェクト選択時の注意: Scene が閉じられると参照が切れる点は許容（Editor 専用フィールドのため）
+
+#### P19-10: RendererPaths 検出結果の JSON 保存を修正
+- **対象ファイル**: `Editor/Inspector/FacialProfileSOEditor.cs`
+- **背景**: `OnDetectRendererPathsClicked()` で検出した RendererPaths は SO のフィールドに保存されるが、`_cachedProfile` が更新されないため「JSON に保存」を押しても検出結果が JSON に含まれない
+- **変更内容**:
+  - `OnDetectRendererPathsClicked()` の末尾で `_cachedProfile` の RendererPaths を更新
+  - 方法: 現在の `_cachedProfile` から新しい `FacialProfile` を RendererPaths 付きで再構築してキャッシュを差し替える
+  ```csharp
+  if (_cachedProfile != null)
+  {
+      var p = _cachedProfile.Value;
+      _cachedProfile = new FacialProfile(
+          p.SchemaVersion, p.Layers.ToArray(), p.Expressions.ToArray(), paths);
+  }
+  ```
+  - 「JSON に保存」押下時に RendererPaths が正しく JSON に含まれることを確認
+
+### テスト（EditMode/）
+- **P19-T01**: `ProfileRebuildBlendShapeWeightTests` — `RebuildProfileFromEdits` 相当ロジックで BlendShape Weight 編集値が正しく反映されるか検証
+  - Weight 編集前後のラウンドトリップ（元の値を変更 → 再構築 → 値が一致）
+  - 複数 BlendShape の同時編集
+  - 範囲外値（負数、1超）のクランプ確認
+- **P19-T02**: `ProfileBlendShapeAddRemoveTests` — Expression 内 BlendShape の追加・削除後にプロファイルが正しく再構築されるか検証
+  - BlendShape 追加後の Expression.BlendShapeValues.Length 増加
+  - BlendShape 削除後の Expression.BlendShapeValues.Length 減少
+  - 追加した BlendShape の名前と Weight が保持される
+  - 削除後に残りの BlendShape の順序と値が維持される
+  - JSON シリアライズ → パースのラウンドトリップ
+- **P19-T03**: `RendererPathsCacheUpdateTests` — RendererPaths 検出後のキャッシュ更新 → JSON ラウンドトリップ検証
+  - FacialProfile に RendererPaths を差し替えて再構築 → シリアライズ → パース → RendererPaths が一致
+  - 既存の Layers / Expressions が RendererPaths 差し替え後も維持される
+  - 空 RendererPaths → 非空への更新、非空 → 別の非空への更新
+
+### 手動検証
+- Inspector の UI 操作確認（Expression List UI、BlendShape 編集、Undo/Redo、クローン作成）
+- ARKit 検出ツールのボタン表示確認
+- 参照モデルの Scene オブジェクト / Packages フォルダ選択確認
+- 既存テスト（`ProfileCreationTests`、`ProfileEditSaveTests`、`FacialProfileRendererPathsTests` 等）が引き続き Green であること
+
+### 完了基準
+- JSON ファイルパスが読み取り専用表示になっている
+- Expression の追加/削除が Unity 標準 UI で操作できる
+- Inspector だけで Expression の BlendShape（名前 + Weight）を完結して編集できる
+- Expression の追加/削除の Undo/Redo が正しく動作する
+- 「プロファイルのクローンを作成」で現在のプロファイルを複製できる
+- LT/RT が Value タイプで Trigger11/12 に割り当てられている
+- ARKit 検出ツールのボタンが検出後も正常に表示される
+- 参照モデルに Scene オブジェクトと Packages フォルダ内アセットを指定できる
+- RendererPaths 検出結果が「JSON に保存」で正しく JSON に含まれる
+
+---
+
 ## フェーズ間の依存関係
 
 ```
@@ -976,6 +1136,8 @@ P00 (基盤)
           │           ├→ P11 (Expression 作成) │       │
           │           └→ P12 (ARKit 検出) ────┘       │
           │                                            └→ P18 (Inspector 一本化)
+          │                                                    │
+          │                                                    └→ P19 (Inspector UI 改善)
           └→ P13 (テンプレート) ←── P05 の後でも可
               └→ P14 (統合・性能テスト) ←── P06〜P08 完了後
                   └→ P15 (ドキュメント)
@@ -988,6 +1150,7 @@ P00 (基盤)
 - P13 は P05 完了後ならいつでも着手可能
 - P17 は P09 / P10 / P12 / P13 完了後に着手可能（P17-01〜P17-06 は並行着手可能、ただし P17-03 は P17-02 に依存。P17-07〜P17-12 は P17-07 → P17-08/P17-09 → P17-10 → P17-11 → P17-12 の順で依存）
 - P18 は P17 完了後に着手可能（P18-01〜P18-05 は並行着手可能、P18-06 は P18-01〜P18-05 完了後、P18-07 は P18-06 完了後）
+- P19 は P18 完了後に着手可能（P19-01/P19-06〜P19-10 は並行着手可能、P19-02 → P19-03 → P19-04 の順で依存、P19-02 → P19-05 の依存あり）
 
 ---
 
@@ -1016,8 +1179,9 @@ P00 (基盤)
 | P16 | CI/CD・リリース準備 | P15 |
 | P17 | Editor 改善・テンプレート拡充 | P09, P10, P12, P13 |
 | P18 | プロファイル管理を Inspector に一本化 | P17 |
+| P19 | Inspector UI 改善（フィードバック対応） | P18 |
 
-### 作業項目一覧（全 88 項目）
+### 作業項目一覧（全 98 項目）
 
 | ID | 作業項目 |
 |----|---------|
@@ -1107,8 +1271,18 @@ P00 (基盤)
 | P18-05 | Inspector に新規プロファイル作成ボタンを追加 |
 | P18-06 | ProfileManagerWindow・ExpressionEditDialog を削除 |
 | P18-07 | 要件ドキュメント・CLAUDE.md を更新 |
+| P19-01 | JSON ファイルパスを読み取り専用表示に変更 |
+| P19-02 | Expression の追加/削除を Unity 標準 List UI に置き換え |
+| P19-03 | Expression 内 BlendShape の Weight 値編集を追加 |
+| P19-04 | Expression 内 BlendShape の追加・削除機能を追加 |
+| P19-05 | Expression の追加/削除の Undo を修正 |
+| P19-06 | 新規プロファイル作成ボタンをクローン機能に置き換え |
+| P19-07 | Xbox コントローラに LT/RT バインディングを追加（Value タイプ） |
+| P19-08 | ARKit 検出ツールのボタン表示崩れを修正 |
+| P19-09 | 参照モデルの ObjectField で Scene オブジェクトを選択可能にする |
+| P19-10 | RendererPaths 検出結果の JSON 保存を修正 |
 
-### テスト一覧（全 39 項目）
+### テスト一覧（全 42 項目）
 
 | ID | テスト名 |
 |----|---------|
@@ -1151,6 +1325,9 @@ P00 (基盤)
 | P17-T03 | FacialProfileRendererPathsTests |
 | P17-T04 | SystemTextJsonParserRendererPathsTests |
 | P17-T05 | FacialProfileMapperRendererPathsTests |
+| P19-T01 | ProfileRebuildBlendShapeWeightTests |
+| P19-T02 | ProfileBlendShapeAddRemoveTests |
+| P19-T03 | RendererPathsCacheUpdateTests |
 
 
 ---
@@ -1178,4 +1355,3 @@ P00 (基盤)
 ## 未整理メモ
 
 - FacialControlDefaultActions.inputactions は Hierarchy 上でどのように適用すればよいですか？
-- ARKit 検出ツールで検出ボタンを押すと、実行後に検出ボタンの UI が潰れる
