@@ -100,6 +100,29 @@ namespace Hidano.FacialControl.Editor.Inspector
             root.Add(_cloneProfileButton);
 
             // ========================================
+            // 使用モデルセクション
+            // ========================================
+            var refModelFoldout = new Foldout { text = ReferenceModelSectionLabel, value = true };
+
+            var refModelField = new ObjectField("使用モデル")
+            {
+                objectType = typeof(GameObject),
+                allowSceneObjects = true
+            };
+            refModelField.BindProperty(serializedObject.FindProperty("_referenceModel"));
+            refModelFoldout.Add(refModelField);
+
+            var detectButton = new Button(OnDetectRendererPathsClicked) { text = "RendererPaths 自動検出" };
+            detectButton.AddToClassList(FacialControlStyles.ActionButton);
+            refModelFoldout.Add(detectButton);
+
+            _rendererPathsContainer = new VisualElement();
+            _rendererPathsContainer.style.marginLeft = 8;
+            refModelFoldout.Add(_rendererPathsContainer);
+
+            root.Add(refModelFoldout);
+
+            // ========================================
             // JSON ファイルパスセクション
             // ========================================
             var jsonFoldout = new Foldout { text = JsonPathSectionLabel, value = true };
@@ -191,29 +214,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             _expressionListButtonContainer.Add(removeButton);
 
             root.Add(_expressionListButtonContainer);
-
-            // ========================================
-            // 使用モデルセクション
-            // ========================================
-            var refModelFoldout = new Foldout { text = ReferenceModelSectionLabel, value = true };
-
-            var refModelField = new ObjectField("使用モデル")
-            {
-                objectType = typeof(GameObject),
-                allowSceneObjects = true
-            };
-            refModelField.BindProperty(serializedObject.FindProperty("_referenceModel"));
-            refModelFoldout.Add(refModelField);
-
-            var detectButton = new Button(OnDetectRendererPathsClicked) { text = "RendererPaths 自動検出" };
-            detectButton.AddToClassList(FacialControlStyles.ActionButton);
-            refModelFoldout.Add(detectButton);
-
-            _rendererPathsContainer = new VisualElement();
-            _rendererPathsContainer.style.marginLeft = 8;
-            refModelFoldout.Add(_rendererPathsContainer);
-
-            root.Add(refModelFoldout);
 
             // ========================================
             // JSON に保存ボタン
