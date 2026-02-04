@@ -15,7 +15,7 @@ namespace Hidano.FacialControl.Editor.Inspector
     /// <summary>
     /// FacialProfileSO のカスタム Inspector。
     /// UI Toolkit で実装し、JSON ファイルパス表示、JSON 読み込みボタン、
-    /// 簡易プロファイル情報、レイヤー詳細一覧、Expression 詳細一覧を表示する。
+    /// レイヤー詳細一覧、Expression 詳細一覧を表示する。
     /// P17-03: レイヤー・Expression のインライン編集と JSON 上書き保存機能を提供する。
     /// </summary>
     [CustomEditor(typeof(FacialProfileSO))]
@@ -124,7 +124,15 @@ namespace Hidano.FacialControl.Editor.Inspector
             // ========================================
             var jsonFoldout = new Foldout { text = JsonPathSectionLabel, value = true };
 
+            // スキーマバージョン（目立たない表示）
             var so0 = target as FacialProfileSO;
+            string initialVersion = so0 != null && !string.IsNullOrEmpty(so0.SchemaVersion) ? so0.SchemaVersion : "---";
+            _schemaVersionLabel = new Label($"スキーマバージョン: {initialVersion}");
+            _schemaVersionLabel.style.fontSize = 10;
+            _schemaVersionLabel.style.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+            _schemaVersionLabel.style.marginBottom = 2;
+            jsonFoldout.Add(_schemaVersionLabel);
+
             _jsonPathLabel = new Label($"JSON ファイルパス: {(so0 != null && !string.IsNullOrEmpty(so0.JsonFilePath) ? so0.JsonFilePath : "---")}");
             _jsonPathLabel.tooltip = "StreamingAssets からの相対パス";
             _jsonPathLabel.AddToClassList(FacialControlStyles.InfoLabel);
