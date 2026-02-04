@@ -1543,6 +1543,14 @@ namespace Hidano.FacialControl.Editor.Inspector
             so.RendererPaths = paths;
             EditorUtility.SetDirty(so);
 
+            // _cachedProfile の RendererPaths を更新
+            if (_cachedProfile != null)
+            {
+                var p = _cachedProfile.Value;
+                _cachedProfile = new FacialProfile(
+                    p.SchemaVersion, p.Layers.ToArray(), p.Expressions.ToArray(), paths);
+            }
+
             UpdateRendererPathsDisplay();
             ShowStatus($"RendererPaths を検出しました: {paths.Length} 件", isError: false);
         }
