@@ -47,14 +47,9 @@ namespace Hidano.FacialControl.Editor.Inspector
         private VisualElement _rendererPathsContainer;
 
         /// <summary>
-        /// Expression 検索フィルタの TextField
+        /// Expression リスト操作セクション（+ / - ボタン）のコンテナ
         /// </summary>
-        private TextField _searchField;
-
-        /// <summary>
-        /// 現在の検索テキスト
-        /// </summary>
-        private string _searchText = "";
+        private VisualElement _expressionListButtonContainer;
 
         /// <summary>
         /// JSON 読み込み成功時にキャッシュされた FacialProfile
@@ -158,16 +153,27 @@ namespace Hidano.FacialControl.Editor.Inspector
             // ========================================
             // Expression 詳細セクション
             // ========================================
-            var addExpressionButton = new Button(OnAddExpressionClicked) { text = "Expression 追加" };
-            addExpressionButton.AddToClassList(FacialControlStyles.ActionButton);
-            root.Add(addExpressionButton);
-
-            _searchField = new TextField("検索");
-            _searchField.RegisterValueChangedCallback(OnSearchTextChanged);
-            root.Add(_searchField);
-
             _expressionDetailFoldout = new Foldout { text = ExpressionDetailSectionLabel, value = false };
             root.Add(_expressionDetailFoldout);
+
+            // + / - ボタン（Unity 標準 List UI パターン）
+            _expressionListButtonContainer = new VisualElement();
+            _expressionListButtonContainer.style.flexDirection = FlexDirection.Row;
+            _expressionListButtonContainer.style.justifyContent = Justify.FlexEnd;
+            _expressionListButtonContainer.style.marginTop = 2;
+            _expressionListButtonContainer.style.marginBottom = 4;
+
+            var addButton = new Button(OnAddExpressionClicked) { text = "+" };
+            addButton.style.width = 24;
+            addButton.style.height = 20;
+            _expressionListButtonContainer.Add(addButton);
+
+            var removeButton = new Button(OnRemoveLastExpressionClicked) { text = "-" };
+            removeButton.style.width = 24;
+            removeButton.style.height = 20;
+            _expressionListButtonContainer.Add(removeButton);
+
+            root.Add(_expressionListButtonContainer);
 
             // ========================================
             // 参照モデルセクション
@@ -609,26 +615,28 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
-        /// 検索テキスト変更時の処理。
-        /// Expression 一覧を検索テキストでフィルタリングして再構築する。
+        /// `-` ボタン押下時の処理。
+        /// 末尾の Expression を削除し、JSON 自動保存 → UI 再構築を行う。
         /// </summary>
-        private void OnSearchTextChanged(ChangeEvent<string> evt)
+        private void OnRemoveLastExpressionClicked()
         {
-            _searchText = evt.newValue ?? "";
-            RebuildExpressionDetailUI();
-        }
-
-        /// <summary>
-        /// Expression 詳細 UI のみを再構築する（検索フィルタ変更時用）
-        /// </summary>
-        private void RebuildExpressionDetailUI()
-        {
-            if (_expressionDetailFoldout == null || _cachedProfile == null)
+            if (_cachedProfile == null)
+            {
+                ShowStatus("プロファイルが読み込まれていません。先に JSON を読み込んでください。", isError: true);
                 return;
+            }
 
-            _expressionDetailFoldout.Clear();
-            _expressionEdits.Clear();
-            BuildExpressionDetailUI(_cachedProfile.Value);
+            var originalProfile = _cachedProfile.Value;
+            var existingExpressions = originalProfile.Expressions.ToArray();
+
+            if (existingExpressions.Length == 0)
+            {
+                ShowStatus("削除する Expression がありません。", isError: true);
+                return;
+            }
+
+            // 末尾の Expression を削除
+            OnDeleteExpressionClicked(existingExpressions.Length - 1);
         }
 
         /// <summary>
@@ -647,7 +655,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
 
             // Expression 再構築
-            // 検索フィルタ中は _expressionEdits が全 Expression を含まない可能性がある。
             // OriginalIndex を使って編集済みデータと元データを正しくマージする。
             var originalExpressions = originalProfile.Expressions.Span;
 
@@ -888,13 +895,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             {
                 var expr = exprSpan[i];
 
-                // 検索フィルタ: 名前の部分一致（大文字小文字区別なし）
-                if (!string.IsNullOrEmpty(_searchText) &&
-                    expr.Name.IndexOf(_searchText, StringComparison.OrdinalIgnoreCase) < 0)
-                {
-                    continue;
-                }
-
                 var editData = new ExpressionEditData(
                     expr.Id, expr.Name, expr.Layer, expr.TransitionDuration, i);
                 _expressionEdits.Add(editData);
@@ -1038,25 +1038,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                     exprFoldout.Add(noBsLabel);
                 }
 
-                // 削除ボタン
-                var capturedDeleteIndex = i;
-                var deleteButton = new Button(() => OnDeleteExpressionClicked(capturedDeleteIndex))
-                {
-                    text = "削除"
-                };
-                deleteButton.AddToClassList(FacialControlStyles.ActionButton);
-                deleteButton.style.marginTop = 4;
-                exprFoldout.Add(deleteButton);
-
                 _expressionDetailFoldout.Add(exprFoldout);
-            }
-
-            // 検索フィルタで全件除外された場合のメッセージ
-            if (_expressionEdits.Count == 0 && !string.IsNullOrEmpty(_searchText))
-            {
-                var noMatchLabel = new Label($"「{_searchText}」に一致する Expression がありません。");
-                noMatchLabel.AddToClassList(FacialControlStyles.InfoLabel);
-                _expressionDetailFoldout.Add(noMatchLabel);
             }
         }
 
