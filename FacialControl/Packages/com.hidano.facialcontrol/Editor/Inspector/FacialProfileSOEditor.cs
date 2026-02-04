@@ -349,6 +349,100 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
+        /// Expression 削除ボタン押下時の処理。
+        /// 確認ダイアログ表示後に削除し、JSON 自動保存 → UI 再構築を行う。
+        /// </summary>
+        private void OnDeleteExpressionClicked(int index)
+        {
+            var so = target as FacialProfileSO;
+            if (so == null)
+                return;
+
+            if (_cachedProfile == null)
+            {
+                ShowStatus("プロファイルが読み込まれていません。先に JSON を読み込んでください。", isError: true);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                ShowStatus("JSON ファイルパスが設定されていません。", isError: true);
+                return;
+            }
+
+            var originalProfile = _cachedProfile.Value;
+            var existingExpressions = originalProfile.Expressions.ToArray();
+
+            if (index < 0 || index >= existingExpressions.Length)
+            {
+                ShowStatus("無効な Expression インデックスです。", isError: true);
+                return;
+            }
+
+            var expressionName = existingExpressions[index].Name;
+
+            // 確認ダイアログ
+            if (!EditorUtility.DisplayDialog(
+                "Expression 削除",
+                $"Expression「{expressionName}」を削除しますか？",
+                "削除",
+                "キャンセル"))
+            {
+                return;
+            }
+
+            var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+
+            // 削除後の Expression 配列を構築
+            var newExpressions = new Expression[existingExpressions.Length - 1];
+            int destIndex = 0;
+            for (int i = 0; i < existingExpressions.Length; i++)
+            {
+                if (i != index)
+                {
+                    newExpressions[destIndex] = existingExpressions[i];
+                    destIndex++;
+                }
+            }
+
+            // 新しいプロファイルを構築
+            var newProfile = new FacialProfile(
+                originalProfile.SchemaVersion,
+                originalProfile.Layers.ToArray(),
+                newExpressions,
+                originalProfile.RendererPaths.ToArray());
+
+            try
+            {
+                Undo.RecordObject(so, "Expression 削除");
+
+                // JSON 自動保存
+                var parser = new SystemTextJsonParser();
+                var json = parser.SerializeProfile(newProfile);
+                System.IO.File.WriteAllText(fullPath, json, System.Text.Encoding.UTF8);
+
+                // キャッシュ更新
+                _cachedProfile = newProfile;
+
+                // SO の表示用フィールドを同期更新
+                so.SchemaVersion = newProfile.SchemaVersion;
+                so.LayerCount = newProfile.Layers.Length;
+                so.ExpressionCount = newProfile.Expressions.Length;
+                EditorUtility.SetDirty(so);
+                serializedObject.Update();
+
+                UpdateProfileInfo();
+                RebuildDetailUI();
+                ShowStatus($"Expression「{expressionName}」を削除しました。", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Expression 削除エラー: {ex.Message}", isError: true);
+                Debug.LogError($"[FacialProfileSOEditor] Expression 削除エラー: {ex}");
+            }
+        }
+
+        /// <summary>
         /// 編集データから FacialProfile を再構築する
         /// </summary>
         private FacialProfile RebuildProfileFromEdits()
@@ -721,6 +815,16 @@ namespace Hidano.FacialControl.Editor.Inspector
                     noBsLabel.AddToClassList(FacialControlStyles.InfoLabel);
                     exprFoldout.Add(noBsLabel);
                 }
+
+                // 削除ボタン
+                var capturedDeleteIndex = i;
+                var deleteButton = new Button(() => OnDeleteExpressionClicked(capturedDeleteIndex))
+                {
+                    text = "削除"
+                };
+                deleteButton.AddToClassList(FacialControlStyles.ActionButton);
+                deleteButton.style.marginTop = 4;
+                exprFoldout.Add(deleteButton);
 
                 _expressionDetailFoldout.Add(exprFoldout);
             }
