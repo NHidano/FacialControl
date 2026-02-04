@@ -9,7 +9,6 @@ using Hidano.FacialControl.Adapters.Json;
 using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Editor.Common;
-using Hidano.FacialControl.Editor.Windows;
 
 namespace Hidano.FacialControl.Editor.Inspector
 {
@@ -52,6 +51,11 @@ namespace Hidano.FacialControl.Editor.Inspector
         private VisualElement _expressionListButtonContainer;
 
         /// <summary>
+        /// プロファイルのクローン作成ボタン。_cachedProfile が null の場合は無効化する。
+        /// </summary>
+        private Button _cloneProfileButton;
+
+        /// <summary>
         /// JSON 読み込み成功時にキャッシュされた FacialProfile
         /// </summary>
         private FacialProfile? _cachedProfile;
@@ -87,12 +91,13 @@ namespace Hidano.FacialControl.Editor.Inspector
                 root.styleSheets.Add(styleSheet);
 
             // ========================================
-            // 新規プロファイル作成ボタン
+            // プロファイルのクローン作成ボタン
             // ========================================
-            var createProfileButton = new Button(OnCreateNewProfileClicked) { text = "新規プロファイル作成" };
-            createProfileButton.AddToClassList(FacialControlStyles.ActionButton);
-            createProfileButton.style.marginBottom = 8;
-            root.Add(createProfileButton);
+            _cloneProfileButton = new Button(OnCloneProfileClicked) { text = "プロファイルのクローンを作成" };
+            _cloneProfileButton.AddToClassList(FacialControlStyles.ActionButton);
+            _cloneProfileButton.style.marginBottom = 8;
+            _cloneProfileButton.SetEnabled(false); // _cachedProfile 読み込み後に有効化
+            root.Add(_cloneProfileButton);
 
             // ========================================
             // JSON ファイルパスセクション
@@ -347,6 +352,8 @@ namespace Hidano.FacialControl.Editor.Inspector
             {
                 _cachedProfile = null;
                 ClearDetailUI();
+                if (_cloneProfileButton != null)
+                    _cloneProfileButton.SetEnabled(false);
                 ShowStatus($"読み込みエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[FacialProfileSOEditor] JSON 読み込みエラー: {ex}");
             }
@@ -443,36 +450,93 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
-        /// 新規プロファイル作成ボタン押下時の処理。
-        /// ProfileCreationDialog を表示し、作成完了後に Inspector を自動更新する。
+        /// プロファイルのクローン作成ボタン押下時の処理。
+        /// 現在の _cachedProfile をシリアライズして新しい JSON ファイルに保存し、
+        /// 新しい FacialProfileSO を生成して Selection に設定する。
         /// </summary>
-        private void OnCreateNewProfileClicked()
+        private void OnCloneProfileClicked()
         {
-            var dialog = ProfileCreationDialog.ShowDialog();
-            dialog.OnCreated += OnProfileCreated;
-        }
-
-        /// <summary>
-        /// ProfileCreationDialog でプロファイル作成完了時のコールバック。
-        /// Inspector を自動更新する。
-        /// </summary>
-        private void OnProfileCreated(FacialProfileSO createdSo)
-        {
-            // 現在の Inspector のターゲット SO の JSON を再読み込みして更新
             var so = target as FacialProfileSO;
             if (so == null)
                 return;
 
-            // JSON パスが設定されていれば再読み込み
-            if (!string.IsNullOrWhiteSpace(so.JsonFilePath))
+            if (_cachedProfile == null)
             {
-                serializedObject.Update();
-                UpdateProfileInfo();
-                TryLoadCachedProfile();
-                UpdateRendererPathsDisplay();
+                ShowStatus("プロファイルが読み込まれていません。先に JSON を読み込んでください。", isError: true);
+                return;
             }
 
-            ShowStatus("新規プロファイルが作成されました。", isError: false);
+            // デフォルトファイル名を生成
+            string defaultFileName = "profile_copy.json";
+            if (!string.IsNullOrWhiteSpace(so.JsonFilePath))
+            {
+                var originalName = System.IO.Path.GetFileNameWithoutExtension(so.JsonFilePath);
+                defaultFileName = $"{originalName}_copy.json";
+            }
+
+            // 保存先を選択
+            var defaultDir = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, "FacialControl");
+            var savePath = EditorUtility.SaveFilePanel(
+                "プロファイルのクローンを保存",
+                System.IO.Directory.Exists(defaultDir) ? defaultDir : UnityEngine.Application.streamingAssetsPath,
+                defaultFileName,
+                "json");
+
+            if (string.IsNullOrEmpty(savePath))
+                return;
+
+            try
+            {
+                // 現在のプロファイルをシリアライズして保存
+                var parser = new SystemTextJsonParser();
+                var json = parser.SerializeProfile(_cachedProfile.Value);
+
+                var directory = System.IO.Path.GetDirectoryName(savePath);
+                if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
+                {
+                    System.IO.Directory.CreateDirectory(directory);
+                }
+                System.IO.File.WriteAllText(savePath, json, System.Text.Encoding.UTF8);
+
+                // StreamingAssets からの相対パスを算出
+                var streamingAssetsPath = UnityEngine.Application.streamingAssetsPath.Replace("\\", "/");
+                var normalizedSavePath = savePath.Replace("\\", "/");
+                string relativePath;
+                if (normalizedSavePath.StartsWith(streamingAssetsPath + "/"))
+                {
+                    relativePath = normalizedSavePath.Substring(streamingAssetsPath.Length + 1);
+                }
+                else
+                {
+                    // StreamingAssets 外に保存された場合はフルパスを使用
+                    relativePath = normalizedSavePath;
+                }
+
+                // 新しい FacialProfileSO を生成
+                var newSo = CreateInstance<FacialProfileSO>();
+                newSo.JsonFilePath = relativePath;
+                newSo.SchemaVersion = _cachedProfile.Value.SchemaVersion;
+                newSo.LayerCount = _cachedProfile.Value.Layers.Length;
+                newSo.ExpressionCount = _cachedProfile.Value.Expressions.Length;
+                newSo.RendererPaths = _cachedProfile.Value.RendererPaths.ToArray();
+
+                // Assets フォルダに SO を保存
+                var soFileName = System.IO.Path.GetFileNameWithoutExtension(savePath);
+                var soPath = $"Assets/{soFileName}.asset";
+                soPath = AssetDatabase.GenerateUniqueAssetPath(soPath);
+                AssetDatabase.CreateAsset(newSo, soPath);
+                AssetDatabase.SaveAssets();
+
+                // 新しい SO を Selection に設定して Inspector で開く
+                Selection.activeObject = newSo;
+
+                ShowStatus($"クローンを作成しました: {System.IO.Path.GetFileName(savePath)}", isError: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"クローン作成エラー: {ex.Message}", isError: true);
+                Debug.LogError($"[FacialProfileSOEditor] クローン作成エラー: {ex}");
+            }
         }
 
         /// <summary>
@@ -999,6 +1063,8 @@ namespace Hidano.FacialControl.Editor.Inspector
             catch (Exception)
             {
                 _cachedProfile = null;
+                if (_cloneProfileButton != null)
+                    _cloneProfileButton.SetEnabled(false);
             }
         }
 
@@ -1030,6 +1096,10 @@ namespace Hidano.FacialControl.Editor.Inspector
                 _layerCountLabel.text = $"レイヤー数: {layers}";
             if (_expressionCountLabel != null)
                 _expressionCountLabel.text = $"Expression 数: {expressions}";
+
+            // クローンボタンの有効/無効をキャッシュ状態に同期
+            if (_cloneProfileButton != null)
+                _cloneProfileButton.SetEnabled(_cachedProfile != null);
         }
 
         /// <summary>
