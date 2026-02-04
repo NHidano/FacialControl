@@ -25,7 +25,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         private const string ProfileInfoSectionLabel = "プロファイル情報";
         private const string LayerDetailSectionLabel = "レイヤー一覧";
         private const string ExpressionDetailSectionLabel = "Expression 一覧";
-        private const string ReferenceModelSectionLabel = "参照モデル";
+        private const string ReferenceModelSectionLabel = "使用モデル";
 
         private Label _schemaVersionLabel;
         private Label _layerCountLabel;
@@ -41,7 +41,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         private Label _jsonPathLabel;
 
         /// <summary>
-        /// 参照モデルセクションの RendererPaths 一覧表示コンテナ
+        /// 使用モデルセクションの RendererPaths 一覧表示コンテナ
         /// </summary>
         private VisualElement _rendererPathsContainer;
 
@@ -193,11 +193,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             root.Add(_expressionListButtonContainer);
 
             // ========================================
-            // 参照モデルセクション
+            // 使用モデルセクション
             // ========================================
             var refModelFoldout = new Foldout { text = ReferenceModelSectionLabel, value = true };
 
-            var refModelField = new ObjectField("参照モデル")
+            var refModelField = new ObjectField("使用モデル")
             {
                 objectType = typeof(GameObject),
                 allowSceneObjects = true
@@ -1282,7 +1282,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                         value = false
                     };
 
-                    // 参照モデルが設定されている場合は BlendShape 名をドロップダウンで選択可能にする
+                    // 使用モデルが設定されている場合は BlendShape 名をドロップダウンで選択可能にする
                     var so = target as FacialProfileSO;
                     var allBlendShapeNames = (so != null) ? CollectBlendShapeNames(so.ReferenceModel) : null;
                     var hasReferenceModel = allBlendShapeNames != null && allBlendShapeNames.Count > 0;
@@ -1331,7 +1331,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                             var initialIndex = dropdownChoices.IndexOf(bs.Name);
                             if (initialIndex < 0)
                             {
-                                // 参照モデルに存在しない BlendShape 名は選択肢に追加
+                                // 使用モデルに存在しない BlendShape 名は選択肢に追加
                                 dropdownChoices.Insert(0, bs.Name);
                                 initialIndex = 0;
                             }
@@ -1354,7 +1354,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                         }
                         else
                         {
-                            // 参照モデル未設定時は BlendShape 名を Label で表示
+                            // 使用モデル未設定時は BlendShape 名を Label で表示
                             var nameLabel = new Label($"  {bs.Name}");
                             nameLabel.AddToClassList(FacialControlStyles.InfoLabel);
                             nameLabel.style.minWidth = 120;
@@ -1510,7 +1510,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
-        /// 参照モデルから RendererPaths を自動検出する。
+        /// 使用モデルから RendererPaths を自動検出する。
         /// 全 SkinnedMeshRenderer のモデルルートからの相対パスを算出し、SO に設定する。
         /// </summary>
         private void OnDetectRendererPathsClicked()
@@ -1521,14 +1521,14 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             if (so.ReferenceModel == null)
             {
-                ShowStatus("参照モデルが設定されていません。", isError: true);
+                ShowStatus("使用モデルが設定されていません。", isError: true);
                 return;
             }
 
             var renderers = so.ReferenceModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
             if (renderers.Length == 0)
             {
-                ShowStatus("参照モデルに SkinnedMeshRenderer が見つかりません。", isError: true);
+                ShowStatus("使用モデルに SkinnedMeshRenderer が見つかりません。", isError: true);
                 return;
             }
 
@@ -1603,7 +1603,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             headerLabel.style.marginBottom = 4;
             _rendererPathsContainer.Add(headerLabel);
 
-            // 参照モデルがある場合は BlendShape 数も表示
+            // 使用モデルがある場合は BlendShape 数も表示
             GameObject refModel = so.ReferenceModel;
 
             for (int i = 0; i < paths.Length; i++)
@@ -1632,8 +1632,8 @@ namespace Hidano.FacialControl.Editor.Inspector
         }
 
         /// <summary>
-        /// 参照モデルの全 SkinnedMeshRenderer から BlendShape 名を収集する（重複排除、ソート済み）。
-        /// 参照モデルが null の場合は null を返す。
+        /// 使用モデルの全 SkinnedMeshRenderer から BlendShape 名を収集する（重複排除、ソート済み）。
+        /// 使用モデルが null の場合は null を返す。
         /// </summary>
         private static List<string> CollectBlendShapeNames(GameObject referenceModel)
         {
