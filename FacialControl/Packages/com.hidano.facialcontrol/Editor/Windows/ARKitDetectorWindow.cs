@@ -392,6 +392,7 @@ namespace Hidano.FacialControl.Editor.Windows
             try
             {
                 _editorService.SaveExpressionsAsProfileJson(expressions, path);
+                AssetDatabase.Refresh();
                 ShowStatus($"Expression を保存しました: {System.IO.Path.GetFileName(path)}", isError: false);
             }
             catch (Exception ex)
@@ -444,6 +445,7 @@ namespace Hidano.FacialControl.Editor.Windows
             try
             {
                 _editorService.SaveOscMappingAsConfigJson(_oscMappings, path);
+                AssetDatabase.Refresh();
                 ShowStatus($"OSC マッピングを保存しました: {System.IO.Path.GetFileName(path)}", isError: false);
             }
             catch (Exception ex)
