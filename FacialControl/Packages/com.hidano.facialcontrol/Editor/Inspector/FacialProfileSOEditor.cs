@@ -1353,31 +1353,24 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                         if (hasReferenceModel)
                         {
-                            // ドロップダウンで BlendShape 名を選択可能
-                            var dropdownChoices = new List<string>(allBlendShapeNames);
-                            var initialIndex = dropdownChoices.IndexOf(bs.Name);
-                            if (initialIndex < 0)
-                            {
-                                // 使用モデルに存在しない BlendShape 名は選択肢に追加
-                                dropdownChoices.Insert(0, bs.Name);
-                                initialIndex = 0;
-                            }
-                            var dropdown = new DropdownField(
-                                dropdownChoices,
-                                initialIndex);
-                            dropdown.style.flexGrow = 1;
-                            dropdown.RegisterValueChangedCallback(evt =>
-                            {
-                                if (capturedExprIndex < _expressionEdits.Count)
+                            // 検索機能付きドロップダウンで BlendShape 名を選択可能
+                            var capturedExprIdxForSearch = capturedExprIndex;
+                            var capturedBsIdxForSearch = capturedBsIndex;
+                            var searchableDropdown = BuildSearchableDropdown(
+                                allBlendShapeNames,
+                                bs.Name,
+                                newValue =>
                                 {
-                                    var edits = _expressionEdits[capturedExprIndex].BlendShapeNameEdits;
-                                    if (edits != null && capturedBsIndex < edits.Length)
+                                    if (capturedExprIdxForSearch < _expressionEdits.Count)
                                     {
-                                        edits[capturedBsIndex] = evt.newValue;
+                                        var edits = _expressionEdits[capturedExprIdxForSearch].BlendShapeNameEdits;
+                                        if (edits != null && capturedBsIdxForSearch < edits.Length)
+                                        {
+                                            edits[capturedBsIdxForSearch] = newValue;
+                                        }
                                     }
-                                }
-                            });
-                            bsContainer.Add(dropdown);
+                                });
+                            bsContainer.Add(searchableDropdown);
                         }
                         else
                         {
@@ -1461,15 +1454,18 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                     if (hasReferenceModel)
                     {
-                        var addBsDropdown = new DropdownField(
-                            new List<string>(allBlendShapeNames),
-                            0);
-                        addBsDropdown.style.flexGrow = 1;
-                        addBsContainer.Add(addBsDropdown);
+                        // 追加用の選択値を保持する変数
+                        string addSelectedValue = allBlendShapeNames[0];
+                        var capturedAddExprIdx = capturedAddExprIndex;
+                        var addSearchableDropdown = BuildSearchableDropdown(
+                            allBlendShapeNames,
+                            addSelectedValue,
+                            newValue => { addSelectedValue = newValue; });
+                        addBsContainer.Add(addSearchableDropdown);
 
                         var addBsButton = new Button(() =>
                         {
-                            OnAddBlendShapeClicked(capturedAddExprIndex, addBsDropdown.value, 0f);
+                            OnAddBlendShapeClicked(capturedAddExprIdx, addSelectedValue, 0f);
                         })
                         {
                             text = "BlendShape 追加"
@@ -1690,6 +1686,87 @@ namespace Hidano.FacialControl.Editor.Inspector
             var sorted = new List<string>(nameSet);
             sorted.Sort(StringComparer.Ordinal);
             return sorted;
+        }
+
+        /// <summary>
+        /// 検索機能付き BlendShape 選択 UI を構築する。
+        /// TextField（検索ボックス）+ DropdownField を組み合わせ、入力値で候補を部分一致フィルタする。
+        /// </summary>
+        /// <param name="allChoices">全候補リスト</param>
+        /// <param name="initialValue">初期選択値</param>
+        /// <param name="onValueChanged">選択変更時のコールバック</param>
+        /// <returns>検索ボックスとドロップダウンを含むコンテナ</returns>
+        private static VisualElement BuildSearchableDropdown(
+            List<string> allChoices,
+            string initialValue,
+            Action<string> onValueChanged)
+        {
+            var container = new VisualElement();
+            container.style.flexGrow = 1;
+
+            var searchField = new TextField();
+            searchField.value = "";
+            // プレースホルダーテキスト表示用
+            var placeholder = new Label("BlendShape を検索...");
+            placeholder.style.position = Position.Absolute;
+            placeholder.style.color = new Color(0.5f, 0.5f, 0.5f, 0.7f);
+            placeholder.style.fontSize = 11;
+            placeholder.style.marginLeft = 4;
+            placeholder.style.marginTop = 2;
+            placeholder.pickingMode = PickingMode.Ignore;
+            searchField.Add(placeholder);
+
+            var dropdownChoices = new List<string>(allChoices);
+            var initialIndex = dropdownChoices.IndexOf(initialValue);
+            if (initialIndex < 0)
+            {
+                dropdownChoices.Insert(0, initialValue);
+                initialIndex = 0;
+            }
+            var dropdown = new DropdownField(dropdownChoices, initialIndex);
+
+            // 検索フィールドの変更時にドロップダウンの候補をフィルタ
+            searchField.RegisterValueChangedCallback(evt =>
+            {
+                // プレースホルダーの表示/非表示
+                placeholder.style.display = string.IsNullOrEmpty(evt.newValue) ? DisplayStyle.Flex : DisplayStyle.None;
+
+                var filterText = evt.newValue ?? "";
+                var filtered = new List<string>();
+                foreach (var name in allChoices)
+                {
+                    if (string.IsNullOrEmpty(filterText)
+                        || name.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        filtered.Add(name);
+                    }
+                }
+
+                if (filtered.Count == 0)
+                    filtered.Add("(該当なし)");
+
+                dropdown.choices = filtered;
+
+                // 現在の値がフィルタ結果に含まれていればそのまま維持、
+                // そうでなければ先頭を選択
+                if (!filtered.Contains(dropdown.value))
+                {
+                    dropdown.SetValueWithoutNotify(filtered[0]);
+                }
+            });
+
+            dropdown.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue != "(該当なし)")
+                {
+                    onValueChanged?.Invoke(evt.newValue);
+                }
+            });
+
+            container.Add(searchField);
+            container.Add(dropdown);
+
+            return container;
         }
 
         /// <summary>
