@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="17" result="Passed" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.1032648">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.103265" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1725" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.089628" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="509004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1726" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.079230" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1727" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.072166" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1728" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.065481" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1729" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.058849" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1730" name="Editor" fullname="Hidano.FacialControl.Tests.EditMode.Editor" runstate="Runnable" testcasecount="72" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.050635" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1001" name="ProfileBlendShapeAddRemoveTests" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.048331" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1004" name="AddBlendShape_ExistingBlendShapesPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_ExistingBlendShapesPreserved" methodname="AddBlendShape_ExistingBlendShapesPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="711253245" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.016972" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1017" name="AddBlendShape_ExpressionMetadataPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_ExpressionMetadataPreserved" methodname="AddBlendShape_ExpressionMetadataPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1124634789" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000389" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1002" name="AddBlendShape_LengthIncreased" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_LengthIncreased" methodname="AddBlendShape_LengthIncreased" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="134747661" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000694" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1003" name="AddBlendShape_NameAndWeightPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_NameAndWeightPreserved" methodname="AddBlendShape_NameAndWeightPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="226240770" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000299" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1006" name="AddBlendShape_OtherExpressionUnchanged" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_OtherExpressionUnchanged" methodname="AddBlendShape_OtherExpressionUnchanged" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="595243855" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000296" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1005" name="AddBlendShape_RoundTrip_ValuesPersisted" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_RoundTrip_ValuesPersisted" methodname="AddBlendShape_RoundTrip_ValuesPersisted" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1863283910" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.005473" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1007" name="AddBlendShape_WeightZero_Preserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddBlendShape_WeightZero_Preserved" methodname="AddBlendShape_WeightZero_Preserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1308780932" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000336" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1014" name="AddThenRemove_RestoredToOriginalLength" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddThenRemove_RestoredToOriginalLength" methodname="AddThenRemove_RestoredToOriginalLength" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="779031515" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000723" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1016" name="AddThenRemove_RoundTrip_Consistent" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.AddThenRemove_RoundTrip_Consistent" methodname="AddThenRemove_RoundTrip_Consistent" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="422412249" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000483" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1018" name="RemoveBlendShape_ExpressionMetadataPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_ExpressionMetadataPreserved" methodname="RemoveBlendShape_ExpressionMetadataPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="388104908" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000318" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1010" name="RemoveBlendShape_FirstElement_OrderPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_FirstElement_OrderPreserved" methodname="RemoveBlendShape_FirstElement_OrderPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1530838048" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000277" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1011" name="RemoveBlendShape_LastElement_OrderPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_LastElement_OrderPreserved" methodname="RemoveBlendShape_LastElement_OrderPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="652372202" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000248" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1008" name="RemoveBlendShape_LengthDecreased" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_LengthDecreased" methodname="RemoveBlendShape_LengthDecreased" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1492498983" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000269" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1013" name="RemoveBlendShape_OtherExpressionUnchanged" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_OtherExpressionUnchanged" methodname="RemoveBlendShape_OtherExpressionUnchanged" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="961413985" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000523" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1009" name="RemoveBlendShape_RemainingOrderAndValuesPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_RemainingOrderAndValuesPreserved" methodname="RemoveBlendShape_RemainingOrderAndValuesPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1844252507" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000370" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1012" name="RemoveBlendShape_RoundTrip_ValuesPersisted" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveBlendShape_RoundTrip_ValuesPersisted" methodname="RemoveBlendShape_RoundTrip_ValuesPersisted" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="308717090" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000372" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1015" name="RemoveThenAdd_NewBlendShapeAtEnd" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests.RemoveThenAdd_NewBlendShapeAtEnd" methodname="RemoveThenAdd_NewBlendShapeAtEnd" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileBlendShapeAddRemoveTests" runstate="Runnable" seed="1786440211" result="Passed" start-time="2026-02-04 10:18:27Z" end-time="2026-02-04 10:18:27Z" duration="0.000444" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.1097825">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.109783" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1725" name="Hidano.FacialControl.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Tests.EditMode.dll" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.092400" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="696540" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1726" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.079899" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1727" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.067464" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1728" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.055462" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1729" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="695" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.043729" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1730" name="Editor" fullname="Hidano.FacialControl.Tests.EditMode.Editor" runstate="Runnable" testcasecount="72" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.031682" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1059" name="ProfileRebuildBlendShapeWeightTests" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.029005" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1069" name="EditWeight_BoundaryOne_RoundTrip_ValueIsOne" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_BoundaryOne_RoundTrip_ValueIsOne" methodname="EditWeight_BoundaryOne_RoundTrip_ValueIsOne" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="1905396387" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.014970" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1068" name="EditWeight_BoundaryZero_RoundTrip_ValueIsZero" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_BoundaryZero_RoundTrip_ValueIsZero" methodname="EditWeight_BoundaryZero_RoundTrip_ValueIsZero" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="1878671022" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000460" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1066" name="EditWeight_ExpressionMetadataPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_ExpressionMetadataPreserved" methodname="EditWeight_ExpressionMetadataPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="835277604" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000488" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1061" name="EditWeight_MultipleValues_RoundTrip_AllValuesUpdated" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_MultipleValues_RoundTrip_AllValuesUpdated" methodname="EditWeight_MultipleValues_RoundTrip_AllValuesUpdated" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="1301612383" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000654" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1062" name="EditWeight_NamesPreserved" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_NamesPreserved" methodname="EditWeight_NamesPreserved" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="802604434" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000335" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1063" name="EditWeight_NegativeValue_ClampedToZero" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_NegativeValue_ClampedToZero" methodname="EditWeight_NegativeValue_ClampedToZero" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="1313650508" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000311" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1065" name="EditWeight_OtherExpressionUnchanged" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_OtherExpressionUnchanged" methodname="EditWeight_OtherExpressionUnchanged" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="2075110709" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000320" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1067" name="EditWeight_SecondExpression_RoundTrip_ValueUpdated" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_SecondExpression_RoundTrip_ValueUpdated" methodname="EditWeight_SecondExpression_RoundTrip_ValueUpdated" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="509505365" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000306" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1060" name="EditWeight_SingleValue_RoundTrip_ValueUpdated" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_SingleValue_RoundTrip_ValueUpdated" methodname="EditWeight_SingleValue_RoundTrip_ValueUpdated" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="1577431151" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000293" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1064" name="EditWeight_ValueOverOne_ClampedToOne" fullname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests.EditWeight_ValueOverOne_ClampedToOne" methodname="EditWeight_ValueOverOne_ClampedToOne" classname="Hidano.FacialControl.Tests.EditMode.Editor.ProfileRebuildBlendShapeWeightTests" runstate="Runnable" seed="78580747" result="Passed" start-time="2026-02-04 10:16:24Z" end-time="2026-02-04 10:16:24Z" duration="0.000290" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
