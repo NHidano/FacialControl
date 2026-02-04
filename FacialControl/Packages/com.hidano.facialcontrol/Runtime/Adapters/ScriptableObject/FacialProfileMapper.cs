@@ -51,6 +51,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
             so.SchemaVersion = profile.SchemaVersion;
             so.LayerCount = profile.Layers.Length;
             so.ExpressionCount = profile.Expressions.Length;
+            so.RendererPaths = profile.RendererPaths.ToArray();
         }
 
         /// <summary>

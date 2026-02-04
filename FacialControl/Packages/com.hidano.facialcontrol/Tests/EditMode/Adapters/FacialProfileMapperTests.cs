@@ -385,5 +385,65 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
                 _mapper.SaveFromSO(so, profile));
             UnityEngine.Object.DestroyImmediate(so);
         }
+
+        // --- P17-T05: RendererPaths の SO ↔ Profile 同期 ---
+
+        [Test]
+        public void UpdateSO_ProfileWithRendererPaths_SyncsRendererPathsToSO()
+        {
+            var so = CreateSO();
+            var profile = new FacialProfile("1.0", rendererPaths: new[] { "Armature/Body", "Armature/Face" });
+
+            _mapper.UpdateSO(so, profile);
+
+            Assert.IsNotNull(so.RendererPaths);
+            Assert.AreEqual(2, so.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", so.RendererPaths[0]);
+            Assert.AreEqual("Armature/Face", so.RendererPaths[1]);
+            UnityEngine.Object.DestroyImmediate(so);
+        }
+
+        [Test]
+        public void UpdateSO_ProfileWithEmptyRendererPaths_SetsEmptyArray()
+        {
+            var so = CreateSO();
+            var profile = new FacialProfile("1.0");
+
+            _mapper.UpdateSO(so, profile);
+
+            Assert.IsNotNull(so.RendererPaths);
+            Assert.AreEqual(0, so.RendererPaths.Length);
+            UnityEngine.Object.DestroyImmediate(so);
+        }
+
+        [Test]
+        public void LoadAndUpdateSO_ProfileWithRendererPaths_SyncsRendererPathsToSO()
+        {
+            var so = CreateSO("profiles/test.json");
+            var profile = new FacialProfile("1.0", rendererPaths: new[] { "Armature/Body" });
+            _repository.LoadResult = profile;
+
+            _mapper.LoadAndUpdateSO(so);
+
+            Assert.IsNotNull(so.RendererPaths);
+            Assert.AreEqual(1, so.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", so.RendererPaths[0]);
+            UnityEngine.Object.DestroyImmediate(so);
+        }
+
+        [Test]
+        public void SaveFromSO_ProfileWithRendererPaths_SyncsRendererPathsToSO()
+        {
+            var so = CreateSO("profiles/output.json");
+            var profile = new FacialProfile("1.0", rendererPaths: new[] { "Armature/Body", "Armature/Head" });
+
+            _mapper.SaveFromSO(so, profile);
+
+            Assert.IsNotNull(so.RendererPaths);
+            Assert.AreEqual(2, so.RendererPaths.Length);
+            Assert.AreEqual("Armature/Body", so.RendererPaths[0]);
+            Assert.AreEqual("Armature/Head", so.RendererPaths[1]);
+            UnityEngine.Object.DestroyImmediate(so);
+        }
     }
 }
