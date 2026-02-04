@@ -308,12 +308,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             if (so == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(so.JsonFilePath))
-            {
-                ShowStatus("JSON ファイルパスが設定されていません。インポート先を指定してください。", isError: true);
-                return;
-            }
-
             var importPath = EditorUtility.OpenFilePanel("プロファイル JSON のインポート", "", "json");
             if (string.IsNullOrEmpty(importPath))
                 return;
@@ -327,20 +321,28 @@ namespace Hidano.FacialControl.Editor.Inspector
                 StoreUndoJsonSnapshot(so);
                 Undo.RecordObject(so, "プロファイルインポート");
 
-                // SO の JSON パスへ保存
-                var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
-                var directory = System.IO.Path.GetDirectoryName(fullPath);
-                if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
+                bool hasJsonFilePath = !string.IsNullOrWhiteSpace(so.JsonFilePath);
+
+                if (hasJsonFilePath)
                 {
-                    System.IO.Directory.CreateDirectory(directory);
+                    // SO の JSON パスへ保存
+                    var fullPath = System.IO.Path.Combine(UnityEngine.Application.streamingAssetsPath, so.JsonFilePath);
+                    var directory = System.IO.Path.GetDirectoryName(fullPath);
+                    if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
+                    {
+                        System.IO.Directory.CreateDirectory(directory);
+                    }
+                    System.IO.File.WriteAllText(fullPath, json, System.Text.Encoding.UTF8);
                 }
-                System.IO.File.WriteAllText(fullPath, json, System.Text.Encoding.UTF8);
 
                 // SO の表示用フィールドを同期更新
                 var mapper = new FacialProfileMapper(
                     new FileProfileRepository(parser));
                 mapper.UpdateSO(so, profile);
-                UpdateUndoJsonSnapshotAfterSave(so, json);
+                if (hasJsonFilePath)
+                {
+                    UpdateUndoJsonSnapshotAfterSave(so, json);
+                }
                 EditorUtility.SetDirty(so);
                 serializedObject.Update();
 
@@ -348,7 +350,16 @@ namespace Hidano.FacialControl.Editor.Inspector
 
                 UpdateProfileInfo();
                 RebuildDetailUI();
-                ShowStatus($"インポートしました: {System.IO.Path.GetFileName(importPath)}", isError: false);
+
+                var filename = System.IO.Path.GetFileName(importPath);
+                if (hasJsonFilePath)
+                {
+                    ShowStatus($"インポートしました: {filename}", isError: false);
+                }
+                else
+                {
+                    ShowStatus($"インポートしました（JSON ファイル書き出しはスキップ）: {filename}", isError: false);
+                }
             }
             catch (Exception ex)
             {
