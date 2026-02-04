@@ -163,8 +163,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             _statusLabel.AddToClassList(FacialControlStyles.StatusLabel);
             jsonFoldout.Add(_statusLabel);
 
-            root.Add(jsonFoldout);
-
             // ========================================
             // プロファイル情報セクション（読み取り専用）
             // ========================================
@@ -221,6 +219,11 @@ namespace Hidano.FacialControl.Editor.Inspector
             var saveButton = new Button(OnSaveJsonClicked) { text = "JSON に保存" };
             saveButton.AddToClassList(FacialControlStyles.ActionButton);
             root.Add(saveButton);
+
+            // ========================================
+            // JSON ファイルパスセクション（最下部に配置）
+            // ========================================
+            root.Add(jsonFoldout);
 
             // 初回更新
             root.schedule.Execute(() =>
