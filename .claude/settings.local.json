@@ -1,5 +1,7 @@
 {
   "permissions": {
-    "allow": []
+    "allow": [
+      "mcp__unity-mcp__unity_listClients"
+    ]
   }
 }

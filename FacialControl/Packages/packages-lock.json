@@ -100,6 +100,13 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.2",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.render-pipelines.core": {
       "version": "17.3.0",
       "depth": 1,
@@ -195,6 +202,15 @@
       "source": "git",
       "dependencies": {},
       "hash": "f23be65e21f80d2ba7a92123192328e77e72b715"
+    },
+    "jp.shiranui-isuzu.unity-mcp": {
+      "version": "https://github.com/isuzu-shiranui/UnityMCP.git?path=jp.shiranui-isuzu.unity-mcp",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      },
+      "hash": "35700c4534f586fc0c72c31076a8a04996e34005"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
