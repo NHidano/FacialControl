@@ -9,6 +9,15 @@
         "com.hidano.uosc": "1.0.0"
       }
     },
+    "com.hidano.unity-mcp-custom-tools": {
+      "version": "git+ssh://git@github-personal/NHidano/UnityMCPCustomTools.git?path=UnityMCPCustomTools/Packages/UnityMCPCustomTools",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "jp.shiranui-isuzu.unity-mcp": "1.1.2"
+      },
+      "hash": "bc59e8371497d14c27e1287123d4cf3603bd00b6"
+    },
     "com.hidano.uosc": {
       "version": "1.0.0",
       "depth": 1,

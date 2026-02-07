@@ -1,7 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "mcp__unity-mcp__unity_listClients"
+      "mcp__unity-mcp__unity_listClients",
+      "Bash(uv run python:*)",
+      "Bash(tasklist:*)",
+      "mcp__unity-mcp__unity_connectToProject",
+      "mcp__unity-mcp__console_getLogs",
+      "Bash(netstat:*)",
+      "Bash(uv run:*)",
+      "Bash(claude --version)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp get:*)",
+      "mcp__windows-capture-mcp__list_windows",
+      "mcp__windows-capture-mcp__capture_window",
+      "mcp__windows-capture-mcp__preview_window",
+      "mcp__windows-capture-mcp__capture_region",
+      "mcp__windows-capture-mcp__resize_window",
+      "Bash(python:*)",
+      "Bash(mkdir:*)",
+      "mcp__windows-capture-mcp__focus_window"
     ]
   }
 }

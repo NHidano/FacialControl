@@ -10,6 +10,7 @@
   ],
   "dependencies": {
     "com.hidano.facialcontrol": "file:com.hidano.facialcontrol",
+    "com.hidano.unity-mcp-custom-tools": "git+ssh://git@github-personal/NHidano/UnityMCPCustomTools.git?path=UnityMCPCustomTools/Packages/UnityMCPCustomTools",
     "com.mikunote.hatsunemiku-sample": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Sample",
     "com.mikunote.magica-cloth-2": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/MagicaCloth2",
     "com.unity.ide.rider": "3.0.38",
