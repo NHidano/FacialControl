@@ -504,6 +504,84 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             StringAssert.Contains(BlinkSlotName, help.text);
         }
 
+        [Test]
+        public void DefaultOverlayClipSelection_SurvivesSerializedObjectRoundTrip()
+        {
+            // 回帰テスト（Default Overlays の clip が Play 突入で .asset 上から外れる不具合）。
+            // clip 割当が SerializedProperty 経由で確定されていれば、Inspector serializedObject の
+            // ApplyModifiedProperties（Play 突入直前の最終確定相当）や新規 SerializedObject 読み出しでも
+            // animationClip が保持される。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+            _so.DefaultOverlays.Add(new OverlaySlotBindingSerializable { slot = BlinkSlotName });
+
+            var root = BuildInspectorRoot();
+            var clipField = root.Q<ObjectField>(FacialCharacterProfileSOInspector.DefaultOverlayAnimationClipFieldName);
+            Assert.That(clipField, Is.Not.Null);
+
+            var clip = CreateClip("DefaultOverlayClipSelection_RoundTripClip");
+            clipField.value = clip;
+
+            Assert.That(_so.DefaultOverlays[0].animationClip, Is.SameAs(clip),
+                "clip 割当直後の managed モデルで animationClip が保持される必要があります。");
+
+            var inspectorSerialized = GetSerializedObject(_editor);
+            inspectorSerialized.ApplyModifiedProperties();
+            Assert.That(_so.DefaultOverlays[0].animationClip, Is.SameAs(clip),
+                "Inspector serializedObject の ApplyModifiedProperties 後に animationClip が巻き戻りました。");
+
+            var fresh = new SerializedObject(_so);
+            var clipProp = fresh
+                .FindProperty("_defaultOverlays")
+                .GetArrayElementAtIndex(0)
+                .FindPropertyRelative("animationClip");
+            Assert.That(clipProp, Is.Not.Null);
+            Assert.That(clipProp.objectReferenceValue, Is.SameAs(clip),
+                "永続化対象の SerializedObject で animationClip が保持されていません。");
+        }
+
+        [Test]
+        public void ExitingEditMode_FlushesPendingOverlayEdits()
+        {
+            // 回帰テスト（アサイン直後に Play すると Default Overlays の clip が外れる不具合）。
+            // panel attach 時の overlay 編集は schedule.Execute で次ティックへ遅延される。遅延ティックが
+            // 来る前に Play 突入するとドメインリロードで panel が破棄され編集が失われるため、
+            // ExitingEditMode で保留中の編集を確定する必要がある。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+            _so.DefaultOverlays.Add(new OverlaySlotBindingSerializable { slot = BlinkSlotName });
+            BuildInspectorRoot();
+
+            int executedCount = 0;
+            AddPendingOverlayEdit(_editor, () => executedCount++);
+            Assert.That(GetPendingOverlayEditCount(_editor), Is.EqualTo(1),
+                "前提: 保留中の overlay 編集が 1 件積まれている必要があります。");
+
+            InvokePlayModeFlush(_editor, PlayModeStateChange.ExitingEditMode);
+
+            Assert.That(executedCount, Is.EqualTo(1),
+                "ExitingEditMode で保留中の overlay 編集がフラッシュ（確定）されていません。");
+            Assert.That(GetPendingOverlayEditCount(_editor), Is.EqualTo(0),
+                "フラッシュ後に保留リストが空になっていません。");
+        }
+
+        [Test]
+        public void NonExitingEditModeChange_DoesNotFlushPendingOverlayEdits()
+        {
+            // ExitingEditMode 以外（例: EnteredPlayMode）では保留編集をフラッシュしてはならない。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+            _so.DefaultOverlays.Add(new OverlaySlotBindingSerializable { slot = BlinkSlotName });
+            BuildInspectorRoot();
+
+            int executedCount = 0;
+            AddPendingOverlayEdit(_editor, () => executedCount++);
+
+            InvokePlayModeFlush(_editor, PlayModeStateChange.EnteredPlayMode);
+
+            Assert.That(executedCount, Is.EqualTo(0),
+                "ExitingEditMode 以外で overlay 編集がフラッシュされてはいけません。");
+            Assert.That(GetPendingOverlayEditCount(_editor), Is.EqualTo(1),
+                "ExitingEditMode 以外で保留リストが変化してはいけません。");
+        }
+
         private VisualElement BuildInspectorRoot()
         {
             _editor = UnityEditor.Editor.CreateEditor(_so, typeof(FacialCharacterProfileSOInspector));
@@ -697,6 +775,33 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             }
 
             ResetAutoSavePending(editor);
+        }
+
+        private static void AddPendingOverlayEdit(UnityEditor.Editor editor, Action edit)
+        {
+            var field = typeof(FacialCharacterProfileSOInspector)
+                .GetField("_pendingOverlayEdits", InstanceNonPublic);
+            Assert.That(field, Is.Not.Null, "_pendingOverlayEdits フィールドが見つかりません。");
+            var list = (List<Action>)field.GetValue(editor);
+            Assert.That(list, Is.Not.Null);
+            list.Add(edit);
+        }
+
+        private static int GetPendingOverlayEditCount(UnityEditor.Editor editor)
+        {
+            var field = typeof(FacialCharacterProfileSOInspector)
+                .GetField("_pendingOverlayEdits", InstanceNonPublic);
+            Assert.That(field, Is.Not.Null, "_pendingOverlayEdits フィールドが見つかりません。");
+            var list = (List<Action>)field.GetValue(editor);
+            return list?.Count ?? 0;
+        }
+
+        private static void InvokePlayModeFlush(UnityEditor.Editor editor, PlayModeStateChange change)
+        {
+            var method = typeof(FacialCharacterProfileSOInspector)
+                .GetMethod("OnPlayModeStateChangedFlushOverlayEdits", InstanceNonPublic);
+            Assert.That(method, Is.Not.Null, "OnPlayModeStateChangedFlushOverlayEdits メソッドが見つかりません。");
+            method.Invoke(editor, new object[] { change });
         }
 
         private static void SetSlots(FacialCharacterProfileSO so, params string[] slots)

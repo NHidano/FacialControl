@@ -177,6 +177,13 @@ namespace Hidano.FacialControl.Editor.Inspector
 
         protected IExpressionAnimationClipSampler _sampler;
         private bool _autoSavePending;
+
+        // panel attach 時に次ティックへ遅延した overlay 編集（ApplyDefaultOverlayClipCore /
+        // ApplyExpressionOverlayClipCore 等）を保持する。遅延ティックが来る前に Play 突入すると、
+        // ドメインリロードで panel が破棄され schedule.Execute が実行されず、編集が確定しないまま失われる
+        // （アサイン直後に Play すると Default Overlays の clip が外れる不具合の根因）。
+        // ExitingEditMode / OnDisable でこのリストをフラッシュして確実に SerializedProperty へ確定する。
+        private readonly List<Action> _pendingOverlayEdits = new List<Action>();
 #if UNITY_EDITOR
         private GameObject _lastReferenceModel;
 #endif
@@ -184,6 +191,58 @@ namespace Hidano.FacialControl.Editor.Inspector
         // ====================================================================
         // Editor lifecycle
         // ====================================================================
+
+        protected virtual void OnEnable()
+        {
+            // Play 突入直前に保留中の overlay 編集を確定するため playModeStateChanged を購読する。
+            // 二重登録を避けてから登録する。
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChangedFlushOverlayEdits;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChangedFlushOverlayEdits;
+        }
+
+        protected virtual void OnDisable()
+        {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChangedFlushOverlayEdits;
+
+            // Inspector 破棄 / 別オブジェクト選択時にも保留中の overlay 編集を取りこぼさない。
+            FlushPendingOverlayEdits();
+        }
+
+        /// <summary>
+        /// Edit モード終了（= Play 突入直前）に、次ティックへ遅延された overlay 編集を確定し、
+        /// 予約済みの自動保存を即フラッシュする。<c>schedule.Execute</c> はドメインリロードによる
+        /// panel 破棄で実行されないため、ここでフラッシュしないとアサイン直後の clip が
+        /// .asset / profile.json に保存されず外れる。
+        /// </summary>
+        private void OnPlayModeStateChangedFlushOverlayEdits(PlayModeStateChange change)
+        {
+            if (change != PlayModeStateChange.ExitingEditMode) return;
+
+            FlushPendingOverlayEdits();
+            if (_autoSavePending)
+            {
+                FlushAutoSave();
+            }
+        }
+
+        /// <summary>
+        /// <see cref="RunOverlayEditDeferredOrImmediate"/> で次ティックへ遅延した overlay 編集
+        /// （<see cref="_pendingOverlayEdits"/>）を即時に実行して確定する。
+        /// 各編集コアは内部で overlayIndex / slot を再検証するため、二重実行されても安全。
+        /// </summary>
+        private void FlushPendingOverlayEdits()
+        {
+            if (_pendingOverlayEdits.Count == 0) return;
+
+            // 実行中に再度遅延が積まれても安全なよう、スナップショットを取り Clear してから実行する。
+            var pending = _pendingOverlayEdits.ToArray();
+            _pendingOverlayEdits.Clear();
+            for (int i = 0; i < pending.Length; i++)
+            {
+                if (this == null || target == null || serializedObject == null) return;
+                pending[i]?.Invoke();
+            }
+        }
 
         public override VisualElement CreateInspectorGUI()
         {
@@ -2682,10 +2741,15 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             if (_rootElement != null && _rootElement.panel != null)
             {
+                // 遅延ティックが来る前に Play 突入した場合に備え、保留リストへ積む。
+                // ExitingEditMode / OnDisable で FlushPendingOverlayEdits により確定され、取りこぼしを防ぐ。
+                _pendingOverlayEdits.Add(editCore);
                 _rootElement.schedule.Execute(() =>
                 {
                     // 遅延実行時点で target / serializedObject が破棄されていないか再検証する。
                     if (this == null || target == null || serializedObject == null) return;
+                    // 既に ExitingEditMode 等でフラッシュ済みなら二重実行しない。
+                    if (!_pendingOverlayEdits.Remove(editCore)) return;
                     editCore();
                 });
                 return;

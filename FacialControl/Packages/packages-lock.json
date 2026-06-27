@@ -61,12 +61,12 @@
       "dependencies": {},
       "url": "https://registry.npmjs.org"
     },
-    "com.mikunote.hatsunemiku-sample": {
-      "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Sample",
+    "com.mikunote.hatsunemiku-note": {
+      "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Note",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "41ad48d9313638ba6ff85febe06bf9cdf9b726a3"
+      "hash": "d91dfeafbe7ada0bc5a88c39fedb7c377ec3560d"
     },
     "com.mikunote.magica-cloth-2": {
       "version": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/MagicaCloth2",
