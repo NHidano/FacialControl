@@ -203,6 +203,7 @@ Tests/
 
 - Unity テストランナーは `run_in_background` を使わず、`timeout: 600000` の同期 Bash 呼び出しで実行する
 - `tasks.txt` は作業手順書（`docs/work-procedure.md`）に記載のタスク ID のみを列挙するファイルである。ターミナルから for 文で連続実行するために使用する。タスクの説明や詳細を `tasks.txt` に直接追記してはならない。タスクの追加・変更は必ず `docs/work-procedure.md` に記載し、`tasks.txt` には ID のみを転記する
+- 同じ原因仮説を 2 回外したら、推測を続けず実機ログ/データ取得に切り替えて一度ユーザーに確認する
 
 ## 重要な注意事項
 
