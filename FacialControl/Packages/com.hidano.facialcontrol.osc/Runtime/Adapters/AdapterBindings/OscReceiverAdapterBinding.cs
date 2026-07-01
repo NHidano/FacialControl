@@ -158,6 +158,16 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         [NonSerialized]
         private bool _hasProcessedHeartbeat;
 
+        // heartbeat の BlendShape 名は MTU に収まるよう複数の
+        // /_facialcontrol/blendshape_names メッセージ (chunk) に分割されて届く。
+        // 同一 heartbeat の chunk 群は同じ bundle timestamp を共有するため、
+        // timestamp が同じ間は _heartbeatScratch へ accumulate し、新しい timestamp で reset する。
+        [NonSerialized]
+        private ulong _heartbeatAccumulationTimestamp;
+
+        [NonSerialized]
+        private bool _heartbeatAccumulating;
+
         [NonSerialized]
         private bool _warnedOnEmptyHeartbeatIntersection;
 
@@ -542,6 +552,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _heartbeatDirty = 0;
             _lastHeartbeatHash = 0u;
             _hasProcessedHeartbeat = false;
+            _heartbeatAccumulationTimestamp = 0u;
+            _heartbeatAccumulating = false;
             _warnedOnEmptyHeartbeatIntersection = false;
             _warnedOnAddressCollision = false;
             _warnedOnUnknownPreset = false;
@@ -978,9 +990,22 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 return;
             }
 
+            // 送信側は BlendShape 名を MTU に収まる分ずつ複数の
+            // /_facialcontrol/blendshape_names メッセージ (chunk) に分割して送る。
+            // 同一 heartbeat の chunk 群は同じ bundle timestamp を共有するので、
+            // timestamp が同じ間は accumulate し、新しい timestamp で reset する。
+            // これをしないと最後の chunk のみ残り、後続 BlendShape (まぶた/目尻/viseme 等)
+            // が mapping に載らず受信側で常にゼロになる。
+            ulong timestampKey = message.timestamp.value;
             lock (_heartbeatSync)
             {
-                _heartbeatScratch.Clear();
+                if (!_heartbeatAccumulating || timestampKey != _heartbeatAccumulationTimestamp)
+                {
+                    _heartbeatScratch.Clear();
+                    _heartbeatAccumulationTimestamp = timestampKey;
+                    _heartbeatAccumulating = true;
+                }
+
                 for (int i = 0; i < message.values.Length; i++)
                 {
                     if (message.values[i] is string name && !string.IsNullOrEmpty(name))
