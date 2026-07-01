@@ -45,6 +45,9 @@ namespace Hidano.FacialControl.Adapters.InputSources
         private double _lastDataTime;
         private bool _isStale;
 
+        // デバッグ用: 初回の非ゼロ受信値を layer へ書き込んだ時に 1 回だけログする（スパム/GC 回避）。
+        private bool _loggedFirstNonZero;
+
         /// <summary>
         /// <see cref="OscInputSource"/> を構築する。
         /// </summary>
@@ -164,6 +167,21 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 }
 
                 output[meshIndex] = readBuffer[mappingIndex];
+            }
+
+            if (!_loggedFirstNonZero)
+            {
+                float dbgMax = 0f;
+                for (int i = 0; i < output.Length; i++)
+                {
+                    if (output[i] > dbgMax) { dbgMax = output[i]; }
+                }
+                if (dbgMax > 0.001f)
+                {
+                    _loggedFirstNonZero = true;
+                    UnityEngine.Debug.Log(
+                        $"[OscInputSource] 初回の非ゼロ受信値を layer へ書き込み: max={dbgMax:F3}（OSC 値メッセージ受信・反映を確認）。");
+                }
             }
 
             return true;

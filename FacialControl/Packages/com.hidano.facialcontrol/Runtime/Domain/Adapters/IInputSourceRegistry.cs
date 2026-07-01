@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
@@ -86,5 +87,12 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// 同一状態に対する複数回の列挙は同じ順序を返す（挿入順保持）。
         /// </summary>
         IReadOnlyList<string> RegisteredIds { get; }
+
+        /// <summary>
+        /// 指定 id（primary slug または slug:sub）の Register/Replace を購読する。
+        /// 該当 id の source が登録された時点で handler が発火する（auto mapping OSC の遅延登録対応）。
+        /// id が null/空、handler が null の場合は no-op。
+        /// </summary>
+        void Subscribe(string id, Action<IInputSource> handler);
     }
 }

@@ -266,6 +266,39 @@ namespace Hidano.FacialControl.Application.UseCases
         }
 
         /// <summary>
+        /// 起動後に登録された入力源を指定レイヤーへ後付けバインドする。auto mapping OSC の
+        /// heartbeat 受信後など、layer 解決時点で未登録だった source を反映するための経路。
+        /// heartbeat ごとに新インスタンスが来るため、同 id が既存なら差し替える（内部 registry の
+        /// TryRemove/TryAdd 警告を避けるため既存有無を先に確認する）。追加した source は次フレームの
+        /// Aggregate で拾われる。
+        /// </summary>
+        public void BindLateInputSource(int layerIdx, IInputSource source)
+        {
+            if (source == null || _registry == null)
+            {
+                return;
+            }
+
+            int count = _registry.GetSourceCountForLayer(layerIdx);
+            bool exists = false;
+            for (int s = 0; s < count; s++)
+            {
+                var existing = _registry.GetSource(layerIdx, s);
+                if (existing != null && string.Equals(existing.Id, source.Id, System.StringComparison.Ordinal))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (exists)
+            {
+                _registry.TryRemoveSource(layerIdx, Hidano.FacialControl.Domain.Models.InputSourceId.Parse(source.Id));
+            }
+            _registry.TryAddSource(layerIdx, source);
+        }
+
+        /// <summary>
         /// 入力源ウェイトのバルク書込スコープを開始する。
         /// 返された <see cref="LayerInputSourceWeightBuffer.BulkScope"/> の
         /// <c>SetWeight</c> で書いた値はスコープの <c>Dispose</c> (= CommitBulk) 時に
