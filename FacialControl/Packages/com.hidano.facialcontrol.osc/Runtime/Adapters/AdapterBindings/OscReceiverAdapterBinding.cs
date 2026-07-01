@@ -618,6 +618,16 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 InitializeGazeBundleState();
                 RegisterGazeSources(ctx.InputSourceRegistry, slug, _mappings);
             }
+            else
+            {
+                // 診断: gaze mapping が 1 つも無いと、送信側が gaze を送っていても受信側は
+                // 一切 routing しない（heartbeat auto-map は BlendShape のみで gaze route を生成しない）。
+                // 「ゲームコントローラの目線が受信側に反映されない」典型原因。
+                Debug.Log(
+                    "[OscReceiverAdapterBinding] gaze mapping が未設定のため Gaze 受信は無効です "
+                    + "（heartbeat auto-map は gaze route を生成しません）。目線を反映するには "
+                    + "受信側マッピングに gaze エントリ（mode=Gaze_*, expressionId, addressPattern）を明示設定してください。");
+            }
 
             _buffer = new OscDoubleBuffer(runtimeMappings.Length);
             _bundleAccumulator = new OscBundleAccumulator(_buffer, settings.BundleAccumulationTimeoutMs);
@@ -1045,7 +1055,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         {
             _runtimeMappings = result.RuntimeMappings;
             _mappingOrigins = result.Origins;
-            LogRuntimeMappingDiagnostics(_runtimeMappings, _mappingOrigins);
+            LogRuntimeMappingDiagnostics(_runtimeMappings, _mappingOrigins, _runtimeMeshBlendShapeNames);
             BuildNormalLookup(_runtimeMappings);
 
             if (_buffer == null || _helperHost == null || _effectiveSettings == null)
@@ -1082,7 +1092,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _runtimeRegistry.Replace(_runtimeSlug, _inputSource);
         }
 
-        private static void LogRuntimeMappingDiagnostics(OscMapping[] mappings, MappingOrigin[] origins)
+        private static void LogRuntimeMappingDiagnostics(
+            OscMapping[] mappings,
+            MappingOrigin[] origins,
+            IReadOnlyList<string> meshBlendShapeNames)
         {
             int manualCount = 0;
             int heartbeatAutoCount = 0;
@@ -1104,6 +1117,55 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             int totalCount = mappings != null ? mappings.Length : 0;
             Debug.Log(
                 $"[OscReceiverAdapterBinding] runtime mappings published: total={totalCount}, manual={manualCount}, heartbeatAuto={heartbeatAutoCount}.");
+
+            // カバレッジ診断: 受信側で実際に書き込まれる BlendShape 名と、メッシュにあるが
+            // どの mapping にも解決されなかった BlendShape 名を列挙する。
+            // 「口だけ動く / まぶた・目尻が動かない」の切り分けに使う:
+            //   - 未マップ側に まぶた/目尻/viseme が居れば「送信されていない or 名前不一致」で受信側は常にゼロ。
+            //   - マップ側に居るのに動かなければ「送信側 postBlendValues がゼロ (bone/gaze 駆動等)」。
+            if (mappings != null && mappings.Length > 0)
+            {
+                var mappedSet = new HashSet<string>(StringComparer.Ordinal);
+                var mapped = new System.Text.StringBuilder();
+                for (int i = 0; i < mappings.Length; i++)
+                {
+                    string name = mappings[i].BlendShapeName;
+                    if (i > 0)
+                    {
+                        mapped.Append(", ");
+                    }
+                    mapped.Append(name);
+                    mappedSet.Add(name);
+                }
+                Debug.Log(
+                    $"[OscReceiverAdapterBinding] mapped BlendShapes ({mappings.Length}): {mapped}");
+
+                if (meshBlendShapeNames != null && meshBlendShapeNames.Count > 0)
+                {
+                    var unmapped = new System.Text.StringBuilder();
+                    int unmappedCount = 0;
+                    for (int i = 0; i < meshBlendShapeNames.Count; i++)
+                    {
+                        string name = meshBlendShapeNames[i];
+                        if (mappedSet.Contains(name))
+                        {
+                            continue;
+                        }
+                        if (unmappedCount > 0)
+                        {
+                            unmapped.Append(", ");
+                        }
+                        unmapped.Append(name);
+                        unmappedCount++;
+                    }
+                    if (unmappedCount > 0)
+                    {
+                        Debug.Log(
+                            $"[OscReceiverAdapterBinding] mesh BlendShapes with NO mapping ({unmappedCount}) " +
+                            $"— 受信側で常にゼロ: {unmapped}");
+                    }
+                }
+            }
         }
 
         private static bool RuntimeMappingsEqual(OscMapping[] left, OscMapping[] right)
