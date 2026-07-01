@@ -599,12 +599,13 @@ namespace Hidano.FacialControl.Adapters.Playable
                         Debug.LogWarning(
                             $"FacialController: inputSource id '{decl.Id ?? "<null>"}' を InputSourceRegistry で解決できないため layer {l} でスキップします。 後から登録された場合は購読経由で layer へ後付けバインドします。");
                         int capturedLayer = l;
+                        float capturedWeight = decl.Weight;
                         registry.Subscribe(decl.Id, lateSource =>
                         {
                             if (_layerUseCase != null && lateSource != null)
                             {
-                                _layerUseCase.BindLateInputSource(capturedLayer, lateSource);
-                                Debug.Log($"[FacialController] late-bind inputSource id='{lateSource.Id}' を layer {capturedLayer} へ後付けバインド完了。");
+                                _layerUseCase.BindLateInputSource(capturedLayer, lateSource, capturedWeight);
+                                Debug.Log($"[FacialController] late-bind inputSource id='{lateSource.Id}' を layer {capturedLayer} へ weight={capturedWeight} で後付けバインド完了。");
                             }
                         });
                     }

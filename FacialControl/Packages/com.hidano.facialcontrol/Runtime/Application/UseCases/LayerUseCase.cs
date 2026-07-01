@@ -272,7 +272,15 @@ namespace Hidano.FacialControl.Application.UseCases
         /// TryRemove/TryAdd 警告を避けるため既存有無を先に確認する）。追加した source は次フレームの
         /// Aggregate で拾われる。
         /// </summary>
-        public void BindLateInputSource(int layerIdx, IInputSource source)
+        /// <param name="layerIdx">後付けバインド先レイヤー。</param>
+        /// <param name="source">登録する入力源。</param>
+        /// <param name="weight">
+        /// この source のレイヤー内ブレンド weight（プロファイル宣言由来）。
+        /// init 経路（<see cref="InitializePipeline"/>）の追加ソースと同じく weight バッファへ焼く。
+        /// これを行わないと Aggregator が weight=0 とみなし（<c>w &gt; 0f</c> ガード）、
+        /// source が値を書いても最終ブレンドへ寄与しない。
+        /// </param>
+        public void BindLateInputSource(int layerIdx, IInputSource source, float weight)
         {
             if (source == null || _registry == null)
             {
@@ -295,7 +303,30 @@ namespace Hidano.FacialControl.Application.UseCases
             {
                 _registry.TryRemoveSource(layerIdx, Hidano.FacialControl.Domain.Models.InputSourceId.Parse(source.Id));
             }
-            _registry.TryAddSource(layerIdx, source);
+
+            // TryAddSource は末尾スロット（現在の source 数）へ置く。追加前に確定させる。
+            int newSourceIdx = _registry.GetSourceCountForLayer(layerIdx);
+            if (!_registry.TryAddSource(layerIdx, source))
+            {
+                return;
+            }
+
+            // registry が容量拡張していれば weight バッファを追随させ、宣言 weight を該当スロットへ焼く。
+            // これがないと Aggregator の w>0 ガードで source の書込値が破棄される。
+            if (_weightBuffer != null)
+            {
+                _weightBuffer.EnsureMaxSourcesPerLayer(_registry.MaxSourcesPerLayer);
+                _weightBuffer.SetWeight(layerIdx, newSourceIdx, weight);
+            }
+
+            // blend フィルタ（UpdateWeights）がこのレイヤーを含めるよう追加ソース有りフラグを立てる。
+            // init 済み解決ソースは 457 行で立つが、購読経由の late-bind はこの経路で立てないと
+            // (HasBeenActive || hasAdditional) が false のままレイヤーごと最終ブレンドから外れる。
+            if (_layerHasAdditionalSources != null
+                && (uint)layerIdx < (uint)_layerHasAdditionalSources.Length)
+            {
+                _layerHasAdditionalSources[layerIdx] = true;
+            }
         }
 
         /// <summary>

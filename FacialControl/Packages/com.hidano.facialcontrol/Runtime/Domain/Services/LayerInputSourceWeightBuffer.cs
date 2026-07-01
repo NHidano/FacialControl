@@ -41,8 +41,11 @@ namespace Hidano.FacialControl.Domain.Services
         /// <summary>レイヤー本数（ctor 指定、不変）。</summary>
         public int LayerCount { get; }
 
-        /// <summary>1 レイヤー当たりの入力源スロット数（ctor 指定、不変）。</summary>
-        public int MaxSourcesPerLayer { get; }
+        /// <summary>
+        /// 1 レイヤー当たりの入力源スロット数。原則 ctor 指定で不変だが、
+        /// <see cref="EnsureMaxSourcesPerLayer"/> による late-bind 時の容量拡張でのみ増加しうる。
+        /// </summary>
+        public int MaxSourcesPerLayer { get; private set; }
 
         private NativeArray<float> _bufferA;
         private NativeArray<float> _bufferB;
@@ -160,6 +163,46 @@ namespace Hidano.FacialControl.Domain.Services
             int flatIdx = (layerIdx * MaxSourcesPerLayer) + sourceIdx;
             var readBuffer = Volatile.Read(ref _writeIndex) == 0 ? _bufferB : _bufferA;
             return readBuffer[flatIdx];
+        }
+
+        /// <summary>
+        /// <see cref="MaxSourcesPerLayer"/> を <paramref name="newMax"/> まで拡張する（縮小・現状維持は no-op）。
+        /// late-bind（LayerUseCase.BindLateInputSource）で
+        /// <see cref="LayerInputSourceRegistry"/> がスロットを増やした際、weight バッファを追随させて
+        /// 追加スロットへ weight を書けるようにする低頻度 API。
+        /// </summary>
+        /// <remarks>
+        /// 既存 weight は新しい stride に移植され、追加スロットは 0 初期化される。
+        /// 両バッファ（read/write）を同一 remap で写すため <see cref="SwapIfDirty"/> の
+        /// copy-forward 不変条件と <c>_writeIndex</c> 由来の read/write 識別は保持される。
+        /// メインスレッド上の late-bind のみが呼ぶ前提であり、<see cref="SetWeight"/> /
+        /// <see cref="GetWeight"/> との同時実行は想定しない。
+        /// </remarks>
+        public void EnsureMaxSourcesPerLayer(int newMax)
+        {
+            if (_disposed || newMax <= MaxSourcesPerLayer)
+            {
+                return;
+            }
+
+            int oldMax = MaxSourcesPerLayer;
+            int newSize = LayerCount * newMax;
+            var newA = new NativeArray<float>(newSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            var newB = new NativeArray<float>(newSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            for (int l = 0; l < LayerCount; l++)
+            {
+                for (int s = 0; s < oldMax; s++)
+                {
+                    newA[(l * newMax) + s] = _bufferA[(l * oldMax) + s];
+                    newB[(l * newMax) + s] = _bufferB[(l * oldMax) + s];
+                }
+            }
+
+            _bufferA.Dispose();
+            _bufferB.Dispose();
+            _bufferA = newA;
+            _bufferB = newB;
+            MaxSourcesPerLayer = newMax;
         }
 
         /// <summary>
