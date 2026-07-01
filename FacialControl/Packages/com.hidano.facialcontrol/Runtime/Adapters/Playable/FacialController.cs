@@ -597,7 +597,16 @@ namespace Hidano.FacialControl.Adapters.Playable
                     else
                     {
                         Debug.LogWarning(
-                            $"FacialController: inputSource id '{decl.Id ?? "<null>"}' を InputSourceRegistry で解決できないため layer {l} でスキップします。");
+                            $"FacialController: inputSource id '{decl.Id ?? "<null>"}' を InputSourceRegistry で解決できないため layer {l} でスキップします。 後から登録された場合は購読経由で layer へ後付けバインドします。");
+                        int capturedLayer = l;
+                        registry.Subscribe(decl.Id, lateSource =>
+                        {
+                            if (_layerUseCase != null && lateSource != null)
+                            {
+                                _layerUseCase.BindLateInputSource(capturedLayer, lateSource);
+                                Debug.Log($"[FacialController] late-bind inputSource id='{lateSource.Id}' を layer {capturedLayer} へ後付けバインド完了。");
+                            }
+                        });
                     }
                 }
             }

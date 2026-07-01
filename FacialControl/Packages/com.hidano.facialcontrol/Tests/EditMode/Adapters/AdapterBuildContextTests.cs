@@ -45,6 +45,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
 
             public bool TryResolve(string layerInputSourceId, out IInputSource source) =>
                 throw new NotImplementedException();
+
+            public void Subscribe(string id, System.Action<IInputSource> handler) =>
+                throw new NotImplementedException();
         }
 
         private sealed class StubFacialOutputBus : IFacialOutputBus

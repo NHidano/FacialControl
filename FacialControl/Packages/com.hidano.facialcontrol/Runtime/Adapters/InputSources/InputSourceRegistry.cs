@@ -34,6 +34,9 @@ namespace Hidano.FacialControl.Adapters.InputSources
         // 挿入順保持の診断用スナップショット。重複登録時は新規追加せず、上書きのみ行う。
         private readonly List<string> _registeredIds = new List<string>();
 
+        private readonly Dictionary<string, List<Action<IInputSource>>> _subscribers =
+            new Dictionary<string, List<Action<IInputSource>>>(StringComparer.Ordinal);
+
         /// <inheritdoc />
         public IReadOnlyList<string> RegisteredIds => _registeredIds;
 
@@ -122,6 +125,35 @@ namespace Hidano.FacialControl.Adapters.InputSources
             return _entries.TryGetValue(layerInputSourceId, out source);
         }
 
+        public void Subscribe(string id, Action<IInputSource> handler)
+        {
+            if (string.IsNullOrEmpty(id) || handler == null)
+            {
+                return;
+            }
+
+            if (!_subscribers.TryGetValue(id, out List<Action<IInputSource>> handlers))
+            {
+                handlers = new List<Action<IInputSource>>();
+                _subscribers[id] = handlers;
+            }
+
+            handlers.Add(handler);
+        }
+
+        private void NotifySubscribers(string key, IInputSource source)
+        {
+            if (!_subscribers.TryGetValue(key, out List<Action<IInputSource>> handlers))
+            {
+                return;
+            }
+
+            for (int i = 0; i < handlers.Count; i++)
+            {
+                handlers[i]?.Invoke(source);
+            }
+        }
+
         private void RegisterInternal(string key, IInputSource source)
         {
             if (_entries.ContainsKey(key))
@@ -129,11 +161,13 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 Debug.LogError(
                     $"[InputSourceRegistry] duplicate registration for id '{key}'; later registration wins.");
                 _entries[key] = source;
+                NotifySubscribers(key, source);
                 return;
             }
 
             _entries.Add(key, source);
             _registeredIds.Add(key);
+            NotifySubscribers(key, source);
         }
 
         private void ReplaceInternal(string key, IInputSource source)
@@ -143,6 +177,7 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 _entries[key] = source;
                 Debug.Log(
                     $"[InputSourceRegistry] replaced id '{key}' ({previous.GetType().Name} -> {source.GetType().Name}).");
+                NotifySubscribers(key, source);
                 return;
             }
 
@@ -150,6 +185,7 @@ namespace Hidano.FacialControl.Adapters.InputSources
             _registeredIds.Add(key);
             Debug.Log(
                 $"[InputSourceRegistry] replaced id '{key}' (<unregistered> -> {source.GetType().Name}).");
+            NotifySubscribers(key, source);
         }
 
         private void UnregisterInternal(string key)
