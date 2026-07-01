@@ -62,6 +62,9 @@ namespace Hidano.FacialControl.Adapters.Playable
         private IInputSourceRegistry _inputSourceRegistry;
         private IReadOnlyList<GazeBindingConfig> _gazeConfigs = Array.Empty<GazeBindingConfig>();
         private GazeSnapshot[] _gazeSnapshotBuffer = Array.Empty<GazeSnapshot>();
+        // 目線(gaze)の目ボーン適用を集約する provider。各入力 binding(OSC/InputSystem/iFacialMocap)が
+        // registry に登録した gaze 入力源を GazeBindingConfigResolver 経由で解決し、単一 provider で適用する。
+        private GazeBonePoseProvider _gazeBoneProvider;
 
         /// <summary>
         /// 初期化済みかどうか
@@ -129,6 +132,9 @@ namespace Hidano.FacialControl.Adapters.Playable
             PublishFacialOutput(output);
 
             _boneWriter?.Apply();
+
+            // 目線の目ボーン適用は BoneWriter(頭部等)の後（Animator → BlendShape → BoneWriter → 目ボーン）。
+            _gazeBoneProvider?.Apply();
         }
 
         /// <summary>
@@ -223,6 +229,10 @@ namespace Hidano.FacialControl.Adapters.Playable
 
             // BoneWriter を生成・初期化。
             SetupBoneWriter(profile);
+
+            // 目線の目ボーン provider を構築。child scope build 済み・_inputSourceRegistry キャッシュ済みで、
+            // 各 binding が登録した gaze 入力源(osc:eye_look 等)を registry から解決できる。
+            SetupGazeBoneProvider();
 
             _isInitialized = true;
         }
@@ -671,6 +681,64 @@ namespace Hidano.FacialControl.Adapters.Playable
             _boneWriter.Initialize(ReadOnlyMemory<BoneSnapshot>.Empty, basisBoneName);
         }
 
+        /// <summary>
+        /// profile の <see cref="GazeBindingConfig"/> 群と registry 登録済みの gaze 入力源から、
+        /// 目ボーンへ localRotation を直接書き込む単一の <see cref="GazeBonePoseProvider"/> を構築する。
+        /// </summary>
+        /// <remarks>
+        /// 目ボーン適用の責務は本メソッド（core の FacialController）に集約する。各入力 binding
+        /// (OSC / InputSystem / iFacialMocap) は gaze 入力源を registry に登録するのみで、
+        /// 目ボーンは回さない。入力源は <see cref="GazeBindingConfigResolver"/> が
+        /// <c>{slug}:{expressionId}</c>（および <c>.left/.right</c>）で解決するため入力方式に依存しない。
+        /// bone path を持たない config（BlendShape 経路のみ想定）はスキップする。
+        /// </remarks>
+        private void SetupGazeBoneProvider()
+        {
+            _gazeBoneProvider = null;
+            if (_animator == null || _inputSourceRegistry == null
+                || _gazeConfigs == null || _gazeConfigs.Count == 0)
+            {
+                return;
+            }
+
+            var gazeBoneBindings = new List<GazeBoneBinding>();
+            for (int i = 0; i < _gazeConfigs.Count; i++)
+            {
+                GazeBindingConfig config = _gazeConfigs[i];
+                if (config == null || string.IsNullOrWhiteSpace(config.expressionId))
+                {
+                    continue;
+                }
+
+                // bone path が無い config は目ボーン適用対象外（BlendShape 経路のみのケース）。
+                if (string.IsNullOrWhiteSpace(config.leftEyeBonePath)
+                    && string.IsNullOrWhiteSpace(config.rightEyeBonePath))
+                {
+                    continue;
+                }
+
+                if (!GazeBindingConfigResolver.TryResolve(
+                        config,
+                        _inputSourceRegistry,
+                        out ResolvedGazeInputSources resolved))
+                {
+                    continue;
+                }
+
+                gazeBoneBindings.Add(
+                    new GazeBoneBinding(config, resolved.LeftSource, resolved.RightSource));
+            }
+
+            if (gazeBoneBindings.Count == 0)
+            {
+                return;
+            }
+
+            _gazeBoneProvider = new GazeBonePoseProvider(
+                new BoneTransformResolver(_animator.transform),
+                gazeBoneBindings);
+        }
+
         // ================================================================
         // 公開 API
         // ================================================================
@@ -969,6 +1037,13 @@ namespace Hidano.FacialControl.Adapters.Playable
                 _boneWriter.RestoreInitialRotations();
                 _boneWriter.Dispose();
                 _boneWriter = null;
+            }
+
+            // gaze provider も Dispose で目ボーンの初期回転を復元する。
+            if (_gazeBoneProvider != null)
+            {
+                _gazeBoneProvider.Dispose();
+                _gazeBoneProvider = null;
             }
 
             _expressionUseCase = null;

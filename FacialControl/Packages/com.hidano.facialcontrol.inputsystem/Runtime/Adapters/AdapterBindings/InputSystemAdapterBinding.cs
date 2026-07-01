@@ -52,7 +52,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
         [NonSerialized] private ExpressionInputSourceAdapter _adapter;
         [NonSerialized] private List<InputActionAnalogSource> _analogSources;
         [NonSerialized] private AnalogExpressionInputSource _analogExpressionSink;
-        [NonSerialized] private GazeBonePoseProvider _gazeBoneProvider;
         [NonSerialized] private IReadOnlyList<GazeBindingConfig> _injectedGazeConfigs;
         [NonSerialized] private bool _isStarted;
 
@@ -82,9 +81,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
 
         /// <summary><see cref="OnStart"/> 完了後 true、<see cref="Dispose"/> 後 false。</summary>
         public bool IsStarted => _isStarted;
-
-        /// <summary>Gaze provider が構築済みかどうか。</summary>
-        public bool HasGazeProvider => _gazeBoneProvider != null;
 
         /// <summary>
         /// テスト / プログラムからの構成注入。Inspector 経由で設定される値と同等の効果を持つ。
@@ -230,7 +226,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
 
             BuildOverlaySources(ctx, slug, blendShapeCount, blendShapeNames);
 
-            BuildGazeProvider(ctx);
+            // 目ボーン適用は core の FacialController に集約したため、ここでは gaze 入力源の registry 登録
+            // (BuildAnalogSources) のみ行い provider は構築しない。config 欠落の gaze binding は警告する。
+            WarnForGazeBindingsWithoutConfig();
 
             // Overlay 経路の OnLateTick で SetLayerWeight するために FacialController をキャッシュ。
             // ctx.HostGameObject は per-FC LifetimeScope build 時の宿主。
@@ -260,8 +258,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
             }
 
             ApplyOverlayLayerWeights();
-
-            _gazeBoneProvider?.Apply();
         }
 
         // 各 overlay binding について Action の現在値をレイヤー weight に反映させる。
@@ -312,12 +308,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
                     UnityEngine.Object.Destroy(_adapter);
                 }
                 _adapter = null;
-            }
-
-            if (_gazeBoneProvider != null)
-            {
-                _gazeBoneProvider.Dispose();
-                _gazeBoneProvider = null;
             }
 
             if (_analogSources != null)
@@ -652,80 +642,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
             }
         }
 
-        // bindingMode == Gaze のエントリで GazeBonePoseProvider を構築する。
-        private void BuildGazeProvider(in AdapterBuildContext ctx)
-        {
-            _gazeBoneProvider = null;
-
-            WarnForGazeBindingsWithoutConfig();
-
-            if (_injectedGazeConfigs == null
-                || _injectedGazeConfigs.Count == 0
-                || _expressionBindings == null
-                || _expressionBindings.Count == 0)
-            {
-                return;
-            }
-
-            var gazeBoneBindings = new List<GazeBoneBinding>();
-            for (int i = 0; i < _injectedGazeConfigs.Count; i++)
-            {
-                GazeBindingConfig config = _injectedGazeConfigs[i];
-                if (config == null || string.IsNullOrWhiteSpace(config.expressionId))
-                {
-                    continue;
-                }
-
-                ExpressionBindingEntry binding = FindGazeBinding(config.expressionId);
-                if (binding == null)
-                {
-                    continue;
-                }
-
-                if (!TryResolveGazeSources(
-                    binding,
-                    out InputActionAnalogSource leftSource,
-                    out InputActionAnalogSource rightSource))
-                {
-                    continue;
-                }
-
-                gazeBoneBindings.Add(new GazeBoneBinding(config, leftSource, rightSource));
-            }
-
-            if (gazeBoneBindings.Count == 0)
-            {
-                return;
-            }
-
-            var resolver = new BoneTransformResolver(ctx.HostGameObject.transform);
-            _gazeBoneProvider = new GazeBonePoseProvider(resolver, gazeBoneBindings);
-        }
-
-        private ExpressionBindingEntry FindGazeBinding(string expressionId)
-        {
-            if (_expressionBindings == null || string.IsNullOrWhiteSpace(expressionId))
-            {
-                return null;
-            }
-
-            for (int i = 0; i < _expressionBindings.Count; i++)
-            {
-                ExpressionBindingEntry entry = _expressionBindings[i];
-                if (entry == null || entry.bindingMode != BindingMode.Gaze)
-                {
-                    continue;
-                }
-
-                if (string.Equals(entry.expressionId, expressionId, StringComparison.Ordinal))
-                {
-                    return entry;
-                }
-            }
-
-            return null;
-        }
-
         private void WarnForGazeBindingsWithoutConfig()
         {
             if (_expressionBindings == null || _expressionBindings.Count == 0)
@@ -770,71 +686,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
 
                 if (string.Equals(config.expressionId, expressionId, StringComparison.Ordinal))
                 {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private bool TryResolveGazeSources(
-            ExpressionBindingEntry binding,
-            out InputActionAnalogSource leftSource,
-            out InputActionAnalogSource rightSource)
-        {
-            leftSource = null;
-            rightSource = null;
-            if (binding == null)
-            {
-                return false;
-            }
-
-            if (!binding.useDistinctLeftRight)
-            {
-                if (!TryFindAnalogSource(binding.actionName, out InputActionAnalogSource sharedSource))
-                {
-                    return false;
-                }
-
-                leftSource = sharedSource;
-                rightSource = sharedSource;
-                return true;
-            }
-
-            TryFindAnalogSource(binding.actionNameLeft, out leftSource);
-            TryFindAnalogSource(binding.actionNameRight, out rightSource);
-
-            if (leftSource == null && rightSource == null)
-            {
-                return false;
-            }
-
-            leftSource ??= rightSource;
-            rightSource ??= leftSource;
-            return true;
-        }
-
-        private bool TryFindAnalogSource(
-            string actionName,
-            out InputActionAnalogSource source)
-        {
-            source = null;
-            if (string.IsNullOrWhiteSpace(actionName) || _analogSources == null)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < _analogSources.Count; i++)
-            {
-                InputActionAnalogSource candidate = _analogSources[i];
-                if (candidate == null)
-                {
-                    continue;
-                }
-
-                if (string.Equals(candidate.Id, actionName, StringComparison.Ordinal))
-                {
-                    source = candidate;
                     return true;
                 }
             }

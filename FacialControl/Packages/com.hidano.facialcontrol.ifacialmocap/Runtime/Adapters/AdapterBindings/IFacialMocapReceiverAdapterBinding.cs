@@ -136,12 +136,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         [NonSerialized]
         private bool _started;
 
-        [NonSerialized]
-        private IReadOnlyList<GazeBindingConfig> _injectedGazeConfigs;
-
-        [NonSerialized]
-        private GazeBonePoseProvider _gazeBoneProvider;
-
         /// <summary>Inspector の Add ドロップダウンが <c>Activator.CreateInstance</c> で使う既定 ctor。</summary>
         public IFacialMocapReceiverAdapterBinding()
         {
@@ -199,16 +193,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             {
                 _mappings = mappings;
             }
-        }
-
-        /// <summary>
-        /// FacialController が Profile の GazeConfigs を注入する gaze 結線フック。
-        /// 最後の引数が <see cref="IReadOnlyList{GazeBindingConfig}"/> の <c>Configure</c> メソッドとして
-        /// FacialController の reflection から発見され、<see cref="OnStart"/> の前に呼ばれる。
-        /// </summary>
-        public void Configure(IReadOnlyList<GazeBindingConfig> gazeConfigs)
-        {
-            _injectedGazeConfigs = gazeConfigs;
         }
 
         private IFacialMocapRuntimeSettingsSO EnsureRuntimeSettings()
@@ -300,52 +284,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 settings.DataVersion,
                 settings.HandshakeIntervalSeconds);
 
-            BuildGazeProvider(ctx);
-
             _started = true;
-        }
-
-        /// <summary>
-        /// 注入された <see cref="GazeBindingConfig"/> と登録済み視線入力源（<c>&lt;slug&gt;:gaze.left/right</c>）から
-        /// 目ボーンへ localRotation を直接書き込む <see cref="GazeBonePoseProvider"/> を構築する。
-        /// </summary>
-        /// <remarks>
-        /// core の <see cref="FacialController"/> は GazeSnapshot を出力バスへ publish するのみで目ボーンは回さない。
-        /// 目ボーン制御は各 binding が本 provider を構築・駆動する責務（InputSystem 経路と同様）。
-        /// </remarks>
-        private void BuildGazeProvider(in AdapterBuildContext ctx)
-        {
-            _gazeBoneProvider = null;
-            if (_injectedGazeConfigs == null || _injectedGazeConfigs.Count == 0 || _registry == null)
-            {
-                return;
-            }
-
-            var gazeBoneBindings = new List<GazeBoneBinding>();
-            for (int i = 0; i < _injectedGazeConfigs.Count; i++)
-            {
-                GazeBindingConfig config = _injectedGazeConfigs[i];
-                if (config == null || string.IsNullOrWhiteSpace(config.expressionId))
-                {
-                    continue;
-                }
-
-                if (!GazeBindingConfigResolver.TryResolve(config, _registry, out ResolvedGazeInputSources resolved))
-                {
-                    continue;
-                }
-
-                gazeBoneBindings.Add(new GazeBoneBinding(config, resolved.LeftSource, resolved.RightSource));
-            }
-
-            if (gazeBoneBindings.Count == 0)
-            {
-                return;
-            }
-
-            _gazeBoneProvider = new GazeBonePoseProvider(
-                new BoneTransformResolver(ctx.HostGameObject.transform),
-                gazeBoneBindings);
         }
 
         private bool BuildBlendShapeSource(in AdapterBuildContext ctx, IFacialMocapRuntimeSettingsSO settings, AdapterSlug slug)
@@ -488,13 +427,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         /// <inheritdoc />
         public override void OnLateTick(float deltaTime)
         {
-            if (!_started)
-            {
-                return;
-            }
-
-            // 目ボーンは Animator 評価後の LateUpdate で localRotation を直接書き込む。
-            _gazeBoneProvider?.Apply();
+            // 目線の目ボーン適用は core の FacialController に集約したため、本 binding は
+            // gaze 入力源(<slug>:gaze.left/right)を registry 登録するのみで LateTick では何もしない。
         }
 
         private void ApplyFrame()
@@ -587,12 +521,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 _registry.Unregister(_slug, GazeLeftSub);
                 _registry.Unregister(_slug, GazeRightSub);
                 _registry.Unregister(_slug, HeadSub);
-            }
-
-            if (_gazeBoneProvider != null)
-            {
-                _gazeBoneProvider.Dispose();
-                _gazeBoneProvider = null;
             }
 
             if (_helperHost != null)

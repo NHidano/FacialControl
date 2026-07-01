@@ -20,8 +20,9 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
     /// <see cref="InputSystemAdapterBinding"/> が <c>OnStart</c> で
     /// <c>InputActionAsset.Instantiate</c> + <c>ActionMap.Enable</c> を実行し、
     /// InputAction 仮想 device → ExpressionTrigger / Analog / Gaze の 3 経路（D-8 集約）で
-    /// 入力源が登録 / 解決可能になることを assert する。
-    /// <c>Dispose</c> で <c>ActionMap.Disable</c> + 内部 Asset destroy + provider dispose が
+    /// 入力源が登録 / 解決可能になることを assert する（gaze の目ボーン適用は core の
+    /// FacialController に集約したため、本 binding は gaze 入力源の登録までを担う）。
+    /// <c>Dispose</c> で <c>ActionMap.Disable</c> + 内部 Asset destroy が
     /// 走り再 <c>Dispose</c> 呼び出しが冪等であることも検証する。
     /// </summary>
     /// <remarks>
@@ -363,33 +364,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
         }
 
         [Test]
-        public void OnStart_GazePath_MatchingExpressionId_BuildsGazeProvider()
-        {
-            _sourceAsset = CreateGazeActionAsset(
-                actionMapName: "Expression",
-                gazeActionName: "GazeLook");
-
-            var gazeBinding = CreateGazeBindingEntry("GazeLook", "expr-gaze");
-            var gazeConfig = CreateGazeConfig("expr-gaze");
-
-            _binding = CreateBinding(
-                slug: "input-system-gaze-pairing-match",
-                asset: _sourceAsset,
-                actionMapName: "Expression",
-                expressionBindings: new List<ExpressionBindingEntry> { gazeBinding },
-                injectedGazeConfigs: new List<GazeBindingConfig> { gazeConfig });
-
-            AdapterBuildContext ctx = CreateContext();
-
-            _binding.OnStart(in ctx);
-            _bindingStarted = true;
-
-            Assert.IsTrue(_binding.HasGazeProvider,
-                "OnStart は expressionId が一致する GazeBindingConfig と Gaze モードの ExpressionBindingEntry から gaze provider を構築するべき。");
-        }
-
-        [Test]
-        public void OnStart_GazePath_BindingWithoutConfig_LogsWarningAndSkipsProvider()
+        public void OnStart_GazePath_BindingWithoutConfig_LogsWarning()
         {
             _sourceAsset = CreateGazeActionAsset(
                 actionMapName: "Expression",
@@ -412,9 +387,6 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
 
             _binding.OnStart(in ctx);
             _bindingStarted = true;
-
-            Assert.IsFalse(_binding.HasGazeProvider,
-                "対応する SO ルート GazeBindingConfig がない Gaze モード ExpressionBindingEntry は warn + skip されるべき。");
         }
 
         [Test]
@@ -436,13 +408,11 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
             _binding.OnStart(in ctx);
             _bindingStarted = true;
 
-            Assert.IsFalse(_binding.HasGazeProvider,
-                "対応する Gaze モード ExpressionBindingEntry がない GazeBindingConfig は warn なしで skip されるべき。");
             LogAssert.NoUnexpectedReceived();
         }
 
         // ---------------------------------------------------------------
-        // Dispose: ActionMap.Disable + Asset destroy + provider dispose
+        // Dispose: ActionMap.Disable + Asset destroy
         // ---------------------------------------------------------------
 
         [Test]

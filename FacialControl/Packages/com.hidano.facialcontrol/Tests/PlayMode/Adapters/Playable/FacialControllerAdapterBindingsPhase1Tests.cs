@@ -11,6 +11,7 @@ using Hidano.FacialControl.Adapters.DependencyInjection;
 using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Adapters;
+using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using VContainer;
 using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
@@ -176,6 +177,66 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
         }
 
         // ---------------------------------------------------------------
+        // gaze の目ボーン適用は core の FacialController に集約されている。
+        // 各 binding が registry に登録した gaze 入力源を GazeBindingConfigResolver で解決し、
+        // LateUpdate で GazeBonePoseProvider が目ボーンの localRotation を書く。
+        // ---------------------------------------------------------------
+
+        [UnityTest]
+        public IEnumerator LateUpdate_RegistryGazeSource_RotatesEyeBoneViaCentralizedProvider()
+        {
+            _controllerGameObject = CreateControllerHost();
+
+            // 目ボーンを host 配下に用意（bone path は単純名で階層全体を再帰探索して解決される）。
+            var eyeBone = new GameObject("LeftEye");
+            eyeBone.transform.SetParent(_controllerGameObject.transform, worldPositionStays: false);
+            eyeBone.transform.localRotation = Quaternion.identity;
+
+            var controller = _controllerGameObject.AddComponent<FacialController>();
+            var so = ScriptableObject.CreateInstance<TestablePhase1ProfileSO>();
+
+            // gaze 入力源(fake-gaze:eye-look)を registry に登録するだけの binding。
+            var binding = new GazeSourceRegisteringBinding
+            {
+                Slug = "fake-gaze",
+                ExpressionId = "eye-look",
+                X = 1f,
+                Y = 0f,
+            };
+            so.WritableAdapterBindings.Add(binding);
+            so.WritableGazeConfigs.Add(new GazeBindingConfig
+            {
+                expressionId = "eye-look",
+                leftEyeBonePath = "LeftEye",
+            });
+
+            try
+            {
+                controller.CharacterSO = so;
+                controller.Initialize();
+
+                Assert.That(controller.IsInitialized, Is.True);
+
+                // Initialize 段階では provider を構築するのみで Apply していないため目ボーンは初期姿勢のまま。
+                Quaternion before = eyeBone.transform.localRotation;
+                Assert.That(Quaternion.Angle(before, Quaternion.identity), Is.LessThan(0.01f),
+                    "Initialize 直後は目ボーンはまだ回っていないはず。");
+
+                // LateUpdate で GazeBonePoseProvider.Apply が走り目ボーンが回る。
+                yield return null;
+
+                Quaternion after = eyeBone.transform.localRotation;
+                Assert.That(Quaternion.Angle(before, after), Is.GreaterThan(1f),
+                    "registry の gaze 入力源から FacialController が目ボーンの localRotation を回すべき（入力方式非依存の集約適用）。");
+            }
+            finally
+            {
+                _controllerGameObject.SetActive(false);
+                UnityEngine.Object.DestroyImmediate(so);
+            }
+        }
+
+        // ---------------------------------------------------------------
         // Helpers / Mocks
         // ---------------------------------------------------------------
 
@@ -285,6 +346,92 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
             {
                 CapturedBus?.Unsubscribe(this);
                 CapturedBus = null;
+            }
+        }
+
+        /// <summary>
+        /// gaze 入力源(<c>&lt;slug&gt;:&lt;expressionId&gt;</c>)を registry に登録するだけの最小 binding。
+        /// OSC / InputSystem / iFacialMocap 各受信 binding が gaze source を登録する挙動を模す。
+        /// 目ボーン適用は FacialController 側に集約されているため本 binding は tick で何もしない。
+        /// </summary>
+        [Serializable]
+        private sealed class GazeSourceRegisteringBinding : AdapterBindingBase
+        {
+            [NonSerialized] public string ExpressionId;
+            [NonSerialized] public float X;
+            [NonSerialized] public float Y;
+
+            public override void OnStart(in AdapterBuildContext ctx)
+            {
+                AdapterSlug slug = AdapterSlug.Parse(Slug);
+                var source = new FakeGazeAnalogSource(Slug + ":" + ExpressionId, X, Y);
+                ctx.InputSourceRegistry.Register(slug, ExpressionId, source);
+            }
+
+            public override void OnLateTick(float deltaTime)
+            {
+            }
+
+            public override void Dispose()
+            {
+            }
+        }
+
+        /// <summary>
+        /// 固定 Vector2 を返すアナログ入力源。
+        /// (EditMode の <c>GazeBindingConfigResolverTests.FakeGazeSource</c> と同型)。
+        /// </summary>
+        private sealed class FakeGazeAnalogSource : IInputSource, IAnalogInputSource
+        {
+            private readonly float _x;
+            private readonly float _y;
+
+            public FakeGazeAnalogSource(string id, float x, float y)
+            {
+                Id = id;
+                _x = x;
+                _y = y;
+                ContributeMask = new BitArray(0);
+            }
+
+            public string Id { get; }
+            public InputSourceType Type => InputSourceType.ValueProvider;
+            public int BlendShapeCount => 0;
+            public BitArray ContributeMask { get; }
+            public bool IsValid => true;
+            public int AxisCount => 2;
+
+            public void Tick(float deltaTime)
+            {
+            }
+
+            public bool TryWriteValues(Span<float> output) => false;
+
+            public bool TryReadScalar(out float value)
+            {
+                value = _x;
+                return true;
+            }
+
+            public bool TryReadVector2(out float x, out float y)
+            {
+                x = _x;
+                y = _y;
+                return true;
+            }
+
+            public bool TryReadAxes(Span<float> output)
+            {
+                if (output.Length > 0)
+                {
+                    output[0] = _x;
+                }
+                if (output.Length > 1)
+                {
+                    output[1] = _y;
+                }
+
+                return true;
             }
         }
     }
