@@ -953,5 +953,79 @@ namespace Hidano.FacialControl.Tests.EditMode.Application
             Assert.AreEqual(1.0f, output[0], 1e-4f,
                 "additional source のみで triggered した bs_smile が最終出力に反映されること");
         }
+
+        // --- late-bind 経路 (BindLateInputSource) の回帰 ---
+        //
+        // init 時点で registry 未解決だった入力源（auto mapping OSC の heartbeat 受信後など）が
+        // 購読経由で後から BindLateInputSource された場合でも、その値が最終 BlendShape 出力へ届くこと。
+        // 修正前は 2 段でゼロ化されていた:
+        //   (1) weight バッファへ宣言 weight が焼かれず、Aggregator の `w > 0f` ガードで書込値が破棄。
+        //   (2) _layerHasAdditionalSources が立たず、UpdateWeights の blend フィルタ
+        //       (HasBeenActive || hasAdditional) からレイヤーごと除外。
+        // さらに OSC 単独レイヤーは init 時 MaxSourcesPerLayer=1 のため、late-bind で registry のみ
+        // 容量拡張され weight バッファが範囲外になり SetWeight すら no-op になっていた。
+
+        // 値提供型 (ValueProvider) の Fake。TryWriteValues で固定値を index0 に書き true を返す
+        // = OscInputSource が非ゼロ受信値を書く挙動の最小モック。ContributeMask は基底が全 true。
+        private sealed class FakeValueWritingSource : ValueProviderInputSourceBase
+        {
+            private readonly float _value;
+
+            public FakeValueWritingSource(string id, int blendShapeCount, float value)
+                : base(InputSourceId.Parse(id), blendShapeCount)
+            {
+                _value = value;
+            }
+
+            public override bool TryWriteValues(Span<float> output)
+            {
+                if (output.Length > 0)
+                {
+                    output[0] = _value;
+                }
+                return true;
+            }
+        }
+
+        [Test]
+        public void BindLateInputSource_UnresolvedAtInit_ValueReachesFinalOutput()
+        {
+            var layers = new[] { new LayerDefinition("emotion", 0, ExclusionMode.LastWins) };
+            var profile = new FacialProfile("1.0", layers, Array.Empty<Expression>());
+            var expressionUseCase = new ExpressionUseCase(profile);
+            var blendShapeNames = new[] { "bs_smile", "bs_sad", "bs_blink" };
+
+            // additional なしで構築 → MaxSourcesPerLayer=1（OSC が init 未解決だった状況を模す）。
+            using var useCase = new LayerUseCase(profile, expressionUseCase, blendShapeNames);
+
+            var lateSource = new FakeValueWritingSource("osc", blendShapeNames.Length, 0.6f);
+            useCase.BindLateInputSource(0, lateSource, 1.0f);
+
+            useCase.UpdateWeights(0.001f);
+
+            var output = useCase.GetBlendedOutput();
+            Assert.AreEqual(0.6f, output[0], 1e-4f,
+                "late-bind された入力源の値が最終出力へ届くこと（修正前はゼロ）");
+        }
+
+        [Test]
+        public void BindLateInputSource_AppliesDeclaredWeight_ScalesOutput()
+        {
+            var layers = new[] { new LayerDefinition("emotion", 0, ExclusionMode.LastWins) };
+            var profile = new FacialProfile("1.0", layers, Array.Empty<Expression>());
+            var expressionUseCase = new ExpressionUseCase(profile);
+            var blendShapeNames = new[] { "bs_smile", "bs_sad", "bs_blink" };
+
+            using var useCase = new LayerUseCase(profile, expressionUseCase, blendShapeNames);
+
+            var lateSource = new FakeValueWritingSource("osc", blendShapeNames.Length, 0.6f);
+            useCase.BindLateInputSource(0, lateSource, 0.5f); // 宣言 weight 0.5
+
+            useCase.UpdateWeights(0.001f);
+
+            var output = useCase.GetBlendedOutput();
+            Assert.AreEqual(0.3f, output[0], 1e-4f,
+                "late-bind の宣言 weight が intra-layer 加重で反映されること (0.6 * 0.5)");
+        }
     }
 }

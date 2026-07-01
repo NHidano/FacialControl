@@ -495,5 +495,60 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
             Assert.AreEqual(0.3f, buffer.GetWeight(1, 0));
             Assert.AreEqual(0.4f, buffer.GetWeight(1, 1));
         }
+
+        // ----- EnsureMaxSourcesPerLayer (late-bind による容量追随) -----
+
+        [Test]
+        public void EnsureMaxSourcesPerLayer_Grows_PreservesExistingWeightsAndZeroFillsNewSlots()
+        {
+            // Registry が late-bind で MaxSourcesPerLayer を +1 した際、weight バッファも追随して
+            // 既存 weight を新 stride に移植し、追加スロットを 0 初期化すること。
+            using var buffer = new LayerInputSourceWeightBuffer(layerCount: 2, maxSourcesPerLayer: 1);
+
+            buffer.SetWeight(0, 0, 0.5f);
+            buffer.SetWeight(1, 0, 0.25f);
+            buffer.SwapIfDirty();
+
+            buffer.EnsureMaxSourcesPerLayer(2);
+
+            Assert.AreEqual(2, buffer.MaxSourcesPerLayer, "容量が拡張されること");
+            Assert.AreEqual(0.5f, buffer.GetWeight(0, 0), "既存 weight が新 stride に移植されること");
+            Assert.AreEqual(0.25f, buffer.GetWeight(1, 0), "既存 weight が新 stride に移植されること");
+            Assert.AreEqual(0f, buffer.GetWeight(0, 1), "追加スロットは 0 初期化");
+            Assert.AreEqual(0f, buffer.GetWeight(1, 1), "追加スロットは 0 初期化");
+
+            // 拡張後の追加スロットへ書けること（既存値は保持）。
+            buffer.SetWeight(0, 1, 0.75f);
+            buffer.SwapIfDirty();
+            Assert.AreEqual(0.75f, buffer.GetWeight(0, 1),
+                "拡張後の追加スロットへ SetWeight できること");
+            Assert.AreEqual(0.5f, buffer.GetWeight(0, 0),
+                "追加スロット書込後も既存 weight は保持されること");
+        }
+
+        [Test]
+        public void EnsureMaxSourcesPerLayer_SmallerOrEqual_IsNoOp()
+        {
+            using var buffer = new LayerInputSourceWeightBuffer(layerCount: 1, maxSourcesPerLayer: 2);
+
+            buffer.SetWeight(0, 1, 0.4f);
+            buffer.SwapIfDirty();
+
+            buffer.EnsureMaxSourcesPerLayer(2); // 同値
+            buffer.EnsureMaxSourcesPerLayer(1); // 縮小要求
+
+            Assert.AreEqual(2, buffer.MaxSourcesPerLayer, "同値・縮小要求は no-op で容量不変");
+            Assert.AreEqual(0.4f, buffer.GetWeight(0, 1), "値も不変");
+        }
+
+        [Test]
+        public void EnsureMaxSourcesPerLayer_AfterDispose_DoesNotThrow()
+        {
+            var buffer = new LayerInputSourceWeightBuffer(layerCount: 1, maxSourcesPerLayer: 1);
+            buffer.Dispose();
+
+            Assert.DoesNotThrow(() => buffer.EnsureMaxSourcesPerLayer(2),
+                "Dispose 済みバッファへの EnsureMaxSourcesPerLayer は no-op で安全であること");
+        }
     }
 }
