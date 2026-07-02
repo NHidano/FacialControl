@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
+using Hidano.FacialControl.Editor.Common;
 using Hidano.FacialControl.LipSync.Adapters.PhonemeEntries;
 using Hidano.FacialControl.LipSync.Editor.Inspector;
 using NUnit.Framework;
@@ -46,6 +47,41 @@ namespace Hidano.FacialControl.LipSync.Tests.EditMode.Editor
             Assert.That(listView, Is.Not.Null);
             Assert.That(listView.reorderable, Is.True);
             Assert.That(listView.showAddRemoveFooter, Is.True);
+        }
+
+        [Test]
+        public void Create_ListView_ShowsAlternatingRowBackgrounds()
+        {
+            var view = CreateView();
+            var listView = view.Q<ListView>(PhonemeEntryListView.ListViewName);
+
+            Assert.That(listView, Is.Not.Null);
+            Assert.That(
+                listView.showAlternatingRowBackgrounds,
+                Is.EqualTo(AlternatingRowBackground.ContentOnly),
+                "各音素エントリ行の境界を視認できるよう交互背景を表示する必要があります。");
+        }
+
+        [Test]
+        public void Create_SavedCollapsedFoldoutState_IsRestored()
+        {
+            string key = ListViewFoldoutStatePersistence.GetSessionStateKey(_entriesProperty);
+            try
+            {
+                SessionState.SetBool(key, false);
+
+                var view = CreateView();
+                var listView = view.Q<ListView>(PhonemeEntryListView.ListViewName);
+                var foldout = listView.Q<Foldout>(className: BaseListView.foldoutHeaderUssClassName);
+
+                Assert.That(foldout, Is.Not.Null);
+                Assert.That(foldout.value, Is.False,
+                    "音素エントリリストの折りたたみ状態が SessionState から復元される必要があります。");
+            }
+            finally
+            {
+                SessionState.EraseBool(key);
+            }
         }
 
         [Test]

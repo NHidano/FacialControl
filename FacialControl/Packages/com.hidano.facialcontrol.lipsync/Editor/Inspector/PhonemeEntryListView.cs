@@ -99,6 +99,8 @@ namespace Hidano.FacialControl.LipSync.Editor.Inspector
                 showAddRemoveFooter = true,
                 showBorder = true,
                 showFoldoutHeader = true,
+                // 各行が複数フィールドのブロックになるため、行境界を視認しやすいよう交互背景を付ける。
+                showAlternatingRowBackgrounds = AlternatingRowBackground.ContentOnly,
                 headerTitle = "音素エントリ",
                 reorderable = true,
                 reorderMode = ListViewReorderMode.Animated,
@@ -111,6 +113,8 @@ namespace Hidano.FacialControl.LipSync.Editor.Inspector
             _listView.style.marginTop = 4;
             _listView.SetViewController(new SafeListViewController());
             _listView.itemsSource = _indexProxy;
+            // ヘッダー Foldout の開閉状態を SessionState へ永続化し、Inspector 再構築時に復元する。
+            ListViewFoldoutStatePersistence.Register(_listView, _listProperty);
             _listView.overridingAddButtonBehavior = (_, button) => OpenAddMenu(button);
             _listView.itemsAdded += OnItemsAdded;
             _listView.itemsRemoved += OnItemsRemoved;

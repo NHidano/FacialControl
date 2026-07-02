@@ -5,6 +5,7 @@ using System.Reflection;
 using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Adapters;
+using Hidano.FacialControl.Editor.Common;
 using Hidano.FacialControl.InputSystem.Adapters.ScriptableObject;
 using Hidano.FacialControl.InputSystem.Editor.AdapterBindings;
 using NUnit.Framework;
@@ -43,6 +44,49 @@ namespace Hidano.FacialControl.InputSystem.Tests.EditMode.Adapters.AdapterBindin
             {
                 Object.DestroyImmediate(_profileSo);
                 _profileSo = null;
+            }
+        }
+
+        [Test]
+        public void CreatePropertyGUI_ExpressionBindingsList_ShowsAlternatingRowBackgrounds()
+        {
+            _profileSo = ScriptableObject.CreateInstance<TestProfileSO>();
+            _profileSo.WritableAdapterBindings.Add(CreateBinding(BlinkSlotName));
+            SerializedProperty bindingProperty = CreateProfileBindingProperty(_profileSo);
+
+            var root = new InputSystemAdapterBindingDrawer().CreatePropertyGUI(bindingProperty);
+            var listView = root.Q<ListView>(InputSystemAdapterBindingDrawer.ExpressionBindingsListName);
+
+            Assert.That(listView, Is.Not.Null);
+            Assert.That(
+                listView.showAlternatingRowBackgrounds,
+                Is.EqualTo(AlternatingRowBackground.ContentOnly),
+                "各キーバインディング行の境界を視認できるよう交互背景を表示する必要があります。");
+        }
+
+        [Test]
+        public void CreatePropertyGUI_SavedCollapsedFoldoutState_IsRestored()
+        {
+            _profileSo = ScriptableObject.CreateInstance<TestProfileSO>();
+            _profileSo.WritableAdapterBindings.Add(CreateBinding(BlinkSlotName));
+            SerializedProperty bindingProperty = CreateProfileBindingProperty(_profileSo);
+            SerializedProperty listProperty = bindingProperty.FindPropertyRelative("_expressionBindings");
+            string key = ListViewFoldoutStatePersistence.GetSessionStateKey(listProperty);
+            try
+            {
+                SessionState.SetBool(key, false);
+
+                var root = new InputSystemAdapterBindingDrawer().CreatePropertyGUI(bindingProperty);
+                var listView = root.Q<ListView>(InputSystemAdapterBindingDrawer.ExpressionBindingsListName);
+                var foldout = listView.Q<Foldout>(className: BaseListView.foldoutHeaderUssClassName);
+
+                Assert.That(foldout, Is.Not.Null);
+                Assert.That(foldout.value, Is.False,
+                    "キーバインディングリストの折りたたみ状態が SessionState から復元される必要があります。");
+            }
+            finally
+            {
+                SessionState.EraseBool(key);
             }
         }
 

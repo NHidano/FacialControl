@@ -8,6 +8,7 @@
 
 ### Changed
 
+- `InputSystemAdapterBindingDrawer` のキーバインディング一覧に交互背景（`AlternatingRowBackground.ContentOnly`）を付け、複数フィールドで構成される各行の境界を視認しやすくした。あわせて一覧ヘッダー Foldout の開閉状態を `SessionState` に保存し、Inspector 再構築（domain reload / asset 再読み込み）後も直前の展開状態を復元するようにした（Editor 再起動時はリセット）。
 - `InputSystemAdapterBindingDrawer` のキーバインディング一覧 `ListView` を固定行高（228px）から `DynamicHeight` 仮想化に変更し、BindingMode によって非表示になるフィールド分の空白で行が縦に間延びする問題を解消した。あわせて `minHeight`（120px）を撤去し、一覧を折りたたんだ際に下部へ無駄な空白が残る問題も解消した。
 
 ### Breaking Changes
