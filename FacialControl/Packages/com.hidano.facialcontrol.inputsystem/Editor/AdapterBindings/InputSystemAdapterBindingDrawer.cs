@@ -49,8 +49,6 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
         public const string OverlaySlotDropdownName = "input-system-binding-overlay-slot-dropdown";
         public const string OverlaySlotHelpName = "input-system-binding-overlay-slot-help";
 
-        // 1 行の高さ (Action + Expression + BindingMode + TriggerMode + ヒントボックス分の余裕)
-        private const float RowHeight = 228f;
         private const long OverlaySlotRefreshIntervalMs = 500;
 
         /// <inheritdoc />
@@ -172,7 +170,9 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
             var listView = new ListView
             {
                 name = ExpressionBindingsListName,
-                fixedItemHeight = RowHeight,
+                // 行内は BindingMode によってフィールドの表示/非表示が切り替わるため、
+                // 固定高だと非表示分の空白が残り縦に間延びする。DynamicHeight で実高に追従させる。
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
                 showAddRemoveFooter = true,
                 showBorder = true,
                 showFoldoutHeader = true,
@@ -186,8 +186,8 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
                 // 子要素を毎回破棄する。bindItem 側は element.Clear() 済み前提で組み立てる。
                 unbindItem = (element, _) => element.Clear(),
             };
+            // minHeight を指定すると折りたたみ時にもその高さ分の空白が残るため設定しない。
             listView.style.marginTop = 4;
-            listView.style.minHeight = 120f;
             listView.SetViewController(new SafeListViewController());
             listView.itemsSource = indexProxy;
 

@@ -6,6 +6,10 @@
 
 本パッケージはこれが初回リリースです。
 
+### Changed
+
+- `PhonemeEntryListView` の音素エントリ `ListView` を固定行高（132px）から `DynamicHeight` 仮想化に変更し、エントリ形式（BlendShape / AnimationClip / Expression）によって短い行の下に空白が残り縦に間延びする問題を解消した。あわせて `minHeight`（96px）を撤去し、一覧を折りたたんだ際に下部へ無駄な空白が残る問題も解消した。
+
 ### Fixed
 
 - phoneme overlay 入力源が解決されず口が動かない不具合を修正。`ULipSyncAdapterBinding` は overlay 入力源を binding の `Slug`（既定 `ulipsync`）で登録していた（キー `ulipsync:a`）が、レイヤーの入力源 id・`GetDefaultLayerInputSources`・サンプル・docs はすべて固定 prefix `lipsync-overlay:{slot}` を使うため、`FacialController` のレイヤー解決（`TryResolve("lipsync-overlay:a")`）がヒットせず集約に乗らなかった。登録/解除/重複検知を固定 prefix `lipsync-overlay` 基準に統一し、レイヤー id と一致させた。

@@ -6,6 +6,10 @@
 
 本パッケージはこれが初回リリースです。
 
+### Changed
+
+- `InputSystemAdapterBindingDrawer` のキーバインディング一覧 `ListView` を固定行高（228px）から `DynamicHeight` 仮想化に変更し、BindingMode によって非表示になるフィールド分の空白で行が縦に間延びする問題を解消した。あわせて `minHeight`（120px）を撤去し、一覧を折りたたんだ際に下部へ無駄な空白が残る問題も解消した。
+
 ### Breaking Changes
 
 - **自前の gaze 目ボーン適用を撤去し core `FacialController` の集約適用へ移行**: `InputSystemAdapterBinding` は `GazeBonePoseProvider` を構築・駆動しなくなった（`BuildGazeProvider` / `OnLateTick` での `Apply` / `Dispose` での破棄を撤去）。公開プロパティ **`HasGazeProvider` は削除**（参照コードはコンパイルエラー）。gaze 入力源の registry 登録（`{slug}:{expressionId}` / `.left` / `.right`）と、対応 `GazeBindingConfig` 欠落時の warning は従来どおり本 binding が担う。目ボーンへの適用は core の `FacialController` が registry 経由で行うため、**ユーザー設定（`GazeBindingConfig` / `ExpressionBindingEntry`）の変更は不要**で実行時挙動は同等。

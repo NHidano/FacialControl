@@ -93,7 +93,9 @@ namespace Hidano.FacialControl.LipSync.Editor.Inspector
             _listView = new ListView
             {
                 name = ListViewName,
-                fixedItemHeight = 132f,
+                // 行内はエントリ形式（BlendShape/AnimationClip/Expression）でフィールド数が変わるため、
+                // 固定高だと短い形式で下に空白が残る。DynamicHeight で実高に追従させる。
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
                 showAddRemoveFooter = true,
                 showBorder = true,
                 showFoldoutHeader = true,
@@ -105,8 +107,8 @@ namespace Hidano.FacialControl.LipSync.Editor.Inspector
                 bindItem = BindRow,
                 unbindItem = (element, _) => element.Clear(),
             };
+            // minHeight を指定すると折りたたみ時にもその高さ分の空白が残るため設定しない。
             _listView.style.marginTop = 4;
-            _listView.style.minHeight = 96f;
             _listView.SetViewController(new SafeListViewController());
             _listView.itemsSource = _indexProxy;
             _listView.overridingAddButtonBehavior = (_, button) => OpenAddMenu(button);

@@ -6,6 +6,10 @@
 
 本パッケージはこれが初回リリースです。
 
+### Changed
+
+- `OscReceiverAdapterBindingDrawer` の Mappings `ListView` を固定行高（236px）から `DynamicHeight` 仮想化に変更し、mode によって非表示になるフィールド分の空白で行が縦に間延びする問題を解消した。あわせて `minHeight`（120px）を撤去し、一覧を折りたたんだ際に下部へ無駄な空白が残る問題も解消した。
+
 ### Breaking changes
 
 - `OscAdapterBinding` を `OscReceiverAdapterBinding` にリネームしました。Inspector の Add ドロップダウン display name も `"OSC"` から `"OSC Receiver"` に変更し、送信側 `OscSenderAdapterBinding` (`"OSC Sender"`) との対称性を確保しました。既存 Profile / Scene asset の `RefIds` 内 `class: OscAdapterBinding` 指定は自動 migration を提供しないため、新クラス名で再アサインしてください。

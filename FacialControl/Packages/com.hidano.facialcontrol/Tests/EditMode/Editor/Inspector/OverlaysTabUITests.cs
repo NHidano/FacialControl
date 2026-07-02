@@ -126,7 +126,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
         }
 
         [Test]
-        public void CreateInspectorGUI_OverlaysStateRadioInitialValue_MatchesSerializableGetState()
+        public void CreateInspectorGUI_OverlaysStateDropdownInitialValue_MatchesSerializableGetState()
         {
             _so = CreateProfileWithSlots(BlinkSlotName);
             var binding = new OverlaySlotBindingSerializable
@@ -139,10 +139,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             var root = BuildInspectorRoot();
             AssertSixTabAndBuilderContracts(root);
 
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
-            Assert.That(radio, Is.Not.Null, "Expression row の Overlays 3 状態ラジオが見つかりません。");
-            Assert.That(radio.choices, Is.EqualTo(new[] { "Default", "Suppress", "Override" }));
-            Assert.That(radio.value, Is.EqualTo(ToRadioIndex(binding.GetState())));
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
+            Assert.That(dropdown, Is.Not.Null, "Expression row の Overlays 3 状態 dropdown が見つかりません。");
+            Assert.That(dropdown.choices, Is.EqualTo(new[] { "Default", "Suppress", "Override" }));
+            Assert.That(dropdown.value, Is.EqualTo(ToStateChoice(binding.GetState())));
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 Is.Null,
                 "Layers tab must not render Expression row layer dropdowns.");
             Assert.That(
-                layersTab.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName),
+                layersTab.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName),
                 Is.Null,
                 "Layers tab must not render Expression overlay controls.");
         }
@@ -218,24 +218,24 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
 
             var root = BuildInspectorRoot();
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
             var clipField = root.Q<ObjectField>(FacialCharacterProfileSOInspector.ExpressionOverlayAnimationClipFieldName);
-            Assert.That(radio, Is.Not.Null);
+            Assert.That(dropdown, Is.Not.Null);
             Assert.That(clipField, Is.Not.Null);
             Assert.That(clipField.objectType, Is.EqualTo(typeof(AnimationClip)));
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.DefaultFallback);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.DefaultFallback);
             Assert.That(clipField.style.display.value, Is.EqualTo(DisplayStyle.None));
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Override);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Override);
             Assert.That(clipField.style.display.value, Is.EqualTo(DisplayStyle.Flex));
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Suppress);
             Assert.That(clipField.style.display.value, Is.EqualTo(DisplayStyle.None));
         }
 
         [Test]
-        public void OverlayStateRadioSelection_UpdatesSerializableFieldsAndClearsOverrideData()
+        public void OverlayStateDropdownSelection_UpdatesSerializableFieldsAndClearsOverrideData()
         {
             _so = CreateProfileWithSlots(BlinkSlotName);
             var clip = CreateClip("OverlayStateRadioSelection_OverrideClip");
@@ -248,10 +248,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(binding));
 
             var root = BuildInspectorRoot();
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
-            Assert.That(radio, Is.Not.Null);
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
+            Assert.That(dropdown, Is.Not.Null);
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Suppress);
             Assert.That(binding.suppress, Is.True);
             Assert.That(binding.animationClip, Is.Null);
             Assert.That(IsEmptySnapshot(binding.cachedSnapshot), Is.True);
@@ -259,17 +259,17 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             binding.animationClip = clip;
             binding.cachedSnapshot = CreateCachedSnapshot();
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.DefaultFallback);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.DefaultFallback);
             Assert.That(binding.suppress, Is.False);
             Assert.That(binding.animationClip, Is.Null);
             Assert.That(IsEmptySnapshot(binding.cachedSnapshot), Is.True);
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Override);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Override);
             Assert.That(binding.suppress, Is.False);
         }
 
         [Test]
-        public void OverlayStateRadioSelection_SchedulesAutoSave()
+        public void OverlayStateDropdownSelection_SchedulesAutoSave()
         {
             // 回帰テスト: Overlay の Suppress/Override 切替は SerializedProperty を経由せず
             // managed モデルを直接書き換えるため、TrackSerializedObjectValue による自動保存監視が
@@ -281,11 +281,11 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
 
             var root = BuildInspectorRoot();
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
-            Assert.That(radio, Is.Not.Null);
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
+            Assert.That(dropdown, Is.Not.Null);
             Assert.That(GetAutoSavePending(_editor), Is.False, "前提: 初期状態では自動保存は予約されていません。");
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Suppress);
 
             Assert.That(
                 GetAutoSavePending(_editor),
@@ -301,12 +301,12 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
 
             var root = BuildInspectorRoot();
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
             var clipField = root.Q<ObjectField>(FacialCharacterProfileSOInspector.ExpressionOverlayAnimationClipFieldName);
-            Assert.That(radio, Is.Not.Null);
+            Assert.That(dropdown, Is.Not.Null);
             Assert.That(clipField, Is.Not.Null);
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Override);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Override);
             ResetAutoSavePending(_editor);
 
             clipField.value = CreateClip("ExpressionOverlayClipSelection_OverrideClip");
@@ -318,7 +318,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
         }
 
         [Test]
-        public void OverlayStateRadioSelection_Suppress_SurvivesSerializedObjectRoundTrip()
+        public void OverlayStateDropdownSelection_Suppress_SurvivesSerializedObjectRoundTrip()
         {
             // 回帰テスト（Suppress 設定が Play 突入で .asset 上 1→0 に戻る不具合）。
             // bound な ListView / ObjectField は SerializedObject の内部キャッシュを保持し、
@@ -331,10 +331,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
 
             var root = BuildInspectorRoot();
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
-            Assert.That(radio, Is.Not.Null);
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
+            Assert.That(dropdown, Is.Not.Null);
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Suppress);
 
             // managed モデル即時反映を確認。
             Assert.That(_so.Expressions[0].overlays[0].suppress, Is.True,
@@ -362,7 +362,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
         }
 
         [Test]
-        public void OverlayStateRadioSelection_DefaultFallbackToSuppress_AddsBindingAndSurvivesRoundTrip()
+        public void OverlayStateDropdownSelection_DefaultFallbackToSuppress_AddsBindingAndSurvivesRoundTrip()
         {
             // DefaultFallback（overlays に該当 slot の binding が無い）から Suppress へ切替える際は、
             // overlays 配列へ新規要素を Add する。配列構造変更が SerializedObject 経由で確定されていないと
@@ -372,17 +372,17 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
 
             var root = BuildInspectorRoot();
-            var radios = new List<RadioButtonGroup>();
-            root.Query<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName)
-                .ForEach(radios.Add);
+            var dropdowns = new List<DropdownField>();
+            root.Query<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName)
+                .ForEach(dropdowns.Add);
             // blink / wink の 2 行が描画される（wink は CollectOverlaySlotsForExpression が宣言 slot を補完）。
-            Assert.That(radios, Has.Count.GreaterThanOrEqualTo(2),
-                "宣言済み slot ごとに overlay 行とラジオが描画される必要があります。");
+            Assert.That(dropdowns, Has.Count.GreaterThanOrEqualTo(2),
+                "宣言済み slot ごとに overlay 行と状態 dropdown が描画される必要があります。");
 
             int initialOverlayCount = _so.Expressions[0].overlays.Count;
 
             // 2 行目（wink, DefaultFallback）を Suppress に切替える → 新規 binding を Add。
-            radios[1].value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            dropdowns[1].value = ToStateChoice(OverlaySlotBindingState.Suppress);
 
             Assert.That(_so.Expressions[0].overlays.Count, Is.GreaterThan(initialOverlayCount),
                 "DefaultFallback→Suppress で overlays に新規 binding が Add される必要があります。");
@@ -451,7 +451,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
         }
 
         [Test]
-        public void CreateInspectorGUI_DefaultOverlayRow_RendersSlotAndAlwaysVisibleClipFieldWithoutStateRadio()
+        public void CreateInspectorGUI_DefaultOverlayRow_RendersSlotAndAlwaysVisibleClipFieldWithoutStateDropdown()
         {
             _so = CreateProfileWithSlots(BlinkSlotName);
             var binding = new OverlaySlotBindingSerializable
@@ -465,11 +465,11 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             var root = BuildInspectorRoot();
             var foldout = root.Q<VisualElement>(FacialCharacterProfileSOInspector.DefaultOverlaysFoldoutName);
             var dropdown = foldout.Q<DropdownField>(FacialCharacterProfileSOInspector.DefaultOverlaySlotDropdownName);
-            var radio = foldout.Q<RadioButtonGroup>();
+            var stateDropdown = foldout.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
             var clipField = foldout.Q<ObjectField>(FacialCharacterProfileSOInspector.DefaultOverlayAnimationClipFieldName);
 
             Assert.That(dropdown, Is.Not.Null, "Default Overlays row の slot DropdownField が見つかりません。");
-            Assert.That(radio, Is.Null, "Default Overlays row に 3 状態ラジオを表示してはいけません。");
+            Assert.That(stateDropdown, Is.Null, "Default Overlays row に 3 状態 dropdown を表示してはいけません。");
             Assert.That(clipField, Is.Not.Null, "Default Overlays row の AnimationClip フィールドが見つかりません。");
             Assert.That(clipField.objectType, Is.EqualTo(typeof(AnimationClip)));
             Assert.That(clipField.style.display.value, Is.EqualTo(DisplayStyle.Flex));
@@ -597,10 +597,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
 
             var root = BuildInspectorRoot();
-            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
-            Assert.That(radio, Is.Not.Null);
+            var dropdown = root.Q<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
+            Assert.That(dropdown, Is.Not.Null);
 
-            radio.value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            dropdown.value = ToStateChoice(OverlaySlotBindingState.Suppress);
             Assert.That(GetAutoSavePending(_editor), Is.True,
                 "前提: Suppress 切替で自動保存が予約されている必要があります。");
 
@@ -631,6 +631,66 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 "ExitingEditMode 以外で overlay 編集がフラッシュされてはいけません。");
             Assert.That(GetPendingOverlayEditCount(_editor), Is.EqualTo(1),
                 "ExitingEditMode 以外で保留リストが変化してはいけません。");
+        }
+
+        [Test]
+        public void BuildSaveStatusBar_DoesNotRenderManualExportButton()
+        {
+            // 書き出しはパラメータ変更時（ScheduleAutoSave）と Play 突入時（AutoExporter）に
+            // 自動実行されるため、手動の「今すぐ書き出し」ボタンは表示しない。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+
+            var root = BuildInspectorRoot();
+            var saveStatusBar = root.Q<VisualElement>(FacialCharacterProfileSOInspector.SaveStatusBarName);
+            Assert.That(saveStatusBar, Is.Not.Null, "Save status bar was not found.");
+
+            var buttons = new List<Button>();
+            saveStatusBar.Query<Button>().ForEach(buttons.Add);
+            Assert.That(buttons.FindAll(b => b.text == "今すぐ書き出し"), Is.Empty,
+                "手動の「今すぐ書き出し」ボタンを表示してはいけません。");
+        }
+
+        [Test]
+        public void TabSelection_PersistsAcrossInspectorRebuild()
+        {
+            // domain reload / asset 再読み込みで Inspector が再構築されても、
+            // 直前に選択していたタブを SessionState から復元する。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+
+            var root = BuildInspectorRoot();
+            var tabView = root.Q<TabView>(FacialCharacterProfileSOInspector.TabViewName);
+            var layersTab = root.Q<Tab>(FacialCharacterProfileSOInspector.TabLayersName);
+            Assert.That(tabView, Is.Not.Null);
+            Assert.That(layersTab, Is.Not.Null);
+
+            tabView.activeTab = layersTab;
+
+            root = RebuildInspectorRoot();
+            tabView = root.Q<TabView>(FacialCharacterProfileSOInspector.TabViewName);
+
+            Assert.That(tabView.activeTab, Is.Not.Null);
+            Assert.That(tabView.activeTab.name, Is.EqualTo(FacialCharacterProfileSOInspector.TabLayersName),
+                "Inspector 再構築後も直前に選択していたタブが復元される必要があります。");
+        }
+
+        [Test]
+        public void SectionFoldoutCollapse_PersistsAcrossInspectorRebuild()
+        {
+            // Foldout の折りたたみ状態も SessionState から復元する。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+
+            var root = BuildInspectorRoot();
+            var foldout = root.Q<Foldout>(FacialCharacterProfileSOInspector.DefaultOverlaysFoldoutName);
+            Assert.That(foldout, Is.Not.Null);
+            Assert.That(foldout.value, Is.True, "前提: Default Overlays セクションは既定で展開されています。");
+
+            foldout.value = false;
+
+            root = RebuildInspectorRoot();
+            foldout = root.Q<Foldout>(FacialCharacterProfileSOInspector.DefaultOverlaysFoldoutName);
+
+            Assert.That(foldout.value, Is.False,
+                "Inspector 再構築後も直前の Foldout 折りたたみ状態が復元される必要があります。");
         }
 
         private VisualElement BuildInspectorRoot()
@@ -771,19 +831,19 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             return !hasBlendShapes && !hasBones && !hasRendererPaths;
         }
 
-        private static int ToRadioIndex(OverlaySlotBindingState state)
+        private static string ToStateChoice(OverlaySlotBindingState state)
         {
             switch (state)
             {
                 case OverlaySlotBindingState.DefaultFallback:
-                    return 0;
+                    return "Default";
                 case OverlaySlotBindingState.Suppress:
-                    return 1;
+                    return "Suppress";
                 case OverlaySlotBindingState.Override:
-                    return 2;
+                    return "Override";
                 default:
                     Assert.Fail($"未知の OverlaySlotBindingState です: {state}");
-                    return -1;
+                    return null;
             }
         }
 

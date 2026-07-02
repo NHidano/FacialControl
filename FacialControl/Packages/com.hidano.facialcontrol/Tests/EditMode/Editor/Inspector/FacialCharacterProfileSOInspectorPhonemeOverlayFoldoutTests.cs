@@ -82,14 +82,14 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 FacialCharacterProfileSOInspector.ExpressionPhonemeOverlaysFoldoutName);
             foldout.value = true;
 
-            var radios = new List<RadioButtonGroup>();
+            var dropdowns = new List<DropdownField>();
             var clipFields = new List<ObjectField>();
-            foldout.Query<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName)
-                .ForEach(radios.Add);
+            foldout.Query<DropdownField>(FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName)
+                .ForEach(dropdowns.Add);
             foldout.Query<ObjectField>(FacialCharacterProfileSOInspector.ExpressionOverlayAnimationClipFieldName)
                 .ForEach(clipFields.Add);
 
-            Assert.That(radios, Has.Count.EqualTo(5));
+            Assert.That(dropdowns, Has.Count.EqualTo(5));
             Assert.That(clipFields, Has.Count.EqualTo(5));
         }
 
@@ -153,12 +153,12 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
 
             var foldout = BuildInspectorRoot().Q<Foldout>(
                 FacialCharacterProfileSOInspector.ExpressionPhonemeOverlaysFoldoutName);
-            var radio = foldout.Q<RadioButtonGroup>(
-                FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
+            var dropdown = foldout.Q<DropdownField>(
+                FacialCharacterProfileSOInspector.ExpressionOverlayStateDropdownName);
             var clipField = foldout.Q<ObjectField>(
                 FacialCharacterProfileSOInspector.ExpressionOverlayAnimationClipFieldName);
 
-            radio.value = 2;
+            dropdown.value = "Override";
             clipField.value = clip;
 
             var binding = _so.Expressions[0].overlays[0];

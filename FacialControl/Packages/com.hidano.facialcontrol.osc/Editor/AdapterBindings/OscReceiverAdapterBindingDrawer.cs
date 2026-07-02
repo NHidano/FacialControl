@@ -28,8 +28,6 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
         private const string EntrySourceIdRightFieldName = "sourceIdRight";
         private const string EntryLeftRightIndependentFieldName = "leftRightIndependent";
 
-        private const float MappingRowHeight = 236f;
-
         public const string RootClassName = "facial-control-osc-adapter-binding";
         public const string SettingsFieldElementName = "osc-adapter-binding-settings";
         public const string SettingsMissingHelpBoxName = "osc-adapter-binding-settings-missing";
@@ -114,7 +112,9 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
             var listView = new ListView
             {
                 name = MappingListName,
-                fixedItemHeight = MappingRowHeight,
+                // 行内は設定内容でフィールドの表示/非表示が切り替わるため、固定高だと
+                // 非表示分の空白が残り縦に間延びする。DynamicHeight で実高に追従させる。
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
                 showAddRemoveFooter = true,
                 showBorder = true,
                 showFoldoutHeader = true,
@@ -126,8 +126,8 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
                 bindItem = (element, index) => BindMappingRow(element, index, property, indexProxy),
                 unbindItem = (element, _) => element.Clear(),
             };
+            // minHeight を指定すると折りたたみ時にもその高さ分の空白が残るため設定しない。
             listView.style.marginTop = 4f;
-            listView.style.minHeight = 120f;
             listView.SetViewController(new SafeListViewController());
             listView.itemsSource = indexProxy;
 

@@ -67,7 +67,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string DefaultOverlaySlotDropdownName = "default-overlay-slot-dropdown";
         public const string DefaultOverlayAnimationClipFieldName = "default-overlay-animation-clip-field";
         public const string DefaultOverlayUndeclaredSlotHelpName = "default-overlay-undeclared-slot-help";
-        public const string ExpressionOverlayStateRadioName = "expression-overlay-state-radio";
+        public const string ExpressionOverlayStateDropdownName = "expression-overlay-state-dropdown";
         public const string ExpressionOverlayAnimationClipFieldName = "expression-overlay-animation-clip-field";
         public const string ExpressionOverlayUndeclaredSlotHelpName = "expression-overlay-undeclared-slot-help";
 
@@ -80,7 +80,6 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string ReferenceModelDirectFieldName = "facial-character-reference-model-field";
 
         public const string SaveStatusBarName = "facial-character-save-status-bar";
-        public const string SaveButtonName = "facial-character-save-button";
         public const string SaveStatusLabelName = "facial-character-save-status";
         public const string ExpressionsValidationHelpName = "facial-character-expressions-validation";
         public const string DebugExpressionIdMappingTitleName = "debug-expression-id-mapping-title";
@@ -184,6 +183,10 @@ namespace Hidano.FacialControl.Editor.Inspector
         // （アサイン直後に Play すると Default Overlays の clip が外れる不具合の根因）。
         // ExitingEditMode / OnDisable でこのリストをフラッシュして確実に SerializedProperty へ確定する。
         private readonly List<Action> _pendingOverlayEdits = new List<Action>();
+
+        // SessionState 永続化対象の Foldout（開閉状態を OnDisable で一括保存する）。
+        private readonly List<(Foldout foldout, string key)> _persistedFoldouts =
+            new List<(Foldout foldout, string key)>();
 #if UNITY_EDITOR
         private GameObject _lastReferenceModel;
 #endif
@@ -203,6 +206,9 @@ namespace Hidano.FacialControl.Editor.Inspector
         protected virtual void OnDisable()
         {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChangedFlushOverlayEdits;
+
+            // 破棄前に Foldout の開閉状態を保存し、再構築時に直前の表示状態を再現できるようにする。
+            SaveFoldoutViewStates();
 
             // Inspector 破棄 / 別オブジェクト選択時にも保留中の overlay 編集を取りこぼさない。
             FlushPendingOverlayEdits();
@@ -275,6 +281,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             RefreshLayerNameChoices();
             RefreshSlotNameChoices();
             _slotDropdowns.Clear();
+            _persistedFoldouts.Clear();
 
             BuildSaveStatusBar(root);
 
@@ -317,6 +324,18 @@ namespace Hidano.FacialControl.Editor.Inspector
             tabView.Add(debugTab);
 
             root.Add(tabView);
+
+            // domain reload / asset 再読み込みで Inspector が再構築されても、直前に選択していた
+            // タブを復元する（既定は先頭の「表情ライブラリ」に戻ってしまう）。
+            PersistSelectedTab(tabView, new List<Tab>
+            {
+                expressionLibraryTab,
+                layersTab,
+                baseExpressionTab,
+                _gazeTab,
+                adapterTab,
+                debugTab,
+            });
 
             UpdateValidation();
             UpdateDebugLabels();
@@ -415,18 +434,8 @@ namespace Hidano.FacialControl.Editor.Inspector
                     text = "ルーティングを編集",
                 };
                 routingButton.AddToClassList(FacialControlStyles.ActionButton);
-                routingButton.style.marginRight = 4f;
                 bar.Add(routingButton);
             }
-
-            var forceExportButton = new Button(ForceSave)
-            {
-                name = SaveButtonName,
-                text = "今すぐ書き出し",
-                tooltip = "現在の設定を StreamingAssets/{SO名}/profile.json に即時エクスポートする。",
-            };
-            forceExportButton.AddToClassList(FacialControlStyles.ActionButton);
-            bar.Add(forceExportButton);
 
             root.Add(bar);
         }
@@ -493,13 +502,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
         }
 
-        private void ForceSave()
-        {
-            serializedObject.ApplyModifiedProperties();
-            FlushAutoSave();
-            AssetDatabase.Refresh();
-        }
-
         // ====================================================================
         // 共通ヘルパー: HelpBox / Foldout の見栄え調整
         // ====================================================================
@@ -513,7 +515,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             return box;
         }
 
-        protected static Foldout MakeSectionFoldout(string name, string text, bool open)
+        protected Foldout MakeSectionFoldout(string name, string text, bool open)
         {
             var foldout = new Foldout
             {
@@ -523,7 +525,98 @@ namespace Hidano.FacialControl.Editor.Inspector
             };
             foldout.style.unityFontStyleAndWeight = FontStyle.Normal;
             foldout.style.fontSize = SectionFoldoutFontSize;
+            PersistFoldoutOpenState(foldout, "section." + name, open);
             return foldout;
+        }
+
+        // ====================================================================
+        // 表示状態（選択タブ / Foldout 開閉）の SessionState 永続化
+        // ====================================================================
+
+        /// <summary>
+        /// Foldout の開閉状態を SessionState に保存・復元する。domain reload や asset 再読み込みで
+        /// Inspector が再構築されても直前の展開状態を再現する（Editor 再起動でリセット）。
+        /// </summary>
+        private void PersistFoldoutOpenState(Foldout foldout, string keySuffix, bool defaultOpen)
+        {
+            string key = GetSessionStateKey(keySuffix);
+            foldout.value = SessionState.GetBool(key, defaultOpen);
+            foldout.RegisterValueChangedCallback(evt =>
+            {
+                // 内包する Toggle / 子 Foldout の ChangeEvent<bool> も bubble してくるため、
+                // この Foldout 自身の開閉のみを保存する。
+                if (evt.target == foldout)
+                {
+                    SessionState.SetBool(key, evt.newValue);
+                }
+            });
+            // ChangeEvent は panel 未接続時にディスパッチされないため、破棄時の一括保存
+            // （SaveFoldoutViewStates）でも確実に拾えるよう参照を保持する。
+            _persistedFoldouts.Add((foldout, key));
+        }
+
+        /// <summary>
+        /// 追跡中の全 Foldout の開閉状態を SessionState へ一括保存する。
+        /// Inspector 破棄（OnDisable）時に呼び、ChangeEvent が届かない経路の変更も取りこぼさない。
+        /// UI 再構築で同一キーの Foldout が重複しても、後から登録された（=最新の）値で上書きされる。
+        /// </summary>
+        private void SaveFoldoutViewStates()
+        {
+            for (int i = 0; i < _persistedFoldouts.Count; i++)
+            {
+                var (foldout, key) = _persistedFoldouts[i];
+                if (foldout != null)
+                {
+                    SessionState.SetBool(key, foldout.value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 選択中タブを SessionState に保存し、Inspector 再構築時に復元する。
+        /// </summary>
+        private void PersistSelectedTab(TabView tabView, List<Tab> tabs)
+        {
+            string key = GetSessionStateKey("tab");
+            int savedIndex = SessionState.GetInt(key, 0);
+            if (savedIndex > 0 && savedIndex < tabs.Count)
+            {
+                tabView.activeTab = tabs[savedIndex];
+            }
+
+            tabView.activeTabChanged += (_, next) =>
+            {
+                int index = tabs.IndexOf(next);
+                if (index >= 0)
+                {
+                    SessionState.SetInt(key, index);
+                }
+            };
+        }
+
+        private string GetSessionStateKey(string suffix)
+        {
+            int id = target != null ? target.GetInstanceID() : 0;
+            return $"Hidano.FacialControl.FacialCharacterProfileSOInspector.{id}.{suffix}";
+        }
+
+        /// <summary>展開状態の保存キー用に expression の id を返す（未解決時は index ベース）。</summary>
+        private string GetExpressionIdAt(int exprIndex)
+        {
+            if (_expressionsProperty != null
+                && exprIndex >= 0
+                && exprIndex < _expressionsProperty.arraySize)
+            {
+                var idProp = _expressionsProperty
+                    .GetArrayElementAtIndex(exprIndex)
+                    .FindPropertyRelative("id");
+                if (idProp != null && !string.IsNullOrEmpty(idProp.stringValue))
+                {
+                    return idProp.stringValue;
+                }
+            }
+
+            return $"index-{exprIndex}";
         }
 
         // ====================================================================
@@ -854,7 +947,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                 name = DefaultOverlaySlotDropdownName,
             };
             slotDropdown.style.minWidth = 160;
-            slotDropdown.style.flexGrow = 1f;
+            slotDropdown.style.flexShrink = 0;
             RegisterSlotDropdown(slotDropdown, currentSlot);
             slotDropdown.RegisterValueChangedCallback(evt =>
             {
@@ -874,13 +967,17 @@ namespace Hidano.FacialControl.Editor.Inspector
             });
             row.Add(slotDropdown);
 
-            var clipField = new OverlayAnimationClipObjectField("AnimationClip")
+            // AnimationClip スロットは内部ラベルを持たせず、Slot dropdown のすぐ脇に表示する
+            // （ラベル込みで flexGrow すると欄が右端まで寄って見つけづらい）。
+            var clipField = new OverlayAnimationClipObjectField(null)
             {
                 name = DefaultOverlayAnimationClipFieldName,
                 objectType = typeof(AnimationClip),
                 allowSceneObjects = false,
+                tooltip = "この slot の既定 overlay AnimationClip",
             };
             clipField.style.flexGrow = 1f;
+            clipField.style.marginLeft = 4;
             clipField.style.display = DisplayStyle.Flex;
             if (clipProp != null)
             {
@@ -2103,6 +2200,8 @@ namespace Hidano.FacialControl.Editor.Inspector
                 value = true,
             };
             section.style.marginTop = 6;
+            PersistFoldoutOpenState(
+                section, $"expression.{GetExpressionIdAt(exprIndex)}.overlays", defaultOpen: true);
 
             if (overlaysProp == null)
             {
@@ -2139,6 +2238,8 @@ namespace Hidano.FacialControl.Editor.Inspector
                 value = false,
             };
             foldout.style.marginTop = 6;
+            PersistFoldoutOpenState(
+                foldout, $"expression.{GetExpressionIdAt(exprIndex)}.phoneme-overlays", defaultOpen: false);
 
             var summary = new Label(BuildPhonemeOverlaySummaryText(overlaysProp, exprIndex))
             {
@@ -2225,22 +2326,27 @@ namespace Hidano.FacialControl.Editor.Inspector
             slotLabel.style.whiteSpace = WhiteSpace.Normal;
             line.Add(slotLabel);
 
-            var radio = new OverlayStateRadioButtonGroup
+            var stateDropdown = new OverlayStateDropdownField
             {
-                name = ExpressionOverlayStateRadioName,
-                choices = new List<string> { "Default", "Suppress", "Override" },
+                name = ExpressionOverlayStateDropdownName,
+                choices = new List<string>(OverlayStateChoices),
             };
-            radio.SetValueWithoutNotify(ToRadioIndex(state));
-            radio.style.minWidth = 240;
-            line.Add(radio);
+            stateDropdown.SetValueWithoutNotify(ToOverlayStateChoice(state));
+            stateDropdown.style.minWidth = 110;
+            stateDropdown.style.flexShrink = 0;
+            line.Add(stateDropdown);
 
-            var clipField = new OverlayAnimationClipObjectField("AnimationClip")
+            // AnimationClip スロットは内部ラベルを持たせず、状態 dropdown のすぐ脇に表示する
+            // （ラベル込みで flexGrow すると欄が右端まで寄って見つけづらい）。
+            var clipField = new OverlayAnimationClipObjectField(null)
             {
                 name = ExpressionOverlayAnimationClipFieldName,
                 objectType = typeof(AnimationClip),
                 allowSceneObjects = false,
+                tooltip = "Override 時に適用する AnimationClip",
             };
             clipField.style.flexGrow = 1f;
+            clipField.style.marginLeft = 4;
             clipField.style.display = state == OverlaySlotBindingState.Override
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
@@ -2254,9 +2360,9 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
             line.Add(clipField);
 
-            radio.OnValueAssigned = value =>
+            stateDropdown.OnValueAssigned = value =>
             {
-                var newState = FromRadioIndex(value);
+                var newState = FromOverlayStateChoice(value);
                 ApplyExpressionOverlayState(exprIndex, slot, newState, clipField);
                 clipField.style.display = newState == OverlaySlotBindingState.Override
                     ? DisplayStyle.Flex
@@ -2332,28 +2438,29 @@ namespace Hidano.FacialControl.Editor.Inspector
             return OverlaySlotBindingState.DefaultFallback;
         }
 
-        private static int ToRadioIndex(OverlaySlotBindingState state)
+        /// <summary>Overlay 状態 dropdown の choices（表示順固定）。</summary>
+        private static readonly string[] OverlayStateChoices = { "Default", "Suppress", "Override" };
+
+        private static string ToOverlayStateChoice(OverlaySlotBindingState state)
         {
             switch (state)
             {
-                case OverlaySlotBindingState.DefaultFallback:
-                    return 0;
                 case OverlaySlotBindingState.Suppress:
-                    return 1;
+                    return "Suppress";
                 case OverlaySlotBindingState.Override:
-                    return 2;
+                    return "Override";
                 default:
-                    return 0;
+                    return "Default";
             }
         }
 
-        private static OverlaySlotBindingState FromRadioIndex(int value)
+        private static OverlaySlotBindingState FromOverlayStateChoice(string choice)
         {
-            switch (value)
+            switch (choice)
             {
-                case 1:
+                case "Suppress":
                     return OverlaySlotBindingState.Suppress;
-                case 2:
+                case "Override":
                     return OverlaySlotBindingState.Override;
                 default:
                     return OverlaySlotBindingState.DefaultFallback;
@@ -3809,11 +3916,11 @@ namespace Hidano.FacialControl.Editor.Inspector
         // AnimationClip 表示用 ObjectField
         // ====================================================================
 
-        private sealed class OverlayStateRadioButtonGroup : RadioButtonGroup
+        private sealed class OverlayStateDropdownField : DropdownField
         {
-            public Action<int> OnValueAssigned;
+            public Action<string> OnValueAssigned;
 
-            public override int value
+            public override string value
             {
                 get => base.value;
                 set

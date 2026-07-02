@@ -6,6 +6,12 @@
 
 本パッケージはこれが初回リリースです。
 
+### Changed
+
+- `FacialCharacterProfileSO` Inspector の Expression List overlay 行で、Default / Suppress / Override の 3 状態選択を `RadioButtonGroup` から `DropdownField` に変更した（要素名 `expression-overlay-state-radio` → `expression-overlay-state-dropdown`）。あわせて Override 用 AnimationClip 欄の内部ラベルを撤去し、状態 dropdown のすぐ脇に表示するようにした（従来はラベル込みで flexGrow していたため欄が右端まで寄って見つけづらかった）。Default Overlays 行の AnimationClip 欄も同様に Slot dropdown 直後へ隣接配置した。
+- `FacialCharacterProfileSO` Inspector の選択タブと各 Foldout（セクション / Expression 行の Overlays / Phoneme Overlays）の展開状態を `SessionState` に保存し、domain reload や asset 再読み込みで Inspector が再構築されても直前の表示状態を復元するようにした（従来は毎回「表情ライブラリ」タブ先頭・既定の展開状態にリセットされていた）。Editor 再起動時はリセットされる。
+- 保存ステータスバーの「今すぐ書き出し」ボタンを削除した。profile.json のエクスポートはパラメータ変更時の自動保存（`ScheduleAutoSave`）と Play 突入 / ビルド時の `FacialCharacterProfileAutoExporter` で自動実行されるため、手動操作は不要になった。
+
 ### Breaking Changes
 
 - **`AnimationEvent` 由来の遷移メタデータを撤去**: Expression の `transitionDuration` / `transitionCurvePreset` は `FacialCharacterProfileSO` Inspector の Expression 行だけで編集する方針に統一しました。AnimationClip 上の `AnimationEvent` (`FacialControlMeta_Set` など) は遷移メタデータとして扱いません。
