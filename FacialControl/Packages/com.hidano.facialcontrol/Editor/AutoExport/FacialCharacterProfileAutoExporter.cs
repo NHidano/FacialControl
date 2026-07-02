@@ -21,6 +21,7 @@ namespace Hidano.FacialControl.Editor.AutoExport
     /// エクスポートは冪等（内容が既に最新なら同一バイトを書くだけ）なので、データが正しければ
     /// ファイル差分は出ない。SO の <c>cachedSnapshot</c> はインメモリで再サンプリングするのみで
     /// アセットを dirty にしない（profile.json の最新化だけを目的とし、余計な保存・再インポートを避ける）。
+    /// ただし既に dirty な（未保存編集を持つ）SO は、編集消失を防ぐためエクスポート前に .asset へ保存する。
     /// </para>
     /// </summary>
     [InitializeOnLoad]
@@ -78,6 +79,12 @@ namespace Hidano.FacialControl.Editor.AutoExport
 
                 try
                 {
+                    // 未保存の編集（Inspector 破棄で自動保存 delayCall が失われた場合等）を
+                    // Play / ビルド前に .asset へ確定する。メモリ上の SO とディスクの .asset が
+                    // 不整合のままだと、以後ディスクへ書かれる契機がなく編集が失われ得る。
+                    // 再サンプリング（下記）より前に呼ぶことで、保存対象をユーザー編集分に限定する。
+                    AssetDatabase.SaveAssetIfDirty(so);
+
                     // クリップを ÷100 正規化して cachedSnapshot に焼き直し（インメモリ）、その値で JSON を書き出す。
                     FacialCharacterProfileExporter.SampleAnimationClipsIntoCachedSnapshots(so, sampler);
                     if (FacialCharacterProfileExporter.ExportProfileJson(so))

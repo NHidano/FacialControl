@@ -206,6 +206,16 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             // Inspector 破棄 / 別オブジェクト選択時にも保留中の overlay 編集を取りこぼさない。
             FlushPendingOverlayEdits();
+
+            // 予約済みの自動保存も破棄前に同期確定する。破棄後に delayCall で FlushAutoSave が
+            // 発火しても target が null となり何も保存されず、suppress/override 編集がメモリ上の
+            // SO にだけ残って .asset / profile.json が古いまま放置される
+            // （編集直後に別オブジェクトを選択すると保存が失われる不具合の根因）。
+            if (_autoSavePending)
+            {
+                EditorApplication.delayCall -= FlushAutoSave;
+                FlushAutoSave();
+            }
         }
 
         /// <summary>

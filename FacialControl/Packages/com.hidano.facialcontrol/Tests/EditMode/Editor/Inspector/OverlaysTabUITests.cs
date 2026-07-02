@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using Hidano.FacialControl.Adapters.Json.Dto;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
@@ -60,6 +61,27 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             {
                 Object.DestroyImmediate(_so);
                 _so = null;
+            }
+
+            // OnDisable フラッシュ検証テストが StreamingAssets へ書き出した profile.json を掃除する。
+            DeleteStreamingAssetsExport("OverlaysTabUITestProfile");
+        }
+
+        private static void DeleteStreamingAssetsExport(string profileName)
+        {
+            string exportDir = Path.Combine(
+                UnityEngine.Application.streamingAssetsPath,
+                FacialCharacterProfileSO.StreamingAssetsRootFolder,
+                profileName);
+            if (Directory.Exists(exportDir))
+            {
+                Directory.Delete(exportDir, recursive: true);
+            }
+
+            string metaPath = exportDir + ".meta";
+            if (File.Exists(metaPath))
+            {
+                File.Delete(metaPath);
             }
         }
 
@@ -561,6 +583,35 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 "ExitingEditMode で保留中の overlay 編集がフラッシュ（確定）されていません。");
             Assert.That(GetPendingOverlayEditCount(_editor), Is.EqualTo(0),
                 "フラッシュ後に保留リストが空になっていません。");
+        }
+
+        [Test]
+        public void DestroyEditor_AutoSavePending_FlushesAutoSaveOnDisable()
+        {
+            // 回帰テスト（編集直後に別オブジェクトを選択すると保存が失われる不具合）。
+            // ScheduleAutoSave は EditorApplication.delayCall へ保存を予約するが、発火前に
+            // Inspector (Editor) が破棄されると delayCall 側の FlushAutoSave は target == null で
+            // 何もせず、.asset / profile.json が未保存のまま残る。破棄（OnDisable）時点で
+            // 保留中の自動保存を同期確定する必要がある。
+            _so = CreateProfileWithSlots(BlinkSlotName);
+            _so.Expressions.Add(CreateExpression(new OverlaySlotBindingSerializable { slot = BlinkSlotName }));
+
+            var root = BuildInspectorRoot();
+            var radio = root.Q<RadioButtonGroup>(FacialCharacterProfileSOInspector.ExpressionOverlayStateRadioName);
+            Assert.That(radio, Is.Not.Null);
+
+            radio.value = ToRadioIndex(OverlaySlotBindingState.Suppress);
+            Assert.That(GetAutoSavePending(_editor), Is.True,
+                "前提: Suppress 切替で自動保存が予約されている必要があります。");
+
+            Object.DestroyImmediate(_editor);
+            _editor = null;
+
+            string jsonPath = FacialCharacterProfileSO.GetStreamingAssetsProfilePath(_so.name);
+            Assert.That(File.Exists(jsonPath), Is.True,
+                "Inspector 破棄時に保留中の自動保存が確定されていません（profile.json 未出力）。"
+                + "破棄後の delayCall では target が null となり保存できないため、"
+                + "OnDisable で FlushAutoSave を実行する必要があります。");
         }
 
         [Test]
