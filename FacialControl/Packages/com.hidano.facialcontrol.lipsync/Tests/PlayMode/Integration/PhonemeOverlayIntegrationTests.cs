@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.LipSync.Adapters;
@@ -12,6 +11,13 @@ using UnityEngine.TestTools;
 
 namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
 {
+    /// <summary>
+    /// Expression の phoneme Override / Suppress 解決を
+    /// <see cref="LipSyncPhonemeOverlayInputSource"/>（解決コンテキスト付き）で検証する。
+    /// Override は口形状 snapshot の差し替えであり、駆動 weight（音素 weight × 音量）は
+    /// 既定 snapshot と同じ値を使い回す。レイヤー集約まで含めた実経路の検証は
+    /// <see cref="PhonemeOverlayPreemptionTests"/> が担う。
+    /// </summary>
     [TestFixture]
     public sealed class PhonemeOverlayIntegrationTests
     {
@@ -28,7 +34,6 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
         };
 
         private readonly StubActiveExpressionProvider _activeProvider = new StubActiveExpressionProvider();
-        private readonly ManualTimeProvider _timeProvider = new ManualTimeProvider();
 
         [UnityTest]
         public IEnumerator ActiveExpressionWithOverride_PhonemeSlot_ProducesSnapshotInOneFrame()
@@ -45,14 +50,56 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             rig.SetLipSyncFrame(1f, ("A", 1f));
             yield return null;
 
-            Assert.That(rig.LipSyncWouldWrite(PhonemeOverlaySlots.A), Is.True);
-            Assert.That(rig.LipSyncOutput[0], Is.EqualTo(0.35f).Within(Tolerance));
+            Assert.That(rig.DefaultWouldWrite(PhonemeOverlaySlots.A), Is.True);
+            Assert.That(rig.DefaultOutput[0], Is.EqualTo(0.35f).Within(Tolerance));
 
             bool wrote = rig.TryResolve(PhonemeOverlaySlots.A);
 
+            // override snapshot が既定 snapshot を置き換え、同じ駆動 weight (1×1) で出力される。
             Assert.That(wrote, Is.True);
             Assert.That(rig.Output[0], Is.EqualTo(0.82f).Within(Tolerance));
             Assert.That(rig.Output[1], Is.EqualTo(0f).Within(Tolerance));
+        }
+
+        [UnityTest]
+        public IEnumerator ActiveExpressionWithOverride_PhonemeSlot_ScalesByDriveWeight()
+        {
+            ExpressionSnapshot overrideSnapshot = Snapshot("smile-a", new BlendShapeSnapshot(FacePath, MouthA, 0.82f));
+            FacialProfile profile = BuildProfile(
+                smileOverlays: new[]
+                {
+                    new OverlaySlotBinding(PhonemeOverlaySlots.A, suppress: false, snapshot: overrideSnapshot),
+                });
+            _activeProvider.Active = profile.FindExpressionById("smile");
+
+            using FrameRig rig = CreateRig(profile);
+            rig.SetLipSyncFrame(0.5f, ("A", 0.5f));
+            yield return null;
+
+            bool wrote = rig.TryResolve(PhonemeOverlaySlots.A);
+
+            // 駆動 weight は「元の a に流れてきた値」（0.5×0.5）を使い回す。
+            Assert.That(wrote, Is.True);
+            Assert.That(rig.Output[0], Is.EqualTo(0.82f * 0.25f).Within(Tolerance));
+        }
+
+        [UnityTest]
+        public IEnumerator ActiveExpressionWithOverride_SilentFrame_ProducesNoOutput()
+        {
+            ExpressionSnapshot overrideSnapshot = Snapshot("smile-a", new BlendShapeSnapshot(FacePath, MouthA, 0.82f));
+            FacialProfile profile = BuildProfile(
+                smileOverlays: new[]
+                {
+                    new OverlaySlotBinding(PhonemeOverlaySlots.A, suppress: false, snapshot: overrideSnapshot),
+                });
+            _activeProvider.Active = profile.FindExpressionById("smile");
+
+            using FrameRig rig = CreateRig(profile);
+            rig.SetLipSyncFrame(0f, ("A", 1f));
+            yield return null;
+
+            // Override は静的オーバーレイではない。無音フレームでは出力されない。
+            Assert.That(rig.TryResolve(PhonemeOverlaySlots.A), Is.False);
         }
 
         [UnityTest]
@@ -69,8 +116,8 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             rig.SetLipSyncFrame(1f, ("A", 1f));
             yield return null;
 
-            Assert.That(rig.LipSyncWouldWrite(PhonemeOverlaySlots.A), Is.True);
-            Assert.That(rig.LipSyncOutput[0], Is.EqualTo(0.35f).Within(Tolerance));
+            Assert.That(rig.DefaultWouldWrite(PhonemeOverlaySlots.A), Is.True);
+            Assert.That(rig.DefaultOutput[0], Is.EqualTo(0.35f).Within(Tolerance));
 
             bool wrote = rig.TryResolve(PhonemeOverlaySlots.A);
 
@@ -160,7 +207,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
 
         private FrameRig CreateRig(FacialProfile profile)
         {
-            return new FrameRig(profile, _activeProvider, _timeProvider);
+            return new FrameRig(profile, _activeProvider);
         }
 
         private static FacialProfile BuildProfile(
@@ -210,15 +257,12 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             private readonly StubActiveExpressionProvider _activeProvider;
             private readonly FakePhonemeWeightSource _weightSource;
             private readonly ULipSyncProvider _provider;
-            private readonly Dictionary<string, OverlayInputSource> _overlays =
-                new Dictionary<string, OverlayInputSource>(StringComparer.Ordinal);
-            private readonly Dictionary<string, LipSyncPhonemeOverlayInputSource> _lipSyncSources =
+            private readonly Dictionary<string, LipSyncPhonemeOverlayInputSource> _resolvingSources =
+                new Dictionary<string, LipSyncPhonemeOverlayInputSource>(StringComparer.Ordinal);
+            private readonly Dictionary<string, LipSyncPhonemeOverlayInputSource> _plainSources =
                 new Dictionary<string, LipSyncPhonemeOverlayInputSource>(StringComparer.Ordinal);
 
-            public FrameRig(
-                FacialProfile profile,
-                StubActiveExpressionProvider activeProvider,
-                ManualTimeProvider timeProvider)
+            public FrameRig(FacialProfile profile, StubActiveExpressionProvider activeProvider)
             {
                 _profile = profile;
                 _activeProvider = activeProvider;
@@ -232,16 +276,16 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                     },
                     BlendShapeNames.Length);
                 Output = new float[BlendShapeNames.Length];
-                LipSyncOutput = new float[BlendShapeNames.Length];
+                DefaultOutput = new float[BlendShapeNames.Length];
             }
 
             public float[] Output { get; }
 
-            public float[] LipSyncOutput { get; }
+            public float[] DefaultOutput { get; }
 
             public void SetLipSyncFrame(float volume, params (string PhonemeId, float Weight)[] weights)
             {
-                // uLipSync 委譲後の確定 weight/volume を直接与える（テストは単一音素 weight=1 を使用）。
+                // uLipSync 委譲後の確定 weight/volume を直接与える。
                 _weightSource.CurrentVolume = volume;
                 for (int i = 0; i < weights.Length; i++)
                 {
@@ -249,28 +293,24 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 }
             }
 
+            /// <summary>
+            /// Override / Suppress / DefaultOverlays を解決する本番構成の
+            /// <see cref="LipSyncPhonemeOverlayInputSource"/> で当該 slot を評価する。
+            /// </summary>
             public bool TryResolve(string slot)
             {
                 Array.Clear(Output, 0, Output.Length);
-
-                OverlayInputSource overlay = GetOverlay(slot);
-                if (overlay.TryWriteValues(Output))
-                {
-                    return true;
-                }
-
-                if (IsSuppressed(slot))
-                {
-                    return false;
-                }
-
-                return GetLipSync(slot).TryWriteValues(Output);
+                return GetResolvingSource(slot).TryWriteValues(Output);
             }
 
-            public bool LipSyncWouldWrite(string slot)
+            /// <summary>
+            /// 解決コンテキスト無し（既定出力のみ）の source で当該 slot を評価する。
+            /// 「Override / Suppress が無ければ何が出ていたか」の対比用。
+            /// </summary>
+            public bool DefaultWouldWrite(string slot)
             {
-                Array.Clear(LipSyncOutput, 0, LipSyncOutput.Length);
-                return GetLipSync(slot).TryWriteValues(LipSyncOutput);
+                Array.Clear(DefaultOutput, 0, DefaultOutput.Length);
+                return GetPlainSource(slot).TryWriteValues(DefaultOutput);
             }
 
             public void Dispose()
@@ -278,28 +318,30 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 _provider.Dispose();
             }
 
-            private OverlayInputSource GetOverlay(string slot)
+            private LipSyncPhonemeOverlayInputSource GetResolvingSource(string slot)
             {
-                if (_overlays.TryGetValue(slot, out OverlayInputSource source))
+                if (_resolvingSources.TryGetValue(slot, out LipSyncPhonemeOverlayInputSource source))
                 {
                     return source;
                 }
 
-                source = new OverlayInputSource(
-                    InputSourceId.Parse("overlay:" + slot),
-                    slot,
+                source = new LipSyncPhonemeOverlayInputSource(
+                    InputSourceId.Parse("lipsync-overlay:" + slot),
+                    PhonemeOverlaySlots.MapReservedToPhonemeId(slot),
+                    _provider,
                     BlendShapeNames.Length,
+                    slot,
                     BlendShapeNames,
                     _profile,
                     _activeProvider,
                     EmotionLayer);
-                _overlays.Add(slot, source);
+                _resolvingSources.Add(slot, source);
                 return source;
             }
 
-            private LipSyncPhonemeOverlayInputSource GetLipSync(string slot)
+            private LipSyncPhonemeOverlayInputSource GetPlainSource(string slot)
             {
-                if (_lipSyncSources.TryGetValue(slot, out LipSyncPhonemeOverlayInputSource source))
+                if (_plainSources.TryGetValue(slot, out LipSyncPhonemeOverlayInputSource source))
                 {
                     return source;
                 }
@@ -309,28 +351,8 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                     PhonemeOverlaySlots.MapReservedToPhonemeId(slot),
                     _provider,
                     BlendShapeNames.Length);
-                _lipSyncSources.Add(slot, source);
+                _plainSources.Add(slot, source);
                 return source;
-            }
-
-            private bool IsSuppressed(string slot)
-            {
-                if (_activeProvider.Active.HasValue
-                    && _activeProvider.Active.Value.TryGetOverlay(slot, out OverlaySlotBinding activeBinding))
-                {
-                    if (activeBinding.Suppress)
-                    {
-                        return true;
-                    }
-
-                    if (!activeBinding.IsDefaultFallback)
-                    {
-                        return false;
-                    }
-                }
-
-                return _profile.TryGetDefaultOverlay(slot, out OverlaySlotBinding defaultBinding)
-                    && defaultBinding.Suppress;
             }
         }
 
@@ -342,11 +364,6 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             {
                 return Active;
             }
-        }
-
-        private sealed class ManualTimeProvider : ITimeProvider
-        {
-            public double UnscaledTimeSeconds { get; set; }
         }
     }
 }

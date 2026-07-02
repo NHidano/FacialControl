@@ -122,6 +122,26 @@ namespace Hidano.FacialControl.LipSync.Adapters
 
         public bool TryComposePhonemeWeights(string phonemeId, Span<float> output)
         {
+            return TryComposePhonemeWeightsCore(phonemeId, overrideWeights: null, output);
+        }
+
+        /// <summary>
+        /// 既定 snapshot の代わりに <paramref name="overrideWeights"/>（Expression の phoneme Override 等で
+        /// 差し替えられた口形状）へ、同じ駆動 weight（音素 weight × 音量）を適用して合成する。
+        /// 無音・音素 weight 0 のフレームでは override 中でも出力されない（静的オーバーレイにしない契約）。
+        /// </summary>
+        public bool TryComposePhonemeWeights(string phonemeId, float[] overrideWeights, Span<float> output)
+        {
+            if (overrideWeights == null)
+            {
+                throw new ArgumentNullException(nameof(overrideWeights));
+            }
+
+            return TryComposePhonemeWeightsCore(phonemeId, overrideWeights, output);
+        }
+
+        private bool TryComposePhonemeWeightsCore(string phonemeId, float[] overrideWeights, Span<float> output)
+        {
             int index = FindPhonemeIndex(phonemeId);
             if (index < 0)
             {
@@ -141,7 +161,7 @@ namespace Hidano.FacialControl.LipSync.Adapters
             // 適用済み。本クラスは snapshot への適用のみ行う。
             _source.TryGetPhonemeWeight(_phonemeKeys[index], out float phonemeWeight);
             float factor = phonemeWeight * _source.CurrentVolume;
-            float[] weights = _snapshotWeights[_phonemeIndices[index]];
+            float[] weights = overrideWeights ?? _snapshotWeights[_phonemeIndices[index]];
             int copyLength = output.Length < weights.Length ? output.Length : weights.Length;
             for (int i = 0; i < copyLength; i++)
             {

@@ -369,6 +369,9 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Performance
                 _registry.Dispose();
             }
 
+            // Override 解決付きの LipSyncPhonemeOverlayInputSource で構成する。
+            // Override は駆動 weight（音素 weight × 音量）で差し替え出力されるため、
+            // FakePhonemeWeightSource へ ratios を流さないと出力が出ない。
             private static CharacterPipeline CreateOverlayPipeline(
                 int characterIndex,
                 FacialProfile profile,
@@ -382,6 +385,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Performance
                     weightSource,
                     CreatePhonemeSnapshots(characterIndex),
                     BlendShapeCount);
+                ApplyRatios(weightSource, CreateRatios());
 
                 var bindings = new List<(int, int, IInputSource)>(ReservedSlots.Length);
                 for (int i = 0; i < ReservedSlots.Length; i++)
@@ -390,10 +394,12 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Performance
                     bindings.Add((
                         0,
                         i,
-                        new OverlayInputSource(
-                            InputSourceId.Parse("overlay:" + characterIndex + ":" + slot),
-                            slot,
+                        new LipSyncPhonemeOverlayInputSource(
+                            InputSourceId.Parse("lipsync-overlay:" + characterIndex + ":" + slot),
+                            PhonemeOverlaySlots.MapReservedToPhonemeId(slot),
+                            provider,
                             BlendShapeCount,
+                            slot,
                             BlendShapeNames,
                             profile,
                             activeProvider,

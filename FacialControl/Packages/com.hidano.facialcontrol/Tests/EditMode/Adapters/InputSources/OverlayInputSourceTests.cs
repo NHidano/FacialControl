@@ -325,8 +325,12 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.InputSources
         }
 
         [Test]
-        public void TryWriteValues_PhonemeReservedSlot_SwitchesInOneFrameWithoutCrossfade()
+        public void TryWriteValues_PhonemeReservedSlot_NeverWritesStatically()
         {
+            // 音素 Override は「口形状 snapshot の差し替え」であり、駆動 weight
+            // （音素 weight × 音量）ごと LipSyncPhonemeOverlayInputSource 側で合成される。
+            // 予約音素 slot の OverlayInputSource が snapshot を静的出力すると
+            // 「表情中ずっと 100% 出力」になるため、常に無効ソースであることを固定する。
             const string phonemeSlot = "a";
             var activeSnapshot = CreateSnapshot(
                 "anger-a-inline",
@@ -356,13 +360,12 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.InputSources
                 emotionLayerName: LayerName);
 
             Span<float> output = stackalloc float[BlendShapeNames.Length];
-            Assert.IsTrue(source.TryWriteValues(output));
-            Assert.AreEqual(0.25f, output[2], 1e-6f);
+            Assert.IsFalse(source.TryWriteValues(output));
 
-            // フォニーム予約 slot は 1 フレーム切替仕様を維持（クロスフェードしない）。
             provider.Active = profile.FindExpressionById("anger");
-            Assert.IsTrue(source.TryWriteValues(output));
-            Assert.AreEqual(0.8f, output[2], 1e-6f);
+            source.Tick(0.1f);
+            Assert.IsFalse(source.TryWriteValues(output));
+            Assert.IsFalse(source.ContributeMask[2]);
         }
 
         [Test]

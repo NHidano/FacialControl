@@ -24,7 +24,7 @@ Inspector に `Phoneme slots を初期化 (a/i/u/e/o)` ボタンがある場合�
 
 各 Expression の `overlays` に、必要な phoneme slot の `OverlaySlotBinding` を追加する。
 
-- Override: `slot` に `a` / `i` / `u` / `e` / `o` のいずれかを指定し、`AnimationClip` または bake 済み `cachedSnapshot` を設定する。Expression が有効な間、その slot は uLipSync の既定出力より優先される。
+- Override: `slot` に `a` / `i` / `u` / `e` / `o` のいずれかを指定し、`AnimationClip` または bake 済み `cachedSnapshot` を設定する。Expression が有効な間、その slot の口形状 snapshot が uLipSync 既定の snapshot の**代わりに**使われる（差し替え）。駆動 weight（音素 weight × 音量）は既定出力と同じ値を使い回すため、無音・当該音素が検出されないフレームでは override 中でも何も出力されない。静的なオーバーレイ出力（表情中に snapshot が常時 100% 出力される挙動）にはならない。
 - Suppress: `Suppress` を有効にする。Expression が有効な間、その slot は何も出力しない。
 - Default fallback: `Suppress = false` かつ snapshot 未設定のままにする、または該当 slot の overlay entry を作らない。この場合は `ULipSyncAdapterBinding` の `BlendShapePhonemeEntry` / `AnimationClipPhonemeEntry` が従来どおり既定出力として使われる。
 
@@ -82,7 +82,7 @@ warning を消すために `ULipSyncAdapterBinding` を削除してはいけな�
 
 | 日付 | 対象実装 | design.md との差分 | rationale | 追跡 issue / spec |
 |------|----------|--------------------|-----------|-------------------|
-| - | - | - | 現時点で既知の乖離なし | - |
+| 2026-07-03 | `LipSyncPhonemeOverlayInputSource` / `OverlayInputSource` | design.md は「`[overlay:{slot}, lipsync-overlay:{slot}]` の並び順で Aggregator が LastWins 相当に preempt する」とするが、Aggregator は加重和のみで並び順 preemption を持たず、`OverlayInputSource` の静的出力では表情中に snapshot が常時 100% 出力されてしまう | Override の意図は「音素の口形状 snapshot の差し替え（駆動 weight = 音素 weight × 音量は既定出力と同じ値を使い回す）」。差し替え合成を `LipSyncPhonemeOverlayInputSource` 側（Override/Suppress/DefaultOverlays の解決込み）へ実装し、予約音素 slot の `OverlayInputSource` は不活性化した（`overlay:{slot}` のレイヤー宣言は互換のため残置可） | 本ガイド §2 / `PhonemeOverlayPreemptionTests` |
 
 ## 6. 関連資料
 

@@ -15,15 +15,15 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
     /// <summary>
     /// Expression の phoneme Override / Suppress が、実経路
     /// (<see cref="LayerUseCase"/> + Aggregator の加重和) で
-    /// <see cref="LipSyncPhonemeOverlayInputSource"/> の既定出力を preempt することを検証する。
+    /// <see cref="LipSyncPhonemeOverlayInputSource"/> の既定出力へ正しく作用することを検証する。
     /// </summary>
     /// <remarks>
-    /// <see cref="PhonemeOverlayIntegrationTests"/> はテストリグ内で優先順を手動実装しており
-    /// 実経路の preemption を検証していなかった（design.md「overlay が立ったら
-    /// lipsync-overlay の寄与は無視される」の regression テスト欠落）。本テストは
-    /// 同一レイヤーに <c>overlay:a</c> と <c>lipsync-overlay:a</c> を実際に並べ、
-    /// 最終ブレンド出力で precedence (Override → Suppress → DefaultOverlays → LipSync default)
-    /// を固定する。
+    /// Override のセマンティクスは「音素の口形状 snapshot の差し替え」であり、
+    /// 静的なオーバーレイ出力ではない。駆動 weight（音素 weight × 音量）は
+    /// 既定 snapshot と同じ値を使い回すため、無音時は override 中でも出力されない。
+    /// あわせて予約音素 slot の <see cref="OverlayInputSource"/> が静的出力を
+    /// しないこと（「表情中ずっと 100% 出力」の禁止）も固定する。
+    /// precedence: Expression Override → Suppress → DefaultOverlays → LipSync default。
     /// </remarks>
     [TestFixture]
     public sealed class PhonemeOverlayPreemptionTests
@@ -41,7 +41,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
         private static readonly string[] BlendShapeNames = { MouthA, MouthI };
 
         [Test]
-        public void ActiveExpressionOverride_PreemptsLipSyncDefaultOutput()
+        public void ActiveExpressionOverride_FullDrive_SubstitutesSnapshot()
         {
             FacialProfile profile = BuildProfile(
                 smileOverlays: new[]
@@ -50,13 +50,53 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 });
             using Harness harness = CreateHarness(profile);
             harness.ActiveProvider.Active = profile.FindExpressionById("smile");
+            harness.WeightSource.SetFrame(1f, (PhonemeA, 1f));
 
             harness.LayerUseCase.UpdateWeights(0f);
 
-            // Override active 中は lipsync 既定出力 (0.85) が加算されず、override 値のみが出る。
+            // Override active 中は既定 snapshot (0.85) の代わりに override 形状が
+            // 同じ駆動 weight (1×1) で出力される。加算されないこと。
             Assert.That(harness.LayerUseCase.BlendedOutputSpan[0], Is.EqualTo(OverrideValue).Within(Tolerance),
-                "Override active 中は override snapshot の値だけが出力されるべき（lipsync 出力が加算されてはならない）。");
+                "Override active 中は override snapshot が既定 snapshot を置き換えるべき（加算されてはならない）。");
             Assert.That(harness.LayerUseCase.BlendedOutputSpan[1], Is.EqualTo(0f).Within(Tolerance));
+        }
+
+        [Test]
+        public void ActiveExpressionOverride_ReusesPhonemeDriveWeight()
+        {
+            FacialProfile profile = BuildProfile(
+                smileOverlays: new[]
+                {
+                    new OverlaySlotBinding(SlotA, suppress: false, snapshot: OverrideSnapshot(OverrideValue)),
+                });
+            using Harness harness = CreateHarness(profile);
+            harness.ActiveProvider.Active = profile.FindExpressionById("smile");
+            harness.WeightSource.SetFrame(1f, (PhonemeA, 0.5f));
+
+            harness.LayerUseCase.UpdateWeights(0f);
+
+            // 駆動 weight は「元の a に流れてきた値」（phonemeWeight × volume）を使い回す。
+            Assert.That(harness.LayerUseCase.BlendedOutputSpan[0], Is.EqualTo(OverrideValue * 0.5f).Within(Tolerance),
+                "override 形状は既定 snapshot と同じ駆動 weight（phonemeWeight×volume）でスケールされるべき。");
+        }
+
+        [Test]
+        public void ActiveExpressionOverride_SilentFrame_ProducesNoOutput()
+        {
+            FacialProfile profile = BuildProfile(
+                smileOverlays: new[]
+                {
+                    new OverlaySlotBinding(SlotA, suppress: false, snapshot: OverrideSnapshot(OverrideValue)),
+                });
+            using Harness harness = CreateHarness(profile);
+            harness.ActiveProvider.Active = profile.FindExpressionById("smile");
+            harness.WeightSource.SetFrame(0f, (PhonemeA, 1f));
+
+            harness.LayerUseCase.UpdateWeights(0f);
+
+            // Override は静的オーバーレイではない。無音（volume=0）なら口は閉じたまま。
+            Assert.That(harness.LayerUseCase.BlendedOutputSpan[0], Is.EqualTo(0f).Within(Tolerance),
+                "無音フレームでは override 中でも出力されないべき（表情中ずっと 100% 出力の禁止）。");
         }
 
         [Test]
@@ -69,6 +109,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 });
             using Harness harness = CreateHarness(profile);
             harness.ActiveProvider.Active = profile.FindExpressionById("smile");
+            harness.WeightSource.SetFrame(1f, (PhonemeA, 1f));
 
             harness.LayerUseCase.UpdateWeights(0f);
 
@@ -80,7 +121,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
         public void ActiveExpressionEmptySnapshotBinding_FallsBackToLipSyncDefault()
         {
             // Inspector 未設定のまま出力された「suppress=false + 空 snapshot」の binding は
-            // default fallback として扱い、リップシンクを preempt しない（全滅事故の防止）。
+            // default fallback として扱い、既定出力を差し替えない（全滅事故の防止）。
             FacialProfile profile = BuildProfile(
                 smileOverlays: new[]
                 {
@@ -88,6 +129,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 });
             using Harness harness = CreateHarness(profile);
             harness.ActiveProvider.Active = profile.FindExpressionById("smile");
+            harness.WeightSource.SetFrame(1f, (PhonemeA, 1f));
 
             harness.LayerUseCase.UpdateWeights(0f);
 
@@ -96,7 +138,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
         }
 
         [Test]
-        public void NoActiveExpression_DefaultOverlayOverride_PreemptsLipSyncDefaultOutput()
+        public void NoActiveExpression_DefaultOverlayOverride_SubstitutesSnapshotWithDrive()
         {
             FacialProfile profile = BuildProfile(
                 defaultOverlays: new[]
@@ -105,11 +147,12 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 });
             using Harness harness = CreateHarness(profile);
             harness.ActiveProvider.Active = null;
+            harness.WeightSource.SetFrame(1f, (PhonemeA, 0.5f));
 
             harness.LayerUseCase.UpdateWeights(0f);
 
-            Assert.That(harness.LayerUseCase.BlendedOutputSpan[0], Is.EqualTo(OverrideValue).Within(Tolerance),
-                "DefaultOverlays の override は base 表情時も lipsync 既定出力を preempt するべき。");
+            Assert.That(harness.LayerUseCase.BlendedOutputSpan[0], Is.EqualTo(OverrideValue * 0.5f).Within(Tolerance),
+                "DefaultOverlays の override も駆動 weight でスケールされた差し替えとして出力されるべき。");
         }
 
         [Test]
@@ -118,6 +161,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             FacialProfile profile = BuildProfile();
             using Harness harness = CreateHarness(profile);
             harness.ActiveProvider.Active = profile.FindExpressionById("smile");
+            harness.WeightSource.SetFrame(1f, (PhonemeA, 1f));
 
             harness.LayerUseCase.UpdateWeights(0f);
 
@@ -125,11 +169,40 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 "overlay binding が無い場合は lipsync 既定出力がそのまま出るべき。");
         }
 
+        [Test]
+        public void ReservedPhonemeSlot_OverlayInputSource_NeverWritesStatically()
+        {
+            FacialProfile profile = BuildProfile(
+                smileOverlays: new[]
+                {
+                    new OverlaySlotBinding(SlotA, suppress: false, snapshot: OverrideSnapshot(OverrideValue)),
+                });
+            var activeProvider = new StubActiveExpressionProvider
+            {
+                Active = profile.FindExpressionById("smile"),
+            };
+
+            var overlaySource = new OverlayInputSource(
+                InputSourceId.Parse($"{OverlayInputSource.ReservedIdPrefix}:{SlotA}"),
+                SlotA,
+                BlendShapeNames.Length,
+                BlendShapeNames,
+                profile,
+                activeProvider,
+                EmotionLayer);
+
+            Span<float> output = stackalloc float[BlendShapeNames.Length];
+            overlaySource.Tick(0f);
+            bool wrote = overlaySource.TryWriteValues(output);
+
+            Assert.That(wrote, Is.False,
+                "予約音素 slot の OverlayInputSource は静的出力してはならない（差し替えは lipsync-overlay 側が行う）。");
+        }
+
         private Harness CreateHarness(FacialProfile profile)
         {
             var activeProvider = new StubActiveExpressionProvider();
             var weightSource = new FakePhonemeWeightSource();
-            weightSource.SetFrame(1f, (PhonemeA, 1f));
 
             var provider = new ULipSyncProvider(
                 weightSource,
@@ -151,6 +224,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
                 provider,
                 BlendShapeNames.Length,
                 SlotA,
+                BlendShapeNames,
                 profile,
                 activeProvider,
                 EmotionLayer);
@@ -163,7 +237,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             };
             var layerUseCase = new LayerUseCase(profile, expressionUseCase, BlendShapeNames, additional);
 
-            return new Harness(provider, layerUseCase, activeProvider);
+            return new Harness(provider, layerUseCase, activeProvider, weightSource);
         }
 
         private static FacialProfile BuildProfile(
@@ -223,11 +297,13 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             public Harness(
                 ULipSyncProvider provider,
                 LayerUseCase layerUseCase,
-                StubActiveExpressionProvider activeProvider)
+                StubActiveExpressionProvider activeProvider,
+                FakePhonemeWeightSource weightSource)
             {
                 Provider = provider;
                 LayerUseCase = layerUseCase;
                 ActiveProvider = activeProvider;
+                WeightSource = weightSource;
             }
 
             public ULipSyncProvider Provider { get; }
@@ -235,6 +311,8 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Integration
             public LayerUseCase LayerUseCase { get; }
 
             public StubActiveExpressionProvider ActiveProvider { get; }
+
+            public FakePhonemeWeightSource WeightSource { get; }
 
             public void Dispose()
             {

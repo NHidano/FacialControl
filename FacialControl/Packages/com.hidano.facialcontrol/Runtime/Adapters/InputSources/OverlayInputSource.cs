@@ -21,10 +21,16 @@ namespace Hidano.FacialControl.Adapters.InputSources
         private readonly bool _slotDeclared;
         private bool _logged;
 
+        // フォニーム予約 slot (a/i/u/e/o) は静的出力しない（常に無効ソース）。
+        // 音素 Override は「口形状 snapshot の差し替え」であり、駆動 weight
+        // （音素 weight × 音量）ごと LipSyncPhonemeOverlayInputSource 側で合成される。
+        // ここで snapshot を静的出力すると「表情中ずっと 100% 出力」になり誤り。
+        // 登録自体はレイヤー配線互換（overlay:{slot} 宣言）のため許容する。
+        private readonly bool _phonemeSlotInert;
+
         // ---- クロスフェード状態 ----
         // 解決結果 (default / override / suppress) が切替わった際、旧出力から新出力へ
-        // 表情遷移と同じ duration/curve で補間する。フォニーム予約 slot (a/i/u/e/o) は
-        // 「1 フレーム切替」仕様（リップシンク応答性）を維持するため無効。
+        // 表情遷移と同じ duration/curve で補間する。
         private readonly bool _crossfadeEnabled;
         private readonly float[] _currentValues;
         private readonly float[] _fromValues;
@@ -64,7 +70,8 @@ namespace Hidano.FacialControl.Adapters.InputSources
             _emotionLayerName = string.IsNullOrEmpty(emotionLayerName) ? "emotion" : emotionLayerName;
             _activeMask = new BitArray(blendShapeCount, false);
             _emptyMask = new BitArray(blendShapeCount, false);
-            _crossfadeEnabled = !PhonemeOverlaySlots.IsReserved(slot);
+            _phonemeSlotInert = PhonemeOverlaySlots.IsReserved(slot);
+            _crossfadeEnabled = !_phonemeSlotInert;
             _currentValues = blendShapeCount == 0 ? Array.Empty<float>() : new float[blendShapeCount];
             _fromValues = blendShapeCount == 0 ? Array.Empty<float>() : new float[blendShapeCount];
             _targetValues = blendShapeCount == 0 ? Array.Empty<float>() : new float[blendShapeCount];
@@ -158,7 +165,7 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// </summary>
         public override void Tick(float deltaTime)
         {
-            if (!_slotDeclared)
+            if (!_slotDeclared || _phonemeSlotInert)
             {
                 return;
             }
@@ -189,7 +196,7 @@ namespace Hidano.FacialControl.Adapters.InputSources
 
         public override bool TryWriteValues(Span<float> output)
         {
-            if (!_slotDeclared)
+            if (!_slotDeclared || _phonemeSlotInert)
             {
                 return false;
             }

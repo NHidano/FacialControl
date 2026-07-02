@@ -1040,7 +1040,8 @@ namespace Hidano.FacialControl.LipSync.Adapters
                 }
 
                 var id = InputSourceId.Parse($"{LipSyncPhonemeOverlayInputSource.SlugPrefix}:{slot}");
-                // Expression Override / Suppress / DefaultOverlays が有効な間は既定出力を止める
+                // Expression の Override は音素の口形状 snapshot を差し替え（駆動 weight は使い回し）、
+                // Suppress は当該 slot の出力を止める
                 // （precedence: Override → Suppress → DefaultOverlays → LipSync default）。
                 var source = new LipSyncPhonemeOverlayInputSource(
                     id,
@@ -1048,6 +1049,7 @@ namespace Hidano.FacialControl.LipSync.Adapters
                     _provider,
                     ctx.BlendShapeNames.Count,
                     slot,
+                    ctx.BlendShapeNames,
                     ctx.Profile,
                     ctx.ActiveExpressionProvider,
                     "emotion");
