@@ -1,21 +1,22 @@
 ---
 name: uloop-simulate-mouse-input
 toolName: simulate-mouse-input
-description: "Simulate Mouse.current input in PlayMode through Unity Input System. Use for gameplay clicks, mouse delta, or scroll; use simulate-mouse-ui for EventSystem UI elements."
+description: "Simulate Mouse.current input in PlayMode through Unity Input System. Use for gameplay mouse clicks, held button input, movement delta, or scroll. Use simulate-mouse-ui for UI."
 context: fork
 ---
 
 # Task
 
-Simulate mouse input via Input System in Unity PlayMode: $ARGUMENTS
+Simulate mouse input via Input System in Unity PlayMode.
 
 ## Workflow
 
 1. Ensure Unity is in PlayMode (use `uloop control-play-mode --action Play` if not)
 2. For Click/LongPress: determine the target screen position (use `uloop screenshot` to find coordinates)
-3. Execute the appropriate `uloop simulate-mouse-input` command
-4. Take a screenshot to verify the result: `uloop screenshot --capture-mode rendering`
-5. Report what happened
+3. Execute the needed `uloop simulate-mouse-input` commands
+4. Inspect the result with the lightest useful evidence: runtime state, logs, or a screenshot
+5. When this input verifies a state transition, use Pause Point inspection from the section below as the standard frame proof
+6. Report what happened and which evidence was used
 
 ## Tool Reference
 
@@ -41,11 +42,18 @@ uloop simulate-mouse-input --action <action> [options]
 
 | Action | What it injects | Description |
 |--------|----------------|-------------|
-| `Click` | Mouse.current button press → release | Inject a button click so game logic detects `wasPressedThisFrame` |
+| `Click` | Mouse.current button press → release | Inject a button click so runtime logic detects `wasPressedThisFrame` |
 | `LongPress` | Mouse.current button press → hold → release | Hold a button for `--duration` seconds |
-| `MoveDelta` | Mouse.current.delta | Inject mouse movement delta one-shot (e.g. for FPS camera look) |
+| `MoveDelta` | Mouse.current.delta | Inject mouse movement delta one-shot |
 | `SmoothDelta` | Mouse.current.delta (per-frame) | Inject mouse delta smoothly over `--duration` seconds (human-like camera pan) |
-| `Scroll` | Mouse.current.scroll | Inject scroll wheel input (e.g. for hotbar or zoom) |
+| `Scroll` | Mouse.current.scroll | Inject scroll wheel input |
+
+### Pause Point Inspection (Standard for E2E)
+
+For standard frame proof when this input drives a state transition, follow the `uloop-wait-for-pause-point` skill. Place markers after the app consumed the mouse input, not immediately after `simulate-mouse-input`.
+
+- If `InterruptedByPausePoint: true`, Unity is paused and input bookkeeping was released. `PausePointId` and `PausePointHitCount` identify the marker.
+- Remove temporary pause-point/log instrumentation before final validation when it was added only for inspection.
 
 ### Global Options (optional)
 
@@ -53,37 +61,38 @@ uloop simulate-mouse-input --action <action> [options]
 |--------|-------------|
 | `--project-path <path>` | Optional. Use only when the target Unity project is not the current directory. |
 
-
 ## When to use this vs simulate-mouse-ui
+
+All rows below assume the New Input System is installed.
 
 | Scenario | Tool |
 |----------|------|
 | Click a Unity UI Button (IPointerClickHandler) | `simulate-mouse-ui` |
-| Destroy a block in Minecraft (reads `Mouse.current.leftButton`) | `simulate-mouse-input` when the project uses the New Input System |
-| Place a block with right-click | `simulate-mouse-input --button Right` when the project uses the New Input System |
+| Runtime logic reads `Mouse.current.leftButton` | `simulate-mouse-input` |
+| Runtime logic reads right-click | `simulate-mouse-input --button Right` |
 | Drag a UI slider | `simulate-mouse-ui --action Drag` |
-| Look around with mouse (FPS camera) | `simulate-mouse-input --action MoveDelta` when the project uses the New Input System |
-| Scroll hotbar slots | `simulate-mouse-input --action Scroll` when the project uses the New Input System |
+| Runtime logic reads `Mouse.current.delta` | `simulate-mouse-input --action MoveDelta` |
+| Runtime logic reads `Mouse.current.scroll` | `simulate-mouse-input --action Scroll` |
 
 ## Examples
 
 ```bash
-# Left-click at screen center (for game logic)
+# Left-click at screen center for runtime input
 uloop simulate-mouse-input --action Click --x 400 --y 300
 
-# Right-click at screen center (e.g. place block)
+# Right-click at screen center
 uloop simulate-mouse-input --action Click --x 400 --y 300 --button Right
 
-# Hold left-click for 2 seconds (e.g. mine block)
+# Hold left-click for 2 seconds
 uloop simulate-mouse-input --action LongPress --x 400 --y 300 --duration 2.0
 
-# Look right (FPS camera)
+# Send a one-shot mouse delta
 uloop simulate-mouse-input --action MoveDelta --delta-x 100 --delta-y 0
 
-# Scroll up (e.g. previous hotbar slot)
+# Scroll up
 uloop simulate-mouse-input --action Scroll --scroll-y 120
 
-# Scroll down (e.g. next hotbar slot)
+# Scroll down
 uloop simulate-mouse-input --action Scroll --scroll-y -120
 
 # Smooth camera pan right over 0.5 seconds
@@ -93,18 +102,22 @@ uloop simulate-mouse-input --action SmoothDelta --delta-x 300 --delta-y 0 --dura
 ## Prerequisites
 
 - Unity must be in **PlayMode**
-- **Input System package** must be installed (`com.unity.inputsystem`)
+- **Input System package** (`com.unity.inputsystem`) must be installed; this tool only works with the New Input System.
 - Game code must read input via Input System API (e.g. `Mouse.current.leftButton.wasPressedThisFrame`)
-- Use this only when the project already uses the New Input System.
 
 ## Output
 
 Returns JSON with:
+
 - `Success`: Whether the operation succeeded
 - `Message`: Status message
 - `Action`: Echoes which action was executed (`Click`, `LongPress`, `MoveDelta`, `SmoothDelta`, or `Scroll`)
 - `Button`: Which button was used (nullable string; populated for `Click` / `LongPress`, null otherwise)
 - `PositionX`: Target X coordinate (nullable float; populated for `Click` / `LongPress`)
 - `PositionY`: Target Y coordinate (nullable float; populated for `Click` / `LongPress`)
+- `InterruptedByPausePoint`: True when Unity paused during Pause Point inspection and the input bookkeeping was safely released
+- `PausePointId`: The id from `UloopPausePoint.Pause("<id>")` when it caused the interruption
+- `PausePointHitCount`: The hit count for that `UloopPausePoint.Pause("<id>")`
+- `PausePointHits` (array, nullable): Every marker hit during this input as `{Id, HitCount}` entries, in hit order. Read this when one input may trigger several markers; `PausePointId` only names the latest one
 
-These are the only six fields. There is no `DeltaX`, `DeltaY`, `ScrollX`, `ScrollY`, `Duration`, or hit-element field in the response — only the issued action, button, and target position are echoed back. Verify visual outcome with a follow-up screenshot.
+Verify visual outcome with a follow-up screenshot.

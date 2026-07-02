@@ -8,9 +8,11 @@ description: "Run Unity Test Runner and report detailed results. Use for EditMod
 
 Execute Unity Test Runner. When tests fail, NUnit XML results with error messages and stack traces are automatically saved. Read the XML file at `XmlPath` for detailed failure diagnosis.
 
-Before running `uloop run-tests`, run `uloop compile` for the same Unity project when the current task created, deleted, renamed, moved, or edited C# source files, test files, `.asmdef`, `.asmref`, package manifest files, or scripting define settings. This refreshes the AssetDatabase, lets Unity discover new tests, and surfaces compile errors before test execution. You may skip this compile step when rerunning tests without code or assembly-definition changes since the last successful compile.
+Before running tests, run `uloop compile` first if you created, deleted, renamed, moved, or edited C# files, test files, `.asmdef`/`.asmref`, or package manifests since the last successful compile. This refreshes the AssetDatabase and surfaces compile errors before test execution.
 
 Before executing tests, `uloop run-tests` saves unsaved loaded Scene changes and unsaved current Prefab Stage changes by default. If saving fails, it returns `Success: false`, keeps `TestCount` at `0`, lists the unsaved items in `Message`, and does not start the Unity Test Runner.
+
+`NoTestsFound` means zero tests matched — not a test failure. Check `NoTestsFoundExplanation` and `Message` for asmdef hints.
 
 ## Usage
 
@@ -55,8 +57,13 @@ uloop run-tests --filter-type regex --filter-value ".*Integration.*"
 ## Output
 
 Returns JSON with:
+
 - `Success` (boolean): Whether all tests passed
+- `Status` (string): Machine-readable execution status such as `Passed`, `Failed`, `NoTestsFound`, or `ExecutionFailed`
+- `HasFailures` (boolean): Whether any discovered test failed
 - `Message` (string): Summary message
+- `NoTestsFound` (boolean): Whether Unity Test Runner discovered zero matching tests
+- `NoTestsFoundExplanation` (string): Agent-facing explanation when `NoTestsFound` is true; empty otherwise
 - `CompletedAt` (string): ISO timestamp when the run finished
 - `TestCount` (number): Total tests executed
 - `PassedCount` (number): Passed tests
@@ -67,6 +74,7 @@ Returns JSON with:
 ### XML Result File
 
 When tests fail, NUnit XML results are automatically saved to `{project_root}/.uloop/outputs/TestResults/<timestamp>.xml`. The XML contains per-test-case results including:
+
 - Test name and full name
 - Pass/fail/skip status and duration
 - For failed tests: `<message>` (assertion error) and `<stack-trace>`

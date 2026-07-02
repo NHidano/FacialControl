@@ -64,13 +64,6 @@ if (obj == null)
 return $"Found: {obj.name} at {obj.transform.position}";
 ```
 
-## Find GameObjects by Tag
-
-```csharp
-GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-return $"Found {enemies.Length} GameObjects with tag 'Enemy'";
-```
-
 ## Set Parent
 
 ```csharp
@@ -89,6 +82,8 @@ return $"Set {child.name}'s parent to {parent.name}";
 ## Get All Children
 
 ```csharp
+using System.Collections.Generic;
+
 GameObject parent = Selection.activeGameObject;
 if (parent == null)
 {
@@ -166,6 +161,8 @@ return $"Created new scene: {newScene.name}";
 ## Get All Root GameObjects in Scene
 
 ```csharp
+using System.Collections.Generic;
+
 UnityEngine.SceneManagement.Scene scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
 GameObject[] roots = scene.GetRootGameObjects();
 

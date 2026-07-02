@@ -7,16 +7,17 @@ context: fork
 
 # Task
 
-Simulate mouse interaction on Unity PlayMode UI: $ARGUMENTS
+Simulate mouse interaction on Unity PlayMode UI.
 
 ## Workflow
 
 1. Ensure Unity is in PlayMode (use `uloop control-play-mode --action Play` if not)
 2. Get UI element info: `uloop screenshot --capture-mode rendering --annotate-elements --elements-only`
 3. Use the `AnnotatedElements` array to find the target element by `Label`, `Name`, or `Path` (A=frontmost, B=next, ...). Use `Interaction` to distinguish click targets from drag/drop/text targets, then use `SimX`/`SimY` directly as `--x`/`--y` coordinates.
-4. Execute the appropriate `uloop simulate-mouse-ui` command
-5. Take a screenshot to verify the result: `uloop screenshot --capture-mode rendering --annotate-elements`
-6. Report what happened
+4. Execute the needed `uloop simulate-mouse-ui` commands
+5. Inspect the result with the lightest useful evidence: runtime state, logs, or a screenshot
+6. When this UI input verifies a state transition, use Pause Point inspection from the section below as the standard frame proof
+7. Report what happened and which evidence was used
 
 ## Tool Reference
 
@@ -56,14 +57,12 @@ uloop simulate-mouse-ui --action <action> --x <x> --y <y> [options]
 - `DragStart` must be called before `DragMove` or `DragEnd`
 - `DragEnd` must be called to release an active drag — failing to call it leaves drag state stuck
 - Calling `DragMove` or `DragEnd` without an active drag returns an error
-- `Drag`, `DragStart`, `DragMove`, and `DragEnd` only support `--button Left`
 
 ### Global Options (all optional, mutually exclusive)
 
 | Option | Description |
 |--------|-------------|
 | `--project-path <path>` | Optional. Use only when the target Unity project is not the current directory. |
-
 
 ## Coordinate System
 
@@ -74,6 +73,12 @@ uloop simulate-mouse-ui --action <action> --x <x> --y <y> [options]
 - Dragging on empty space (no draggable UI element) returns `Success = false`
 - `--bypass-raycast` still uses coordinates for pointer event positions, but chooses the clicked, long-pressed, or dragged GameObject by `--target-path`
 - If `--target-path` or `--drop-target-path` matches multiple active GameObjects, the command fails instead of choosing an arbitrary duplicate
+
+## Pause Point Inspection (Standard for E2E)
+
+For standard frame proof when this UI input drives a state transition, follow the `uloop-wait-for-pause-point` skill. Place markers after the app consumed the UI event, not immediately after `simulate-mouse-ui`.
+
+- Remove temporary pause-point/log instrumentation before final validation when it was added only for inspection.
 
 ## Examples
 
@@ -114,11 +119,12 @@ uloop simulate-mouse-ui --action DragEnd --x 600 --y 300
 - Unity must be in **PlayMode**
 - Target scene must have an **EventSystem** GameObject
 - UI elements must have a **GraphicRaycaster** on their Canvas
-- If you need gameplay mouse input rather than UI pointer events, `simulate-mouse-input` assumes the project uses the New Input System; otherwise prefer `execute-dynamic-code`
+- If you need runtime mouse input rather than UI pointer events, `simulate-mouse-input` assumes the project uses the New Input System; otherwise prefer `execute-dynamic-code`
 
 ## Output
 
 Returns JSON with:
+
 - `Success`: Whether the operation succeeded
 - `Message`: Status message (e.g. "Hit element: ButtonStart" or "No UI element under (x, y)")
 - `Action`: Echoes which action was executed (`Click`, `Drag`, `DragStart`, `DragMove`, `DragEnd`, or `LongPress`)
@@ -128,6 +134,6 @@ Returns JSON with:
 - `EndPositionX`: Drag end X coordinate (nullable float; populated for drag actions only)
 - `EndPositionY`: Drag end Y coordinate (nullable float; populated for drag actions only)
 
-These are the only eight fields. There is no `Button`, `Duration`, `DragSpeed`, raycast list, or pointer-event log in the response — verify the visual outcome with a follow-up `uloop screenshot --capture-mode rendering --annotate-elements`.
+Verify the visual outcome with a follow-up `uloop screenshot --capture-mode rendering --annotate-elements`.
 
 Note: Click and LongPress on empty space (no UI element) still return `Success = true` with `HitGameObjectName = null`. Drag actions on empty space return `Success = false`.

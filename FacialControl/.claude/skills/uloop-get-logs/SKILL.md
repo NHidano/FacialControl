@@ -1,7 +1,7 @@
 ---
 name: uloop-get-logs
 toolName: get-logs
-description: "Read current Unity Console entries from a running Editor. Use during bug investigation after compile, tests, PlayMode, or dynamic code to inspect logs, warnings, errors, and stack traces."
+description: "Read current Unity Console entries from a running Editor. Use during bug investigation after compile, tests, PlayMode, dynamic code, or immediately after `uloop-wait-for-pause-point`."
 ---
 
 # uloop get-logs
@@ -50,12 +50,10 @@ uloop get-logs --search-text "Missing.*Component" --use-regex
 ## Output
 
 Returns JSON with:
+
 - `TotalCount` (number): Total logs available before max-count clipping
 - `DisplayedCount` (number): Logs returned in this response (≤ `--max-count`)
-- `LogType` (string): The `--log-type` filter that was applied
-- `MaxCount` (number): The `--max-count` cap that was applied
-- `SearchText` (string): The `--search-text` filter that was applied (empty when omitted)
-- `IncludeStackTrace` (boolean): Whether stack traces are included in `Logs[]`
+- Input filters (`LogType`, `MaxCount`, `SearchText`, `IncludeStackTrace`) are echoed back in the response
 - `Logs` (array): Each entry has:
   - `Type` (string): `"Error"`, `"Warning"`, or `"Log"`
   - `Message` (string): Log message body

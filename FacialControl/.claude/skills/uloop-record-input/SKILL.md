@@ -39,12 +39,12 @@ Replay injects input frame-by-frame, so the game must also be deterministic to p
 ## Prerequisites
 
 - Unity must be in **PlayMode**
-- **Input System package** must be installed (`com.unity.inputsystem`)
-- Use this only when the project already uses the New Input System.
+- **Input System package** (`com.unity.inputsystem`) must be installed; this tool only works with the New Input System.
 
 ## Output
 
 The CLI prints JSON with:
+
 - `Success`: Whether the operation succeeded
 - `Message`: Status message
 - `Action`: Echoes which action was executed (`Start` or `Stop`)
@@ -52,4 +52,4 @@ The CLI prints JSON with:
 - `TotalFrames`: Number of frames recorded (nullable int; populated on `Stop` only)
 - `DurationSeconds`: Recording duration in seconds (nullable float; populated on `Stop` only)
 
-The CLI output contains only these six payload fields. Internal metadata such as `Ver` is removed before printing. There is no `RecordingId`, `StartTimestamp`, `KeysCaptured`, or per-frame data in the response — frame data lives only in the JSON file at `OutputPath`.
+Frame data lives only in the JSON file at `OutputPath`; internal metadata fields are not included in the response.

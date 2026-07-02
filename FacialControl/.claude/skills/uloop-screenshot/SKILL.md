@@ -67,14 +67,12 @@ uloop screenshot --window-name Project --match-mode prefix
 
 # Save screenshot to a specific directory
 uloop screenshot --output-directory /tmp/screenshots
-
-# Combine options
-uloop screenshot --window-name Scene --resolution-scale 0.5 --output-directory /tmp/screenshots
 ```
 
 ## Output
 
 Returns JSON with:
+
 - `ScreenshotCount`: Number of windows captured
 - `Screenshots`: Array of screenshot info, each containing:
   - `ImagePath`: Absolute path to the saved PNG file. Empty when `--elements-only` is used because no image file is written.
