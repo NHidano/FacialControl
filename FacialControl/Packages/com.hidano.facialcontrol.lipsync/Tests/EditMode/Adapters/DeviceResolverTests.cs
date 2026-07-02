@@ -83,6 +83,48 @@ namespace Hidano.FacialControl.LipSync.Tests.EditMode.Adapters
         }
 
         [Test]
+        public void Resolve_EmptyDeviceName_FallsBackToFirstMicrophone()
+        {
+            var descriptor = Descriptor(string.Empty, 0);
+            var asio = new FakeAsioDriverEnumerator("ASIO Fireface");
+            var mic = new FakeMicrophoneDeviceEnumerator("Built-in Mic", "USB Microphone");
+
+            DeviceResolution resolution = DeviceResolver.Resolve(descriptor, asio, mic);
+
+            Assert.That(resolution.Kind, Is.EqualTo(DeviceKind.Microphone));
+            Assert.That(resolution.ResolvedIndex, Is.EqualTo(0));
+            Assert.That(resolution.DeviceNameMatched, Is.EqualTo("Built-in Mic"));
+        }
+
+        [Test]
+        public void Resolve_NullDeviceName_FallsBackToFirstMicrophone()
+        {
+            var descriptor = Descriptor(null, 0);
+            var asio = new FakeAsioDriverEnumerator("ASIO Fireface");
+            var mic = new FakeMicrophoneDeviceEnumerator("Built-in Mic");
+
+            DeviceResolution resolution = DeviceResolver.Resolve(descriptor, asio, mic);
+
+            Assert.That(resolution.Kind, Is.EqualTo(DeviceKind.Microphone));
+            Assert.That(resolution.ResolvedIndex, Is.EqualTo(0));
+            Assert.That(resolution.DeviceNameMatched, Is.EqualTo("Built-in Mic"));
+        }
+
+        [Test]
+        public void Resolve_EmptyDeviceName_NoMicrophones_ReturnsUnresolved()
+        {
+            var descriptor = Descriptor(string.Empty, 0);
+            var asio = new FakeAsioDriverEnumerator("ASIO Fireface");
+            var mic = new FakeMicrophoneDeviceEnumerator();
+
+            DeviceResolution resolution = DeviceResolver.Resolve(descriptor, asio, mic);
+
+            Assert.That(resolution.Kind, Is.EqualTo(DeviceKind.Unresolved));
+            Assert.That(resolution.ResolvedIndex, Is.EqualTo(-1));
+            Assert.That(resolution.DeviceNameMatched, Is.Null);
+        }
+
+        [Test]
         public void Resolve_NullEnumerator_ThrowsArgumentNullException()
         {
             var descriptor = Descriptor("USB Microphone", 0);

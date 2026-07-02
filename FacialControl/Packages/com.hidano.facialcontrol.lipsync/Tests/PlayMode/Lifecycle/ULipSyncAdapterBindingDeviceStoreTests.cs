@@ -118,11 +118,34 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Lifecycle
         }
 
         [Test]
-        public void OnStart_DeviceStoreReturnsEmptyDeviceName_LogsErrorAndDoesNotStart()
+        public void OnStart_DeviceStoreReturnsEmptyDeviceName_FallsBackToFirstMicrophoneAndStarts()
         {
             // DeviceStore に何も Save していないので Load は DeviceName="" を返す。
-            // 既存挙動: 空文字 DeviceName は DeviceResolver で Unresolved と扱われ、binding は起動しない。
-            _binding = CreateBinding(new FakeMicrophoneDeviceEnumerator(PrimaryMicDeviceName));
+            // デバイス未選択のままでもリップシンクが全滅しないよう、既定のマイク
+            // （マイク一覧の先頭）へフォールバックして binding は起動する。
+            _binding = CreateBinding(new FakeMicrophoneDeviceEnumerator(
+                PrimaryMicDeviceName,
+                SecondaryMicDeviceName));
+            AdapterBuildContext ctx = CreateContext();
+
+            _binding.OnStart(in ctx);
+            _bindingStarted = true;
+
+            Assert.That(_binding.IsStarted, Is.True,
+                "DeviceStore に DeviceName 未保存 (空文字) のとき、既定マイクへフォールバックして起動するべき。");
+
+            var microphone = _hostGameObject.GetComponent<uLipSync.uLipSyncMicrophone>();
+            Assert.That(microphone, Is.Not.Null,
+                "フォールバック起動時も uLipSyncMicrophone が AddComponent されるべき。");
+            Assert.That(microphone.index, Is.EqualTo(0),
+                "フォールバックはマイク一覧の先頭 (index 0) を使用するべき。");
+        }
+
+        [Test]
+        public void OnStart_EmptyDeviceNameAndNoMicrophones_LogsErrorAndDoesNotStart()
+        {
+            // デバイス未選択かつマイクが 1 台も無い場合は従来どおり未解決エラーで起動しない。
+            _binding = CreateBinding(new FakeMicrophoneDeviceEnumerator());
             AdapterBuildContext ctx = CreateContext();
 
             UnityEngine.TestTools.LogAssert.Expect(
@@ -131,7 +154,7 @@ namespace Hidano.FacialControl.LipSync.Tests.PlayMode.Lifecycle
             _binding.OnStart(in ctx);
 
             Assert.That(_binding.IsStarted, Is.False,
-                "DeviceStore に DeviceName 未保存 (空文字) のとき、binding は起動してはならない。");
+                "デバイス未選択かつマイク 0 台のとき、binding は起動してはならない。");
             Assert.That(_hostGameObject.GetComponent<uLipSync.uLipSyncMicrophone>(), Is.Null,
                 "未解決のとき uLipSyncMicrophone は AddComponent されるべきでない。");
         }

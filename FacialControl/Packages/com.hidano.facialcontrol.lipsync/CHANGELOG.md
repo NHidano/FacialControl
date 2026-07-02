@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- リップシンクデバイス未選択（初回起動等で保存済みデバイスが無い）だと `ULipSyncAdapterBinding` の初期化がデバイス解決エラーで中断し、phoneme overlay 入力源（`lipsync-overlay:a`〜`o`）が一切登録されずリップシンクが動かない不具合を修正。デバイス名未指定の場合は既定のマイク（マイク一覧の先頭）へフォールバックして初期化を継続する（ASIO は明示選択時のみ使用）。フォールバック発動時はどのマイクを使用したかを `Debug.Log` で通知する。マイクが 1 台も無い場合は従来どおり未解決エラーとなる。
 - phoneme overlay 入力源が解決されず口が動かない不具合を修正。`ULipSyncAdapterBinding` は overlay 入力源を binding の `Slug`（既定 `ulipsync`）で登録していた（キー `ulipsync:a`）が、レイヤーの入力源 id・`GetDefaultLayerInputSources`・サンプル・docs はすべて固定 prefix `lipsync-overlay:{slot}` を使うため、`FacialController` のレイヤー解決（`TryResolve("lipsync-overlay:a")`）がヒットせず集約に乗らなかった。登録/解除/重複検知を固定 prefix `lipsync-overlay` 基準に統一し、レイヤー id と一致させた。
 - マイク未接続時にノイズを拾って口が開くことがある不具合を修正。`ULipSyncProvider` の音量正規化を `rawVolume` の自前再正規化から uLipSync 本体が正規化済みの `LipSyncInfo.volume` 直結へ戻した。`rawVolume` を調整可能な `Min Volume`/`Max Volume` で再正規化する実装は、`Min Volume` を下げるほどノイズフロアを増幅してしまい、未接続・無音時の瞬間的なノイズで口が開いていた。音量正規化は uLipSync 本体の責務に委ね、FacialControl 側では再加工しない。これに伴い `ULipSyncAdapterBinding` の `Min Volume`/`Max Volume` 設定（Inspector 含む）と `ULipSyncProvider` の `minVolume`/`maxVolume` コンストラクタ引数を削除。小さい声・低ゲインで口が動かない場合は uLipSync 側（マイク gain / `uLipSyncMicrophone` / Profile）で調整する。
 

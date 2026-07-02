@@ -249,6 +249,13 @@ namespace Hidano.FacialControl.LipSync.Adapters
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(_runtimeDescriptor.DeviceName))
+            {
+                Debug.Log(
+                    $"[ULipSyncAdapterBinding] リップシンクデバイスが未選択のため、既定のマイク '{resolution.DeviceNameMatched}' を使用します。"
+                    + " 別のデバイスを使う場合は binding Inspector で選択してください。");
+            }
+
             uLipSync.Profile profile = ResolveAnalyzerProfile();
             if (profile == null)
             {

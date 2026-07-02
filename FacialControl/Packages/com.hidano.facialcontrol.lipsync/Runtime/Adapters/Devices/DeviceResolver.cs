@@ -49,6 +49,31 @@ namespace Hidano.FacialControl.LipSync.Adapters.Devices
                 throw new ArgumentNullException(nameof(micEnumerator));
             }
 
+            // デバイス名未指定（初回起動・デバイス未選択）は既定マイクへフォールバックする。
+            // ASIO は明示選択が前提のため既定にはせず、マイク一覧の先頭を採用する。
+            // マイクが 1 台も無い場合のみ Unresolved を返す。
+            if (string.IsNullOrWhiteSpace(descriptor.DeviceName))
+            {
+                string[] fallbackAsio = asioEnumerator.GetDriverNames() ?? Array.Empty<string>();
+                string[] fallbackMics = micEnumerator.GetDeviceNames() ?? Array.Empty<string>();
+                if (fallbackMics.Length > 0)
+                {
+                    return new DeviceResolution(
+                        DeviceKind.Microphone,
+                        0,
+                        fallbackMics[0],
+                        fallbackAsio,
+                        fallbackMics);
+                }
+
+                return new DeviceResolution(
+                    DeviceKind.Unresolved,
+                    -1,
+                    null,
+                    fallbackAsio,
+                    fallbackMics);
+            }
+
             string[] asioNames = asioEnumerator.GetDriverNames() ?? Array.Empty<string>();
             if (TryResolve(asioNames, descriptor, out int asioIndex, out string asioName, out bool asioNameFound))
             {
