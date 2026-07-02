@@ -8,6 +8,7 @@
 
 ### Breaking Changes
 
+- **自前の gaze 目ボーン適用を撤去し core `FacialController` の集約適用へ移行**: `InputSystemAdapterBinding` は `GazeBonePoseProvider` を構築・駆動しなくなった（`BuildGazeProvider` / `OnLateTick` での `Apply` / `Dispose` での破棄を撤去）。公開プロパティ **`HasGazeProvider` は削除**（参照コードはコンパイルエラー）。gaze 入力源の registry 登録（`{slug}:{expressionId}` / `.left` / `.right`）と、対応 `GazeBindingConfig` 欠落時の warning は従来どおり本 binding が担う。目ボーンへの適用は core の `FacialController` が registry 経由で行うため、**ユーザー設定（`GazeBindingConfig` / `ExpressionBindingEntry`）の変更は不要**で実行時挙動は同等。
 - **`InputSystemAdapterBindingDrawer` の表示順を変更**: Input Drawer は InputActionAsset / Trigger bindings / Analog bindings / Gaze settings の順で、実際の設定フローに合わせて並び替えました。既存の Inspector 表示順との見た目互換は維持しません。
 - **自動マイグレーション無し**: 過去のスクリーンショット、手順書、Inspector 操作順を前提にした説明は更新が必要です。既存データの自動変換は行いません。必要に応じて `InputSystemAdapterBinding` の内容を Inspector 上で確認し直してください。
 - 根拠: spec `preview1-polish-pack` Req 6.5 / task 8.2。

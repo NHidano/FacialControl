@@ -29,6 +29,17 @@
 - **トリガ**: `OscOutputDemo` Scene の OSC 出力動作確認が完了したタイミング
 - **影響範囲**: `Packages/com.hidano.facialcontrol.osc/Samples~/OscOutputDemo/OscOutputDemoBootstrap.cs`（`OscOutputDemoSignalBinding` / `DemoSignalState` / `DemoBlendShapeSource` / `DemoGazeSource` の削除）, 同 `OscOutputDemoProfile.asset`, 同 `README.md`, 関連 `.meta`
 
+### S-21: OSC PlayMode テスト 4 件の LogAssert 追従（gaze mapping 未設定ログ由来の pre-existing 赤）
+- **出典**: 2026-07-02 セッション「gaze 目ボーン適用の FacialController 集約」のフル PlayMode 検証で検出。**集約変更とは無関係な pre-existing failure**（base への `git stash` 実行で同 4 件が落ちることを確認済み）。
+- **背景**: 2026-07-01 のコミット `724ebbb` / `ef62e04` が `OscReceiverAdapterBinding.StartReceiverPhase` に「gaze mapping が未設定のため Gaze 受信は無効です」の `Debug.Log` を追加したが、gaze mapping 無しで receiver を起動する既存テストが `LogAssert` 未追従のまま赤になっている。
+- **赤の内訳**（PlayMode、いずれも `com.hidano.facialcontrol.osc/Tests/PlayMode/`）:
+  - `OscHeartbeatConsistencyTests.OnFixedTick_HeartbeatMissingReceiverBlendShape_LogsMismatchWarning`（Unhandled log message）
+  - `OscReceiverAdapterBindingAutoMappingIntegrationTests.HandleHeartbeat_HeartbeatHashUnchanged_DoesNotRebuildOscInputSource` / 同 `OnStart_EmptyMappingsAndNoHeartbeat_DoesNotRegisterOscInputSourceOrChangeRenderer`
+  - `OscReceiverGCAllocationTests.OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation`（ログ由来のハッシュ不一致）
+- **方針**: 各テストに `LogAssert.Expect(LogType.Log, ...)` を追加する（もしくは gaze mapping 未設定ログの出し方をテスト非干渉な形に調整する）。
+- **トリガ**: 次に OSC パッケージのテストを触る PR / フル PlayMode の赤ゼロ化を狙うタイミング
+- **影響範囲**: 上記テスト 4 ファイル（もしくは `OscReceiverAdapterBinding` のログ出力 1 箇所）
+
 ---
 
 ## 中期（preview.2 以降 / 別 spec 候補）
@@ -233,6 +244,14 @@
 - **トリガ**: preview.2 移行の仕上げフェーズ / サンプル Import 経路の動作確認時 / これらの赤が他 spec の `spec-run` バッチで継続的にノイズ（保守的 FAIL 判定）になっているとき
 - **影響範囲**: `Assets/StreamingAssets/FacialControl/MultiSourceBlendDemoCharacter/profile.json`、`Packages/com.hidano.facialcontrol.inputsystem/Samples~/MultiSourceBlendDemo/`（asset + StreamingAssets）、`Assets/Samples/FacialControl InputSystem/0.1.0-preview.2/Multi Source Blend Demo/`、`Tests/EditMode/Editor/Inspector/SampleAssetsAreInSyncTests.cs`
 - **関連**: M-27（入力源ルーティング・グラフエディタ — 本件はその `spec-run` 検証中に顕在化したが原因は別系統）、`overlay-clip-redesign` / `phoneme-overlay-slots`（preview.2 overlay 移行系）
+
+### M-29: BlendShape ベース gaze の runtime 配線復活（`lookXxxSamples` 消費経路が全入力源で未配線）
+- **出典**: 2026-07-02 セッション「gaze 目ボーン適用の FacialController 集約」の調査で判明。同セッションのスコープ決定で「bone 先行、BlendShape gaze は含めない」と先送り。
+- **背景**: `GazeBindingConfig` は bone 制御（`leftEyeBonePath` 等）と BlendShape 制御（`lookLeft/Right/Up/DownClip` → Editor 焼き付けの `lookXxxSamples`）の 2 系統を持つが、`lookXxxSamples` から `AnalogBindingEntry` を構築して `AnalogBlendShapeInputSource` に流す runtime 経路（旧 `FacialCharacterSO.BuildAnalogProfileFromGazeConfigs`）が adapter-binding-architecture 移行時に失われ、**現在どの入力源（InputSystem / OSC / iFacialMocap）でも BlendShape ベース gaze は動かない**。目ボーンを持たないモデル（BlendShape で目線表現）は gaze を反映できない。
+- **方針**: `FacialController` の集約 gaze 経路（`SetupGazeBoneProvider` と同じ registry 解決）で、`lookXxxSamples` を持つ config から `AnalogBindingEntry` 群を構築し `AnalogBlendShapeInputSource`（値提供型 `IInputSource`、Aggregator 自動駆動）として layer に載せる。入力源非依存の一般機能として実装する。
+- **トリガ**: 目ボーン非搭載モデル（BlendShape 目線）ユーザーの gaze 反映要望 / VRM 対応（M-1）着手時（VRM は BlendShape 目線モデルが多い）
+- **影響範囲**: `FacialController`（構築経路）、`AnalogBlendShapeInputSource`（再利用）、`GazeBindingConfig.lookXxxSamples`（既存データ）、PlayMode テスト
+- **関連**: M-13（multi-source gaze blending）、M-5（Vector3 ターゲット視線）— いずれも bone 経路前提の拡張であり本件（BlendShape 経路の復活）とは独立
 
 ---
 

@@ -15,6 +15,10 @@
 - `IFacialMocapRuntimeSettingsSO` / `IFacialMocapOptionsDto` と JSON ラウンドトリップ、UI Toolkit ベースの `IFacialMocapReceiverAdapterBindingDrawer` を追加しました。
 - Package Manager の Import Sample から利用できる `IFacialMocapReceiverDemo` を追加しました。
 
+### Changed
+
+- 自前の gaze 目ボーン適用を撤去し、core `FacialController` の集約適用へ移行しました。`IFacialMocapReceiverAdapterBinding` は `GazeBonePoseProvider` を構築・駆動せず、視線入力源（`<slug>:gaze.left` / `<slug>:gaze.right`）の registry 登録までを担います。あわせて FacialController からの gaze 結線フック `Configure(IReadOnlyList<GazeBindingConfig>)` を削除しました（目ボーン適用が binding 外へ移ったため不要）。`GazeBindingConfig` での結線手順（README 記載）は変わりません。
+
 ### Documentation
 
 - README に iFacialMocap プロトコル、受信設定、視線 / 頭部の結線手順、サンプル導線を記載しました。

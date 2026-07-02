@@ -19,6 +19,7 @@
 
 ### Added
 
+- **目線の目ボーン適用を `FacialController` に集約**: `FacialController` が profile ルートの `GazeBindingConfig` 群を `GazeBindingConfigResolver` で `InputSourceRegistry` の gaze 入力源（`{slug}:{expressionId}` / `.left` / `.right`）に解決し、単一の `GazeBonePoseProvider` を構築して `LateUpdate` 末尾（BoneWriter 適用後）で目ボーンへ localRotation を書き込むようにした。各入力 binding（OSC / InputSystem / iFacialMocap）は gaze 入力源の registry 登録のみを担い、目ボーンは回さない。この経路は入力方式非依存のため、**OSC 受信した gaze も設定のみで目ボーンに反映される**（従来は目ボーン適用 provider を持つ binding が InputSystem / iFacialMocap に限られ、OSC 受信 gaze はローカルモデルに反映されなかった）。bone path を持たない `GazeBindingConfig`（BlendShape 経路のみ）は構築対象外。`Cleanup` 時は provider の `Dispose` が目ボーンを初期回転へ復元する。
 - Play モード突入時（`EditorApplication.playModeStateChanged` の `ExitingEditMode`）およびビルド開始時（`IPreprocessBuildWithReport.OnPreprocessBuild`）に、プロジェクト内の全 `FacialCharacterProfileSO`（派生型含む）を再サンプリングして `StreamingAssets/FacialControl/{SO 名}/profile.json` を自動エクスポートする `FacialCharacterProfileAutoExporter` を追加。これまで profile.json の更新は Inspector 編集の `TrackSerializedObjectValue` 起点のみだったため、クリップだけ差し替えてエクスポートを忘れた場合や、`AnimationClipExpressionSampler` の ÷100 スケール修正前に生成された旧 profile.json（0..100 スケール）が残っている場合に、古い JSON のまま Play / ビルドに進み全 BlendShape が 100% に飽和し得た。本フックにより、ランタイムが読む JSON が常に最新の正規化 0..1 値になる。エクスポートは冪等（内容が最新なら同一バイトを書くだけ）で、SO の `cachedSnapshot` はインメモリ再サンプリングのみ行いアセットを dirty にしない。
 
 ### Breaking changes
