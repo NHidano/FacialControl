@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Overlay slot（blink 等）の解決結果（default / 表情別 override / suppress）が active 表情の切替時に 1 フレームで瞬時に切替わり、目パチ（パチパチした見た目のポップ）や一瞬のリセットに見える不具合を修正。`OverlayInputSource` が解決結果の切替を検出した際、旧出力値から新出力値へ表情側と同期したクロスフェード（切替先 active 表情の `transitionDuration` / `transitionCurve`、active 解除時は既定リリース `Expression.DefaultTransitionDuration` + Linear）で補間するようにした。遷移中の ContributeMask は from ∪ target の union を維持し、suppress への切替もフェードアウト完了後に無効ソース化する。フォニーム予約 slot（a/i/u/e/o）はリップシンク応答性の「1 フレーム切替」仕様を維持するためクロスフェード対象外。典型例: RT（overlay weight）押下中に override 付き表情を ON/OFF しても、専用閉じ目 ⇄ 既定閉じ目が滑らかに遷移する。
 - AnimationClip で登録した Expression の BlendShape weight が個別値を反映せず全て最大 (100) に飽和する不具合を修正。`AnimationClipExpressionSampler` が `blendShape.*` カーブ（Unity 標準 0..100 スケール）の値を正規化せず snapshot へ格納していたため、ドメイン / runtime apply 側の正規化 0..1 規約（`FacialController` の `×100`）と二重スケールになり、キーフレーム 30/40 が `×100` で 3000/4000 → 100 にクランプされていた。サンプラはカーブ値を `/100` して正規化 0..1 で格納し、`ExpressionClipBakery` は正規化 0..1 を `×100` して Unity 標準スケールでカーブへ書き込むよう統一した。これに伴い同梱 `MultiSourceBlendDemo` の `profile.json`（dev / Samples~ 両コピー）と SO `.asset` に残っていた 0..100 スケールの BlendShape 値を正規化 0..1 へ移行した（.anim カーブは元から 0..100 のため変更なし）。
 - `FacialCharacterProfileSO` Inspector の Expression List / Default Overlays で Overlay の Suppress / Override 切替および override clip 割当が確実に保存されない不具合を修正。これらのハンドラは `SerializedProperty` を経由せず managed モデルを直接書き換えて `serializedObject.Update()` のみで終えていたため、`TrackSerializedObjectValue` による自動保存監視が発火せず、`EditorUtility.SetDirty` 任せの「次回の手動保存時にたまたま保存される」挙動になっていた。各ハンドラから自動保存予約 `ScheduleAutoSave()` を明示的に呼び、profile.json エクスポートとアセット保存を確実に走らせるようにした。
 

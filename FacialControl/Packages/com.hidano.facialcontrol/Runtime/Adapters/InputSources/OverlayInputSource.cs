@@ -19,8 +19,26 @@ namespace Hidano.FacialControl.Adapters.InputSources
         private readonly BitArray _activeMask;
         private readonly BitArray _emptyMask;
         private readonly bool _slotDeclared;
-        private bool _hasActiveResolved;
         private bool _logged;
+
+        // ---- クロスフェード状態 ----
+        // 解決結果 (default / override / suppress) が切替わった際、旧出力から新出力へ
+        // 表情遷移と同じ duration/curve で補間する。フォニーム予約 slot (a/i/u/e/o) は
+        // 「1 フレーム切替」仕様（リップシンク応答性）を維持するため無効。
+        private readonly bool _crossfadeEnabled;
+        private readonly float[] _currentValues;
+        private readonly float[] _fromValues;
+        private readonly float[] _targetValues;
+        private readonly BitArray _fromMask;
+        private BitArray _targetMask;
+        // 現在ターゲットの同一性キー (ResolvedSnapshot.Values の参照)。null = 無効ターゲット (suppress / 解決なし)。
+        private float[] _targetKey;
+        private bool _targetActive;
+        private bool _resolvedOnce;
+        private float _elapsedTime;
+        private float _duration;
+        private TransitionCurve _curve;
+        private bool _transitionComplete = true;
 
         public OverlayInputSource(
             InputSourceId id,
@@ -46,6 +64,13 @@ namespace Hidano.FacialControl.Adapters.InputSources
             _emotionLayerName = string.IsNullOrEmpty(emotionLayerName) ? "emotion" : emotionLayerName;
             _activeMask = new BitArray(blendShapeCount, false);
             _emptyMask = new BitArray(blendShapeCount, false);
+            _crossfadeEnabled = !PhonemeOverlaySlots.IsReserved(slot);
+            _currentValues = blendShapeCount == 0 ? Array.Empty<float>() : new float[blendShapeCount];
+            _fromValues = blendShapeCount == 0 ? Array.Empty<float>() : new float[blendShapeCount];
+            _targetValues = blendShapeCount == 0 ? Array.Empty<float>() : new float[blendShapeCount];
+            _fromMask = new BitArray(blendShapeCount, false);
+            _targetMask = _emptyMask;
+            _curve = TransitionCurve.Linear;
             _resolvedBySlot = new Dictionary<SlotKey, ResolvedSnapshot>(
                 profile.Expressions.Length + profile.DefaultOverlays.Length,
                 EqualityComparer<SlotKey>.Default);
@@ -121,71 +146,184 @@ namespace Hidano.FacialControl.Adapters.InputSources
             }
         }
 
-        public override BitArray ContributeMask => _hasActiveResolved ? _activeMask : _emptyMask;
+        public override BitArray ContributeMask => HasActiveOutput ? _activeMask : _emptyMask;
+
+        // ターゲットが有効か、無効ターゲットへのフェードアウトが進行中の間は寄与を継続する。
+        private bool HasActiveOutput => _targetActive || !_transitionComplete;
+
+        /// <summary>
+        /// 解決結果の切替検出とクロスフェードの時間進行。
+        /// <see cref="LayerInputSourceAggregator"/> から毎フレーム
+        /// <see cref="TryWriteValues"/> の直前に呼ばれる。
+        /// </summary>
+        public override void Tick(float deltaTime)
+        {
+            if (!_slotDeclared)
+            {
+                return;
+            }
+
+            RefreshResolution();
+
+            if (_transitionComplete)
+            {
+                return;
+            }
+
+            if (deltaTime > 0f)
+            {
+                _elapsedTime += deltaTime;
+            }
+
+            float weight = TransitionCalculator.ComputeBlendWeight(_curve, _elapsedTime, _duration);
+            for (int i = 0; i < BlendShapeCount; i++)
+            {
+                _currentValues[i] = _fromValues[i] + (_targetValues[i] - _fromValues[i]) * weight;
+            }
+
+            if (_elapsedTime >= _duration)
+            {
+                SnapToTarget();
+            }
+        }
 
         public override bool TryWriteValues(Span<float> output)
         {
-            if (!_slotDeclared || !ResolveSnapshot(out var resolved) || resolved.Suppress || !resolved.HasSnapshot)
+            if (!_slotDeclared)
             {
-                ClearActiveMask();
-                _hasActiveResolved = false;
                 return false;
             }
 
-            _hasActiveResolved = true;
-            CopyMaskFrom(resolved.Mask);
+            RefreshResolution();
+
+            if (!HasActiveOutput)
+            {
+                return false;
+            }
 
             int copyLen = output.Length < BlendShapeCount ? output.Length : BlendShapeCount;
             for (int i = 0; i < copyLen; i++)
             {
-                output[i] = 0f;
-            }
-
-            var indices = resolved.Indices;
-            var values = resolved.Values;
-            for (int i = 0; i < indices.Length; i++)
-            {
-                int index = indices[i];
-                if ((uint)index < (uint)copyLen)
-                {
-                    output[index] = values[i];
-                }
+                output[i] = _currentValues[i];
             }
 
             return true;
         }
 
-        private bool ResolveSnapshot(out ResolvedSnapshot resolved)
+        /// <summary>
+        /// active provider から現在の解決結果を求め、ターゲットが切替わっていれば
+        /// クロスフェード遷移を開始する（初回解決とフォニーム予約 slot・遷移時間 0 は即時反映）。
+        /// duration/curve は表情側の遷移と同期させるため、切替時点の active 表情の
+        /// <see cref="Expression.TransitionDuration"/> / <see cref="Expression.TransitionCurve"/> を使い、
+        /// active 不在（解除でデフォルトへ戻る）時は既定リリース
+        /// (<see cref="Expression.DefaultTransitionDuration"/> + Linear) を使う。
+        /// </summary>
+        private void RefreshResolution()
         {
+            ResolvedSnapshot resolved = default;
+            bool found = false;
+            Expression? active = null;
+
             if (_activeProvider != null)
             {
-                var active = _activeProvider.TryGetTopActiveExpression(_emotionLayerName);
+                active = _activeProvider.TryGetTopActiveExpression(_emotionLayerName);
                 if (active.HasValue)
                 {
                     var activeKey = new SlotKey(active.Value.Id, _slot);
-                    if (_resolvedBySlot.TryGetValue(activeKey, out resolved))
-                    {
-                        return true;
-                    }
+                    found = _resolvedBySlot.TryGetValue(activeKey, out resolved);
                 }
             }
 
-            var defaultKey = new SlotKey(null, _slot);
-            return _resolvedBySlot.TryGetValue(defaultKey, out resolved);
+            if (!found)
+            {
+                found = _resolvedBySlot.TryGetValue(new SlotKey(null, _slot), out resolved);
+            }
+
+            bool targetActive = found && !resolved.Suppress && resolved.HasSnapshot;
+            float[] newKey = targetActive ? resolved.Values : null;
+            if (_resolvedOnce && ReferenceEquals(newKey, _targetKey))
+            {
+                return;
+            }
+
+            bool isFirstResolution = !_resolvedOnce;
+            _resolvedOnce = true;
+            _targetKey = newKey;
+            _targetActive = targetActive;
+            _targetMask = targetActive ? resolved.Mask : _emptyMask;
+            BuildDenseTargetValues(targetActive ? resolved : default);
+
+            if (isFirstResolution || !_crossfadeEnabled)
+            {
+                SnapToTarget();
+                return;
+            }
+
+            float duration = active.HasValue
+                ? active.Value.TransitionDuration
+                : Expression.DefaultTransitionDuration;
+            if (duration <= 0f)
+            {
+                SnapToTarget();
+                return;
+            }
+
+            // 現在出力値からのクロスフェードを開始する。遷移中の mask は from ∪ target。
+            Array.Copy(_currentValues, _fromValues, BlendShapeCount);
+            CopyMaskInto(_activeMask, _fromMask);
+            _activeMask.SetAll(false);
+            _activeMask.Or(_fromMask);
+            OrMaskInto(_targetMask, _activeMask);
+            _duration = duration;
+            _curve = active.HasValue ? active.Value.TransitionCurve : TransitionCurve.Linear;
+            _elapsedTime = 0f;
+            _transitionComplete = false;
         }
 
-        private void CopyMaskFrom(BitArray source)
+        private void SnapToTarget()
         {
-            int length = _activeMask.Length;
-            for (int i = 0; i < length; i++)
+            Array.Copy(_targetValues, _currentValues, BlendShapeCount);
+            _activeMask.SetAll(false);
+            OrMaskInto(_targetMask, _activeMask);
+            _transitionComplete = true;
+        }
+
+        private void BuildDenseTargetValues(in ResolvedSnapshot resolved)
+        {
+            Array.Clear(_targetValues, 0, _targetValues.Length);
+            var indices = resolved.Indices;
+            var values = resolved.Values;
+            if (indices == null || values == null)
             {
-                _activeMask[i] = i < source.Length && source[i];
+                return;
+            }
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                int index = indices[i];
+                if ((uint)index < (uint)_targetValues.Length)
+                {
+                    _targetValues[index] = values[i];
+                }
             }
         }
 
-        private void ClearActiveMask()
+        private static void CopyMaskInto(BitArray source, BitArray destination)
         {
-            _activeMask.SetAll(false);
+            destination.SetAll(false);
+            destination.Or(source);
+        }
+
+        private void OrMaskInto(BitArray source, BitArray destination)
+        {
+            int length = destination.Length;
+            for (int i = 0; i < length; i++)
+            {
+                if (i < source.Length && source[i])
+                {
+                    destination[i] = true;
+                }
+            }
         }
 
         private void LogUndeclaredSlotOnce()

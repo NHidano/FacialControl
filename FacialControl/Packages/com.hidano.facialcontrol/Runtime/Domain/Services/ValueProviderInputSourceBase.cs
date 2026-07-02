@@ -61,12 +61,13 @@ namespace Hidano.FacialControl.Domain.Services
         }
 
         /// <summary>
-        /// 時間進行 (no-op)。値提供型は内部に時間依存状態を持たないため、呼出しても副作用はない。
+        /// 時間進行 (既定は no-op)。値提供型は原則として時間依存状態を持たないが、
+        /// クロスフェード等の内部補間を持つ派生 (<c>OverlayInputSource</c> 等) は override して進行させる。
         /// </summary>
-        /// <param name="deltaTime">前フレームからの経過秒数 (無視される)。</param>
-        public void Tick(float deltaTime)
+        /// <param name="deltaTime">前フレームからの経過秒数。</param>
+        public virtual void Tick(float deltaTime)
         {
-            // no-op: value provider 型は時間進行を伴う内部状態を持たない。
+            // no-op: value provider 型は既定では時間進行を伴う内部状態を持たない。
         }
 
         /// <summary>
