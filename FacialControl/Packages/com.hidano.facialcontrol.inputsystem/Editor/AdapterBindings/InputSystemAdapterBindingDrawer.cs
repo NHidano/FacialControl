@@ -587,6 +587,7 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
             dropdown.RegisterValueChangedCallback(evt =>
             {
                 var so = bindingProperty.serializedObject;
+                if (!IsSerializedObjectAlive(so)) return;
                 so.Update();
                 var prop = overlaySlotProp
                     ?? FindExpressionBindingEntryProperty(bindingProperty, index)
@@ -601,16 +602,85 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
 
             container.Add(dropdown);
             container.Add(help);
-            container.schedule.Execute(() =>
+            IVisualElementScheduledItem scheduledRefresh = null;
+            scheduledRefresh = container.schedule.Execute(() =>
             {
-                var so = bindingProperty.serializedObject;
-                so.Update();
-                var prop = FindExpressionBindingEntryProperty(bindingProperty, index)
-                    ?.FindPropertyRelative("overlaySlot");
-                RefreshOverlaySlotChoices(dropdown, help, bindingProperty, prop);
-            }).Every(OverlaySlotRefreshIntervalMs);
+                if (!TickOverlaySlotRefresh(dropdown, help, bindingProperty, index))
+                {
+                    // Inspector 切替等で SerializedObject が破棄された後もタイマーだけが
+                    // 生き残ると、ティックごとに破棄済みオブジェクトへアクセスしてしまうため停止する。
+                    scheduledRefresh?.Pause();
+                }
+            });
+            scheduledRefresh.Every(OverlaySlotRefreshIntervalMs);
 
             return container;
+        }
+
+        /// <summary>
+        /// Overlay slot 候補の定期リフレッシュ 1 回分を実行する。
+        /// </summary>
+        /// <returns>継続可能なら true。SerializedObject が破棄済みなら false（呼び出し側でタイマー停止）。</returns>
+        private static bool TickOverlaySlotRefresh(
+            DropdownField dropdown,
+            HelpBox help,
+            SerializedProperty bindingProperty,
+            int index)
+        {
+            var so = bindingProperty.serializedObject;
+            if (!IsSerializedObjectAlive(so))
+            {
+                return false;
+            }
+
+            so.Update();
+            var prop = FindExpressionBindingEntryProperty(bindingProperty, index)
+                ?.FindPropertyRelative("overlaySlot");
+            RefreshOverlaySlotChoices(dropdown, help, bindingProperty, prop);
+            return true;
+        }
+
+        // SerializedObject に破棄済み判定の公開 API が無いため、native ポインタを直接確認する。
+        private static readonly System.Reflection.FieldInfo SerializedObjectNativePtrField =
+            typeof(SerializedObject).GetField(
+                "m_NativeObjectPtr",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        /// <summary>
+        /// <paramref name="so"/> が破棄されておらず、対象オブジェクトも生存しているかを返す。
+        /// 破棄済みの SerializedObject へ <see cref="SerializedObject.Update"/> 等を呼ぶと
+        /// NullReferenceException になるため、アクセス前に必ず確認する。
+        /// </summary>
+        private static bool IsSerializedObjectAlive(SerializedObject so)
+        {
+            if (so == null)
+            {
+                return false;
+            }
+
+            if (SerializedObjectNativePtrField != null)
+            {
+                if ((IntPtr)SerializedObjectNativePtrField.GetValue(so) == IntPtr.Zero)
+                {
+                    return false;
+                }
+
+                return so.targetObject != null;
+            }
+
+            // 内部フィールドが取得できない（Unity 側の変更）場合は例外ベースで判定する。
+            try
+            {
+                return so.targetObject != null;
+            }
+            catch (NullReferenceException)
+            {
+                return false;
+            }
+            catch (ArgumentNullException)
+            {
+                return false;
+            }
         }
 
         private static SerializedProperty FindExpressionBindingEntryProperty(

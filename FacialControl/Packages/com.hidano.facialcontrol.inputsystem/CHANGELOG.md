@@ -56,6 +56,7 @@
 
 ### Fixed
 
+- `InputSystemAdapterBindingDrawer` の Overlay slot 候補を定期リフレッシュするタイマーが、Inspector を別オブジェクトへ切り替えた後も破棄済み `SerializedObject` へ `Update()` を呼び続け、`NullReferenceException` がティックごとに大量発生する問題を修正。破棄を検出した時点でタイマーを停止するようにした。
 - `GazeBonePoseProvider` で目線入力 (Vector2) が上下左右とも反転して目ボーンに反映されていた問題を修正。Unity の `Quaternion.AngleAxis` 左手系規約と参照モデル自動取得の yaw/pitch 軸 (+Y / +X) の組み合わせで生じていた符号反転をコード側で吸収し、InputActionAsset の Invert processor に頼らずとも入力 +X = 視線右、+Y = 視線上 で動作するようにした。
 
 ### Removed

@@ -93,6 +93,29 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor
         }
 
         [Test]
+        public void SaveState_KeyOverloadAfterSerializedObjectDisposed_PersistsWithoutError()
+        {
+            // 回帰テスト: Inspector を別オブジェクトへ切り替えると DetachFromPanelEvent 時点で
+            // SerializedObject が破棄済みのことがあり、キー再計算（targetObject アクセス）で
+            // NullReferenceException が発生していた。detach 経路は Register 時に確定済みの
+            // キーを受け取る overload を使い、破棄後も保存できる必要がある。
+            SerializedProperty listProperty = FindItemsProperty();
+            string key = TrackKey(listProperty);
+
+            var listView = CreateFoldoutListView();
+            ListViewFoldoutStatePersistence.Register(listView, listProperty);
+            FindHeaderFoldout(listView).value = false;
+
+            _serializedObject.Dispose();
+
+            Assert.DoesNotThrow(
+                () => ListViewFoldoutStatePersistence.SaveState(listView, key),
+                "SerializedObject 破棄後でもキー指定の SaveState は例外を出さず保存できる必要があります。");
+            Assert.That(SessionState.GetBool(key, true), Is.False,
+                "破棄後の SaveState でも折りたたみ状態が SessionState へ保存される必要があります。");
+        }
+
+        [Test]
         public void GetSessionStateKey_DifferentProperties_ProduceDifferentKeys()
         {
             SerializedProperty itemsProperty = FindItemsProperty();

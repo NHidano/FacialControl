@@ -56,7 +56,9 @@ namespace Hidano.FacialControl.Editor.Common
             });
             // ChangeEvent は panel 未接続時にディスパッチされないため、detach 時にも
             // 現在値を保存して破棄直前の変更を取りこぼさない。
-            listView.RegisterCallback<DetachFromPanelEvent>(_ => SaveState(listView, listProperty));
+            // Inspector 切替時の detach では SerializedObject が既に破棄されていることがあるため、
+            // キーを再計算（targetObject アクセス）せず Register 時に確定したキーで保存する。
+            listView.RegisterCallback<DetachFromPanelEvent>(_ => SaveState(listView, key));
         }
 
         /// <summary>
@@ -64,13 +66,22 @@ namespace Hidano.FacialControl.Editor.Common
         /// </summary>
         public static void SaveState(ListView listView, SerializedProperty listProperty)
         {
+            SaveState(listView, GetSessionStateKey(listProperty));
+        }
+
+        /// <summary>
+        /// ヘッダー Foldout の現在の開閉状態を、確定済みの保存キーで SessionState へ保存する。
+        /// SerializedObject 破棄後（Inspector 切替時の detach 等）でも安全に呼び出せる。
+        /// </summary>
+        public static void SaveState(ListView listView, string sessionStateKey)
+        {
             var foldout = listView?.Q<Foldout>(className: BaseListView.foldoutHeaderUssClassName);
             if (foldout == null)
             {
                 return;
             }
 
-            SessionState.SetBool(GetSessionStateKey(listProperty), foldout.value);
+            SessionState.SetBool(sessionStateKey, foldout.value);
         }
     }
 }

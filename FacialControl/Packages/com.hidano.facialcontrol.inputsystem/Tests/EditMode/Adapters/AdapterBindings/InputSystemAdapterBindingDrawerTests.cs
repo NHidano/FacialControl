@@ -119,6 +119,51 @@ namespace Hidano.FacialControl.InputSystem.Tests.EditMode.Adapters.AdapterBindin
         }
 
         [Test]
+        public void TickOverlaySlotRefresh_SerializedObjectDisposed_ReturnsFalseWithoutError()
+        {
+            // 回帰テスト: FacialCharacterProfileSO 編集後に Inspector を別オブジェクトへ切り替えると、
+            // 破棄済み SerializedObject に対して定期リフレッシュが so.Update() を呼び
+            // NullReferenceException が大量発生していた。破棄後は false を返して停止すべき。
+            _profileSo = ScriptableObject.CreateInstance<TestProfileSO>();
+            SetSlots(_profileSo, BlinkSlotName);
+            _profileSo.WritableAdapterBindings.Add(CreateBinding(BlinkSlotName));
+            SerializedProperty bindingProperty = CreateProfileBindingProperty(_profileSo);
+
+            var row = new VisualElement();
+            InvokeBindExpressionBindingRow(row, 0, bindingProperty);
+            var dropdown = row.Q<DropdownField>(InputSystemAdapterBindingDrawer.OverlaySlotDropdownName);
+            var help = row.Q<HelpBox>(InputSystemAdapterBindingDrawer.OverlaySlotHelpName);
+
+            _serializedObject.Dispose();
+
+            bool result = true;
+            Assert.DoesNotThrow(
+                () => result = InvokeTickOverlaySlotRefresh(dropdown, help, bindingProperty, 0),
+                "SerializedObject 破棄後のティックは例外を出さずに停止判定を返すべき。");
+            Assert.That(result, Is.False, "破棄後のティックは false（タイマー停止）を返すべき。");
+        }
+
+        [Test]
+        public void TickOverlaySlotRefresh_ValidSerializedObject_ReturnsTrueAndRefreshesChoices()
+        {
+            _profileSo = ScriptableObject.CreateInstance<TestProfileSO>();
+            SetSlots(_profileSo, BlinkSlotName);
+            _profileSo.WritableAdapterBindings.Add(CreateBinding(BlinkSlotName));
+            SerializedProperty bindingProperty = CreateProfileBindingProperty(_profileSo);
+
+            var row = new VisualElement();
+            InvokeBindExpressionBindingRow(row, 0, bindingProperty);
+            var dropdown = row.Q<DropdownField>(InputSystemAdapterBindingDrawer.OverlaySlotDropdownName);
+            var help = row.Q<HelpBox>(InputSystemAdapterBindingDrawer.OverlaySlotHelpName);
+
+            SetSlots(_profileSo, BlinkSlotName, WinkSlotName);
+            bool result = InvokeTickOverlaySlotRefresh(dropdown, help, bindingProperty, 0);
+
+            Assert.That(result, Is.True, "有効な SerializedObject に対するティックは true（継続）を返すべき。");
+            Assert.That(dropdown.choices, Is.EqualTo(new[] { string.Empty, BlinkSlotName, WinkSlotName }));
+        }
+
+        [Test]
         public void BindExpressionBindingRow_WhenProfileSoIsUnavailable_DisablesOverlaySlotDropdownAndShowsHelp()
         {
             var host = ScriptableObject.CreateInstance<NonProfileBindingHost>();
@@ -299,6 +344,29 @@ namespace Hidano.FacialControl.InputSystem.Tests.EditMode.Adapters.AdapterBindin
 
             Assert.That(method, Is.Not.Null);
             method.Invoke(null, new object[] { dropdown, help, bindingProperty, overlaySlotProperty });
+        }
+
+        private static bool InvokeTickOverlaySlotRefresh(
+            DropdownField dropdown,
+            HelpBox help,
+            SerializedProperty bindingProperty,
+            int index)
+        {
+            MethodInfo method = typeof(InputSystemAdapterBindingDrawer).GetMethod(
+                "TickOverlaySlotRefresh",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(method, Is.Not.Null,
+                "定期リフレッシュの本体は TickOverlaySlotRefresh として切り出されているべき。");
+            try
+            {
+                return (bool)method.Invoke(null, new object[] { dropdown, help, bindingProperty, index });
+            }
+            catch (TargetInvocationException ex)
+            {
+                // 呼び出し先の例外をそのままテストへ伝搬させる。
+                throw ex.InnerException ?? ex;
+            }
         }
 
         private static SerializedProperty FindOverlaySlotProperty(SerializedProperty bindingProperty)
