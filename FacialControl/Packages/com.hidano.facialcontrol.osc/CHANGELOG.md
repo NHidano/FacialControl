@@ -22,6 +22,7 @@
 
 ### Added
 
+- `OscReceiver` の受信ポートが使用中の場合、空きポートへ自動繰り上げして待ち受けるようにしました（例: 9001 使用中なら 9002）。繰り上げ時は警告ログで実際の待ち受けポートを通知します。uOSC は SO_REUSEADDR 付きで bind するため従来はポート衝突が無警告で受信不能になっていましたが、ビルド済みアプリでも衝突に気づけるようになります。空き判定・繰り上げ解決を担う `OscPortResolver` と、実際の待ち受けポートを返す `OscReceiver.ActivePort` を追加しました。
 - `OscSenderAdapterBinding` を追加し、`FacialOutputBus` から post-blend BlendShape と Gaze Vector2 を購読して OSC 送信できるようにしました。
 - 複数 endpoint 同報、VRChat / ARKit アドレスプリセット、OSC bundle フレーム送信、BlendShape 名 heartbeat、sender identity、同一プロセス内 loopback 抑制を追加しました。
 - `OscReceiverAdapterBinding` に bundle atomic swap、staleness fail-safe、sender identity によるゾンビ排除、heartbeat 整合性検査、Gaze Vector2 受信 source 登録を追加しました。

@@ -29,6 +29,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         private bool _autoStart = true;
 
         private uOSC.uOscServer _server;
+        private int _activePort = -1;
         private OscDoubleBuffer _buffer;
         private OscBundleAccumulator _bundleAccumulator;
         private BundleInterpretationMode _bundleMode;
@@ -64,6 +65,13 @@ namespace Hidano.FacialControl.Adapters.OSC
         /// サーバーが稼働中かどうか。
         /// </summary>
         public bool IsRunning => _server != null && _server.isRunning;
+
+        /// <summary>
+        /// 実際に待ち受けているポート番号。
+        /// <see cref="Port"/> が使用中だった場合は空きポートへ自動繰り上げされるため、
+        /// 設定値と異なることがある。<see cref="StartReceiving"/> 前は -1。
+        /// </summary>
+        public int ActivePort => _activePort;
 
         /// <summary>
         /// 受信バッファへの参照。
@@ -123,6 +131,8 @@ namespace Hidano.FacialControl.Adapters.OSC
 
         /// <summary>
         /// 受信サーバーを開始する。
+        /// 設定ポートが使用中の場合は空きポートへ自動繰り上げし、警告ログで通知する
+        /// （ビルド済みアプリで衝突が発覚しても無警告で受信不能にならないようにするため）。
         /// </summary>
         public void StartReceiving()
         {
@@ -132,8 +142,31 @@ namespace Hidano.FacialControl.Adapters.OSC
                 return;
             }
 
+            // 稼働中の再呼び出しで自分自身の bind を「使用中」と誤検知し、
+            // ポートが移動してしまうのを防ぐ。
+            if (IsRunning)
+            {
+                return;
+            }
+
+            int resolvedPort = OscPortResolver.ResolveAvailablePort(_port);
+            if (resolvedPort < 0)
+            {
+                Debug.LogError(
+                    $"[FacialControl] OSC 受信ポート {_port} から {OscPortResolver.DefaultMaxAttempts} 個連続で空きポートが見つかりませんでした。" +
+                    $"ポート {_port} で待ち受けを試みますが、他プロセスが占有している間は受信できません。");
+                resolvedPort = _port;
+            }
+            else if (resolvedPort != _port)
+            {
+                Debug.LogWarning(
+                    $"[FacialControl] OSC 受信ポート {_port} は使用中のため {resolvedPort} に繰り上げて待ち受けます。" +
+                    $"送信側の宛先ポートを {resolvedPort} に合わせてください。");
+            }
+
+            _activePort = resolvedPort;
             EnsureServer();
-            _server.port = _port;
+            _server.port = resolvedPort;
             _server.autoStart = false;
             _server.StartServer();
         }
