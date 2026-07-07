@@ -229,6 +229,64 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor
             Assert.IsNull(texture);
         }
 
+        [Test]
+        public void Setup_WithoutTrackTargetPath_UsesDefaultFov()
+        {
+            var source = CreatePreviewSource();
+
+            try
+            {
+                _wrapper.Setup(source);
+
+                Assert.AreEqual(PreviewRenderWrapper.DefaultFov, _wrapper.CameraFieldOfView, 1e-5f);
+            }
+            finally
+            {
+                DestroyPreviewSourceMaterial(source);
+                Object.DestroyImmediate(source);
+            }
+        }
+
+        [Test]
+        public void Setup_WithTrackTargetPath_UsesFaceTrackFov()
+        {
+            var source = CreatePreviewSource();
+            var head = new GameObject("head");
+            head.transform.SetParent(source.transform);
+            head.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+
+            try
+            {
+                _wrapper.Setup(source, "head");
+
+                Assert.AreEqual(PreviewRenderWrapper.FaceTrackFov, _wrapper.CameraFieldOfView, 1e-5f);
+                Assert.Less(PreviewRenderWrapper.FaceTrackFov, PreviewRenderWrapper.DefaultFov);
+            }
+            finally
+            {
+                DestroyPreviewSourceMaterial(source);
+                Object.DestroyImmediate(source);
+            }
+        }
+
+        [Test]
+        public void Setup_WithUnresolvableTrackTargetPath_FallsBackToDefaultFov()
+        {
+            var source = CreatePreviewSource();
+
+            try
+            {
+                _wrapper.Setup(source, "no/such/joint");
+
+                Assert.AreEqual(PreviewRenderWrapper.DefaultFov, _wrapper.CameraFieldOfView, 1e-5f);
+            }
+            finally
+            {
+                DestroyPreviewSourceMaterial(source);
+                Object.DestroyImmediate(source);
+            }
+        }
+
         private static GameObject CreatePreviewSource()
         {
             var source = GameObject.CreatePrimitive(PrimitiveType.Cube);

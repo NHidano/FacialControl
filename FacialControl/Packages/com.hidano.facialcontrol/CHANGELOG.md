@@ -8,6 +8,11 @@
 
 ### Changed
 
+- Expression 作成ツール（`ExpressionCreatorWindow`）の Clip 選択を「登録済み Expression の Clip を編集」「Project 内の既存 Clip を編集」「Clip の作成から行う」の 3 モード開始方式に変更した。AnimationClip スロットはモード選択まで非表示になり、既存 Clip 設定と新規作成のどちらから始めるべきか迷わない導線にした。「登録済み〜」はモデル配下の `FacialController` に設定された `FacialCharacterProfileSO` の Expression から AnimationClip をドロップダウン選択できる（SO 未設定時はボタン無効 + 理由を tooltip 表示）。
+- Expression 作成ツールのプレビューカメラを、モデル設定時に自動解決したトラッキング対象（Humanoid Animator の Head ボーン → Generic フォールバックとして head / neck 名のジョイント）へ注視させるようにした。従来は最初に見つかった Animator が Humanoid でないと顔に寄れなかった。カメラ位置は従来の bounds ベースのまま、FoV を 30° → 12° に下げて顔のアップを実現する（`PreviewRenderWrapper.FaceTrackFov`）。自動解決が誤るケース向けに「トラッキング対象」フィールドをモデルスロット直下に表出し手動修正可能にした。
+- Expression 作成ツールの BlendShape スライダー表示を SkinnedMeshRenderer Inspector に合わせて 0..100 スケールに変更した（内部値・ベイク経路は正規化 0..1 のまま）。
+- Expression 作成ツールの BlendShape 絞り込みに、文字列検索に加えてモデル配下の SkinnedMeshRenderer をリスト化した選択式フィルタ（ドロップダウン）を追加した。
+- Expression 作成ツールの「AnimationClip にベイク」ボタンが潰れて表示される問題への対応として、高さを通常ボタンの 2 倍（40px）に固定した。
 - Editor 共通ユーティリティ `ListViewFoldoutStatePersistence` を追加した。`showFoldoutHeader` 付き `ListView` のヘッダー Foldout 開閉状態を `SessionState` に保存・復元する（InputSystem のキーバインディング / LipSync の音素エントリ / OSC の Mappings 各リストで使用。Editor 再起動時はリセット）。
 - `FacialCharacterProfileSO` Inspector の Expression List overlay 行で、Default / Suppress / Override の 3 状態選択を `RadioButtonGroup` から `DropdownField` に変更した（要素名 `expression-overlay-state-radio` → `expression-overlay-state-dropdown`）。あわせて Override 用 AnimationClip 欄の内部ラベルを撤去し、状態 dropdown のすぐ脇に表示するようにした（従来はラベル込みで flexGrow していたため欄が右端まで寄って見つけづらかった）。Default Overlays 行の AnimationClip 欄も同様に Slot dropdown 直後へ隣接配置した。
 - `FacialCharacterProfileSO` Inspector の選択タブと各 Foldout（セクション / Expression 行の Overlays / Phoneme Overlays）の展開状態を `SessionState` に保存し、domain reload や asset 再読み込みで Inspector が再構築されても直前の表示状態を復元するようにした（従来は毎回「表情ライブラリ」タブ先頭・既定の展開状態にリセットされていた）。Editor 再起動時はリセットされる。
@@ -30,6 +35,9 @@
 
 ### Added
 
+- Expression 作成ツールに「全 Expression プレビューを PNG 書き出し」ボタンを追加した。モデル配下の `FacialController` に `FacialCharacterProfileSO` が設定されている場合のみ有効で、SO に登録された AnimationClip 付き全 Expression のプレビューを指定フォルダへ `{Expression 名}.png` として一括書き出しする。実行できない場合はボタンを無効化し、ホバー / tooltip で理由（モデル未設定・FacialController 無し・SO 未設定・Clip 付き Expression 無し）を表示する。
+- Expression 作成ツールで既存 Clip を読み込んだ際、設定中モデルの SkinnedMeshRenderer に存在しない BlendShape が Clip に含まれている場合、黄色の警告文で該当 BlendShape 一覧を表示するようにした。
+- Expression 作成ツールで編集後にベイクせずウィンドウを閉じようとした場合、Unity 標準の未保存確認ダイアログ（`EditorWindow.hasUnsavedChanges`）を表示するようにした。「保存」を選ぶと現在のスライダー値をベイクして閉じる（ベイク先 Clip 未設定時は作成ダイアログを表示し、キャンセルでクローズを中断）。
 - **目線の目ボーン適用を `FacialController` に集約**: `FacialController` が profile ルートの `GazeBindingConfig` 群を `GazeBindingConfigResolver` で `InputSourceRegistry` の gaze 入力源（`{slug}:{expressionId}` / `.left` / `.right`）に解決し、単一の `GazeBonePoseProvider` を構築して `LateUpdate` 末尾（BoneWriter 適用後）で目ボーンへ localRotation を書き込むようにした。各入力 binding（OSC / InputSystem / iFacialMocap）は gaze 入力源の registry 登録のみを担い、目ボーンは回さない。この経路は入力方式非依存のため、**OSC 受信した gaze も設定のみで目ボーンに反映される**（従来は目ボーン適用 provider を持つ binding が InputSystem / iFacialMocap に限られ、OSC 受信 gaze はローカルモデルに反映されなかった）。bone path を持たない `GazeBindingConfig`（BlendShape 経路のみ）は構築対象外。`Cleanup` 時は provider の `Dispose` が目ボーンを初期回転へ復元する。
 - Play モード突入時（`EditorApplication.playModeStateChanged` の `ExitingEditMode`）およびビルド開始時（`IPreprocessBuildWithReport.OnPreprocessBuild`）に、プロジェクト内の全 `FacialCharacterProfileSO`（派生型含む）を再サンプリングして `StreamingAssets/FacialControl/{SO 名}/profile.json` を自動エクスポートする `FacialCharacterProfileAutoExporter` を追加。これまで profile.json の更新は Inspector 編集の `TrackSerializedObjectValue` 起点のみだったため、クリップだけ差し替えてエクスポートを忘れた場合や、`AnimationClipExpressionSampler` の ÷100 スケール修正前に生成された旧 profile.json（0..100 スケール）が残っている場合に、古い JSON のまま Play / ビルドに進み全 BlendShape が 100% に飽和し得た。本フックにより、ランタイムが読む JSON が常に最新の正規化 0..1 値になる。エクスポートは冪等（内容が最新なら同一バイトを書くだけ）で、SO の `cachedSnapshot` はインメモリ再サンプリングのみ行いアセットを dirty にしない。
 

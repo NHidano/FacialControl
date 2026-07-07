@@ -9,6 +9,13 @@ namespace Hidano.FacialControl.Editor.Common
     public class PreviewRenderWrapper : IDisposable
     {
         public const float DefaultFov = 30f;
+
+        /// <summary>
+        /// トラッキング対象（顔ジョイント）が指定されたときの FoV。
+        /// カメラ位置は全身 bounds ベースのまま動かさず、FoV を下げることで顔のアップを実現する。
+        /// </summary>
+        public const float FaceTrackFov = 12f;
+
         public const float DefaultNearClip = 0.01f;
         public const float DefaultFarClip = 100f;
         public const float DefaultLightIntensity = 1.2f;
@@ -35,7 +42,25 @@ namespace Hidano.FacialControl.Editor.Common
 
         public GameObject PreviewInstance => _previewInstance;
 
+        /// <summary>
+        /// 現在のプレビューカメラ FoV。未初期化時は <see cref="DefaultFov"/> を返す。
+        /// </summary>
+        public float CameraFieldOfView
+            => _previewRenderUtility != null ? _previewRenderUtility.camera.fieldOfView : DefaultFov;
+
         public void Setup(GameObject sourceObject)
+        {
+            Setup(sourceObject, null);
+        }
+
+        /// <summary>
+        /// プレビューをセットアップする。
+        /// <paramref name="trackTargetPath"/> にソースルートからの相対 Transform パスを渡すと、
+        /// その位置をカメラの注視点にし FoV を <see cref="FaceTrackFov"/> へ下げる（顔アップ用途）。
+        /// null / 解決不能パスの場合は従来どおり bounds / Humanoid Head ベースの注視点と
+        /// <see cref="DefaultFov"/> を用いる。
+        /// </summary>
+        public void Setup(GameObject sourceObject, string trackTargetPath)
         {
             Cleanup();
 
@@ -61,7 +86,18 @@ namespace Hidano.FacialControl.Editor.Common
             _previewRenderUtility.AddSingleGO(_previewInstance);
 
             var bounds = CalculateBounds(_previewInstance);
-            var pivotPoint = CalculatePivotPoint(_previewInstance, bounds);
+            var trackTarget = ResolveTrackTarget(_previewInstance.transform, trackTargetPath);
+            Vector3 pivotPoint;
+            if (trackTarget != null)
+            {
+                pivotPoint = trackTarget.position;
+                _previewRenderUtility.camera.fieldOfView = FaceTrackFov;
+            }
+            else
+            {
+                pivotPoint = CalculatePivotPoint(_previewInstance, bounds);
+            }
+
             var pivotDistance = bounds.extents.magnitude * 2f;
             var rotation = Quaternion.Euler(0f, 180f, 0f);
             var position = pivotPoint - rotation * Vector3.forward * pivotDistance;
@@ -215,6 +251,21 @@ namespace Hidano.FacialControl.Editor.Common
         public void ResetCamera()
         {
             _state = _initialState;
+        }
+
+        /// <summary>
+        /// トラッキング対象パスをプレビューインスタンス内の Transform に解決する。
+        /// 空文字はルート自身、null / 不一致は null を返す。
+        /// </summary>
+        private static Transform ResolveTrackTarget(Transform instanceRoot, string trackTargetPath)
+        {
+            if (trackTargetPath == null)
+                return null;
+
+            if (trackTargetPath.Length == 0)
+                return instanceRoot;
+
+            return instanceRoot.Find(trackTargetPath);
         }
 
         public static Vector3 CalculatePivotPoint(GameObject go, Bounds fallbackBounds)
