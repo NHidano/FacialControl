@@ -696,6 +696,16 @@ namespace Hidano.FacialControl.Editor.Tools
 
         private void OnSavePreviewClicked()
         {
+            // どの Expression の画像か判別できるファイル名を組み立てられないため、
+            // Expression（AnimationClip）未選択時は保存せず警告する。
+            if (_targetClip == null)
+            {
+                Debug.LogWarning(
+                    "[ExpressionCreatorWindow] Expression が選択されていないため、プレビュー PNG を保存できません。"
+                        + "「登録済み Expression から編集」タブで Expression を選択するか、AnimationClip を設定してください。");
+                return;
+            }
+
             ConfigureSavePreviewDependencies();
 
             var path = _savePreviewPathProvider(BuildSavePreviewDefaultFileName());
@@ -802,6 +812,9 @@ namespace Hidano.FacialControl.Editor.Tools
             {
                 int exported = 0;
                 var usedFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // GetExportAllDisabledReason で _targetObject 非 null は確認済み
+                var modelName = _targetObject.name;
+                var timestamp = BuildExportTimestamp();
 
                 for (int e = 0; e < expressions.Count; e++)
                 {
@@ -829,7 +842,7 @@ namespace Hidano.FacialControl.Editor.Tools
                             return;
                         }
 
-                        var fileName = BuildExportFileName(expression, usedFileNames);
+                        var fileName = BuildExportFileName(modelName, expression, timestamp, usedFileNames);
                         _pngFileWriter(Path.Combine(folder, fileName), texture.EncodeToPNG());
                         exported++;
                     }
@@ -856,22 +869,29 @@ namespace Hidano.FacialControl.Editor.Tools
         }
 
         /// <summary>
-        /// 単発プレビュー保存ダイアログのデフォルトファイル名を組み立てる。
-        /// 編集中の Clip が登録済み Expression のものであれば Expression 名、
-        /// そうでなければ Clip 名を用いる。Clip 未設定時は従来の固定名。
+        /// 単発プレビュー保存ダイアログのデフォルトファイル名
+        /// 「{モデル名}_{Expression 名}_{yyyyMMdd-HHmm}.png」を組み立てる。
+        /// Expression 名は編集中の Clip が登録済み Expression のものであればその名前、
+        /// そうでなければ Clip 名。<see cref="_targetClip"/> 非 null が呼び出し前提。
         /// </summary>
         private string BuildSavePreviewDefaultFileName()
         {
-            if (_targetClip == null)
-                return "expression-preview.png";
+            var expressionName = ResolveExpressionNameForTargetClip();
+            if (string.IsNullOrWhiteSpace(expressionName))
+                expressionName = _targetClip.name;
+            if (string.IsNullOrWhiteSpace(expressionName))
+                expressionName = "expression";
 
-            var baseName = ResolveExpressionNameForTargetClip();
-            if (string.IsNullOrWhiteSpace(baseName))
-                baseName = _targetClip.name;
-            if (string.IsNullOrWhiteSpace(baseName))
-                return "expression-preview.png";
-
+            var timestamp = BuildExportTimestamp();
+            var baseName = _targetObject != null
+                ? $"{_targetObject.name}_{expressionName}_{timestamp}"
+                : $"{expressionName}_{timestamp}";
             return SanitizeFileName(baseName) + ".png";
+        }
+
+        private static string BuildExportTimestamp()
+        {
+            return DateTime.Now.ToString("yyyyMMdd-HHmm");
         }
 
         /// <summary>
@@ -906,14 +926,24 @@ namespace Hidano.FacialControl.Editor.Tools
             return name;
         }
 
-        private static string BuildExportFileName(ExpressionSerializable expression, HashSet<string> usedFileNames)
+        /// <summary>
+        /// 一括書き出しの PNG ファイル名「{モデル名}_{Expression 名}_{yyyyMMdd-HHmm}.png」を組み立てる。
+        /// 同名衝突時は末尾に連番を付与する。
+        /// </summary>
+        private static string BuildExportFileName(
+            string modelName,
+            ExpressionSerializable expression,
+            string timestamp,
+            HashSet<string> usedFileNames)
         {
-            var baseName = SanitizeFileName(!string.IsNullOrWhiteSpace(expression.name)
+            var expressionName = !string.IsNullOrWhiteSpace(expression.name)
                 ? expression.name
-                : expression.animationClip.name);
+                : expression.animationClip.name;
 
-            if (string.IsNullOrWhiteSpace(baseName))
-                baseName = "expression";
+            if (string.IsNullOrWhiteSpace(expressionName))
+                expressionName = "expression";
+
+            var baseName = SanitizeFileName($"{modelName}_{expressionName}_{timestamp}");
 
             var fileName = baseName + ".png";
             int suffix = 1;

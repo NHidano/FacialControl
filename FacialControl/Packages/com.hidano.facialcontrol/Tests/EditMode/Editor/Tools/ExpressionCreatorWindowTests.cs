@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using UnityEngine.TestTools;
 using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Models;
@@ -327,6 +329,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             }));
             SetPrivateField(window, "_pngFileWriter", (Action<string, byte[]>)((path, bytes) => writtenPaths.Add(path)));
 
+            // Window 展開直後の「Expression 未選択」状態でも一括書き出しは成立すること
+            Assert.IsNull(GetPrivateField(window, "_targetClip"));
+
             InvokePrivateMethod(window, "OnExportAllExpressionPreviewsClicked");
 
             // Clip 付き Expression の数だけ PNG が書き出される
@@ -338,10 +343,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
                 Assert.AreEqual(512, size.width);
                 Assert.AreEqual(512, size.height);
             }
-            StringAssert.Contains("笑顔", writtenPaths[0]);
-            StringAssert.Contains("怒り", writtenPaths[1]);
-            StringAssert.EndsWith(".png", writtenPaths[0]);
-            StringAssert.EndsWith(".png", writtenPaths[1]);
+
+            // ファイル名は {モデル名}_{Expression 名}_{yyyyMMdd-HHmm}.png
+            StringAssert.IsMatch(@"ControllerModel_笑顔_\d{8}-\d{4}\.png$", writtenPaths[0]);
+            StringAssert.IsMatch(@"ControllerModel_怒り_\d{8}-\d{4}\.png$", writtenPaths[1]);
         }
 
         [Test]
@@ -594,6 +599,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             _trackedObjects.Add(window);
             InvokeCreateGUI(window);
 
+            // Expression 未選択時は警告して保存しない仕様のため、Clip を設定しておく
+            SetPrivateField(window, "_targetClip", CreateTrackedClip());
+
             var outputPath = Path.Combine(Path.GetTempPath(), $"expression-preview-{Guid.NewGuid():N}.png");
             _trackedFiles.Add(outputPath);
             var capturedWidth = 0;
@@ -632,7 +640,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
         }
 
         [Test]
-        public void SavePreviewPngHandler_RegisteredExpressionClip_DefaultFileNameUsesExpressionName()
+        public void SavePreviewPngHandler_RegisteredExpressionClip_DefaultFileNameHasModelExpressionTimestamp()
         {
             var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
             _trackedObjects.Add(window);
@@ -654,7 +662,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             InvokePrivateMethod(window, "OnSavePreviewClicked");
 
-            Assert.AreEqual("笑顔.png", receivedDefaultFileName);
+            // {モデル名}_{Expression 名}_{yyyyMMdd-HHmm}.png
+            Assert.IsNotNull(receivedDefaultFileName);
+            StringAssert.IsMatch(@"^ControllerModel_笑顔_\d{8}-\d{4}\.png$", receivedDefaultFileName);
         }
 
         [Test]
@@ -677,26 +687,29 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             InvokePrivateMethod(window, "OnSavePreviewClicked");
 
-            Assert.AreEqual("MyClip.png", receivedDefaultFileName);
+            // モデル未設定のため Expression 名（Clip 名）と日時のみ
+            Assert.IsNotNull(receivedDefaultFileName);
+            StringAssert.IsMatch(@"^MyClip_\d{8}-\d{4}\.png$", receivedDefaultFileName);
         }
 
         [Test]
-        public void SavePreviewPngHandler_WithoutClip_DefaultFileNameFallsBack()
+        public void SavePreviewPngHandler_WithoutExpressionSelected_LogsWarningAndDoesNotSave()
         {
             var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
             _trackedObjects.Add(window);
             InvokeCreateGUI(window);
 
-            string receivedDefaultFileName = null;
-            SetPrivateField(window, "_savePreviewPathProvider", (Func<string, string>)(defaultFileName =>
+            var pathProviderCalled = false;
+            SetPrivateField(window, "_savePreviewPathProvider", (Func<string, string>)(_ =>
             {
-                receivedDefaultFileName = defaultFileName;
+                pathProviderCalled = true;
                 return string.Empty;
             }));
 
+            LogAssert.Expect(LogType.Warning, new Regex("Expression が選択されていない"));
             InvokePrivateMethod(window, "OnSavePreviewClicked");
 
-            Assert.AreEqual("expression-preview.png", receivedDefaultFileName);
+            Assert.IsFalse(pathProviderCalled, "Expression 未選択時は保存ダイアログを開かないこと");
         }
 
         [Test]
