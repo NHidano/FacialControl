@@ -56,6 +56,13 @@ namespace Hidano.FacialControl.Editor.Tools
 
         private const string BlendShapePropertyPrefix = "blendShape.";
 
+        /// <summary>
+        /// 全 Expression 書き出しの前回書き出し先フォルダを記憶する EditorPrefs キー。
+        /// プロジェクトデータに残すほどではないマシンローカルの利便設定のため EditorPrefs を使う。
+        /// </summary>
+        private const string LastExportFolderPrefsKey
+            = "Hidano.FacialControl.ExpressionCreatorWindow.LastExportFolder";
+
         // モデル参照
         private GameObject _targetObject;
         private SkinnedMeshRenderer[] _skinnedMeshRenderers;
@@ -1412,10 +1419,31 @@ namespace Hidano.FacialControl.Editor.Tools
 
         private void ConfigureExportAllDependencies()
         {
-            _exportFolderProvider ??= () => EditorUtility.SaveFolderPanel(
-                "Expression プレビュー PNG の書き出し先",
-                "",
-                "");
+            _exportFolderProvider ??= () =>
+            {
+                var folder = EditorUtility.SaveFolderPanel(
+                    "Expression プレビュー PNG の書き出し先",
+                    LoadLastExportFolder(),
+                    "");
+                SaveLastExportFolder(folder);
+                return folder;
+            };
+        }
+
+        /// <summary>
+        /// 前回の書き出し先フォルダを返す。未記録またはディレクトリが既に存在しない場合は
+        /// 空文字（<see cref="EditorUtility.SaveFolderPanel"/> の既定位置）を返す。
+        /// </summary>
+        private static string LoadLastExportFolder()
+        {
+            var folder = EditorPrefs.GetString(LastExportFolderPrefsKey, string.Empty);
+            return !string.IsNullOrEmpty(folder) && Directory.Exists(folder) ? folder : string.Empty;
+        }
+
+        private static void SaveLastExportFolder(string folder)
+        {
+            if (!string.IsNullOrEmpty(folder))
+                EditorPrefs.SetString(LastExportFolderPrefsKey, folder);
         }
 
         private class BlendShapeEntry

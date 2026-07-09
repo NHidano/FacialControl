@@ -713,6 +713,42 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
         }
 
         [Test]
+        public void LastExportFolder_RoundTrip_ReturnsSavedFolderOnlyWhileDirectoryExists()
+        {
+            const string prefsKey = "Hidano.FacialControl.ExpressionCreatorWindow.LastExportFolder";
+            var hadKey = EditorPrefs.HasKey(prefsKey);
+            var originalValue = EditorPrefs.GetString(prefsKey, string.Empty);
+            var tempDir = Path.Combine(Path.GetTempPath(), $"expression-export-prefs-{Guid.NewGuid():N}");
+
+            try
+            {
+                Directory.CreateDirectory(tempDir);
+
+                InvokeStaticMethod("SaveLastExportFolder", tempDir);
+                Assert.AreEqual(tempDir, InvokeStaticMethod("LoadLastExportFolder"));
+
+                // 記憶先ディレクトリが消えていたら既定位置（空文字）へフォールバック
+                Directory.Delete(tempDir, true);
+                Assert.AreEqual(string.Empty, InvokeStaticMethod("LoadLastExportFolder"));
+
+                // ダイアログキャンセル（空文字）は既存の記憶を上書きしない
+                Directory.CreateDirectory(tempDir);
+                InvokeStaticMethod("SaveLastExportFolder", string.Empty);
+                Assert.AreEqual(tempDir, InvokeStaticMethod("LoadLastExportFolder"));
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir))
+                    Directory.Delete(tempDir, true);
+
+                if (hadKey)
+                    EditorPrefs.SetString(prefsKey, originalValue);
+                else
+                    EditorPrefs.DeleteKey(prefsKey);
+            }
+        }
+
+        [Test]
         public void CreateNewClipHandler_WithSpecifiedPath_CreatesAndAssignsClip()
         {
             var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
@@ -895,6 +931,16 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             Assert.IsNotNull(field);
 
             return field.GetValue(window);
+        }
+
+        private static object InvokeStaticMethod(string methodName, params object[] args)
+        {
+            var method = typeof(ExpressionCreatorWindow).GetMethod(
+                methodName,
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.IsNotNull(method);
+
+            return method.Invoke(null, args);
         }
 
         private static void InvokePrivateMethod(ExpressionCreatorWindow window, string methodName, params object[] args)
