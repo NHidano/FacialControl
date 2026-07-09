@@ -95,12 +95,10 @@ namespace Hidano.FacialControl.Editor.Tools
         private VisualElement _exportAllContainer;
         private Button _exportAllButton;
 
-        // ステータス
-        private Label _statusLabel;
-
         // 依存
         private IExpressionAnimationClipSampler _sampler;
-        private Func<string> _savePreviewPathProvider;
+        // 引数はダイアログのデフォルトファイル名
+        private Func<string, string> _savePreviewPathProvider;
         private Func<int, int, Texture2D> _previewTextureCapture;
         private Action<string, byte[]> _pngFileWriter;
         private Func<string> _createClipPathProvider;
@@ -205,15 +203,9 @@ namespace Hidano.FacialControl.Editor.Tools
             leftPanel.Add(savePreviewButton);
 
             // 全 Expression プレビュー PNG 書き出し。
-            // 無効化時もホバーで理由を提示できるよう、コンテナ側に tooltip / ホバーイベントを持たせる。
+            // 無効化時もホバーで理由を提示できるよう、コンテナ側にも tooltip を持たせる。
             _exportAllContainer = new VisualElement();
             _exportAllContainer.name = ExportAllContainerName;
-            _exportAllContainer.RegisterCallback<MouseEnterEvent>(_ =>
-            {
-                var reason = GetExportAllDisabledReason();
-                if (reason != null)
-                    ShowStatus(reason, isError: true);
-            });
             leftPanel.Add(_exportAllContainer);
 
             _exportAllButton = new Button(OnExportAllExpressionPreviewsClicked)
@@ -383,12 +375,6 @@ namespace Hidano.FacialControl.Editor.Tools
             bottomSection.Add(bakeButton);
 
             root.Add(bottomSection);
-
-            _statusLabel = new Label();
-            _statusLabel.AddToClassList(FacialControlStyles.StatusLabel);
-            _statusLabel.style.paddingLeft = 4;
-            _statusLabel.style.paddingBottom = 4;
-            root.Add(_statusLabel);
 
             RefreshRegisteredClipChoices();
             RefreshExportAllButtonState();
@@ -712,7 +698,7 @@ namespace Hidano.FacialControl.Editor.Tools
         {
             ConfigureSavePreviewDependencies();
 
-            var path = _savePreviewPathProvider();
+            var path = _savePreviewPathProvider(BuildSavePreviewDefaultFileName());
             if (string.IsNullOrEmpty(path))
                 return;
 
@@ -732,7 +718,6 @@ namespace Hidano.FacialControl.Editor.Tools
             }
             catch (Exception ex)
             {
-                ShowStatus($"プレビュー PNG 保存エラー: {ex.Message}", isError: true);
                 Debug.LogError($"[ExpressionCreatorWindow] プレビュー PNG 保存エラー: {ex}");
             }
             finally
@@ -859,7 +844,6 @@ namespace Hidano.FacialControl.Editor.Tools
             }
             catch (Exception ex)
             {
-                ShowStatus($"Expression プレビュー書き出しエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[ExpressionCreatorWindow] Expression プレビュー書き出しエラー: {ex}");
             }
             finally
@@ -871,15 +855,62 @@ namespace Hidano.FacialControl.Editor.Tools
             }
         }
 
-        private static string BuildExportFileName(ExpressionSerializable expression, HashSet<string> usedFileNames)
+        /// <summary>
+        /// 単発プレビュー保存ダイアログのデフォルトファイル名を組み立てる。
+        /// 編集中の Clip が登録済み Expression のものであれば Expression 名、
+        /// そうでなければ Clip 名を用いる。Clip 未設定時は従来の固定名。
+        /// </summary>
+        private string BuildSavePreviewDefaultFileName()
         {
-            var baseName = !string.IsNullOrWhiteSpace(expression.name)
-                ? expression.name
-                : expression.animationClip.name;
+            if (_targetClip == null)
+                return "expression-preview.png";
 
+            var baseName = ResolveExpressionNameForTargetClip();
+            if (string.IsNullOrWhiteSpace(baseName))
+                baseName = _targetClip.name;
+            if (string.IsNullOrWhiteSpace(baseName))
+                return "expression-preview.png";
+
+            return SanitizeFileName(baseName) + ".png";
+        }
+
+        /// <summary>
+        /// <see cref="_targetClip"/> が登録済み Expression の Clip であれば、その Expression 名を返す。
+        /// 該当が無ければ null。
+        /// </summary>
+        private string ResolveExpressionNameForTargetClip()
+        {
+            var so = ResolveCharacterSO();
+            if (so == null || so.Expressions == null)
+                return null;
+
+            for (int i = 0; i < so.Expressions.Count; i++)
+            {
+                var expression = so.Expressions[i];
+                if (expression != null
+                    && expression.animationClip == _targetClip
+                    && !string.IsNullOrWhiteSpace(expression.name))
+                {
+                    return expression.name;
+                }
+            }
+
+            return null;
+        }
+
+        private static string SanitizeFileName(string name)
+        {
             var invalidChars = Path.GetInvalidFileNameChars();
             for (int i = 0; i < invalidChars.Length; i++)
-                baseName = baseName.Replace(invalidChars[i], '_');
+                name = name.Replace(invalidChars[i], '_');
+            return name;
+        }
+
+        private static string BuildExportFileName(ExpressionSerializable expression, HashSet<string> usedFileNames)
+        {
+            var baseName = SanitizeFileName(!string.IsNullOrWhiteSpace(expression.name)
+                ? expression.name
+                : expression.animationClip.name);
 
             if (string.IsNullOrWhiteSpace(baseName))
                 baseName = "expression";
@@ -1083,7 +1114,6 @@ namespace Hidano.FacialControl.Editor.Tools
             }
             catch (Exception ex)
             {
-                ShowStatus($"AnimationClip 作成エラー: {ex.Message}", isError: true);
                 Debug.LogError($"[ExpressionCreatorWindow] AnimationClip 作成エラー: {ex}");
             }
         }
@@ -1118,7 +1148,6 @@ namespace Hidano.FacialControl.Editor.Tools
             }
             catch (Exception ex)
             {
-                ShowStatus($"AnimationClip 読み込みエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[ExpressionCreatorWindow] AnimationClip 読み込みエラー: {ex}");
             }
         }
@@ -1250,7 +1279,6 @@ namespace Hidano.FacialControl.Editor.Tools
             }
             catch (Exception ex)
             {
-                ShowStatus($"ベイクエラー: {ex.Message}", isError: true);
                 Debug.LogError($"[ExpressionCreatorWindow] ベイクエラー: {ex}");
             }
         }
@@ -1317,28 +1345,24 @@ namespace Hidano.FacialControl.Editor.Tools
             hasUnsavedChanges = true;
         }
 
-        private void ShowStatus(string message, bool isError)
+        /// <summary>
+        /// 実行結果・エラーを Console へ表示する。
+        /// ウィンドウ下部のステータスラベルはウィンドウ幅で見切れるため廃止した。
+        /// </summary>
+        private static void ShowStatus(string message, bool isError)
         {
-            if (_statusLabel == null)
-                return;
-
-            _statusLabel.text = message;
-
-            _statusLabel.RemoveFromClassList(FacialControlStyles.StatusError);
-            _statusLabel.RemoveFromClassList(FacialControlStyles.StatusSuccess);
-            _statusLabel.AddToClassList(isError
-                ? FacialControlStyles.StatusError
-                : FacialControlStyles.StatusSuccess);
-
-            _statusLabel.style.display = DisplayStyle.Flex;
+            if (isError)
+                Debug.LogError($"[ExpressionCreatorWindow] {message}");
+            else
+                Debug.Log($"[ExpressionCreatorWindow] {message}");
         }
 
         private void ConfigureSavePreviewDependencies()
         {
-            _savePreviewPathProvider ??= () => EditorUtility.SaveFilePanel(
+            _savePreviewPathProvider ??= defaultFileName => EditorUtility.SaveFilePanel(
                 "プレビューを PNG として保存",
                 "",
-                "expression-preview.png",
+                defaultFileName,
                 "png");
             _previewTextureCapture ??= (width, height) => _previewWrapper?.CapturePreviewTexture(width, height);
             _pngFileWriter ??= File.WriteAllBytes;

@@ -599,7 +599,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             var capturedWidth = 0;
             var capturedHeight = 0;
 
-            SetPrivateField(window, "_savePreviewPathProvider", (Func<string>)(() => outputPath));
+            SetPrivateField(window, "_savePreviewPathProvider", (Func<string, string>)(_ => outputPath));
             SetPrivateField(window, "_previewTextureCapture", (Func<int, int, Texture2D>)((width, height) =>
             {
                 capturedWidth = width;
@@ -629,6 +629,74 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             Assert.AreEqual((byte)'P', bytes[1]);
             Assert.AreEqual((byte)'N', bytes[2]);
             Assert.AreEqual((byte)'G', bytes[3]);
+        }
+
+        [Test]
+        public void SavePreviewPngHandler_RegisteredExpressionClip_DefaultFileNameUsesExpressionName()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            var clip = CreateTrackedClip();
+            clip.name = "SmileClip";
+            var model = CreateControllerModel(("笑顔", clip));
+            InvokePrivateMethod(window, "ApplyModelChange", model);
+            SetPrivateField(window, "_targetClip", clip);
+
+            string receivedDefaultFileName = null;
+            SetPrivateField(window, "_savePreviewPathProvider", (Func<string, string>)(defaultFileName =>
+            {
+                receivedDefaultFileName = defaultFileName;
+                // キャンセル扱いで保存はさせない
+                return string.Empty;
+            }));
+
+            InvokePrivateMethod(window, "OnSavePreviewClicked");
+
+            Assert.AreEqual("笑顔.png", receivedDefaultFileName);
+        }
+
+        [Test]
+        public void SavePreviewPngHandler_UnregisteredClip_DefaultFileNameUsesClipName()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            var clip = CreateTrackedClip();
+            clip.name = "MyClip";
+            SetPrivateField(window, "_targetClip", clip);
+
+            string receivedDefaultFileName = null;
+            SetPrivateField(window, "_savePreviewPathProvider", (Func<string, string>)(defaultFileName =>
+            {
+                receivedDefaultFileName = defaultFileName;
+                return string.Empty;
+            }));
+
+            InvokePrivateMethod(window, "OnSavePreviewClicked");
+
+            Assert.AreEqual("MyClip.png", receivedDefaultFileName);
+        }
+
+        [Test]
+        public void SavePreviewPngHandler_WithoutClip_DefaultFileNameFallsBack()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            string receivedDefaultFileName = null;
+            SetPrivateField(window, "_savePreviewPathProvider", (Func<string, string>)(defaultFileName =>
+            {
+                receivedDefaultFileName = defaultFileName;
+                return string.Empty;
+            }));
+
+            InvokePrivateMethod(window, "OnSavePreviewClicked");
+
+            Assert.AreEqual("expression-preview.png", receivedDefaultFileName);
         }
 
         [Test]

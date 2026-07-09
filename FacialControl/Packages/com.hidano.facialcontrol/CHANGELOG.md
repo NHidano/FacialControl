@@ -14,6 +14,8 @@
 - Expression 作成ツールの BlendShape 絞り込みに、文字列検索に加えてモデル配下の SkinnedMeshRenderer をリスト化した選択式フィルタ（ドロップダウン）を追加した。
 - Expression 作成ツールの「AnimationClip にベイク」ボタンが潰れて表示される問題への対応として、高さを通常ボタンの 2 倍（40px）に固定した。
 - Expression 作成ツールの PNG 書き出し（「プレビューを PNG として保存」/「全 Expression プレビューを PNG 書き出し」）の画像サイズを 256x256 から 512x512 に拡大した。画面上のプレビュー表示は 256x256 のまま。
+- Expression 作成ツールの実行結果・エラーの表示先をウィンドウ下部のステータスラベルから Console に変更した（ラベルはウィンドウ幅によってメッセージが見切れるため廃止）。
+- Expression 作成ツールの「プレビューを PNG として保存」の保存ダイアログのデフォルトファイル名を、編集中の Clip が登録済み Expression のものであれば「{Expression 名}.png」、そうでなければ「{Clip 名}.png」にした（Clip 未設定時は従来の `expression-preview.png`）。どの画像がどの表情か判別できるようにするため。
 - Editor 共通ユーティリティ `ListViewFoldoutStatePersistence` を追加した。`showFoldoutHeader` 付き `ListView` のヘッダー Foldout 開閉状態を `SessionState` に保存・復元する（InputSystem のキーバインディング / LipSync の音素エントリ / OSC の Mappings 各リストで使用。Editor 再起動時はリセット）。
 - `FacialCharacterProfileSO` Inspector の Expression List overlay 行で、Default / Suppress / Override の 3 状態選択を `RadioButtonGroup` から `DropdownField` に変更した（要素名 `expression-overlay-state-radio` → `expression-overlay-state-dropdown`）。あわせて Override 用 AnimationClip 欄の内部ラベルを撤去し、状態 dropdown のすぐ脇に表示するようにした（従来はラベル込みで flexGrow していたため欄が右端まで寄って見つけづらかった）。Default Overlays 行の AnimationClip 欄も同様に Slot dropdown 直後へ隣接配置した。
 - `FacialCharacterProfileSO` Inspector の選択タブと各 Foldout（セクション / Expression 行の Overlays / Phoneme Overlays）の展開状態を `SessionState` に保存し、domain reload や asset 再読み込みで Inspector が再構築されても直前の表示状態を復元するようにした（従来は毎回「表情ライブラリ」タブ先頭・既定の展開状態にリセットされていた）。Editor 再起動時はリセットされる。
