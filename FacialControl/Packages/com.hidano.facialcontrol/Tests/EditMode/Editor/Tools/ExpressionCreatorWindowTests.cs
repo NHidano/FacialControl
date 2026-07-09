@@ -127,24 +127,36 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
         }
 
         [Test]
-        public void CreateGUI_AddsThreeClipModeButtons()
+        public void CreateGUI_AddsTwoClipModeTabs()
         {
             var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
             _trackedObjects.Add(window);
 
             InvokeCreateGUI(window);
 
-            var registeredButton = window.rootVisualElement.Q<Button>("expression-creator-edit-registered-clip-button");
-            Assert.IsNotNull(registeredButton);
-            Assert.AreEqual("登録済み Expression の Clip を編集", registeredButton.text);
+            var tabView = window.rootVisualElement.Q<TabView>("expression-creator-clip-tab-view");
+            Assert.IsNotNull(tabView);
 
-            var projectButton = window.rootVisualElement.Q<Button>("expression-creator-edit-project-clip-button");
+            var registeredTab = window.rootVisualElement.Q<Tab>("expression-creator-registered-tab");
+            Assert.IsNotNull(registeredTab);
+            Assert.AreEqual("登録済み Expression から編集", registeredTab.label);
+
+            var clipEditTab = window.rootVisualElement.Q<Tab>("expression-creator-clip-edit-tab");
+            Assert.IsNotNull(clipEditTab);
+            Assert.AreEqual("AnimationClip を作成・編集", clipEditTab.label);
+
+            // 「AnimationClip を作成・編集」タブ内に既存 Clip 編集 / 新規 Clip 作成のボタンを持つ
+            var projectButton = clipEditTab.Q<Button>("expression-creator-edit-project-clip-button");
             Assert.IsNotNull(projectButton);
-            Assert.AreEqual("Project 内の既存 Clip を編集", projectButton.text);
+            Assert.AreEqual("既存 Clip を編集", projectButton.text);
 
-            var createButton = window.rootVisualElement.Q<Button>("expression-creator-create-new-clip-button");
+            var createButton = clipEditTab.Q<Button>("expression-creator-create-new-clip-button");
             Assert.IsNotNull(createButton);
-            Assert.AreEqual("Clip の作成から行う", createButton.text);
+            Assert.AreEqual("新規 Clip を作成", createButton.text);
+
+            // 登録済みタブ内にドロップダウンを持つ
+            var dropdown = registeredTab.Q<DropdownField>("expression-creator-registered-clip-dropdown");
+            Assert.IsNotNull(dropdown);
         }
 
         [Test]
@@ -159,9 +171,14 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             Assert.IsNotNull(clipRow);
             Assert.AreEqual(DisplayStyle.None, clipRow.style.display.value);
 
+            // 登録済み Clip が 0 件のためドロップダウンは非表示、案内 HelpBox が表示される
             var dropdown = window.rootVisualElement.Q<DropdownField>("expression-creator-registered-clip-dropdown");
             Assert.IsNotNull(dropdown);
             Assert.AreEqual(DisplayStyle.None, dropdown.style.display.value);
+
+            var helpBox = window.rootVisualElement.Q<HelpBox>("expression-creator-registered-clip-help");
+            Assert.IsNotNull(helpBox);
+            Assert.AreEqual(DisplayStyle.Flex, helpBox.style.display.value);
         }
 
         [Test]
@@ -179,19 +196,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
         }
 
         [Test]
-        public void EditRegisteredClipButton_WithoutModel_Disabled()
-        {
-            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
-            _trackedObjects.Add(window);
-
-            InvokeCreateGUI(window);
-
-            var registeredButton = window.rootVisualElement.Q<Button>("expression-creator-edit-registered-clip-button");
-            Assert.IsFalse(registeredButton.enabledSelf);
-            Assert.IsNotEmpty(registeredButton.tooltip);
-        }
-
-        [Test]
         public void EditRegisteredClip_WithCharacterSO_PopulatesDropdownAndAssignsClip()
         {
             var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
@@ -204,16 +208,15 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             InvokePrivateMethod(window, "ApplyModelChange", model);
 
-            var registeredButton = window.rootVisualElement.Q<Button>("expression-creator-edit-registered-clip-button");
-            Assert.IsTrue(registeredButton.enabledSelf);
-
-            InvokePrivateMethod(window, "OnEditRegisteredClipClicked");
-
             var dropdown = window.rootVisualElement.Q<DropdownField>("expression-creator-registered-clip-dropdown");
             Assert.AreEqual(DisplayStyle.Flex, dropdown.style.display.value);
             // Clip 未設定の Expression は選択肢に含まれない
             Assert.AreEqual(1, dropdown.choices.Count);
             StringAssert.Contains("笑顔", dropdown.choices[0]);
+
+            // 登録済み Clip があるため案内 HelpBox は非表示
+            var helpBox = window.rootVisualElement.Q<HelpBox>("expression-creator-registered-clip-help");
+            Assert.AreEqual(DisplayStyle.None, helpBox.style.display.value);
 
             InvokePrivateMethod(window, "ApplyRegisteredClipSelection", 0);
 
@@ -312,10 +315,12 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             var exportFolder = Path.Combine(Path.GetTempPath(), $"expression-export-{Guid.NewGuid():N}");
             var writtenPaths = new List<string>();
+            var capturedSizes = new List<(int width, int height)>();
 
             SetPrivateField(window, "_exportFolderProvider", (Func<string>)(() => exportFolder));
             SetPrivateField(window, "_previewTextureCapture", (Func<int, int, Texture2D>)((width, height) =>
             {
+                capturedSizes.Add((width, height));
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 texture.Apply();
                 return texture;
@@ -326,6 +331,13 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             // Clip 付き Expression の数だけ PNG が書き出される
             Assert.AreEqual(2, writtenPaths.Count);
+
+            // 書き出し画像サイズは 512x512
+            foreach (var size in capturedSizes)
+            {
+                Assert.AreEqual(512, size.width);
+                Assert.AreEqual(512, size.height);
+            }
             StringAssert.Contains("笑顔", writtenPaths[0]);
             StringAssert.Contains("怒り", writtenPaths[1]);
             StringAssert.EndsWith(".png", writtenPaths[0]);
@@ -361,6 +373,61 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
             Assert.Greater(color.r, 0.9f);
             Assert.Greater(color.g, 0.7f);
             Assert.Less(color.b, 0.5f);
+
+            // 一括削除ボタンも表示される
+            var deleteButton = window.rootVisualElement.Q<Button>(
+                "expression-creator-delete-missing-blendshape-button");
+            Assert.IsNotNull(deleteButton);
+            Assert.AreEqual(DisplayStyle.Flex, deleteButton.style.display.value);
+        }
+
+        [Test]
+        public void DeleteMissingBlendShapes_RemovesOnlyMissingCurves_AndHidesWarning()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            var model = CreateModelWithBlendShapes(("Face", new[] { "Smile" }));
+            InvokePrivateMethod(window, "ApplyModelChange", model);
+
+            var clip = CreateTrackedClip();
+            ExpressionClipBakery.Bake(clip, new List<ExpressionClipBakery.BlendShapeBakeEntry>
+            {
+                new ExpressionClipBakery.BlendShapeBakeEntry("Face", "Smile", 0.5f),
+                new ExpressionClipBakery.BlendShapeBakeEntry("Face", "Unknown", 1.0f),
+                new ExpressionClipBakery.BlendShapeBakeEntry("Ghost", "Vanished", 0.75f),
+            }, 0.25f, TransitionCurvePreset.Linear);
+
+            SetPrivateField(window, "_targetClip", clip);
+            InvokePrivateMethod(window, "RestoreSliderValuesFromTargetClip");
+
+            InvokePrivateMethod(window, "OnDeleteMissingBlendShapesClicked");
+
+            // 存在しない BlendShape のカーブのみ削除され、既存カーブは残る
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            Assert.AreEqual(1, bindings.Length);
+            Assert.AreEqual("Face", bindings[0].path);
+            Assert.AreEqual("blendShape.Smile", bindings[0].propertyName);
+
+            // 警告と一括削除ボタンは非表示に戻る
+            var warning = window.rootVisualElement.Q<Label>("expression-creator-missing-blendshape-warning");
+            Assert.AreEqual(DisplayStyle.None, warning.style.display.value);
+
+            var deleteButton = window.rootVisualElement.Q<Button>(
+                "expression-creator-delete-missing-blendshape-button");
+            Assert.AreEqual(DisplayStyle.None, deleteButton.style.display.value);
+        }
+
+        [Test]
+        public void DeleteMissingBlendShapes_WithoutTargetClip_DoesNothing()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            // _targetClip 未設定でも例外なく無視される
+            Assert.DoesNotThrow(() => InvokePrivateMethod(window, "OnDeleteMissingBlendShapesClicked"));
         }
 
         [Test]
@@ -384,6 +451,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             var warning = window.rootVisualElement.Q<Label>("expression-creator-missing-blendshape-warning");
             Assert.AreEqual(DisplayStyle.None, warning.style.display.value);
+
+            var deleteButton = window.rootVisualElement.Q<Button>(
+                "expression-creator-delete-missing-blendshape-button");
+            Assert.AreEqual(DisplayStyle.None, deleteButton.style.display.value);
         }
 
         [Test]
@@ -547,8 +618,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
 
             handler.Invoke(window, null);
 
-            Assert.AreEqual(256, capturedWidth);
-            Assert.AreEqual(256, capturedHeight);
+            // 書き出し画像サイズは画面上のプレビュー(256)とは独立に 512x512
+            Assert.AreEqual(512, capturedWidth);
+            Assert.AreEqual(512, capturedHeight);
             Assert.IsTrue(File.Exists(outputPath));
 
             var bytes = File.ReadAllBytes(outputPath);

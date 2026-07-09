@@ -85,6 +85,15 @@ namespace Hidano.FacialControl.Editor.Common
 
             _previewRenderUtility.AddSingleGO(_previewInstance);
 
+            // 同一エディタフレーム内で SetBlendShapeWeight → キャプチャを複数回行う一括書き出しでは、
+            // スキニング再計算がフレームあたり 1 回に間引かれ BlendShape 変更が描画に反映されない。
+            // プレビュー専用インスタンスなので毎レンダー再計算のコスト影響は無視できる。
+            var skinnedRenderers = _previewInstance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            for (int i = 0; i < skinnedRenderers.Length; i++)
+            {
+                skinnedRenderers[i].forceMatrixRecalculationPerRender = true;
+            }
+
             var bounds = CalculateBounds(_previewInstance);
             var trackTarget = ResolveTrackTarget(_previewInstance.transform, trackTargetPath);
             Vector3 pivotPoint;
@@ -152,6 +161,45 @@ namespace Hidano.FacialControl.Editor.Common
             var rect = new Rect(0f, 0f, width, height);
             var previousActive = RenderTexture.active;
 
+            // SRP(URP) では GUI コンテキスト外（ボタンクリック等）からの PreviewRenderUtility.Render()
+            // （camera.Render() 経由）が何も描画せず、EndPreview() は直前に画面へ描画された内容が
+            // 残った RenderTexture を返す。このため明示的な RenderRequest でオフスクリーン描画する。
+            var request = new UnityEngine.Rendering.RenderPipeline.StandardRequest();
+            if (UnityEngine.Rendering.RenderPipeline.SupportsRenderRequest(_previewRenderUtility.camera, request))
+            {
+                // MSAA 付き一時 RT は URP の最終 depth copy で resolve surface エラーになるため使わない
+                var renderTexture = RenderTexture.GetTemporary(
+                    width, height, 24, RenderTextureFormat.ARGB32);
+                try
+                {
+                    // BeginPreview / EndPreview でプレビューシーンのライティング設定を
+                    // on-screen 描画（Render(rect)）と揃える。
+                    _previewRenderUtility.BeginPreview(rect, GUIStyle.none);
+                    try
+                    {
+                        request.destination = renderTexture;
+                        UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(
+                            _previewRenderUtility.camera, request);
+                    }
+                    finally
+                    {
+                        _previewRenderUtility.EndPreview();
+                    }
+
+                    RenderTexture.active = renderTexture;
+                    var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                    texture.ReadPixels(rect, 0, 0);
+                    texture.Apply();
+                    return texture;
+                }
+                finally
+                {
+                    RenderTexture.active = previousActive;
+                    RenderTexture.ReleaseTemporary(renderTexture);
+                }
+            }
+
+            // Built-in RP fallback: 従来どおり PreviewRenderUtility の描画結果を読み取る
             _previewRenderUtility.BeginPreview(rect, GUIStyle.none);
             try
             {

@@ -230,6 +230,48 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor
         }
 
         [Test]
+        public void CapturePreviewTexture_BlendShapeChangedInSameCallback_ReflectsChangeInCapture()
+        {
+            IgnoreWhenGraphicsDeviceUnavailable();
+
+            // 全 Expression PNG 書き出しの再現: 同一エディタコールバック内で
+            // SetBlendShapeWeight → キャプチャを繰り返しても各キャプチャに反映されること。
+            var source = CreateBlendShapeQuadSource(out var mesh, out var material);
+            Texture2D texture0 = null;
+            Texture2D texture100 = null;
+
+            try
+            {
+                _wrapper.Setup(source);
+                var smr = _wrapper.PreviewInstance.GetComponentInChildren<SkinnedMeshRenderer>(true);
+
+                smr.SetBlendShapeWeight(0, 0f);
+                texture0 = _wrapper.CapturePreviewTexture(64, 64);
+
+                // BlendShape でクアッドを視界外へ移動させる
+                smr.SetBlendShapeWeight(0, 100f);
+                texture100 = _wrapper.CapturePreviewTexture(64, 64);
+
+                Assert.IsNotNull(texture0);
+                Assert.IsNotNull(texture100);
+                Assert.IsTrue(ContainsNonBackgroundPixel(texture0),
+                    "weight 0 のキャプチャにクアッドが描画されていること");
+                Assert.IsTrue(PixelsDiffer(texture0, texture100),
+                    "同一コールバック内の BlendShape 変更がキャプチャに反映されること");
+            }
+            finally
+            {
+                if (texture0 != null)
+                    Object.DestroyImmediate(texture0);
+                if (texture100 != null)
+                    Object.DestroyImmediate(texture100);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(mesh);
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
         public void Setup_WithoutTrackTargetPath_UsesDefaultFov()
         {
             var source = CreatePreviewSource();
@@ -285,6 +327,66 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor
                 DestroyPreviewSourceMaterial(source);
                 Object.DestroyImmediate(source);
             }
+        }
+
+        /// <summary>
+        /// BlendShape（頂点を視界外へ移動させる "MoveAway"）付きの両面クアッド
+        /// SkinnedMeshRenderer を持つプレビューソースを生成する。
+        /// </summary>
+        private static GameObject CreateBlendShapeQuadSource(out Mesh mesh, out Material material)
+        {
+            mesh = new Mesh { hideFlags = HideFlags.HideAndDontSave };
+            mesh.vertices = new[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f),
+                new Vector3(0.5f, -0.5f, 0f),
+                new Vector3(-0.5f, 0.5f, 0f),
+                new Vector3(0.5f, 0.5f, 0f),
+            };
+            // 両面（カメラがどちら側にいても描画されるように表裏 4 枚）
+            mesh.triangles = new[] { 0, 2, 1, 2, 3, 1, 1, 2, 0, 1, 3, 2 };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            var deltas = new[]
+            {
+                new Vector3(50f, 50f, 0f),
+                new Vector3(50f, 50f, 0f),
+                new Vector3(50f, 50f, 0f),
+                new Vector3(50f, 50f, 0f),
+            };
+            mesh.AddBlendShapeFrame("MoveAway", 100f, deltas, null, null);
+
+            var shader = Shader.Find("Universal Render Pipeline/Unlit")
+                ?? Shader.Find("Unlit/Color");
+            material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", Color.red);
+            material.color = Color.red;
+
+            var source = new GameObject("BlendShapeQuadSource") { hideFlags = HideFlags.HideAndDontSave };
+            var smr = source.AddComponent<SkinnedMeshRenderer>();
+            smr.sharedMesh = mesh;
+            smr.localBounds = new Bounds(Vector3.zero, Vector3.one * 3f);
+            smr.updateWhenOffscreen = true;
+            smr.sharedMaterial = material;
+            return source;
+        }
+
+        private static bool PixelsDiffer(Texture2D a, Texture2D b)
+        {
+            var pa = a.GetPixels32();
+            var pb = b.GetPixels32();
+            if (pa.Length != pb.Length)
+                return true;
+
+            for (int i = 0; i < pa.Length; i++)
+            {
+                if (pa[i].r != pb[i].r || pa[i].g != pb[i].g || pa[i].b != pb[i].b)
+                    return true;
+            }
+
+            return false;
         }
 
         private static GameObject CreatePreviewSource()
