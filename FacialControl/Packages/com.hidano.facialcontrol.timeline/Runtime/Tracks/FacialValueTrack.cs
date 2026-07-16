@@ -1,5 +1,7 @@
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Timeline.Playables;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -27,7 +29,36 @@ namespace Hidano.FacialControl.Timeline.Tracks
 
         public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
         {
-            return ScriptPlayable<FacialTrackMixerBehaviour>.Create(graph, inputCount);
+            ScriptPlayable<FacialValueMixerBehaviour> playable =
+                ScriptPlayable<FacialValueMixerBehaviour>.Create(graph, inputCount);
+            playable.GetBehaviour().Configure(channelSubId, channelKind, CollectClipSamples(this));
+            return playable;
+        }
+
+        private static FacialValueMixerBehaviour.ClipSample[] CollectClipSamples(FacialValueTrack track)
+        {
+            if (track == null)
+            {
+                return Array.Empty<FacialValueMixerBehaviour.ClipSample>();
+            }
+
+            var clips = new List<FacialValueMixerBehaviour.ClipSample>();
+            foreach (TimelineClip clip in track.GetClips())
+            {
+                if (!(clip.asset is FacialValueClip valueClip))
+                {
+                    continue;
+                }
+
+                clips.Add(new FacialValueMixerBehaviour.ClipSample(
+                    clip.start,
+                    clip.end,
+                    valueClip.Axes));
+            }
+
+            return clips.Count == 0
+                ? Array.Empty<FacialValueMixerBehaviour.ClipSample>()
+                : clips.ToArray();
         }
     }
 }

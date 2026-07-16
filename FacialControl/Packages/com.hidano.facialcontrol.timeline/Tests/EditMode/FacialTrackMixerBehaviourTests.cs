@@ -121,6 +121,96 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             }
         }
 
+        [Test]
+        public void ValueMixer_SamplesAnalogCurvesIntoSink()
+        {
+            var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            var directorObject = new GameObject("FacialTrackMixerBehaviourTests_ValueDirector");
+            var receiverObject = new GameObject("FacialTrackMixerBehaviourTests_ValueReceiver");
+            var director = directorObject.AddComponent<PlayableDirector>();
+            var receiver = receiverObject.AddComponent<FacialTimelineReceiver>();
+            var analogSink = new TimelineAnalogInputSource(InputSourceId.Parse("timeline:analog-main"), axisCount: 3);
+
+            try
+            {
+                receiver.Configure(
+                    CreateProfile(),
+                    new FakeInputSourceRegistry(),
+                    Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
+                    Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
+                    new[] { ("analog-main", analogSink) },
+                    Array.Empty<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>());
+
+                TimelineAsset configuredTimeline = CreateAnalogTimeline(timeline);
+                director.playableAsset = configuredTimeline;
+                director.SetGenericBinding(configuredTimeline.GetOutputTrack(0), receiver);
+                director.RebuildGraph();
+
+                director.time = 0.25d;
+                director.Evaluate();
+
+                Span<float> axes = stackalloc float[3];
+                Assert.That(analogSink.IsValid, Is.True);
+                Assert.That(analogSink.TryReadAxes(axes), Is.True);
+                Assert.That(axes.ToArray(), Is.EqualTo(new[] { 0.25f, 0.5f, -0.25f }).Within(0.0001f));
+            }
+            finally
+            {
+                DestroyGraph(director);
+                UnityEngine.Object.DestroyImmediate(directorObject);
+                UnityEngine.Object.DestroyImmediate(receiverObject);
+                UnityEngine.Object.DestroyImmediate(timeline);
+            }
+        }
+
+        [Test]
+        public void ValueMixer_SamplesGazeCurvesAndInvalidatesOutsideClip()
+        {
+            var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            var directorObject = new GameObject("FacialTrackMixerBehaviourTests_GazeDirector");
+            var receiverObject = new GameObject("FacialTrackMixerBehaviourTests_GazeReceiver");
+            var director = directorObject.AddComponent<PlayableDirector>();
+            var receiver = receiverObject.AddComponent<FacialTimelineReceiver>();
+            var gazeSink = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));
+
+            try
+            {
+                receiver.Configure(
+                    CreateProfile(),
+                    new FakeInputSourceRegistry(),
+                    Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
+                    Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
+                    Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
+                    new[] { ("gaze-main", gazeSink, string.Empty) });
+
+                TimelineAsset configuredTimeline = CreateGazeTimeline(timeline);
+                director.playableAsset = configuredTimeline;
+                director.SetGenericBinding(configuredTimeline.GetOutputTrack(0), receiver);
+                director.RebuildGraph();
+
+                director.time = 0.25d;
+                director.Evaluate();
+
+                Assert.That(gazeSink.IsValid, Is.True);
+                Assert.That(gazeSink.TryReadVector2(out float x, out float y), Is.True);
+                Assert.That(x, Is.EqualTo(-0.5f).Within(0.0001f));
+                Assert.That(y, Is.EqualTo(0.5f).Within(0.0001f));
+
+                director.time = 0.75d;
+                director.Evaluate();
+
+                Assert.That(gazeSink.IsValid, Is.False);
+                Assert.That(gazeSink.TryReadVector2(out _, out _), Is.False);
+            }
+            finally
+            {
+                DestroyGraph(director);
+                UnityEngine.Object.DestroyImmediate(directorObject);
+                UnityEngine.Object.DestroyImmediate(receiverObject);
+                UnityEngine.Object.DestroyImmediate(timeline);
+            }
+        }
+
         private static TimelineExpressionStateSink CreateExpressionSink(FacialProfile profile)
         {
             return new TimelineExpressionStateSink(
@@ -143,6 +233,52 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             childClip.start = 0.5d;
             childClip.duration = 1.0d;
             ((FacialExpressionClip)childClip.asset).ExpressionId = "angry";
+
+            return timeline;
+        }
+
+        private static TimelineAsset CreateAnalogTimeline(TimelineAsset timeline)
+        {
+            var track = timeline.CreateTrack<FacialValueTrack>(null, "Analog");
+            track.ChannelSubId = "analog-main";
+            track.ChannelKind = FacialValueChannelKind.Analog;
+
+            TimelineClip clip = track.CreateClip<FacialValueClip>();
+            clip.start = 0.0d;
+            clip.duration = 0.5d;
+            ((FacialValueClip)clip.asset).Axes = new[]
+            {
+                AnimationCurve.Linear(0f, 0f, 0.5f, 0.5f),
+                AnimationCurve.Linear(0f, 1f, 0.5f, 0f),
+                AnimationCurve.Linear(0f, -0.5f, 0.5f, 0f),
+            };
+
+            return timeline;
+        }
+
+        private static TimelineAsset CreateGazeTimeline(TimelineAsset timeline)
+        {
+            var track = timeline.CreateTrack<FacialValueTrack>(null, "Gaze");
+            track.ChannelSubId = "gaze-main";
+            track.ChannelKind = FacialValueChannelKind.Gaze;
+
+            TimelineClip clip = track.CreateClip<FacialValueClip>();
+            clip.start = 0.0d;
+            clip.duration = 0.5d;
+            ((FacialValueClip)clip.asset).Axes = new[]
+            {
+                AnimationCurve.Linear(0f, -1f, 0.5f, 0f),
+                AnimationCurve.Linear(0f, 1f, 0.5f, 0f),
+            };
+
+            TimelineClip secondClip = track.CreateClip<FacialValueClip>();
+            secondClip.start = 1.0d;
+            secondClip.duration = 0.25d;
+            ((FacialValueClip)secondClip.asset).Axes = new[]
+            {
+                AnimationCurve.Linear(0f, 0f, 0.25f, 0.5f),
+                AnimationCurve.Linear(0f, 0f, 0.25f, -0.5f),
+            };
 
             return timeline;
         }
