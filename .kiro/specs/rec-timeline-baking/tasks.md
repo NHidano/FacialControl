@@ -76,7 +76,7 @@
   - _Requirements: 1.2, 3.3, 6.3, 6.4, 7.2_
   - _Depends: 4.1, 4.2, 4.3_
 
-- [ ] 4.5 AdapterBinding 正道の接続点を実装する
+- [x] 4.5 AdapterBinding 正道の接続点を実装する
   - テストファースト: OnStart で sink 群 + Receiver が登録され、Timeline 未再生時は他入力へ影響しない（invalid / 空スタック・gaze 差し替え未実施）ことのテストを先に書く
   - AdapterBindingBase 継承 + [FacialAdapterBinding] で、レイヤー名列とチャネル定義（sub / AxisCount / IsGaze / TakeoverSourceId）に従い sink 群を構築し registry へ登録（`timeline:gaze-{n}` / `timeline:{channel}`）、HostGameObject へ Receiver を生成・注入する
   - Dispose は gaze 差し替え復元（最終防衛線・参照同一性ガード付き）→ Receiver 破棄 → sink 解除の順。デッド PlayableGraph 経路（OscReceiverPlayable 等）への依存を持たない
