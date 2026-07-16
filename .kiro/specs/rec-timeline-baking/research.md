@@ -7,6 +7,7 @@
   - 系2 active 表情解決（`Layer2ActiveExpressionProvider`）は `ExpressionTriggerInputSourceBase.ActiveExpressionIds` を直接読むため、`blendShapeCount = 0` で構築した派生 sink は「値出力ゼロ・active 状態のみ供給」を**構造的に**実現できる（Req 5.2 / 5.4 の核）
   - `LayerInputSourceAggregator.AggregateInternal` には per-source 値（scratch、pre-weight）の観測点となるコード位置が存在するが、観測フックは未実装。追加は 1 フィールド + null チェック 1 箇所の加算的変更で済む（Req 4.2）
   - Unity Timeline のカスタム Track は `TrackAsset.CreateTrackMixer` + `PlayableBehaviour.ProcessFrame` + `IPropertyPreview.GatherProperties`（Edit Mode プレビュー）が公式パターン。Timeline の PlayableGraph は PlayableDirector 所有であり、FacialController のデッド PlayableGraph 出力経路とは別物
+  - gaze 消費側（`GazeBonePoseProvider` の `EyeBinding.Source`）は構築時キャッシュ（readonly）のため `registry.Replace` 単体では差し替わらない（rec spec の gap 分析で実コード確認済み）。ユーザー決定（案 2）で core に「Replace 再バインド伝搬」注入面が rec spec Req 6.4 として追加予定であり、gaze のライブ⇄Timeline 切替はこれを利用する
 
 ## Research Log
 
@@ -39,9 +40,17 @@
 - **Implications**: core 改修は Aggregator への観測フック追加のみに限定できる。それ以外はすべて既存拡張契約の範囲内で実現可能
 
 ### 先行 spec `rec-recording-playback` との境界
-- **Context**: REC 記録データの物理フォーマットが未確定（先行 spec は requirements フェーズ）
+- **Context**: REC 記録データの物理フォーマットが未確定（先行 spec は requirements フェーズ → gap 分析・design 生成中）
 - **Findings**: 論理形は「操作イベント時系列（トリガー on/off + expressionId + アナログ軸値 + gaze(-1..1 Vector2)、秒ベース相対タイムスタンプ）」で確定済み。sidecar 物理フォーマット・読込 API は未確定
 - **Implications**: 本 spec は論理形のみに依存する `IRecordedEventSequence` を自パッケージ内に定義し、rec の実フォーマットへの変換を Editor 書き出し境界の adapter 1 ファイルに封じ込める。rec の design 確定時に adapter のみ再照合すればよい
+
+### gaze 消費側の構築時キャッシュと core 注入面（先行 spec 決定・設計後に確定）
+- **Context**: 当初設計は「profile の `GazeBindingConfig` に `timeline:gaze-{n}` を静的配線する」方式だったが、rec spec の gap 分析結果と突き合わせた結果、方式の見直しが必要になった
+- **Sources Consulted**: rec spec gap 分析（`FacialController.InitializeInternal` のレイヤー入力源 1 回解決 / `GazeBonePoseProvider.EyeBinding.Source` の readonly 実コード確認）、コーディネーター経由のユーザー決定（案 2）
+- **Findings**:
+  - gaze 消費側は入力ソース参照を構築時にキャッシュするため、`GazeBindingConfig` の静的配線は「ライブ gaze か Timeline gaze のどちらか一方に固定」となり、「ライブ本番中の Timeline 再生」という本 spec の前提と衝突する
+  - `registry.Replace` 単体では消費側参照は差し替わらない。ユーザー決定（案 2）により「Replace 時に消費側（レイヤー入力・gaze 解決）へ再バインドを伝搬する注入面」が rec spec Req 6.4 として core に正式追加される予定（rec spec design 生成中、契約形状は未確定）
+- **Implications**: 本 spec の gaze 供給は「再生セッション中のみ既存ライブ gaze ソースを timeline sink へ Replace（伝搬付き）し、停止時に復元する」一時差し替え方式へ変更。注入面の実装・契約定義は rec spec 所掌で、本 spec は利用側（Revalidation Trigger に契約照合を追加）
 
 ## Architecture Pattern Evaluation
 
@@ -94,9 +103,37 @@
 - **Trade-offs**: 曲線遷移で最大サンプル間隔相当の微小誤差（60 Hz で知覚不可レベル）。厳密一致が必要になった場合は接線付きキーまたはレート引き上げで対処可能
 - **Follow-up**: PlayMode 等価性テストの epsilon を実測で確定する
 
+### Decision: gaze のライブ⇄Timeline 切替は Replace 再バインド伝搬による一時差し替え（レビュー修正 1）
+- **Context**: 当初設計の「`GazeBindingConfig` に `timeline:gaze-{n}` を静的配線」は、gaze 消費側（`EyeBinding.Source`）が構築時固定であるためライブ gaze と Timeline gaze が共存できず（プロファイル設定でどちらか一方に固定）、「ライブ本番中の Timeline 再生」という前提と衝突した
+- **Alternatives Considered**:
+  1. 静的配線（当初案） — 実装は単純だが構築時固定により共存不可。棄却
+  2. **一時差し替え**: 再生セッション開始時に `Replace(既存ライブ gaze ソース id, timeline sink)` を実行し、core 注入面（rec spec が追加する Replace 再バインド伝搬）が消費側を再バインド。停止時に元ソースへ復元
+  3. gaze 解決側に複数ソースの優先度合成を新設 — 共存の表現力は最大だが core の gaze 解決コードパスの変更（Req 9.3 違反）であり、本 spec / rec spec のいずれの所掌でもない
+- **Selected Approach**: 2（一時差し替え）。差し替えの実行と復元は `FacialTimelineReceiver` が所有し、差し替え対象は binding 設定の `TakeoverSourceId`（`GazeBindingConfig` が参照している既存ライブソース id）で指定する。復元は Receiver.ReleaseAll → Receiver.OnDisable/OnDestroy → TimelineAdapterBinding.Dispose の三重防衛線で保証（すべて冪等）
+- **Rationale**: ユーザーの `GazeBindingConfig` は既存ライブ配線のまま変更不要になり、非再生中はライブ gaze が従来どおり機能する。core への追加は rec spec 所掌の注入面のみで、本 spec は利用側に留まる
+- **Trade-offs**: 再生中は当該 gaze チャネルを Timeline が占有する（ライブ gaze と同時合成はしない — 案 3 のスコープ）。注入面の契約形状が rec spec design で確定するまで結合実装できない（Fake 境界で先行実装）
+- **Follow-up**: rec spec design 確定時に注入面の契約形状（API 名・伝搬対象・復元可否）を照合（Revalidation Trigger 登録済み）
+
+### Decision: 状態イベント列は正本クリップ列から graph 構築時に導出（レビュー修正 3）
+- **Context**: 当初設計は状態イベント列（`StateEvents`）を `FacialTimelineBakeAsset` に格納していたが、「ベイク欠落時は状態駆動のみ継続」という 6.4 の挙動記述と矛盾していた（イベント列自体がベイク成果物内にあるため欠落時は状態駆動も不能）
+- **Alternatives Considered**:
+  1. (a) ベイク欠落時は当該 Track を完全無効化（状態駆動もなし）とし記述側を修正 — BakeAsset 中心の単純な構成を維持できるが、ベイク欠落で override/suppress まで全滅し degradation が粗い。また状態イベントが「正本の複製」としてベイクに二重化され、陳腐化時に状態まで古くなる
+  2. (b) mixer が graph 構築時（アロケーション許容）に Track のクリップ列から状態イベントを直接導出 — 状態は常に正本と一致（ベイク陳腐化・欠落の影響を受けない）。導出コストは構築時 1 回のみ。BakeAsset は「シミュレーションを要する値カーブ + ハッシュ」に純化される
+- **Selected Approach**: 2（クリップ列から導出）。`FacialTimelineBakeAsset` から `StateEvents` を削除し、`TimelineStateEvent` は非シリアライズのランタイムモデルとする
+- **Rationale**: 「正本はクリップ列」（Req 3.2）の原則に照らすと、正本から O(クリップ数) で導出できる状態イベントをベイク（派生物）に複製する必然性がなく、複製を持たない方が整合性の破れ口が減る。6.4 の graceful degradation（値欠落でも状態駆動継続）が構造的に成立する
+- **Trade-offs**: mixer の graph 構築時処理がやや増える（レーン統合 + 安定ソート。構築時のためGC 制約外）。ベイク欠落時に状態だけ動く状態は「表情が出ないのに override/suppress は効く」という中途半端な見え方になり得る（ログ通知で原因提示）
+
+### Decision: rec 依存の宣言形 — package.json 必須依存 + asmdef 参照は Editor のみ（レビュー修正 2）
+- **Context**: Runtime asmdef のコメントに rec 参照が残っており、「rec 依存は Editor 書き出し時のみ」という Boundary 記述と矛盾していた
+- **Alternatives Considered**:
+  1. package.json で rec を必須依存として宣言し、asmdef 参照は Editor asmdef のみに限定
+  2. rec を package.json から外し `versionDefines` で rec 存在時のみ Exporter をコンパイル（optional 化）
+- **Selected Approach**: 1。UPM には optional 依存の表現がなく、案 2 は rec 未導入時に主要ユースケース（REC 書き出し、Req 9.5）が無言で消える。本パッケージは rec の後続 spec であり rec 前提は自然。ランタイム再生コードが rec の型に触れないことは Runtime asmdef の参照リストで物理的に強制する
+- **Trade-offs**: Timeline 編集・再生だけを使いたい利用者にも rec の導入を要求する（rec は core のみに依存する軽量パッケージのため許容）
+
 ### Decision: ベイク欠落時のランタイム挙動
-- **Selected Approach**: ベイク成果物が無い場合は値供給なし + 状態イベント駆動のみ + Unity 標準ログ通知（Req 6.4）。ライブ駆動モードへのフォールバックは持たない
-- **Rationale**: フォールバックは第 2 の再生モード（スクラブ非対応）を生み、Req 5.2 の「値の供給元はベイクのみ」と矛盾する。Editor では自動再ベイク（6.2）が先に走るため通常発生しない
+- **Selected Approach**: ベイク成果物が無い場合は値供給なし（表情ソース値・連続値とも）+ 状態駆動（クリップ列由来イベント）は継続 + Unity 標準ログ通知（Req 6.4）。ライブ駆動モードへのフォールバックは持たない
+- **Rationale**: フォールバックは第 2 の再生モード（スクラブ非対応）を生み、Req 5.2 の「値の供給元はベイクのみ」と矛盾する。状態イベントは正本クリップ列から導出するため欠落の影響を受けない（上記 Decision 参照）。Editor では自動再ベイク（6.2）が先に走るため通常発生しない
 - **Trade-offs**: ビルド後ランタイムでベイク欠落だと表情値が出ない（ログで原因提示）
 
 ### Decision: Timeline 停止時は全解除
@@ -106,6 +143,8 @@
 
 ## Risks & Mitigations
 - **rec spec の設計変更で論理イベント形が変わる** — `IRecordedEventSequence` + adapter 1 ファイルに依存を封じ込め、Revalidation Trigger として明記
+- **core 注入面（Replace 再バインド伝搬）の契約形状が想定と異なる**（rec spec design 生成中） — gaze 差し替えを Receiver の `BeginPlaybackSession`/`ReleaseAll` に局所化し、注入面は Fake 境界で先行実装。rec design 確定時に照合（Revalidation Trigger 登録済み）
+- **gaze 差し替えの復元漏れ**（差し替えたままライブ gaze が死ぬ） — 三重防衛線（ReleaseAll / Receiver OnDisable/OnDestroy / Binding Dispose、すべて冪等）+ 各経路の PlayMode テストで担保
 - **Aggregator 観測フックの perf 退行** — observer 未登録時は null チェック 1 回/ソース/フレームのみ。既存 GC ゼロゲートテストで担保
 - **Edit Mode プレビューの driven-property 復元漏れ**（過去に reflection 注入で実害事例あり） — `GatherProperties` 経由の標準 preview 機構のみを使い、独自の直接書込プレビューを作らない
 - **同一フレーム内複数イベントの順序** — レーン分割後もイベント統合はレイヤー親 Track の mixer が一元管理し、記録時刻 + 安定ソートで順序決定性を保証

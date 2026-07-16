@@ -263,7 +263,7 @@ flowchart LR
 | Requirement | Summary | Components | Interfaces | Flows |
 |-------------|---------|------------|------------|-------|
 | 1.1 | 独自 Track 提供 | FacialExpressionTrack, FacialValueTrack | TrackAsset 派生 | — |
-| 1.2 | mixer が入力パイプライン駆動 | 両 MixerBehaviour, Receiver, sink 群 | ITimelineSinkAccess | ランタイム再生 |
+| 1.2 | mixer が入力パイプライン駆動 | 両 MixerBehaviour, Receiver, sink 群 | Receiver の TryGet 系 API | ランタイム再生 |
 | 1.3 | 遷移計算をライブと同一コードパス | BakeSimulationHarness（値）, StateSink（状態） | 観測フック | ベイク |
 | 1.4 | 合成済み値を直接書かない | sink 群（入力源として参加） | IInputSource | 境界図 |
 | 1.5 | 線形再生でライブと同一結果 | TimelineBakeService（60Hz + epsilon 検証） | — | ベイク |
@@ -850,8 +850,10 @@ steering 契約どおり Unity 標準ログ（`Debug.Log/LogWarning/LogError`）
 1. **ライブ等価**（Req 1.5）: 同一イベント列を (a) ライブ trigger 駆動、(b) 書き出し → ベイク → Timeline 線形再生、で流し post-blend 出力を許容誤差比較（線形遷移は厳密一致、カーブ遷移は epsilon）
 2. **スクラブ/ジャンプ**（Req 5.3/5.4）: 任意時刻へのジャンプ直後の値（ベイクサンプル）と active 状態（override/suppress の発火）が線形到達時と一致
 3. **レイヤー共存**（Req 5.5）: Timeline 再生中に Fake リップシンク入力を並走させ、既存合成で共存すること
-4. **gaze 経路**（Req 7.2/7.4): gaze カーブ → `Publish` → `GazeBonePoseProvider` で目ボーンが動き、プロファイル差し替えで追従すること
-5. **停止時解除**: graph 停止で state sink 全解除 + value sink invalidate、他入力源へ影響しないこと
+4. **gaze 差し替え経路**（Req 7.2/7.4）: ライブ gaze ソース稼働中に Timeline 再生を開始すると gaze 消費側が timeline sink へ切り替わり（Replace 再バインド伝搬経由）、gaze カーブ → `Publish` → `GazeBonePoseProvider` で目ボーンが動き、停止でライブソースへ復元されること。プロファイル差し替えで追従すること
+5. **gaze 復元保証**: graph 破棄・Receiver 破棄・Binding Dispose の各経路で差し替えが必ず復元されること（三重防衛線の各段を個別検証）
+6. **停止時解除**: graph 停止で state sink 全解除 + value sink invalidate、他入力源へ影響しないこと
+7. **ベイク欠落時の degradation**（Req 6.4）: BakeAsset 未割当で再生した場合、値供給なし・状態駆動（override/suppress）は継続し、ログ通知が出ること
 
 ### Performance Tests（PlayMode）
 1. Timeline 再生中の定常フレーム GC ゼロ（`FacialControllerGcZeroGateTests` の ProfilerRecorder パターンを踏襲、Req 8.1）
@@ -871,7 +873,9 @@ steering 契約どおり Unity 標準ログ（`Debug.Log/LogWarning/LogError`）
 
 新規パッケージのため移行はない。導入手順のみ:
 1. `com.hidano.facialcontrol.timeline` を導入（UPM が core / rec / com.unity.timeline を解決）
-2. `FacialCharacterProfileSO` に `TimelineAdapterBinding` を追加し、対象レイヤー / チャネルを設定（gaze を使う場合は `GazeBindingConfig` に `timeline:gaze-{n}` を配線）
+2. `FacialCharacterProfileSO` に `TimelineAdapterBinding` を追加し、対象レイヤー / チャネルを設定。gaze を使う場合はチャネル設定の `TakeoverSourceId` に既存ライブ gaze ソースの id（`GazeBindingConfig` が参照している id）を指定する。**`GazeBindingConfig` 自体は既存のライブ配線のまま変更しない**（再生中のみ Timeline が当該チャネルを一時占有する）
 3. REC 記録を Exporter で TimelineAsset へ書き出し（ベイクは自動生成）、PlayableDirector の Track binding に `FacialTimelineReceiver` を割当てる
 
-実装順序の制約: `RecEventSequenceAdapter` は rec spec の読込 API 確定後にのみ実装可能。それ以外（Track / mixer / sink / ベイク / ハッシュ）は `IRecordedEventSequence` の Fake で先行実装できる。
+実装順序の制約:
+- `RecEventSequenceAdapter` は rec spec の読込 API 確定後にのみ実装可能。それ以外（Track / mixer / sink / ベイク / ハッシュ）は `IRecordedEventSequence` の Fake で先行実装できる
+- gaze 差し替え（Receiver の `BeginPlaybackSession` / 復元）は core 注入面（rec spec が追加する Replace 再バインド伝搬）の実装後にのみ結合可能。それまでは注入面の Fake を境界にして先行実装する
