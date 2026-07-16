@@ -165,7 +165,7 @@
   - _Boundary: RecFileReader_
   - _Depends: 5.3_
 
-- [ ] 7.3 (P) writer thread によるストリーミング書き出しを実装する
+- [x] 7.3 (P) writer thread によるストリーミング書き出しを実装する
   - background スレッド + 事前確保バッファ + ファイル追記でキューを順次消費する（既存の受信ループパターンを踏襲、throttled error log 含む）
   - ファイルストリームの所有権は writer thread に固定し、ループ脱出時に finally で必ず close する。ファイナライズは producer 停止 → drain → フッタ書込 → close → Join(timeout) の順。Join タイムアウト時メインスレッドはストリームに触れない（ロック残留防止）
   - 停止 API は冪等（二重呼び出し・未オープンは静かに no-op）。同名ファイルは開始時に連番リネームで回避。Editor では記録停止時のみ AssetDatabase.Refresh

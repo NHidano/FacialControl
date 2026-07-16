@@ -22,17 +22,20 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             queue.Enqueue(in second, stackalloc float[] { 0.25f, -0.5f });
             queue.Enqueue(in third, ReadOnlySpan<float>.Empty);
 
-            Assert.That(queue.TryDequeue(out RecEvent dequeuedFirst, out ReadOnlySpan<float> firstAxes), Is.True);
+            Assert.That(queue.TryDequeue(out RecEvent dequeuedFirst, out ReadOnlySpan<float> firstAxes, out string firstIdValue), Is.True);
             Assert.That(dequeuedFirst, Is.EqualTo(first));
             Assert.That(firstAxes.Length, Is.Zero);
+            Assert.That(firstIdValue, Is.Null);
 
-            Assert.That(queue.TryDequeue(out RecEvent dequeuedSecond, out ReadOnlySpan<float> secondAxes), Is.True);
+            Assert.That(queue.TryDequeue(out RecEvent dequeuedSecond, out ReadOnlySpan<float> secondAxes, out string secondIdValue), Is.True);
             Assert.That(dequeuedSecond, Is.EqualTo(second));
             Assert.That(secondAxes.ToArray(), Is.EqualTo(new[] { 0.25f, -0.5f }));
+            Assert.That(secondIdValue, Is.Null);
 
-            Assert.That(queue.TryDequeue(out RecEvent dequeuedThird, out ReadOnlySpan<float> thirdAxes), Is.True);
+            Assert.That(queue.TryDequeue(out RecEvent dequeuedThird, out ReadOnlySpan<float> thirdAxes, out string thirdIdValue), Is.True);
             Assert.That(dequeuedThird, Is.EqualTo(third));
             Assert.That(thirdAxes.Length, Is.Zero);
+            Assert.That(thirdIdValue, Is.Null);
             Assert.That(queue.IsEmpty, Is.True);
         }
 
@@ -57,9 +60,10 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
             for (int i = 0; i < expected.Length; i++)
             {
-                Assert.That(queue.TryDequeue(out RecEvent actual, out ReadOnlySpan<float> axes), Is.True);
+                Assert.That(queue.TryDequeue(out RecEvent actual, out ReadOnlySpan<float> axes, out string idValue), Is.True);
                 Assert.That(actual, Is.EqualTo(expected[i]));
                 Assert.That(axes.Length, Is.Zero);
+                Assert.That(idValue, Is.Null);
             }
 
             Assert.That(queue.IsEmpty, Is.True);
@@ -113,7 +117,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
                     int index = 0;
                     while (index < eventCount)
                     {
-                        if (!queue.TryDequeue(out RecEvent evt, out ReadOnlySpan<float> axes))
+                        if (!queue.TryDequeue(out RecEvent evt, out ReadOnlySpan<float> axes, out _))
                         {
                             Thread.Yield();
                             continue;

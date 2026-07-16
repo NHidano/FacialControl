@@ -108,14 +108,17 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             Assert.That(sink.AppendedEvents.Count, Is.EqualTo(6));
             Assert.That(sink.AppendedEvents[0].evt.Kind, Is.EqualTo(RecEventKind.IdDefine));
             Assert.That(sink.AppendedEvents[0].evt.DefinedIdKind, Is.EqualTo(RecEvent.IdDefinitionKind.Source));
+            Assert.That(sink.AppendedEvents[0].idValue, Is.EqualTo("input:trigger"));
             Assert.That(sink.AppendedEvents[1].evt.Kind, Is.EqualTo(RecEventKind.IdDefine));
             Assert.That(sink.AppendedEvents[1].evt.DefinedIdKind, Is.EqualTo(RecEvent.IdDefinitionKind.Expression));
+            Assert.That(sink.AppendedEvents[1].idValue, Is.EqualTo("smile"));
             Assert.That(sink.AppendedEvents[2].evt.Kind, Is.EqualTo(RecEventKind.TriggerOn));
             Assert.That(sink.AppendedEvents[2].evt.TimestampSeconds, Is.EqualTo(0.10d));
             Assert.That(sink.AppendedEvents[3].evt.Kind, Is.EqualTo(RecEventKind.TriggerOff));
             Assert.That(sink.AppendedEvents[3].evt.TimestampSeconds, Is.EqualTo(0.20d));
             Assert.That(sink.AppendedEvents[4].evt.Kind, Is.EqualTo(RecEventKind.IdDefine));
             Assert.That(sink.AppendedEvents[4].evt.DefinedIdKind, Is.EqualTo(RecEvent.IdDefinitionKind.Source));
+            Assert.That(sink.AppendedEvents[4].idValue, Is.EqualTo("input:gaze"));
             Assert.That(sink.AppendedEvents[5].evt.Kind, Is.EqualTo(RecEventKind.AnalogSample));
             Assert.That(sink.AppendedEvents[5].evt.TimestampSeconds, Is.EqualTo(0.30d));
             Assert.That(sink.AppendedEvents[5].axes, Is.EqualTo(new[] { 0.25f, -0.5f }));
@@ -234,7 +237,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
         private sealed class FakeRecEventSink : IRecEventSink
         {
-            public readonly List<(RecEvent evt, float[] axes)> AppendedEvents = new List<(RecEvent evt, float[] axes)>();
+            public readonly List<(RecEvent evt, float[] axes, string idValue)> AppendedEvents = new List<(RecEvent evt, float[] axes, string idValue)>();
 
             public int OpenCallCount { get; private set; }
 
@@ -252,9 +255,9 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
                 OpenedBaseline = baseline;
             }
 
-            public void AppendEvent(in RecEvent evt, ReadOnlySpan<float> axes)
+            public void AppendEvent(in RecEvent evt, ReadOnlySpan<float> axes, string idValue = null)
             {
-                AppendedEvents.Add((evt, axes.ToArray()));
+                AppendedEvents.Add((evt, axes.ToArray(), idValue));
             }
 
             public void Complete(double durationSeconds, int eventCount)

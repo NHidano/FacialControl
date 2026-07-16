@@ -46,10 +46,11 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
                 return;
             }
 
-            _idTable = new RecIdTable();
+            baseline ??= RecBaselineState.Empty;
+            _idTable = CreateSeededIdTable(baseline);
             _eventCount = 0;
             _clock.Reset();
-            _sink.Open(baseline ?? RecBaselineState.Empty);
+            _sink.Open(baseline);
             _observationBus.Subscribe(this);
             _state = RecordingState.Recording;
         }
@@ -186,7 +187,7 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
             index = _idTable.GetOrAddSourceId(sourceId);
             if (!existed)
             {
-                AppendEvent(RecEvent.CreateIdDefine(index, RecEvent.IdDefinitionKind.Source), ReadOnlySpan<float>.Empty);
+                AppendEvent(RecEvent.CreateIdDefine(index, RecEvent.IdDefinitionKind.Source), ReadOnlySpan<float>.Empty, sourceId);
             }
 
             return index;
@@ -198,16 +199,42 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
             index = _idTable.GetOrAddExpressionId(expressionId);
             if (!existed)
             {
-                AppendEvent(RecEvent.CreateIdDefine(index, RecEvent.IdDefinitionKind.Expression), ReadOnlySpan<float>.Empty);
+                AppendEvent(RecEvent.CreateIdDefine(index, RecEvent.IdDefinitionKind.Expression), ReadOnlySpan<float>.Empty, expressionId);
             }
 
             return index;
         }
 
-        private void AppendEvent(in RecEvent evt, ReadOnlySpan<float> axes)
+        private void AppendEvent(in RecEvent evt, ReadOnlySpan<float> axes, string idValue = null)
         {
-            _sink.AppendEvent(evt, axes);
+            _sink.AppendEvent(evt, axes, idValue);
             _eventCount++;
+        }
+
+        private static RecIdTable CreateSeededIdTable(RecBaselineState baseline)
+        {
+            var idTable = new RecIdTable();
+            if (baseline == null)
+            {
+                return idTable;
+            }
+
+            for (int i = 0; i < baseline.TriggerEntries.Count; i++)
+            {
+                RecBaselineState.TriggerEntry entry = baseline.TriggerEntries[i];
+                idTable.GetOrAddSourceId(entry.SourceId);
+                for (int j = 0; j < entry.ExpressionIds.Count; j++)
+                {
+                    idTable.GetOrAddExpressionId(entry.ExpressionIds[j]);
+                }
+            }
+
+            for (int i = 0; i < baseline.AnalogEntries.Count; i++)
+            {
+                idTable.GetOrAddSourceId(baseline.AnalogEntries[i].SourceId);
+            }
+
+            return idTable;
         }
 
         private void ThrowIfDisposed()

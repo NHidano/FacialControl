@@ -65,7 +65,7 @@ namespace Hidano.FacialControl.Rec.Domain.Services
         /// <summary>
         /// Producer-thread only. Adds an event to the queue and never drops it; saturation grows the queue by adding a new segment.
         /// </summary>
-        public void Enqueue(in RecEvent evt, ReadOnlySpan<float> axes)
+        public void Enqueue(in RecEvent evt, ReadOnlySpan<float> axes, string idValue = null)
         {
             ValidateAxes(evt, axes);
 
@@ -75,14 +75,14 @@ namespace Hidano.FacialControl.Rec.Domain.Services
                 segment = MoveProducerToNextSegment(segment);
             }
 
-            segment.Write(in evt, axes);
+            segment.Write(in evt, axes, idValue);
             Volatile.Write(ref segment.PublishedCount, segment.WriteCount);
         }
 
         /// <summary>
         /// Consumer-thread only. Returns true when an event is available. The returned axes span is valid until the next TryDequeue call.
         /// </summary>
-        public bool TryDequeue(out RecEvent evt, out ReadOnlySpan<float> axes)
+        public bool TryDequeue(out RecEvent evt, out ReadOnlySpan<float> axes, out string idValue)
         {
             Segment segment = _consumerSegment;
 
@@ -91,7 +91,7 @@ namespace Hidano.FacialControl.Rec.Domain.Services
                 int publishedCount = Volatile.Read(ref segment.PublishedCount);
                 if (segment.ReadCount < publishedCount)
                 {
-                    segment.Read(out evt, out axes);
+                    segment.Read(out evt, out axes, out idValue);
                     return true;
                 }
 
@@ -100,6 +100,7 @@ namespace Hidano.FacialControl.Rec.Domain.Services
                 {
                     evt = default;
                     axes = default;
+                    idValue = null;
                     return false;
                 }
 
@@ -174,12 +175,14 @@ namespace Hidano.FacialControl.Rec.Domain.Services
             private readonly RecEvent[] _events;
             private readonly int[] _axisStarts;
             private readonly float[] _axisValues;
+            private readonly string[] _idValues;
 
             public Segment(int segmentCapacity, int axisFloatCapacityPerSegment)
             {
                 _events = new RecEvent[segmentCapacity];
                 _axisStarts = new int[segmentCapacity];
                 _axisValues = new float[axisFloatCapacityPerSegment];
+                _idValues = new string[segmentCapacity];
             }
 
             public Segment Next;
@@ -200,7 +203,7 @@ namespace Hidano.FacialControl.Rec.Domain.Services
                     && AxisWriteCount + axisCount <= axisFloatCapacityPerSegment;
             }
 
-            public void Write(in RecEvent evt, ReadOnlySpan<float> axes)
+            public void Write(in RecEvent evt, ReadOnlySpan<float> axes, string idValue)
             {
                 int index = WriteCount;
                 int axisStart = AxisWriteCount;
@@ -212,14 +215,17 @@ namespace Hidano.FacialControl.Rec.Domain.Services
 
                 _axisStarts[index] = axisStart;
                 _events[index] = evt;
+                _idValues[index] = idValue;
                 AxisWriteCount += axes.Length;
                 WriteCount = index + 1;
             }
 
-            public void Read(out RecEvent evt, out ReadOnlySpan<float> axes)
+            public void Read(out RecEvent evt, out ReadOnlySpan<float> axes, out string idValue)
             {
                 int index = ReadCount;
                 evt = _events[index];
+                idValue = _idValues[index];
+                _idValues[index] = null;
                 axes = evt.AxisCount == 0
                     ? ReadOnlySpan<float>.Empty
                     : new ReadOnlySpan<float>(_axisValues, _axisStarts[index], evt.AxisCount);
