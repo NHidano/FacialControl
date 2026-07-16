@@ -43,7 +43,7 @@
 - 依存方向制約: timeline Runtime → {core, com.unity.timeline} / timeline Editor → {timeline Runtime, rec, com.unity.timeline}。逆方向参照は禁止。osc / inputsystem / lipsync への依存は禁止
 
 ### Revalidation Triggers
-- rec spec の design 確定により論理イベント形（トリガー on/off + expressionId + アナログ軸値 + gaze + 秒タイムスタンプ）が変わった場合 → `RecEventSequenceAdapter` と本 design の照合
+- rec spec の記録モデル（`RecTimeline` / `RecEvent`。2026-07-16 の design 確定内容と照合済み: AnalogSample の可変軸数対応 + gaze 専用 kind の廃止を反映）が再度変わった場合 → `RecEventSequenceAdapter` と `IRecordedEventSequence` 契約の再照合
 - **rec spec の design 確定時に、core 注入面（Replace 再バインド伝搬）の契約形状（API 名・伝搬対象範囲・元ソースへの復元可否）を本 design の gaze 差し替え設計（Receiver / TimelineAdapterBinding）と照合**
 - core の `IInputSourceRegistry` / `AdapterBuildContext` / `Layer2ActiveExpressionProvider` の契約形状変更
 - `FacialTimelineBakeAsset` スキーマまたはハッシュ正規形の変更（ベイク互換性が壊れる）
@@ -267,7 +267,8 @@ flowchart LR
 | 1.3 | 遷移計算をライブと同一コードパス | BakeSimulationHarness（値）, StateSink（状態） | 観測フック | ベイク |
 | 1.4 | 合成済み値を直接書かない | sink 群（入力源として参加） | IInputSource | 境界図 |
 | 1.5 | 線形再生でライブと同一結果 | TimelineBakeService（60Hz + epsilon 検証） | — | ベイク |
-| 2.1–2.3 | REC → クリップ列変換 | RecToTimelineExporter | IRecordedEventSequence | — |
+| 2.1–2.2 | REC → クリップ列変換 | RecToTimelineExporter | IRecordedEventSequence | — |
+| 2.3 | アナログ/gaze 連続値のカーブクリップ化 | RecToTimelineExporter（可変 N 軸 + gaze 振り分け規則） | RecordedEvent.Axes | — |
 | 2.4 | TimelineAsset として保存 | RecToTimelineExporter | AssetDatabase | — |
 | 2.5 | 無効 expressionId の安全な書き出し | Exporter, FacialTimelineValidator | — | — |
 | 3.1 | Unity 標準編集操作 | Track/Clip 定義, TrackEditors | ClipCaps | — |
@@ -301,7 +302,7 @@ flowchart LR
 | 9.2 | デッド経路非依存 | 全コンポーネント（設計制約） | — | — |
 | 9.3 | core コードパス不変更 | 観測フックのみ（加算的） | — | — |
 | 9.4 | Timeline 依存の局所化 | 新規パッケージ package.json | — | — |
-| 9.5 | REC 記録データを入力可能 | RecEventSequenceAdapter | IRecordedEventSequence | — |
+| 9.5 | REC 記録データを入力可能 | RecEventSequenceAdapter（rec 実モデル RecTimeline/RecEvent の 1:1 変換） | IRecordedEventSequence | — |
 
 ## Components and Interfaces
 
@@ -640,21 +641,25 @@ public void SetSourceValueObserver(ILayerSourceValueObserver observer); // null 
 | Requirements | 2.1–2.5, 3.4, 9.5 |
 
 **Responsibilities & Constraints**
-- 変換規則: トリガー on/off 対 → `FacialExpressionClip`（開始 = on 時刻、終了 = off 時刻。off 欠落は記録終端まで）。重なる区間は決定的な貪欲レーン割当（開始時刻順に最初に空いたレーンへ）。アナログ / gaze 連続値 → `FacialValueClip`（記録イベント時刻をそのまま Keyframe とする。リサンプルしない）
+- 変換規則: トリガー on/off 対 → `FacialExpressionClip`（開始 = on 時刻、終了 = off 時刻。off 欠落は記録終端まで）。重なる区間は決定的な貪欲レーン割当（開始時刻順に最初に空いたレーンへ）。`AnalogValue` イベントは **SourceId 単位**で `FacialValueTrack` + `FacialValueClip` へ変換する（軸数はイベントの `Axes.Length` に従う可変 N 軸。記録イベント時刻をそのまま各軸カーブの Keyframe とする。リサンプルしない）
+- **gaze 振り分け規則**（rec の実モデルに gaze 専用 kind は存在せず gaze は「アナログ 2 軸サンプル」に統一されているため、gaze への割当は Exporter の責務）: (1) 既定の自動推論 — SourceId が現在のプロファイルの `GazeBindingConfig` が参照するソース id と一致し、かつ軸数が 2 のとき当該 Track を Gaze 種別とする、(2) 書き出しウィンドウで SourceId ごとに Analog / Gaze 種別をユーザーが上書き可能、(3) Gaze 指定なのに軸数が 2 でない場合は `Debug.LogWarning` + Analog 種別へフォールバック。書き出し後の gaze 識別は従来どおり Track 種別と `TimelineValueChannelConfig.IsGaze` が担う
 - 現在のプロファイルに存在しない expressionId: クリップは生成し `Debug.LogWarning`（クリップ名 + 時刻。OQ2。差し替え修復を可能にするため除外しない）
 - 出力先は UI Toolkit ウィンドウで明示指定。既定は新規 TimelineAsset。既存アセット / 既存 Track を指定した場合は確認ダイアログ必須（OQ4、Req 3.4）。書き出し後に `TimelineBakeService` を自動実行し、`FacialTimelineReceiver.BakeAsset` を割当てる
-- `RecEventSequenceAdapter` が rec パッケージの実フォーマット読込を `IRecordedEventSequence` へ変換する（rec 依存はこのファイルに封じ込め — Revalidation Trigger 対象）
+- `RecEventSequenceAdapter` が rec パッケージの実モデル（`RecTimeline` / `RecEvent`。AnalogSample は `u8 axisCount + f32[axisCount]`、最大 255 軸。id は slug:sub 形式のソース id 文字列）を `IRecordedEventSequence` へ **1:1 で機械的に変換**する。kind の推論・gaze 判定は adapter では行わない（薄い変換に限定。rec 依存はこのファイルに封じ込め — Revalidation Trigger 対象）
 
 **Contracts**: Batch [x]
 
 ##### Batch / Job Contract
 - Trigger: メニュー / ウィンドウからの手動実行
-- Input / validation: REC 記録（`IRecordedEventSequence`）、対象プロファイル、出力先パス。イベント時刻の昇順を検証
+- Input / validation: REC 記録（`IRecordedEventSequence`）、対象プロファイル、出力先パス。イベント時刻の昇順と `AnalogValue` の軸数（1 以上）を検証
 - Output / destination: TimelineAsset（Track/クリップ列）+ 自動ベイク済み `FacialTimelineBakeAsset`（sub-asset）
-- Idempotency & recovery: 同一入力 → 同一クリップ列（決定的レーン割当）。失敗時は AssetDatabase 変更を保存しない
+- Idempotency & recovery: 同一入力 → 同一クリップ列（決定的レーン割当。gaze 自動推論も profile 内容から決定的）。失敗時は AssetDatabase 変更を保存しない
 
 ```csharp
-/// <summary>rec 論理イベント形の契約（本パッケージ内定義。物理フォーマット非依存）。</summary>
+/// <summary>rec 論理イベント形の契約(本パッケージ内定義)。rec spec design の確定モデル
+/// (RecTimeline / RecEvent、RecEventKind: IdDefine / TriggerOn / TriggerOff / AnalogSample / Footer)
+/// と 2026-07-16 に照合済み。IdDefine / Footer は adapter 内で解決・消費され本契約には現れない。
+/// Editor 書き出し時のみ使用する Batch 契約のためヒープ確保を許容する。</summary>
 public interface IRecordedEventSequence
 {
     double DurationSeconds { get; }
@@ -662,16 +667,17 @@ public interface IRecordedEventSequence
     RecordedEvent this[int index] { get; }   // 時刻昇順
 }
 
-public enum RecordedEventKind { TriggerOn, TriggerOff, AnalogValue, GazeValue }
+/// <summary>gaze 専用 kind は持たない(rec 実モデルに存在しない)。
+/// gaze への割当は Exporter の振り分け規則が担う。</summary>
+public enum RecordedEventKind { TriggerOn, TriggerOff, AnalogValue }
 
 public readonly struct RecordedEvent
 {
     public readonly double TimeSeconds;      // 記録開始起点の相対秒
     public readonly RecordedEventKind Kind;
     public readonly string ExpressionId;     // Trigger 系のみ
-    public readonly string SourceId;         // Analog / Gaze のチャネル識別子
-    public readonly float X;                 // Analog: 軸値 / Gaze: x (-1..1)
-    public readonly float Y;                 // Gaze: y (-1..1)
+    public readonly string SourceId;         // AnalogValue のソース id(slug:sub 形式)
+    public readonly float[] Axes;            // AnalogValue の軸値(長さ 1..255 の可変軸)。gaze は 2 軸・値域 -1..1
 }
 ```
 
@@ -842,7 +848,7 @@ steering 契約どおり Unity 標準ログ（`Debug.Log/LogWarning/LogError`）
 ### Unit Tests（EditMode）
 1. `TimelineEventStateReconstructor` — 線形前進とジャンプで active 集合・スタック順が全経路一致（順序復元・同時刻イベントの安定順序を含む）
 2. `FacialTimelineHashCalculator` — 同一正本 → 同一値 / クリップ移動・Keyframe 編集・プロファイル遷移時間変更のそれぞれで不一致、非意味情報（Track 表示順以外の並び）で不変
-3. Exporter 変換 — on/off 対 → クリップ、重なり → 決定的レーン割当、off 欠落 → 終端まで、未知 expressionId → 生成 + Warning（`LogAssert`）
+3. Exporter 変換 — on/off 対 → クリップ、重なり → 決定的レーン割当、off 欠落 → 終端まで、未知 expressionId → 生成 + Warning（`LogAssert`）、多軸アナログ（AxisCount > 2）の欠落なし変換、gaze 自動推論の決定性（GazeBindingConfig 一致 + 2 軸 → Gaze / 軸数不一致 → Warning + Analog フォールバック）
 4. ベイク決定性 — 同一クリップ列 + プロファイルから 2 回ベイクしてカーブのバイト等価（Req 4.5）、キー削減の決定性
 5. 観測フック — observer 未登録で既存 Aggregator テストが全緑（挙動不変）、登録時に (layer, source) 順で pre-weight 値が届く
 

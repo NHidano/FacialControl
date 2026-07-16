@@ -42,7 +42,17 @@
 ### 先行 spec `rec-recording-playback` との境界
 - **Context**: REC 記録データの物理フォーマットが未確定（先行 spec は requirements フェーズ → gap 分析・design 生成中）
 - **Findings**: 論理形は「操作イベント時系列（トリガー on/off + expressionId + アナログ軸値 + gaze(-1..1 Vector2)、秒ベース相対タイムスタンプ）」で確定済み。sidecar 物理フォーマット・読込 API は未確定
-- **Implications**: 本 spec は論理形のみに依存する `IRecordedEventSequence` を自パッケージ内に定義し、rec の実フォーマットへの変換を Editor 書き出し境界の adapter 1 ファイルに封じ込める。rec の design 確定時に adapter のみ再照合すればよい
+- **Implications**: 本 spec は論理形のみに依存する `IRecordedEventSequence` を自パッケージ内に定義し、rec の実フォーマットへの変換を Editor 書き出し境界の adapter 1 ファイルに封じ込める。rec の design 確定時に adapter のみ再照合すればよい（→ 下記「rec design 確定モデルとの契約照合」で実施済み）
+
+### rec design 確定モデルとの契約照合（2026-07-16・レビュー修正）
+- **Context**: rec spec の design が確定したため、本 spec の `IRecordedEventSequence` / `RecordedEvent` 契約を rec の実モデルと突き合わせた
+- **Sources Consulted**: `.kiro/specs/rec-recording-playback/design.md`（確定版）
+- **Findings**:
+  - rec の記録イベント実モデルは `RecTimeline` / `RecEvent`。`RecEventKind` は IdDefine / TriggerOn / TriggerOff / AnalogSample / Footer のみで、**gaze 専用 kind は存在しない**（gaze はアナログ 2 軸サンプルに統一）
+  - AnalogSample レコードは `u8 axisCount + f32[axisCount]` の**可変軸数（最大 255 軸）**。多軸アナログソースが実在する（ifacialmocap の `AnalogAxesInputSource` 等）
+  - id は slug:sub 形式のソース id 文字列で識別
+  - 当初契約との不整合 2 件: (1) `RecordedEvent` が `float X / float Y` の 2 軸固定で AxisCount > 2 のイベントが変換で欠落する（timeline 側の `FacialValueClip.Axes` / `TimelineValueChannelConfig.AxisCount` は N 軸対応済みで、間の契約だけがボトルネックだった）、(2) `RecordedEventKind.GazeValue` に対応する kind が rec 側になく、adapter の振り分け規則が未定義だった
+- **Implications**: `RecordedEvent` を `float[] Axes`（可変軸）へ変更し、kind を `AnalogValue` に一本化（下記 Decision）。IdDefine / Footer は adapter 内で解決・消費し契約には現さない。アーキテクチャパターン選定への影響なし（データ形のみの変更）
 
 ### gaze 消費側の構築時キャッシュと core 注入面（先行 spec 決定・設計後に確定）
 - **Context**: 当初設計は「profile の `GazeBindingConfig` に `timeline:gaze-{n}` を静的配線する」方式だったが、rec spec の gap 分析結果と突き合わせた結果、方式の見直しが必要になった
@@ -123,6 +133,16 @@
 - **Rationale**: 「正本はクリップ列」（Req 3.2）の原則に照らすと、正本から O(クリップ数) で導出できる状態イベントをベイク（派生物）に複製する必然性がなく、複製を持たない方が整合性の破れ口が減る。6.4 の graceful degradation（値欠落でも状態駆動継続）が構造的に成立する
 - **Trade-offs**: mixer の graph 構築時処理がやや増える（レーン統合 + 安定ソート。構築時のためGC 制約外）。ベイク欠落時に状態だけ動く状態は「表情が出ないのに override/suppress は効く」という中途半端な見え方になり得る（ログ通知で原因提示）
 
+### Decision: RecordedEvent は可変軸 + kind は AnalogValue に一本化、gaze 振り分けは Exporter の責務（レビュー修正 4）
+- **Context**: rec design 確定モデルとの照合で、`RecordedEvent` の 2 軸固定（`float X/Y`）と `GazeValue` kind の 2 点が rec の実モデル（AnalogSample 可変軸・gaze 専用 kind なし）と不整合だった
+- **Alternatives Considered**:
+  1. **kind 一本化**: `RecordedEventKind` を TriggerOn / TriggerOff / AnalogValue の 3 値にし、`Axes: float[]`（1..255 軸）で全アナログを表現。gaze への割当は Exporter の振り分け規則（profile の `GazeBindingConfig` 参照 id との一致 + 軸数 2 で自動推論、書き出しウィンドウで上書き可、不一致は Warning + Analog フォールバック）
+  2. GazeValue kind を契約に残す: adapter が AnalogSample を Gaze/Analog に振り分ける推論規則を持つ
+- **Selected Approach**: 1（kind 一本化）
+- **Rationale**: 案 2 は adapter に profile 知識（GazeBindingConfig との照合）が必要になり、「rec 実モデルの 1:1 機械変換に限定した薄い adapter」という依存封じ込め方針が崩れる。また同じ振り分け規則が adapter と Exporter UI（ユーザー上書き）の 2 箇所に分裂する。案 1 は契約が rec 実モデルと同形になり、振り分けという編集判断を Exporter（Editor UI を持つ層）1 箇所に集約できる。Timeline 側の gaze 識別は元から Track 種別 / `TimelineValueChannelConfig.IsGaze` が担っており、契約に gaze kind がなくても表現力は失われない
+- **Trade-offs**: `IRecordedEventSequence` 単体からは gaze チャネルを識別できない（利用側が profile 文脈を持つ必要がある — 現状の利用側は Exporter のみで、Exporter は profile を必ず受け取るため実害なし）。`float[] Axes` はイベント毎のヒープ確保を伴うが、Editor 書き出し専用の Batch 契約のため許容（Req 8.3 と同枠）
+- **Follow-up**: EditMode テストに「多軸（AxisCount > 2）アナログの欠落なし変換」「gaze 自動推論の決定性」を追加する
+
 ### Decision: rec 依存の宣言形 — package.json 必須依存 + asmdef 参照は Editor のみ（レビュー修正 2）
 - **Context**: Runtime asmdef のコメントに rec 参照が残っており、「rec 依存は Editor 書き出し時のみ」という Boundary 記述と矛盾していた
 - **Alternatives Considered**:
@@ -142,7 +162,7 @@
 - **Trade-offs**: Timeline 停止からライブ操作への状態引き継ぎはしない（引き継ぎたい場合は rec のリアルタイム再生を使う）
 
 ## Risks & Mitigations
-- **rec spec の設計変更で論理イベント形が変わる** — `IRecordedEventSequence` + adapter 1 ファイルに依存を封じ込め、Revalidation Trigger として明記
+- **rec spec の記録モデルが再度変わる**（2026-07-16 確定版とは照合済み） — `IRecordedEventSequence` + adapter 1 ファイルに依存を封じ込め、Revalidation Trigger として明記
 - **core 注入面（Replace 再バインド伝搬）の契約形状が想定と異なる**（rec spec design 生成中） — gaze 差し替えを Receiver の `BeginPlaybackSession`/`ReleaseAll` に局所化し、注入面は Fake 境界で先行実装。rec design 確定時に照合（Revalidation Trigger 登録済み）
 - **gaze 差し替えの復元漏れ**（差し替えたままライブ gaze が死ぬ） — 三重防衛線（ReleaseAll / Receiver OnDisable/OnDestroy / Binding Dispose、すべて冪等）+ 各経路の PlayMode テストで担保
 - **Aggregator 観測フックの perf 退行** — observer 未登録時は null チェック 1 回/ソース/フレームのみ。既存 GC ゼロゲートテストで担保
@@ -155,3 +175,4 @@
 - [TrackAsset API](https://docs.unity3d.com/Packages/com.unity.timeline@1.6/api/UnityEngine.Timeline.TrackAsset.html) — CreateTrackMixer / GatherProperties
 - [IPropertyPreview API](https://docs.unity3d.com/Packages/com.unity.timeline@1.4/api/UnityEngine.Timeline.IPropertyPreview.html) — Edit Mode プレビューの driven-property 登録
 - `.kiro/specs/rec-recording-playback/requirements.md` — 先行 spec の論理イベント形の定義元
+- `.kiro/specs/rec-recording-playback/design.md` — 記録イベント実モデル（RecTimeline / RecEvent / AnalogSample 可変軸）と core 注入面（Replace 再バインド伝搬）の定義元（2026-07-16 照合）
