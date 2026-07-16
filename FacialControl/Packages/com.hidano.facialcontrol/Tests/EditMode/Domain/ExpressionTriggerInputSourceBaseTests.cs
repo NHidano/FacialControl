@@ -28,6 +28,22 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
     [TestFixture]
     public class ExpressionTriggerInputSourceBaseTests
     {
+        private sealed class TestTriggerEventObserver : ITriggerEventObserver
+        {
+            public readonly List<(string sourceId, string expressionId)> OnEvents = new();
+            public readonly List<(string sourceId, string expressionId)> OffEvents = new();
+
+            public void OnTriggerOn(string sourceId, string expressionId)
+            {
+                OnEvents.Add((sourceId, expressionId));
+            }
+
+            public void OnTriggerOff(string sourceId, string expressionId)
+            {
+                OffEvents.Add((sourceId, expressionId));
+            }
+        }
+
         private sealed class TestExpressionTriggerSource : ExpressionTriggerInputSourceBase
         {
             public TestExpressionTriggerSource(
@@ -214,6 +230,52 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
 
             Assert.DoesNotThrow(() => source.TriggerOff("unknown-id"));
             Assert.AreEqual(1, source.ActiveIdsForTest.Count);
+        }
+
+        [Test]
+        public void TriggerOn_WithObserver_NotifiesObserverAfterStackUpdate()
+        {
+            var source = CreateSource("input");
+            var observer = new TestTriggerEventObserver();
+            source.SetTriggerEventObserver(observer);
+
+            source.TriggerOn("smile");
+
+            Assert.AreEqual(1, source.ActiveIdsForTest.Count);
+            Assert.AreEqual("smile", source.ActiveIdsForTest[0]);
+            Assert.AreEqual(1, observer.OnEvents.Count);
+            Assert.AreEqual(("input", "smile"), observer.OnEvents[0]);
+            Assert.AreEqual(0, observer.OffEvents.Count);
+        }
+
+        [Test]
+        public void TriggerOff_WithObserver_NotifiesObserverOnlyWhenRemovalSucceeds()
+        {
+            var source = CreateSource("input");
+            var observer = new TestTriggerEventObserver();
+            source.SetTriggerEventObserver(observer);
+            source.TriggerOn("smile");
+
+            observer.OnEvents.Clear();
+
+            source.TriggerOff("smile");
+            source.TriggerOff("unknown-id");
+
+            Assert.AreEqual(0, source.ActiveIdsForTest.Count);
+            Assert.AreEqual(0, observer.OnEvents.Count);
+            Assert.AreEqual(1, observer.OffEvents.Count);
+            Assert.AreEqual(("input", "smile"), observer.OffEvents[0]);
+        }
+
+        [Test]
+        public void TriggerOn_WithoutObserver_KeepsExistingBehavior()
+        {
+            var source = CreateSource("input");
+
+            Assert.DoesNotThrow(() => source.TriggerOn("smile"));
+
+            Assert.AreEqual(1, source.ActiveIdsForTest.Count);
+            Assert.AreEqual("smile", source.ActiveIdsForTest[0]);
         }
 
         [Test]

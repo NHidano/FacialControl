@@ -72,6 +72,7 @@ namespace Hidano.FacialControl.Domain.Services
         private TransitionCurve _curve;
         private bool _isComplete;
         private bool _hasWarnedStackDepthExceeded;
+        private ITriggerEventObserver _triggerEventObserver;
 
         /// <summary>
         /// 現在アクティブな Expression の ID リストを読取専用で公開する (診断/HUD/テスト用)。
@@ -85,6 +86,14 @@ namespace Hidano.FacialControl.Domain.Services
         /// 現在の補間済み BlendShape 値 (長さ <see cref="BlendShapeCount"/>)。診断/テスト用。
         /// </summary>
         protected ReadOnlySpan<float> CurrentValues => _currentValues;
+
+        /// <summary>
+        /// トリガー on/off 観測者を設定する。null は解除として扱う。
+        /// </summary>
+        public void SetTriggerEventObserver(ITriggerEventObserver observer)
+        {
+            _triggerEventObserver = observer;
+        }
 
         /// <summary>
         /// Expression トリガー型の基底を構築する。
@@ -184,6 +193,7 @@ namespace Hidano.FacialControl.Domain.Services
 
             _activeExpressionIds.Add(expressionId);
             StartTransition(outgoingMask);
+            _triggerEventObserver?.OnTriggerOn(Id, expressionId);
         }
 
         /// <summary>
@@ -205,6 +215,7 @@ namespace Hidano.FacialControl.Domain.Services
             if (_activeExpressionIds.Remove(expressionId))
             {
                 StartTransition(outgoingMask);
+                _triggerEventObserver?.OnTriggerOff(Id, expressionId);
             }
         }
 

@@ -8,7 +8,7 @@
   - _Requirements: 7.1, 7.2, 7.3_
 
 - [ ] 2. core: トリガー観測フックと基準状態確立 API
-- [ ] 2.1 トリガー on/off の per-instance 観測フックを追加する
+- [x] 2.1 トリガー on/off の per-instance 観測フックを追加する
   - 観測契約（ITriggerEventObserver）を core Domain に定義し、トリガー型入力源の on/off がスタック操作成立後に観測者へ通知されるようにする（off は除去成功時のみ通知。既存の「不在 id は静かに無視」と整合）
   - 観測者は 1 インスタンスに高々 1 つ。未設定時は null チェック 1 回のみで alloc・仮想呼び出しゼロ、既存挙動・性能は不変
   - TDD: 通知タイミング・expressionId の受け渡し・未設定時の挙動不変を検証する EditMode テストを先に書いてから（Red）実装で緑にする
