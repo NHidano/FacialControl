@@ -4,7 +4,7 @@
 > テスト実行は Unity batchmode 同期実行（`timeout: 600000`、Editor を閉じた状態で実行）。
 
 - [ ] 1. Foundation: パッケージ雛形と前提 spike
-- [ ] 1.1 新規パッケージ com.hidano.facialcontrol.timeline の雛形を構築する
+- [x] 1.1 新規パッケージ com.hidano.facialcontrol.timeline の雛形を構築する
   - package.json（core / rec / com.unity.timeline 1.8.9 の依存宣言。Timeline 依存を本パッケージに局所化し core / rec へ波及させない）、README / CHANGELOG / LICENSE / Documentation~ を既存拡張パッケージ（osc / inputsystem）と同一パターンで作成する
   - Runtime asmdef（参照: core の Domain / Application / Adapters + Unity.Timeline。rec は参照しない）と Editor asmdef（参照: timeline Runtime + rec + Unity.Timeline / TimelineEditor）、Tests（EditMode / PlayMode / Shared）の asmdef を配置する
   - 完了条件: 空実装のままプロジェクトがコンパイルされ、Runtime asmdef から rec の型が物理的に参照不能であること

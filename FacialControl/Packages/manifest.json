@@ -22,6 +22,7 @@
     "com.hidano.facialcontrol.lipsync": "file:com.hidano.facialcontrol.lipsync",
     "com.hidano.facialcontrol.osc": "file:com.hidano.facialcontrol.osc",
     "com.hidano.facialcontrol.rec": "file:com.hidano.facialcontrol.rec",
+    "com.hidano.facialcontrol.timeline": "file:com.hidano.facialcontrol.timeline",
     "com.hidano.scene-view-style-camera-controller": "1.0.0",
     "com.hidano.ulipsync-asio": "3.1.5-custom.0",
     "com.mikunote.hatsunemiku-note": "git+ssh://git@github.com/NHidano/Mikunote_Models.git?path=/Mikunote_Models/Assets/HatsuneMiku_Note",

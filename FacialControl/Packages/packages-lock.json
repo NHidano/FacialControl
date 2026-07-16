@@ -43,6 +43,16 @@
         "com.hidano.facialcontrol": "0.1.0-preview.2"
       }
     },
+    "com.hidano.facialcontrol.timeline": {
+      "version": "file:com.hidano.facialcontrol.timeline",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2",
+        "com.hidano.facialcontrol.rec": "0.1.0-preview.1",
+        "com.unity.timeline": "1.8.9"
+      }
+    },
     "com.hidano.scene-view-style-camera-controller": {
       "version": "1.0.0",
       "depth": 0,
