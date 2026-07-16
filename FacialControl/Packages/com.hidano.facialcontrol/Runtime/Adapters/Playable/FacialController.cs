@@ -59,9 +59,15 @@ namespace Hidano.FacialControl.Adapters.Playable
         private BoneWriter _boneWriter;
         private FacialControllerLifetimeScope _childLifetimeScope;
         private IFacialOutputBus _facialOutputBus;
+        private IFacialInputObservationBus _inputObservationBus;
         private IInputSourceRegistry _inputSourceRegistry;
+        private AnalogObservationSampler _analogObservationSampler;
         private IReadOnlyList<GazeBindingConfig> _gazeConfigs = Array.Empty<GazeBindingConfig>();
         private GazeSnapshot[] _gazeSnapshotBuffer = Array.Empty<GazeSnapshot>();
+        private readonly Dictionary<string, ExpressionTriggerInputSourceBase> _observedTriggerSources =
+            new Dictionary<string, ExpressionTriggerInputSourceBase>(StringComparer.Ordinal);
+        private readonly HashSet<string> _gazeSubscriptionIds =
+            new HashSet<string>(StringComparer.Ordinal);
         // 目線(gaze)の目ボーン適用を集約する provider。各入力 binding(OSC/InputSystem/iFacialMocap)が
         // registry に登録した gaze 入力源を GazeBindingConfigResolver 経由で解決し、単一 provider で適用する。
         private GazeBonePoseProvider _gazeBoneProvider;
@@ -75,6 +81,16 @@ namespace Hidano.FacialControl.Adapters.Playable
         /// 現在のプロファイル。未読み込みの場合は null。
         /// </summary>
         public FacialProfile? CurrentProfile => _currentProfile;
+
+        /// <summary>
+        /// 1 体ぶんの操作イベント観測バス。未初期化時は null。
+        /// </summary>
+        public IFacialInputObservationBus InputObservationBus => _inputObservationBus;
+
+        /// <summary>
+        /// 1 体ぶんの入力 source registry。未初期化時は null。
+        /// </summary>
+        public IInputSourceRegistry InputSourceRegistry => _inputSourceRegistry;
 
         /// <summary>
         /// 統合キャラクター SO の参照。
@@ -116,6 +132,8 @@ namespace Hidano.FacialControl.Adapters.Playable
         {
             if (!_isInitialized || _layerUseCase == null)
                 return;
+
+            _analogObservationSampler?.Sample();
 
             // Aggregator パイプラインを 1 フレーム分進める。
             // sourceIdx=0 の LayerExpressionSource は ExpressionUseCase.GetActiveExpressions から駆動、
@@ -233,6 +251,7 @@ namespace Hidano.FacialControl.Adapters.Playable
             // 目線の目ボーン provider を構築。child scope build 済み・_inputSourceRegistry キャッシュ済みで、
             // 各 binding が登録した gaze 入力源(osc:eye_look 等)を registry から解決できる。
             SetupGazeBoneProvider();
+            SetupObservationAndRebindIntegration(profile, additionalSources);
 
             _isInitialized = true;
         }
@@ -250,7 +269,9 @@ namespace Hidano.FacialControl.Adapters.Playable
                     : Array.Empty<GazeBindingConfig>();
 
             _facialOutputBus = null;
+            _inputObservationBus = null;
             _inputSourceRegistry = null;
+            _analogObservationSampler = null;
             _gazeConfigs = gazeConfigs ?? Array.Empty<GazeBindingConfig>();
             EnsureGazeSnapshotBufferCapacity(_gazeConfigs.Count);
 
@@ -469,6 +490,7 @@ namespace Hidano.FacialControl.Adapters.Playable
             }
 
             _childLifetimeScope.Container.TryResolve<IFacialOutputBus>(out _facialOutputBus);
+            _childLifetimeScope.Container.TryResolve<IFacialInputObservationBus>(out _inputObservationBus);
             _childLifetimeScope.Container.TryResolve<IInputSourceRegistry>(out _inputSourceRegistry);
         }
 
@@ -573,13 +595,7 @@ namespace Hidano.FacialControl.Adapters.Playable
             FacialProfile profile)
         {
             var result = new List<(int layerIdx, IInputSource source, float weight)>();
-            if (_childLifetimeScope == null || _childLifetimeScope.Container == null)
-            {
-                return result;
-            }
-
-            if (!_childLifetimeScope.Container.TryResolve<IInputSourceRegistry>(out var registry)
-                || registry == null)
+            if (_inputSourceRegistry == null)
             {
                 return result;
             }
@@ -600,7 +616,7 @@ namespace Hidano.FacialControl.Adapters.Playable
                 for (int d = 0; d < declarations.Length; d++)
                 {
                     var decl = declarations[d];
-                    if (registry.TryResolve(decl.Id, out var source) && source != null)
+                    if (_inputSourceRegistry.TryResolve(decl.Id, out var source) && source != null)
                     {
                         result.Add((l, source, decl.Weight));
                     }
@@ -608,16 +624,6 @@ namespace Hidano.FacialControl.Adapters.Playable
                     {
                         Debug.LogWarning(
                             $"FacialController: inputSource id '{decl.Id ?? "<null>"}' を InputSourceRegistry で解決できないため layer {l} でスキップします。 後から登録された場合は購読経由で layer へ後付けバインドします。");
-                        int capturedLayer = l;
-                        float capturedWeight = decl.Weight;
-                        registry.Subscribe(decl.Id, lateSource =>
-                        {
-                            if (_layerUseCase != null && lateSource != null)
-                            {
-                                _layerUseCase.BindLateInputSource(capturedLayer, lateSource, capturedWeight);
-                                Debug.Log($"[FacialController] late-bind inputSource id='{lateSource.Id}' を layer {capturedLayer} へ weight={capturedWeight} で後付けバインド完了。");
-                            }
-                        });
                     }
                 }
             }
@@ -694,7 +700,12 @@ namespace Hidano.FacialControl.Adapters.Playable
         /// </remarks>
         private void SetupGazeBoneProvider()
         {
-            _gazeBoneProvider = null;
+            if (_gazeBoneProvider != null)
+            {
+                _gazeBoneProvider.Dispose();
+                _gazeBoneProvider = null;
+            }
+
             if (_animator == null || _inputSourceRegistry == null
                 || _gazeConfigs == null || _gazeConfigs.Count == 0)
             {
@@ -737,6 +748,182 @@ namespace Hidano.FacialControl.Adapters.Playable
             _gazeBoneProvider = new GazeBonePoseProvider(
                 new BoneTransformResolver(_animator.transform),
                 gazeBoneBindings);
+        }
+
+        private void SetupObservationAndRebindIntegration(
+            FacialProfile profile,
+            IReadOnlyList<(int layerIdx, IInputSource source, float weight)> additionalSources)
+        {
+            if (_inputSourceRegistry == null || _inputObservationBus == null)
+            {
+                _analogObservationSampler = null;
+                return;
+            }
+
+            _analogObservationSampler = new AnalogObservationSampler(_inputSourceRegistry, _inputObservationBus);
+
+            WireTriggerObserversForRegisteredSources();
+            WireTriggerObserversForResolvedSources(additionalSources);
+            SubscribeDeclaredLayerInputSources(profile);
+            SubscribeGazeInputSources();
+        }
+
+        private void WireTriggerObserversForRegisteredSources()
+        {
+            IReadOnlyList<string> registeredIds = _inputSourceRegistry.RegisteredIds;
+            for (int i = 0; i < registeredIds.Count; i++)
+            {
+                string id = registeredIds[i];
+                if (_inputSourceRegistry.TryResolve(id, out IInputSource source))
+                {
+                    UpdateObservedTriggerSource(id, source as ExpressionTriggerInputSourceBase);
+                }
+            }
+        }
+
+        private void WireTriggerObserversForResolvedSources(
+            IReadOnlyList<(int layerIdx, IInputSource source, float weight)> additionalSources)
+        {
+            if (additionalSources == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < additionalSources.Count; i++)
+            {
+                IInputSource source = additionalSources[i].source;
+                if (source == null)
+                {
+                    continue;
+                }
+
+                UpdateObservedTriggerSource(source.Id, source as ExpressionTriggerInputSourceBase);
+            }
+        }
+
+        private void SubscribeDeclaredLayerInputSources(FacialProfile profile)
+        {
+            var layerInputSourcesSpan = profile.LayerInputSources.Span;
+            int upper = Math.Min(profile.Layers.Length, layerInputSourcesSpan.Length);
+            for (int layerIdx = 0; layerIdx < upper; layerIdx++)
+            {
+                InputSourceDeclaration[] declarations = layerInputSourcesSpan[layerIdx];
+                if (declarations == null || declarations.Length == 0)
+                {
+                    continue;
+                }
+
+                for (int declarationIdx = 0; declarationIdx < declarations.Length; declarationIdx++)
+                {
+                    InputSourceDeclaration declaration = declarations[declarationIdx];
+                    int capturedLayerIdx = layerIdx;
+                    float capturedWeight = declaration.Weight;
+                    string capturedId = declaration.Id;
+                    _inputSourceRegistry.Subscribe(capturedId, source =>
+                    {
+                        HandleLayerInputSourceRebound(capturedLayerIdx, capturedId, capturedWeight, source);
+                    });
+                }
+            }
+        }
+
+        private void HandleLayerInputSourceRebound(
+            int layerIdx,
+            string sourceId,
+            float weight,
+            IInputSource source)
+        {
+            if (_layerUseCase == null)
+            {
+                return;
+            }
+
+            if (source == null)
+            {
+                _layerUseCase.UnbindLateInputSource(layerIdx, sourceId);
+                UpdateObservedTriggerSource(sourceId, null);
+                return;
+            }
+
+            _layerUseCase.BindLateInputSource(layerIdx, source, weight);
+            UpdateObservedTriggerSource(sourceId, source as ExpressionTriggerInputSourceBase);
+        }
+
+        private void SubscribeGazeInputSources()
+        {
+            _gazeSubscriptionIds.Clear();
+
+            for (int i = 0; i < _gazeConfigs.Count; i++)
+            {
+                GazeBindingConfig config = _gazeConfigs[i];
+                if (config == null || string.IsNullOrWhiteSpace(config.expressionId))
+                {
+                    continue;
+                }
+
+                if (config.useDistinctLeftRight)
+                {
+                    AddGazeSubscriptionId(config.sourceIdLeft);
+                    AddGazeSubscriptionId(config.sourceIdRight);
+                    continue;
+                }
+
+                if (GazeBindingConfigResolver.TryResolve(
+                        config,
+                        _inputSourceRegistry,
+                        out ResolvedGazeInputSources resolved))
+                {
+                    AddGazeSubscriptionId(resolved.LeftSourceId);
+                    AddGazeSubscriptionId(resolved.RightSourceId);
+                }
+            }
+        }
+
+        private void AddGazeSubscriptionId(string sourceId)
+        {
+            if (string.IsNullOrEmpty(sourceId)
+                || !_gazeSubscriptionIds.Add(sourceId))
+            {
+                return;
+            }
+
+            _inputSourceRegistry.Subscribe(sourceId, _ => SetupGazeBoneProvider());
+        }
+
+        private void UpdateObservedTriggerSource(
+            string sourceId,
+            ExpressionTriggerInputSourceBase triggerSource)
+        {
+            if (string.IsNullOrEmpty(sourceId))
+            {
+                return;
+            }
+
+            if (_observedTriggerSources.TryGetValue(sourceId, out ExpressionTriggerInputSourceBase previous)
+                && !ReferenceEquals(previous, triggerSource))
+            {
+                previous.SetTriggerEventObserver(null);
+                _observedTriggerSources.Remove(sourceId);
+            }
+
+            if (triggerSource == null || _inputObservationBus == null)
+            {
+                return;
+            }
+
+            triggerSource.SetTriggerEventObserver(_inputObservationBus);
+            _observedTriggerSources[sourceId] = triggerSource;
+        }
+
+        private void ClearObservedTriggerSources()
+        {
+            foreach (KeyValuePair<string, ExpressionTriggerInputSourceBase> pair in _observedTriggerSources)
+            {
+                pair.Value?.SetTriggerEventObserver(null);
+            }
+
+            _observedTriggerSources.Clear();
+            _gazeSubscriptionIds.Clear();
         }
 
         // ================================================================
@@ -910,11 +1097,21 @@ namespace Hidano.FacialControl.Adapters.Playable
         public bool TryGetExpressionTriggerSourceById(string id, out ExpressionTriggerInputSourceBase source)
         {
             source = null;
-            if (!_isInitialized || _layerUseCase == null)
+            if (!_isInitialized)
             {
                 return false;
             }
-            return _layerUseCase.TryGetExpressionTriggerSourceById(id, out source);
+
+            if (_inputSourceRegistry != null
+                && _inputSourceRegistry.TryResolve(id, out IInputSource inputSource)
+                && inputSource is ExpressionTriggerInputSourceBase triggerSource)
+            {
+                source = triggerSource;
+                return true;
+            }
+
+            return _layerUseCase != null
+                && _layerUseCase.TryGetExpressionTriggerSourceById(id, out source);
         }
 
         /// <summary>
@@ -1005,6 +1202,9 @@ namespace Hidano.FacialControl.Adapters.Playable
         }
         private void Cleanup()
         {
+            ClearObservedTriggerSources();
+            _analogObservationSampler = null;
+
             // child scope を build していた場合は最初に Dispose し、binding.Dispose を完了させる。
             // host 群の Dispose を完了させてから既存 cleanup を行う。
             if (_childLifetimeScope != null)
@@ -1014,6 +1214,7 @@ namespace Hidano.FacialControl.Adapters.Playable
             }
 
             _facialOutputBus = null;
+            _inputObservationBus = null;
             _inputSourceRegistry = null;
             _gazeConfigs = Array.Empty<GazeBindingConfig>();
             _gazeSnapshotBuffer = Array.Empty<GazeSnapshot>();

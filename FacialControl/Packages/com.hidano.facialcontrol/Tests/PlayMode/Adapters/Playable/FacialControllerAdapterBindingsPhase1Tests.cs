@@ -10,9 +10,11 @@ using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
 using Hidano.FacialControl.Adapters.DependencyInjection;
 using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
+using Hidano.FacialControl.Application.UseCases;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
+using Hidano.FacialControl.Domain.Services;
 using VContainer;
 using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
 
@@ -26,10 +28,17 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
     public class FacialControllerAdapterBindingsPhase1Tests
     {
         private GameObject _controllerGameObject;
+        private Mesh _mesh;
 
         [TearDown]
         public void TearDown()
         {
+            if (_mesh != null)
+            {
+                UnityEngine.Object.DestroyImmediate(_mesh);
+                _mesh = null;
+            }
+
             if (_controllerGameObject != null)
             {
                 UnityEngine.Object.DestroyImmediate(_controllerGameObject);
@@ -236,6 +245,166 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
             }
         }
 
+        [UnityTest]
+        public IEnumerator ReplaceAndUnregister_DeclaredLayerInputSource_PropagatesToBlendOutput()
+        {
+            _controllerGameObject = CreateControllerHost();
+            AssignBlendShapeMesh(_controllerGameObject, "smile");
+
+            var controller = _controllerGameObject.AddComponent<FacialController>();
+            var so = ScriptableObject.CreateInstance<DeclaredInputProfileSO>();
+            so.LayerInputSourceId = "rebind-source";
+            so.BlendShapeName = "smile";
+
+            var binding = new ValueSourceRegisteringBinding
+            {
+                Slug = "rebind-source",
+                Source = new MutableValueSource("rebind-source", 1, 0, 0.2f)
+            };
+            so.WritableAdapterBindings.Add(binding);
+
+            try
+            {
+                controller.CharacterSO = so;
+                controller.Initialize();
+
+                yield return null;
+
+                Assert.That(ReadCurrentOutput(controller)[0], Is.EqualTo(0.2f).Within(0.001f));
+
+                controller.InputSourceRegistry.Replace(
+                    AdapterSlug.Parse("rebind-source"),
+                    new MutableValueSource("rebind-source", 1, 0, 0.8f));
+
+                yield return null;
+
+                Assert.That(ReadCurrentOutput(controller)[0], Is.EqualTo(0.8f).Within(0.001f));
+
+                controller.InputSourceRegistry.Unregister(AdapterSlug.Parse("rebind-source"));
+
+                yield return null;
+
+                Assert.That(ReadCurrentOutput(controller)[0], Is.EqualTo(0f).Within(0.001f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(so);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Replace_TriggerSource_RewiresObservationBusToNewInstance()
+        {
+            _controllerGameObject = CreateControllerHost();
+
+            var controller = _controllerGameObject.AddComponent<FacialController>();
+            var so = ScriptableObject.CreateInstance<DeclaredInputProfileSO>();
+            so.LayerInputSourceId = "trigger-source";
+            so.IncludeExpression = true;
+            so.ExpressionId = "expr-smile";
+
+            var binding = new TriggerSourceRegisteringBinding
+            {
+                Slug = "trigger-source",
+                ExpressionId = "expr-smile"
+            };
+            so.WritableAdapterBindings.Add(binding);
+
+            try
+            {
+                controller.CharacterSO = so;
+                controller.Initialize();
+
+                var observer = new RecordingInputObserver();
+                controller.InputObservationBus.Subscribe(observer);
+
+                Assert.That(controller.TryGetExpressionTriggerSourceById("trigger-source", out var initial), Is.True);
+                initial.TriggerOn("expr-smile");
+
+                Assert.That(observer.TriggerOnCount, Is.EqualTo(1));
+
+                var replacement = new TestObservationTriggerSource(
+                    "trigger-source",
+                    controller.CurrentProfile.GetValueOrDefault(),
+                    Array.Empty<string>());
+                controller.InputSourceRegistry.Replace(AdapterSlug.Parse("trigger-source"), replacement);
+
+                yield return null;
+
+                replacement.TriggerOn("expr-smile");
+                Assert.That(observer.TriggerOnCount, Is.EqualTo(2));
+
+                initial.TriggerOn("expr-smile");
+                Assert.That(observer.TriggerOnCount, Is.EqualTo(2));
+
+                controller.InputObservationBus.Unsubscribe(observer);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(so);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ReplaceAndUnregister_GazeSource_RebuildsProvider()
+        {
+            _controllerGameObject = CreateControllerHost();
+
+            var eyeBone = new GameObject("LeftEye");
+            eyeBone.transform.SetParent(_controllerGameObject.transform, worldPositionStays: false);
+            eyeBone.transform.localRotation = Quaternion.identity;
+
+            var controller = _controllerGameObject.AddComponent<FacialController>();
+            var so = ScriptableObject.CreateInstance<DeclaredInputProfileSO>();
+            so.WritableGazeConfigs.Add(new GazeBindingConfig
+            {
+                expressionId = "look",
+                useDistinctLeftRight = true,
+                sourceIdLeft = "look-left",
+                sourceIdRight = "look-right",
+                leftEyeBonePath = "LeftEye",
+            });
+
+            var binding = new DistinctGazeSourceRegisteringBinding
+            {
+                Slug = "gaze-rebind",
+                LeftSource = new MutableGazeAnalogSource("look-left", 0.2f, 0f),
+                RightSource = new MutableGazeAnalogSource("look-right", 0.2f, 0f),
+            };
+            so.WritableAdapterBindings.Add(binding);
+
+            try
+            {
+                controller.CharacterSO = so;
+                controller.Initialize();
+
+                yield return null;
+
+                Quaternion initialAppliedRotation = eyeBone.transform.localRotation;
+                Assert.That(Quaternion.Angle(Quaternion.identity, initialAppliedRotation), Is.GreaterThan(0.1f));
+
+                controller.InputSourceRegistry.Replace(
+                    AdapterSlug.Parse("look-left"),
+                    new MutableGazeAnalogSource("look-left", -1f, 0f));
+
+                yield return null;
+
+                Quaternion replacedRotation = eyeBone.transform.localRotation;
+                Assert.That(Quaternion.Angle(initialAppliedRotation, replacedRotation), Is.GreaterThan(1f));
+
+                controller.InputSourceRegistry.Unregister(AdapterSlug.Parse("look-left"));
+                controller.InputSourceRegistry.Unregister(AdapterSlug.Parse("look-right"));
+
+                yield return null;
+
+                Assert.That(Quaternion.Angle(Quaternion.identity, eyeBone.transform.localRotation), Is.LessThan(0.1f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(so);
+            }
+        }
+
         // ---------------------------------------------------------------
         // Helpers / Mocks
         // ---------------------------------------------------------------
@@ -250,6 +419,30 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
             meshGo.transform.SetParent(go.transform);
             meshGo.AddComponent<SkinnedMeshRenderer>();
             return go;
+        }
+
+        private void AssignBlendShapeMesh(GameObject host, string blendShapeName)
+        {
+            SkinnedMeshRenderer renderer = host.GetComponentInChildren<SkinnedMeshRenderer>();
+            Assert.That(renderer, Is.Not.Null);
+
+            _mesh = new Mesh();
+            _mesh.vertices = new[] { Vector3.zero, Vector3.right, Vector3.up };
+            _mesh.triangles = new[] { 0, 1, 2 };
+            _mesh.AddBlendShapeFrame(blendShapeName, 100f, new Vector3[3], null, null);
+            renderer.sharedMesh = _mesh;
+        }
+
+        private static float[] ReadCurrentOutput(FacialController controller)
+        {
+            FieldInfo field = typeof(FacialController).GetField(
+                "_layerUseCase",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+
+            LayerUseCase useCase = field.GetValue(controller) as LayerUseCase;
+            Assert.That(useCase, Is.Not.Null);
+            return useCase.GetBlendedOutput();
         }
 
         /// <summary>
@@ -269,6 +462,55 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
                     new LayerDefinition("emotion", 0, ExclusionMode.LastWins)
                 };
                 return new FacialProfile("2.0", layers);
+            }
+        }
+
+        public sealed class DeclaredInputProfileSO : FacialCharacterProfileSO
+        {
+            public string LayerInputSourceId;
+            public string BlendShapeName = "smile";
+            public bool IncludeExpression;
+            public string ExpressionId = "expr";
+
+            public List<AdapterBindingBase> WritableAdapterBindings => _adapterBindings;
+            public List<GazeBindingConfig> WritableGazeConfigs => _gazeConfigs;
+
+            public override FacialProfile LoadProfile()
+            {
+                var layers = new[]
+                {
+                    new LayerDefinition("emotion", 0, ExclusionMode.LastWins)
+                };
+
+                InputSourceDeclaration[][] layerInputSources = string.IsNullOrEmpty(LayerInputSourceId)
+                    ? null
+                    : new[]
+                    {
+                        new[]
+                        {
+                            new InputSourceDeclaration(LayerInputSourceId, 1f, null)
+                        }
+                    };
+
+                Expression[] expressions = null;
+                if (IncludeExpression)
+                {
+                    expressions = new[]
+                    {
+                        new Expression(
+                            ExpressionId,
+                            ExpressionId,
+                            "emotion",
+                            0f,
+                            TransitionCurve.Linear,
+                            new[]
+                            {
+                                new BlendShapeMapping(BlendShapeName, 1f)
+                            })
+                    };
+                }
+
+                return new FacialProfile("2.0", layers, expressions, null, layerInputSources);
             }
         }
 
@@ -316,6 +558,33 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
             public override void Dispose()
             {
                 DisposeCount++;
+            }
+        }
+
+        [Serializable]
+        private sealed class ValueSourceRegisteringBinding : AdapterBindingBase
+        {
+            [NonSerialized] public MutableValueSource Source;
+
+            public override void OnStart(in AdapterBuildContext ctx)
+            {
+                ctx.InputSourceRegistry.Register(AdapterSlug.Parse(Slug), Source);
+            }
+        }
+
+        [Serializable]
+        private sealed class TriggerSourceRegisteringBinding : AdapterBindingBase
+        {
+            [NonSerialized] public string ExpressionId;
+            [NonSerialized] public TestObservationTriggerSource RegisteredSource;
+
+            public override void OnStart(in AdapterBuildContext ctx)
+            {
+                RegisteredSource = new TestObservationTriggerSource(
+                    Slug,
+                    ctx.Profile,
+                    ctx.BlendShapeNames);
+                ctx.InputSourceRegistry.Register(AdapterSlug.Parse(Slug), RegisteredSource);
             }
         }
 
@@ -377,6 +646,19 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
             }
         }
 
+        [Serializable]
+        private sealed class DistinctGazeSourceRegisteringBinding : AdapterBindingBase
+        {
+            [NonSerialized] public MutableGazeAnalogSource LeftSource;
+            [NonSerialized] public MutableGazeAnalogSource RightSource;
+
+            public override void OnStart(in AdapterBuildContext ctx)
+            {
+                ctx.InputSourceRegistry.Register(AdapterSlug.Parse(LeftSource.Id), LeftSource);
+                ctx.InputSourceRegistry.Register(AdapterSlug.Parse(RightSource.Id), RightSource);
+            }
+        }
+
         /// <summary>
         /// 固定 Vector2 を返すアナログ入力源。
         /// (EditMode の <c>GazeBindingConfigResolverTests.FakeGazeSource</c> と同型)。
@@ -432,6 +714,119 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
                 }
 
                 return true;
+            }
+        }
+
+        private sealed class MutableGazeAnalogSource : IInputSource, IAnalogInputSource
+        {
+            private readonly float _x;
+            private readonly float _y;
+
+            public MutableGazeAnalogSource(string id, float x, float y)
+            {
+                Id = id;
+                _x = x;
+                _y = y;
+                ContributeMask = new BitArray(0);
+            }
+
+            public string Id { get; }
+            public InputSourceType Type => InputSourceType.ValueProvider;
+            public int BlendShapeCount => 0;
+            public BitArray ContributeMask { get; }
+            public bool IsValid => true;
+            public int AxisCount => 2;
+
+            public void Tick(float deltaTime)
+            {
+            }
+
+            public bool TryWriteValues(Span<float> output) => false;
+
+            public bool TryReadScalar(out float value)
+            {
+                value = _x;
+                return true;
+            }
+
+            public bool TryReadVector2(out float x, out float y)
+            {
+                x = _x;
+                y = _y;
+                return true;
+            }
+
+            public bool TryReadAxes(Span<float> output)
+            {
+                if (output.Length > 0)
+                {
+                    output[0] = _x;
+                }
+
+                if (output.Length > 1)
+                {
+                    output[1] = _y;
+                }
+
+                return true;
+            }
+        }
+
+        private sealed class MutableValueSource : ValueProviderInputSourceBase
+        {
+            private readonly int _writeIndex;
+            private readonly float _value;
+
+            public MutableValueSource(string id, int blendShapeCount, int writeIndex, float value)
+                : base(InputSourceId.Parse(id), blendShapeCount)
+            {
+                _writeIndex = writeIndex;
+                _value = value;
+            }
+
+            public override bool TryWriteValues(Span<float> output)
+            {
+                if ((uint)_writeIndex < (uint)output.Length)
+                {
+                    output[_writeIndex] = _value;
+                }
+
+                return true;
+            }
+        }
+
+        private sealed class TestObservationTriggerSource : ExpressionTriggerInputSourceBase
+        {
+            public TestObservationTriggerSource(
+                string id,
+                FacialProfile profile,
+                IReadOnlyList<string> blendShapeNames)
+                : base(
+                    InputSourceId.Parse(id),
+                    blendShapeNames?.Count ?? 0,
+                    maxStackDepth: 4,
+                    exclusionMode: ExclusionMode.LastWins,
+                    blendShapeNames ?? Array.Empty<string>(),
+                    profile)
+            {
+            }
+        }
+
+        private sealed class RecordingInputObserver : IFacialInputObserver
+        {
+            public int TriggerOnCount { get; private set; }
+
+            public void OnTriggerOn(string sourceId, string expressionId)
+            {
+                TriggerOnCount++;
+            }
+
+            public void OnTriggerOff(string sourceId, string expressionId)
+            {
+            }
+
+            public void OnAnalogSample(string sourceId, ReadOnlySpan<float> axes)
+            {
             }
         }
     }

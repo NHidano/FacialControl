@@ -104,6 +104,7 @@ namespace Hidano.FacialControl.Adapters.DependencyInjection
                 {
                     builder.Register<IInputSourceRegistry, InputSourceRegistry>(Lifetime.Scoped);
                     builder.Register<IFacialOutputBus, FacialOutputBus>(Lifetime.Scoped);
+                    builder.Register<IFacialInputObservationBus, FacialInputObservationBus>(Lifetime.Scoped);
 
                     builder.RegisterEntryPoint<PhonemeOverlayInputSourceRegistrationHost>(
                         resolver => new PhonemeOverlayInputSourceRegistrationHost(

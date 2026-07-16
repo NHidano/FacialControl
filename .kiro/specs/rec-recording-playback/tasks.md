@@ -63,7 +63,7 @@
   - _Requirements: 6.4_
   - _Boundary: LayerUseCase_
 
-- [ ] 4.4 FacialController へ観測・注入面を配線し再バインド伝搬を実装する（統合）
+- [x] 4.4 FacialController へ観測・注入面を配線し再バインド伝搬を実装する（統合）
   - child scope でのバス登録・取得、解決済み全トリガーソースへの観測フック配線、LateUpdate 冒頭（UpdateWeights 前）でのサンプラー駆動を組み込む
   - 解決成否に関わらず全宣言 id（gaze 解決 id 含む）を Subscribe し、非 null 通知でレイヤースワップ + gaze provider 再構築 + 新ソースがトリガー型ならフック再配線、null 通知でレイヤー除去 + gaze provider 再構築（未解決時挙動へ回帰）を行う
   - gaze snapshot（OSC 送信）経路は無変更（毎フレーム再解決のまま）。既存の遅延バインドハンドラの null 安全を再確認する
