@@ -189,7 +189,7 @@
   - _Requirements: 5.5, 6.4_
   - _Boundary: PlayMode Integration Tests_
 
-- [ ] 9.4 gaze 差し替え経路・復元保証・多重占有ガードの統合テストを実装する
+- [x] 9.4 gaze 差し替え経路・復元保証・多重占有ガードの統合テストを実装する
   - ライブ gaze ソース稼働中の Timeline 再生開始で消費側が timeline sink へ切替わり、gaze カーブ → Publish → GazeBonePoseProvider で目ボーンが動き、停止でライブソースへ復元されること。プロファイル差し替えで gaze 再生結果が追従すること
   - 三重防衛線（graph 破棄 / Receiver 破棄 / Binding Dispose）の各経路で差し替えが必ず復元されること。同一 TakeoverSourceId への A 差し替え → B 差し替え → A 先行停止で A の復元が no-op + Warning となり B の占有が保たれること。開始時に他 sink 占有済みなら Warning + チャネル無効化で縮退すること
   - 完了条件: gaze 系 PlayMode テストが全緑であること
