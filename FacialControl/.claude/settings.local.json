@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(powershell -ExecutionPolicy Bypass -File \"D:/Personal/Repositries/FacialControl/FacialControl/test-results/strip-internal-refs.ps1\")"
+      "PowerShell(powershell -ExecutionPolicy Bypass -File \"D:/Personal/Repositries/FacialControl/FacialControl/test-results/strip-internal-refs.ps1\")",
+      "Bash(codex exec:*)",
+      "Bash(timeout 1800 codex exec:*)"
     ]
   }
 }
