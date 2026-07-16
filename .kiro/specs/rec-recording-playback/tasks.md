@@ -90,7 +90,7 @@
   - _Boundary: RecEvent, RecBaselineState, RecTimeline, RecLoadResult, IRecClock, IRecEventSink, Injection Ports_
   - _Depends: 1_
 
-- [ ] 5.2 (P) SPSC チャンクキューを実装する
+- [x] 5.2 (P) SPSC チャンクキューを実装する
   - 固定長セグメントを初期 N 個事前確保し、飽和時のみセグメント追加 alloc で欠落なしに継続する単一 producer / 単一 consumer キュー（Unity 非依存）
   - Enqueue は I/O 完了を待たない。セグメント受け渡しは Volatile/Interlocked の軽量同期。飽和拡張回数の診断カウンタを持つ
   - TDD: FIFO 順序・飽和時の無欠落拡張・producer/consumer 別スレッドでの整合を検証する EditMode テストを先に書く
