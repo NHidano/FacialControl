@@ -147,7 +147,7 @@
   - _Depends: 5.4, 5.5_
 
 - [ ] 7. rec Adapters: sidecar 永続化
-- [ ] 7.1 (P) sidecar パス規約を実装する
+- [x] 7.1 (P) sidecar パス規約を実装する
   - `StreamingAssets/FacialControl/{assetName}/recordings/` 規約（既存の sidecar 規約定数を再利用）で保存先パスを一元的に組み立てる。recordings サブフォルダで profile.json / ARKit config.json と物理分離する
   - assetName の無効文字置換とディレクトリトラバーサル（`..` 等）の拒否。Editor / ビルド後の両対応（Windows PC 前提）
   - TDD: パス組み立て・無効名・トラバーサル拒否の EditMode テストを先に書く
