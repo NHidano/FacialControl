@@ -1,12 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Models;
+using Hidano.FacialControl.Rec.Adapters.FileSystem;
+using Hidano.FacialControl.Rec.Domain.Services;
+using Hidano.FacialControl.Timeline.Adapters;
+using Hidano.FacialControl.Timeline.Adapters.Assets;
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Timeline.Domain.Models;
 using Hidano.FacialControl.Timeline.Tracks;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace Hidano.FacialControl.Timeline.Editor
@@ -15,6 +22,11 @@ namespace Hidano.FacialControl.Timeline.Editor
     {
         private const string DefaultFallbackLayerName = "Expressions";
         private const double MinimumClipDuration = 1d / 60d;
+        private const string DefaultBakeAssetName = "FacialTimelineBake";
+        private const string OverwriteDialogTitle = "Overwrite Timeline Export";
+
+        public static Func<string, string, string, string, bool> ConfirmOverwriteDialog =
+            (title, message, ok, cancel) => EditorUtility.DisplayDialog(title, message, ok, cancel);
 
         public static TimelineAsset CreateTimelineAsset(
             IRecordedEventSequence sequence,
@@ -28,18 +40,20 @@ namespace Hidano.FacialControl.Timeline.Editor
             return CreateTimelineAsset(
                 sequence,
                 profileAsset.BuildFallbackProfile(),
-                CollectGazeSourceIds(profileAsset.GazeConfigs));
+                CollectGazeSourceIds(profileAsset.GazeConfigs),
+                null);
         }
 
         public static TimelineAsset CreateTimelineAsset(
             IRecordedEventSequence sequence,
             FacialProfile profile,
-            IReadOnlyCollection<string> gazeSourceIds = null)
+            IReadOnlyCollection<string> gazeSourceIds = null,
+            IReadOnlyDictionary<string, FacialValueChannelKind> sourceKindOverrides = null)
         {
             ValidateSequence(sequence);
 
             var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
-            PopulateTimeline(timeline, sequence, profile, gazeSourceIds);
+            PopulateTimeline(timeline, sequence, profile, gazeSourceIds, sourceKindOverrides);
             return timeline;
         }
 
@@ -47,7 +61,8 @@ namespace Hidano.FacialControl.Timeline.Editor
             TimelineAsset timeline,
             IRecordedEventSequence sequence,
             FacialProfile profile,
-            IReadOnlyCollection<string> gazeSourceIds = null)
+            IReadOnlyCollection<string> gazeSourceIds = null,
+            IReadOnlyDictionary<string, FacialValueChannelKind> sourceKindOverrides = null)
         {
             if (timeline == null)
             {
@@ -59,8 +74,124 @@ namespace Hidano.FacialControl.Timeline.Editor
             List<ExpressionClipInfo> expressionClips = BuildExpressionClips(sequence, profile);
             CreateExpressionTracks(timeline, expressionClips);
 
-            List<AnalogTrackInfo> analogTracks = BuildAnalogTracks(sequence, gazeSourceIds);
+            List<AnalogTrackInfo> analogTracks = BuildAnalogTracks(sequence, gazeSourceIds, sourceKindOverrides);
             CreateAnalogTracks(timeline, analogTracks, sequence.DurationSeconds);
+        }
+
+        public static bool TryExportTimelineAsset(
+            string recordingPath,
+            FacialCharacterProfileSO profileAsset,
+            string outputAssetPath,
+            out ExportResult result,
+            TimelineAsset existingTimeline = null,
+            PlayableDirector director = null,
+            FacialTimelineReceiver receiver = null,
+            IReadOnlyDictionary<string, FacialValueChannelKind> sourceKindOverrides = null)
+        {
+            result = null;
+
+            if (profileAsset == null)
+            {
+                throw new ArgumentNullException(nameof(profileAsset));
+            }
+
+            if (string.IsNullOrWhiteSpace(outputAssetPath))
+            {
+                throw new ArgumentException("Output asset path must be non-empty.", nameof(outputAssetPath));
+            }
+
+            if (!RecFileReader.TryRead(recordingPath, out RecBinaryFormat.ReadResult readResult))
+            {
+                result = ExportResult.CreateFailed(recordingPath, outputAssetPath);
+                return false;
+            }
+
+            var sequence = new RecEventSequenceAdapter(readResult.Timeline);
+            IReadOnlyCollection<string> gazeSourceIds = CollectGazeSourceIds(profileAsset.GazeConfigs);
+
+            string normalizedPath = NormalizeAssetPath(outputAssetPath);
+            TimelineAsset targetTimeline = ResolveOrCreateTimelineAsset(
+                normalizedPath,
+                existingTimeline,
+                out bool createdTimeline,
+                out bool overwritingExistingAsset);
+
+            if (targetTimeline == null)
+            {
+                result = ExportResult.CreateFailed(recordingPath, normalizedPath);
+                return false;
+            }
+
+            if (overwritingExistingAsset)
+            {
+                string message = $"TimelineAsset '{normalizedPath}' already exists. Exported tracks will be replaced.";
+                if (!ConfirmOverwriteDialog(OverwriteDialogTitle, message, "Overwrite", "Cancel"))
+                {
+                    result = ExportResult.CreateCancelled(recordingPath, normalizedPath);
+                    return false;
+                }
+            }
+
+            try
+            {
+                ClearTimeline(targetTimeline);
+                PopulateTimeline(
+                    targetTimeline,
+                    sequence,
+                    profileAsset.BuildFallbackProfile(),
+                    gazeSourceIds,
+                    sourceKindOverrides);
+
+                if (createdTimeline)
+                {
+                    AssetDatabase.CreateAsset(targetTimeline, normalizedPath);
+                }
+
+                FacialTimelineBakeAsset bakeAsset = FindBakeAsset(normalizedPath);
+                bool createdBake = false;
+                if (bakeAsset == null)
+                {
+                    bakeAsset = ScriptableObject.CreateInstance<FacialTimelineBakeAsset>();
+                    bakeAsset.name = DefaultBakeAssetName;
+                    AssetDatabase.AddObjectToAsset(bakeAsset, targetTimeline);
+                    createdBake = true;
+                }
+
+                TimelineBakeService.UpdateBakeAsset(targetTimeline, profileAsset, bakeAsset);
+                EditorUtility.SetDirty(targetTimeline);
+                EditorUtility.SetDirty(bakeAsset);
+
+                if (director != null)
+                {
+                    director.playableAsset = targetTimeline;
+                }
+
+                if (receiver != null)
+                {
+                    receiver.BakeAsset = bakeAsset;
+                    if (director != null)
+                    {
+                        BindReceiverToTimelineTracks(director, targetTimeline, receiver);
+                    }
+                }
+
+                AssetDatabase.SaveAssetIfDirty(bakeAsset);
+                AssetDatabase.SaveAssetIfDirty(targetTimeline);
+                AssetDatabase.ImportAsset(normalizedPath);
+
+                result = ExportResult.Succeeded(recordingPath, normalizedPath, targetTimeline, bakeAsset, createdTimeline, createdBake);
+                Selection.activeObject = targetTimeline;
+                return true;
+            }
+            catch
+            {
+                if (createdTimeline && File.Exists(normalizedPath))
+                {
+                    AssetDatabase.DeleteAsset(normalizedPath);
+                }
+
+                throw;
+            }
         }
 
         private static void ValidateSequence(IRecordedEventSequence sequence)
@@ -236,7 +367,8 @@ namespace Hidano.FacialControl.Timeline.Editor
 
         private static List<AnalogTrackInfo> BuildAnalogTracks(
             IRecordedEventSequence sequence,
-            IReadOnlyCollection<string> gazeSourceIds)
+            IReadOnlyCollection<string> gazeSourceIds,
+            IReadOnlyDictionary<string, FacialValueChannelKind> sourceKindOverrides)
         {
             var analogEventsBySource = new Dictionary<string, List<AnalogEventInfo>>(StringComparer.Ordinal);
 
@@ -261,6 +393,7 @@ namespace Hidano.FacialControl.Timeline.Editor
             foreach (KeyValuePair<string, List<AnalogEventInfo>> pair in analogEventsBySource)
             {
                 bool isConfiguredAsGaze = ContainsSourceId(gazeSourceIds, pair.Key);
+                bool hasOverride = TryGetSourceKindOverride(sourceKindOverrides, pair.Key, out FacialValueChannelKind overrideKind);
                 int maxAxisCount = 0;
                 bool hasNonGazeAxisCount = false;
                 for (int i = 0; i < pair.Value.Count; i++)
@@ -271,11 +404,15 @@ namespace Hidano.FacialControl.Timeline.Editor
                 }
 
                 FacialValueChannelKind channelKind = FacialValueChannelKind.Analog;
-                if (isConfiguredAsGaze && !hasNonGazeAxisCount)
+                bool wantsGaze = hasOverride
+                    ? overrideKind == FacialValueChannelKind.Gaze
+                    : isConfiguredAsGaze;
+
+                if (wantsGaze && !hasNonGazeAxisCount)
                 {
                     channelKind = FacialValueChannelKind.Gaze;
                 }
-                else if (isConfiguredAsGaze && hasNonGazeAxisCount)
+                else if (wantsGaze && hasNonGazeAxisCount)
                 {
                     Debug.LogWarning(
                         $"[RecToTimelineExporter] Gaze source '{pair.Key}' has non-2D samples. It is exported as Analog instead.");
@@ -286,6 +423,20 @@ namespace Hidano.FacialControl.Timeline.Editor
 
             tracks.Sort((left, right) => string.CompareOrdinal(left.SourceId, right.SourceId));
             return tracks;
+        }
+
+        private static bool TryGetSourceKindOverride(
+            IReadOnlyDictionary<string, FacialValueChannelKind> sourceKindOverrides,
+            string sourceId,
+            out FacialValueChannelKind kind)
+        {
+            if (sourceKindOverrides != null && !string.IsNullOrEmpty(sourceId))
+            {
+                return sourceKindOverrides.TryGetValue(sourceId, out kind);
+            }
+
+            kind = default;
+            return false;
         }
 
         private static void CreateAnalogTracks(
@@ -381,6 +532,97 @@ namespace Hidano.FacialControl.Timeline.Editor
             }
 
             return ids;
+        }
+
+        private static TimelineAsset ResolveOrCreateTimelineAsset(
+            string outputAssetPath,
+            TimelineAsset existingTimeline,
+            out bool createdTimeline,
+            out bool overwritingExistingAsset)
+        {
+            createdTimeline = false;
+            overwritingExistingAsset = false;
+
+            if (existingTimeline != null)
+            {
+                createdTimeline = false;
+                overwritingExistingAsset = true;
+                return existingTimeline;
+            }
+
+            TimelineAsset loadedTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(outputAssetPath);
+            if (loadedTimeline != null)
+            {
+                createdTimeline = false;
+                overwritingExistingAsset = true;
+                return loadedTimeline;
+            }
+
+            if (File.Exists(outputAssetPath))
+            {
+                Debug.LogError($"[RecToTimelineExporter] Output path '{outputAssetPath}' is not a TimelineAsset.");
+                return null;
+            }
+
+            createdTimeline = true;
+            return ScriptableObject.CreateInstance<TimelineAsset>();
+        }
+
+        private static void ClearTimeline(TimelineAsset timeline)
+        {
+            TrackAsset[] outputTracks = ToArray(timeline.GetOutputTracks());
+            for (int i = 0; i < outputTracks.Length; i++)
+            {
+                timeline.DeleteTrack(outputTracks[i]);
+            }
+        }
+
+        private static void BindReceiverToTimelineTracks(
+            PlayableDirector director,
+            TimelineAsset timeline,
+            FacialTimelineReceiver receiver)
+        {
+            foreach (TrackAsset track in timeline.GetOutputTracks())
+            {
+                director.SetGenericBinding(track, receiver);
+            }
+        }
+
+        private static T[] ToArray<T>(IEnumerable<T> items)
+        {
+            var list = new List<T>();
+            foreach (T item in items)
+            {
+                list.Add(item);
+            }
+
+            return list.ToArray();
+        }
+
+        private static FacialTimelineBakeAsset FindBakeAsset(string timelinePath)
+        {
+            UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(timelinePath);
+            for (int i = 0; i < assets.Length; i++)
+            {
+                if (assets[i] is FacialTimelineBakeAsset bakeAsset)
+                {
+                    return bakeAsset;
+                }
+            }
+
+            return null;
+        }
+
+        private static string NormalizeAssetPath(string outputAssetPath)
+        {
+            string normalized = outputAssetPath.Replace('\\', '/');
+            if (!normalized.StartsWith("Assets/", StringComparison.Ordinal)
+                && !normalized.StartsWith("Packages/", StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Output asset path must be inside Assets/ or Packages/.", nameof(outputAssetPath));
+            }
+
+            return normalized;
         }
 
         private readonly struct OpenExpressionClip
@@ -503,6 +745,66 @@ namespace Hidano.FacialControl.Timeline.Editor
             public int AxisCount { get; }
 
             public List<AnalogEventInfo> Events { get; }
+        }
+
+        public sealed class ExportResult
+        {
+            private ExportResult(
+                bool success,
+                bool cancelled,
+                string recordingPath,
+                string outputAssetPath,
+                TimelineAsset timeline,
+                FacialTimelineBakeAsset bakeAsset,
+                bool createdTimeline,
+                bool createdBake)
+            {
+                Success = success;
+                Cancelled = cancelled;
+                RecordingPath = recordingPath ?? string.Empty;
+                OutputAssetPath = outputAssetPath ?? string.Empty;
+                Timeline = timeline;
+                BakeAsset = bakeAsset;
+                CreatedTimeline = createdTimeline;
+                CreatedBake = createdBake;
+            }
+
+            public bool Success { get; }
+
+            public bool Cancelled { get; }
+
+            public string RecordingPath { get; }
+
+            public string OutputAssetPath { get; }
+
+            public TimelineAsset Timeline { get; }
+
+            public FacialTimelineBakeAsset BakeAsset { get; }
+
+            public bool CreatedTimeline { get; }
+
+            public bool CreatedBake { get; }
+
+            public static ExportResult Succeeded(
+                string recordingPath,
+                string outputAssetPath,
+                TimelineAsset timeline,
+                FacialTimelineBakeAsset bakeAsset,
+                bool createdTimeline,
+                bool createdBake)
+            {
+                return new ExportResult(true, false, recordingPath, outputAssetPath, timeline, bakeAsset, createdTimeline, createdBake);
+            }
+
+            public static ExportResult CreateCancelled(string recordingPath, string outputAssetPath)
+            {
+                return new ExportResult(false, true, recordingPath, outputAssetPath, null, null, false, false);
+            }
+
+            public static ExportResult CreateFailed(string recordingPath, string outputAssetPath)
+            {
+                return new ExportResult(false, false, recordingPath, outputAssetPath, null, null, false, false);
+            }
         }
     }
 }
