@@ -144,7 +144,7 @@
   - _Requirements: 2.4, 3.4_
   - _Depends: 6.2, 7.1_
 
-- [ ] 7.3 (P) 事前検証とクリップ UI 表示を実装する
+- [x] 7.3 (P) 事前検証とクリップ UI 表示を実装する
   - テストファースト: EmptyParentTrack（親 Track 空 + 子レーンのみ = mixer 非コンパイルで無警告沈黙する状態）をエラー検出し正常なレーン構成では検出しないこと、MissingExpressionId / GazeOutOfRange / EmptyClip を検出することの EditMode テストを先に書く
   - 検証レポート（EmptyParentTrack は修復手段を Message で提示。gaze 値域外は Warning のみで値は変更しない）と、ClipEditor による MissingExpressionId クリップのエラー表示、TrackEditor のレーン編集補助を実装する
   - 完了条件: 検証テストが全緑で、無効 expressionId のクリップが Timeline ウィンドウ上でエラー表示されること

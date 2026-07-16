@@ -12,6 +12,7 @@
         "Hidano.FacialControl.Rec.Application",
         "Hidano.FacialControl.Rec.Adapters",
         "Unity.Timeline",
+        "Unity.Timeline.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
