@@ -153,7 +153,7 @@
   - _Depends: 3.1_
 
 - [ ] 8. 先行 spec 依存の結合（依存ゲート付き）
-- [ ] 8.1 (P) rec 実フォーマット読込アダプターを結合する
+- [x] 8.1 (P) rec 実フォーマット読込アダプターを結合する
   - 依存ゲート: rec-recording-playback の読込 API 確定・実装後にのみ着手可能（それまでは 7.1 の Fake で先行済み。契約が変わった場合は Revalidation Trigger に従い再照合）
   - rec 実モデル（RecTimeline / RecEvent、AnalogSample 可変軸。IdDefine / Footer は adapter 内で解決・消費）→ rec 論理形への 1:1 機械変換のみを行う（kind 推論・gaze 判定は行わない）。rec 依存はこの 1 ファイル + Editor asmdef に封じ込める
   - 完了条件: 実 REC 記録から書き出し → Timeline 編集可能な TimelineAsset + ベイク生成まで通しで成功すること
