@@ -60,7 +60,7 @@
   - _Requirements: 1.4, 5.5, 7.1_
   - _Boundary: TimelineBakedValueSink, TimelineGazeInputSource, TimelineAnalogInputSource_
 
-- [ ] 4.3 (P) ベイク成果物アセットのスキーマを定義する
+- [x] 4.3 (P) ベイク成果物アセットのスキーマを定義する
   - ハッシュ hex・sampleRate・表情ソースベイク（レイヤー別・BlendShape 名キーの sparse カーブ。リグ非依存・2 バイト文字対応）・連続値ベイク（絶対時間カーブ、gaze は正規化 Vector2 のままボーン回転を持たない）を保持する ScriptableObject を定義する
   - 状態イベント列は成果物に持たせない（mixer が正本クリップ列から導出する設計を崩さない）
   - 完了条件: TimelineAsset の sub-asset として保存・参照でき、シリアライズ往復で内容が保たれること
