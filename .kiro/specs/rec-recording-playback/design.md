@@ -876,13 +876,15 @@ UI Toolkit 製の最小 Inspector。Play 中に記録/再生の開始・停止�
 
 ### Domain Model
 
-- **集約ルート**: `RecTimeline`（1 記録 = 1 ファイル = 1 タイムライン）。イベント列は時刻昇順・不変
-- **値オブジェクト**: `RecEvent`（kind + timestampSeconds + sourceIdIndex + expressionIdIndex + axes 参照）、`RecEventKind`
+- **集約ルート**: `RecTimeline`（1 記録 = 1 ファイル = 1 タイムライン）= **基準状態（`RecBaselineState`）+ 時刻付きイベント列**。イベント列は時刻昇順・不変
+- **値オブジェクト**: `RecEvent`（kind + timestampSeconds + sourceIdIndex + expressionIdIndex + axes 参照）、`RecEventKind`、`RecBaselineState`（トリガーソース別スタック列 + アナログソース別軸値）
 - **不変条件**:
+  - 基準状態レコードは最初の時刻付きイベントより前に必ず出現する（再生側が「基準確立」と「時系列イベント」を構造的に区別できる）
   - タイムスタンプは記録開始起点の相対秒（`double`）で単調非減少（Req 1.5）
   - id 参照（u16 index）は必ず先行する IdDefine レコードで定義済み
-  - 正本は操作イベントのみ。合成後 BlendShape 値・フレーム番号は保持しない（Req 1.4）
+  - 正本は「基準状態 + 操作イベント」のみ。合成後 BlendShape 値・フレーム番号は保持しない（Req 1.4）
   - gaze はアナログ 2 軸サンプルとして -1..1 を無変換で保持（Req 4.2, 4.4）
+  - 同一トリガーソースの `BaselineTrigger` は出現順がスタック順（古い→新しい）を表す
 
 ### Physical Data Model（`.fcrec` バイナリレイアウト）
 
@@ -905,7 +907,11 @@ UI Toolkit 製の最小 Inspector。Play 中に記録/再生の開始・停止�
 | 2 | TriggerOn | f64 t, u16 sourceIdx, u16 expressionIdx |
 | 3 | TriggerOff | f64 t, u16 sourceIdx, u16 expressionIdx |
 | 4 | AnalogSample | f64 t, u16 sourceIdx, u8 axisCount, f32[axisCount] |
+| 5 | BaselineTrigger | u16 sourceIdx, u16 expressionIdx（時刻なし。同一 source の出現順 = スタック順） |
+| 6 | BaselineAnalog | u16 sourceIdx, u8 axisCount, f32[axisCount]（時刻なし） |
 | 255 | Footer | f64 durationSeconds, u32 eventCount |
+
+- **基準状態レコード（kind 5/6）は最初の時刻付きレコード（kind 2/3/4）より前に出現しなければならない**（違反は読込エラー）。基準に必要な IdDefine は基準レコードに先行する
 
 - **追記のみ**（Req 5.6）: id 辞書をヘッダに置かず初出時インライン定義することで、記録中の順次ストリーミング書き出しと辞書保持を両立
 - **復旧**: フッタ欠落（クラッシュ）時は先頭からスキャンし、途中で切れたレコードを警告付き破棄して読込続行。magic/version 不正・レコード kind 不明はエラー（`Debug.LogError` + 再生開始しない、Req 5.5）
@@ -915,7 +921,7 @@ UI Toolkit 製の最小 Inspector。Play 中に記録/再生の開始・停止�
 ### Data Contracts & Integration
 
 - 観測イベント契約（`IFacialInputObserver`）と注入契約（Injection Ports）が rec ↔ core の唯一の統合面。`ReadOnlySpan<float>` の axes は**コールバック中のみ有効**（保持禁止）を両契約共通の規約とする
-- 後続 spec `rec-timeline-baking` は同じ `.fcrec` と `RecTimeline` を入力として消費する想定（Revalidation Triggers 参照）
+- 後続 spec `rec-timeline-baking` は同じ `.fcrec` と `RecTimeline` を入力として消費する想定。同 spec が注入面を使う場合は本 spec 定義の**占有規則**（`IInjectedInputSource` 節参照）に従う（Revalidation Triggers 参照）
 
 ## Error Handling
 
@@ -931,13 +937,21 @@ Unity 標準ログのみ（`Debug.Log/Warning/Error`）。カスタム例外型�
 - sidecar 不在・ヘッダ不正・未知 version → Error + 再生を開始しない（`Load` が null / false、Req 5.5）
 
 **データ整合性エラー**
-- 欠落 expressionId → 読込時に `RecLoadResult.MissingExpressionIds` で事前検知可能（Req 9.2）。再生時は該当イベントを発火前スキップ + distinct 単位 1 回の Warning、再生全体は継続（Req 9.1）
+- 欠落 expressionId → 読込時に `RecLoadResult.MissingExpressionIds` で事前検知可能（Req 9.2）。再生時は該当イベントを発火前スキップ（基準スタックからも除外）+ distinct 単位 1 回の Warning、再生全体は継続（Req 9.1）
 - トリガー sourceId 解決失敗（binding 構成変更等）→ distinct 単位 1 回の Warning + スキップ
+- アナログ原本不在（別構成への記録持ち込み）→ エラーではなく正式サポート: `Register` で装着し Info ログ、停止時 `Unregister`
 - フッタ欠落ファイル → Warning + スキャン復旧読込（truncated tail は破棄）
+- 基準レコードが時刻付きイベントより後に出現 → 読込エラー（フォーマット不変条件違反）
+
+**注入・並行利用エラー**
+- 注入対象 id が他者占有（`IInjectedInputSource` 検出）→ 当該 id をスキップ + Warning、再生は継続（占有規則 1）
+- 復元時に現エントリが自分の装着インスタンスでない → Warning + no-op（占有規則 2。後続占有者を破壊しない）
+- registry 通知中の再入（Register/Replace/Unregister/Subscribe）→ `Debug.LogError` + no-op（実行時ガード）
 
 **システムエラー**
 - writer thread の I/O 例外 → thread 内で捕捉し Error ログ（throttled）、キュー消費は継続（捕捉側を飽和させない、Req 8.4）
-- ファイナライズ Join タイムアウト → Error ログ。ファイルは復旧スキャンで読込可能
+- ファイナライズ Join タイムアウト → Error ログのみ。**FileStream は writer thread が `finally` で必ず close** するためロック残留せず、次の記録（常に新パス）は開始可能
+- 停止系 API の二重呼び出し（`OnDisable` + `OnDestroy` 等）→ 冪等・静かに no-op
 - 記録セッション中の `SetProfile` 再初期化 → 再購読 + Warning（切替瞬間の欠落は既知の制限）
 
 ### Monitoring
@@ -950,18 +964,22 @@ Unity 標準ログのみ（`Debug.Log/Warning/Error`）。カスタム例外型�
 ### Unit Tests（EditMode / rec Domain 中心、TDD 対象の核）
 
 1. `RecEventChunkQueue` — FIFO 順序、飽和時のセグメント拡張で無欠落、SPSC 並行 Enqueue/Dequeue の整合（producer/consumer スレッドテスト）
-2. `RecBinaryFormat` — 全レコード種別の roundtrip、フッタ欠落ファイルの復旧スキャン、truncated tail 破棄、未知 version エラー
+2. `RecBinaryFormat` — 全レコード種別（基準レコード含む）の roundtrip、基準レコードの出現順不変条件（違反で読込エラー）、フッタ欠落ファイルの復旧スキャン、truncated tail 破棄、未知 version エラー
 3. `RecPlaybackScheduler` — 大小 deltaTime での順序・時刻維持（1 Tick 複数イベント発火）、終端検知、double 累積精度
-4. `RecValidation` / `PlaybackUseCase` — 欠落 expressionId の distinct 検出と発火前スキップ、二重開始/再生の拒否
+4. `RecValidation` / `PlaybackUseCase` — 欠落 expressionId の distinct 検出と発火前スキップ（基準スタックからの除外含む）、二重開始/再生の拒否、停止系 API の冪等性
 5. `FacialInputObservationBus`（core） — publish 中 Subscribe/Unsubscribe の遅延適用、観測者例外の隔離、HasObservers ガード（FacialOutputBusTests と同型）
+6. `ExpressionTriggerInputSourceBase.ResetToExpressionStack`（core） — 遷移を経ない定常確定（直後の TryWriteValues が最終合成値）、空列での全解除、observer 非通知、深度超過の切り詰め
+7. `InputSourceRegistry`（core） — Unregister の null 通知、通知中再入の LogError + no-op ガード
 
 ### Integration Tests（PlayMode）
 
-1. 記録 → 停止 → 読込 → 再生で、トリガー・アナログ・gaze を含む操作列のブレンド出力（`BlendedOutputSpan`）が収録時と一致する（同一プロファイル・同一レイヤー設定、Req 3.3）
-2. `Replace` 再バインド伝搬 — 差し替え後 1 フレーム以内にレイヤー出力・gaze ボーンが新ソース値を反映し、復元後にライブ値へ戻る
-3. 再生停止時の状態保持 — on のままのトリガーが解除されず、ライブ TriggerOff で通常遷移すること（Req 3.5）
-4. 記録停止時のファイナライズ — 停止直後にファイルが読込可能、`OnDestroy` 経由でも取りこぼしなし
-5. 観測者未登録時の既存挙動不変 — rec 未使用シーンで既存 PlayMode スイートが緑のまま（回帰ゲート）
+1. 記録 → 停止 → 読込 → 再生で、トリガー・アナログ・gaze を含む操作列のブレンド出力（`BlendedOutputSpan`）が**フレーム 0 から**収録時と一致する（同一プロファイル・同一レイヤー設定で無条件成立、Req 3.3/3.8。保持中トリガーがある状態からの収録・再生を含む）
+2. 基準状態確立 — ライブの残存トリガー（記録に無いもの）が再生開始で解除され、基準スタックが遷移を経ず定常値で立ち上がる（収束窓が無いこと、Req 3.8）
+3. `Replace` / `Unregister` 再バインド伝搬 — 差し替え後 1 フレーム以内にレイヤー出力・gaze ボーンが新ソース値を反映し、復元後にライブ値へ戻る。原本不在 id への Register 装着 → Unregister 除去で未解決時挙動へ回帰する
+4. 再生停止時の状態保持 — on のままのトリガーが解除されず、ライブ TriggerOff で通常遷移すること（Req 3.5）
+5. 注入占有規則 — 他者占有 id への装着スキップ + Warning、「A 装着 → B 装着 → A 復元」で B の占有が破壊されない
+6. 記録停止時のファイナライズ — 停止直後にファイルが読込可能、`OnDestroy` 経由でも取りこぼしなし、二重停止で安全
+7. 観測者未登録時の既存挙動不変 — rec 未使用シーンで既存 PlayMode スイートが緑のまま（回帰ゲート）
 
 ### Performance Tests（PlayMode / Performance）
 
@@ -985,8 +1003,10 @@ Unity 標準ログのみ（`Debug.Log/Warning/Error`）。カスタム例外型�
 
 - 検討過程・代替案・トレードオフの詳細: `.kiro/specs/rec-recording-playback/research.md`
   - sidecar フォーマット選定（JSONL / JSON+バイナリ / 追記型バイナリの比較）
+  - 基準状態レコード + 決定的確立への設計変更（t=0 TriggerOn 畳み込み方式の廃止理由）
   - 観測スコープ（per-FC バス vs static event）
   - pull 消費点サンプリングの意味論的正当性
-  - Replace 再バインド伝搬の到達範囲と既知の制限
+  - Replace / Unregister 再バインド伝搬の到達範囲と既知の制限
+  - 注入面の多重占有規則（A→B→A 系の破壊防止）
   - 再生停止 → ライブ引き継ぎの値ジャンプ許容の根拠
   - asmdef 3 分割の判断

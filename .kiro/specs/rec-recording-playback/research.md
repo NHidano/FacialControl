@@ -74,6 +74,17 @@
 - **Trade-offs**: 人間可読性を失う（読込・検証 API とログで補う）。バージョニングはヘッダ version u16 で管理（preview 段階は破壊的変更許容の既存方針に整合）
 - **Follow-up**: 実装時にレコード書込の endianness（little 固定）と truncated tail の復旧テストを EditMode で先行させる
 
+### Decision: 基準状態レコード + 再生開始時の決定的確立（重畳方式の廃止 / validate-design 反映）
+- **Context**: validate-design の Critical Issue。当初案は記録開始時の状態を「t=0 の TriggerOn 群」に畳み込み、再生時にライブ状態へ**重畳**する方式だった。レビューで (a) ライブの残存トリガーとの重畳（MaxStackDepth の自動 drop でスタック順まで変化）、(b) 保持済み表情が 0→1 の新遷移として立ち上がり遷移時間ぶんの収束窓でブレンドが不一致、の 2 欠陥が指摘された。ユーザー判断:「ニュートラル状態は事前に取得または生成しておいて、それを基準に最初のフレームを記録すればよい」
+- **Alternatives Considered**:
+  1. 既知の制限として文書化（重畳方式を維持）— 不採用（ユーザー決定）
+  2. t=0 TriggerOn 畳み込みを維持しつつ再生前に全解除 — 収束窓の問題が残る
+  3. 記録 = 「基準状態 + イベント列」構造とし、再生開始時に基準状態を決定的に確立
+- **Selected Approach**: 3。`.fcrec` に `BaselineTrigger` / `BaselineAnalog` レコード種別（時刻なし、最初の時刻付きイベントより前に出現する不変条件）を追加し、再生側が「基準確立」と「通常イベント」を構造的に区別できるようにする。再生開始時は core 新 API `ExpressionTriggerInputSourceBase.ResetToExpressionStack`（スタック置換 + 遷移を経ない定常値確定 + observer 非通知）で**全トリガーソース**を基準へリセット（基準の無いソースは空スタック = ライブ残存トリガーの解除）、アナログは注入ソースへ基準値をシードする
+- **Rationale**: フレーム 0 から収録時と同一のブレンドが同一構成で無条件に成立し（Req 3.3 / 新設 3.8）、重畳の非決定性と収束窓が構造的に消える
+- **Trade-offs**: core 注入面に API が 1 つ増える（案2 の枠内として正式化）。再生開始が「ライブ状態を上書きする」操作になる（意図された仕様。requirements.md に AC 3.8 として追加済み）
+- **Follow-up**: ResetToExpressionStack の定常確定（直後 TryWriteValues が最終合成値・Tick 非進行）と LastWins/Blend 両モードでのマスク整合を EditMode で先行検証
+
 ### Decision: 観測スコープ = FacialController（child scope）単位の `IFacialInputObservationBus`
 - **Context**: Research Needed #2。10 体同時制御時の記録スコープ
 - **Alternatives Considered**: static event（グローバル）/ per-instance バス
@@ -93,8 +104,27 @@
 - **Context**: Research Needed #4（ユーザー確定済み案2 の具体化）
 - **Selected Approach**: FacialController が (a) レイヤー入力源の全宣言 id を（解決成否に関わらず）Subscribe し、通知時に `BindLateInputSource`（既存スワップ対応）+ Layer2Provider 再投入 + トリガー観測フック再配線、(b) GazeConfigs 由来の gaze id を Subscribe し、通知時に `SetupGazeBoneProvider` を再実行する
 - **Rationale**: 新規機構をほぼ作らず、既存の遅延バインド経路を Replace にも汎化するだけで済む
-- **Trade-offs**: Subscribe に Unsubscribe が無いが、registry は child scope 再構築ごとに新インスタンスになるためリークは scope 寿命に閉じる。**再入制約**: Subscribe ハンドラ内から registry の Register/Replace/Subscribe を呼ぶことを禁止する（`NotifySubscribers` がライブ list を index 走査するため）— design.md に不変条件として明記
+- **Trade-offs**: Subscribe に Unsubscribe が無いが、registry は child scope 再構築ごとに新インスタンスになるためリークは scope 寿命に閉じる
 - **Follow-up**: 発火順（Replace → 同期ハンドラ → 次フレーム Aggregate 反映）の統合テスト
+- **改訂（validate-design 反映）**:
+  - **再入ガードの実行時化**: 「Subscribe ハンドラ内から registry を変更しない」制約は XML doc のみでは検出不能とのレビュー指摘（`NotifySubscribers` L144-155 はライブ list を index 走査）を受け、`InputSourceRegistry` に notify 中フラグ + `Debug.LogError` + no-op の軽量ガード（数行・alloc なし）を追加する
+  - **Unregister 通知の追加（原本不在注入の正式サポート）**: `UnregisterInternal`（L191-206）は従来 NotifySubscribers を発火せず、原本が存在しない id へ注入したソースを消費側から外す経路が無かった。ユーザー判断で「記録時と再生時でシーン構成が異なる利用（別プロジェクト/別バインディング構成への記録持ち込み）は preview スコープ内」と確定したため、原本不在 id への注入は `Register` で装着し、`EndInjection` は `Unregister` で除去する。Unregister は `NotifySubscribers(key, null)` を発火し、null 通知 = 「ソース消滅 → 消費側は未解決時挙動へ回帰」（レイヤー: `UnbindLateInputSource` で除去、gaze: provider 再構築で該当 binding スキップ）を正式契約とする。既存の遅延バインドハンドラ（FacialController L613）は `!= null` ガード済みのため null 通知で誤動作しない
+
+### Decision: 注入面の多重占有規則（rec-timeline-baking レビュー反映）
+- **Context**: 後続 spec `rec-timeline-baking` の validate-design で「同一ソース id を複数の所有者が Replace で差し替える系（rec リアルタイム再生と Timeline 再生の併用等）において、A 差し替え → B 差し替え → A 復元、の順序で B の占有が破壊される」が指摘された。注入面の契約オーナーは本 spec
+- **Alternatives Considered**:
+  1. core に占有管理テーブルを持たせる — core が注入者概念を持つことになり「core は rec を知らない」（6.6）と整合しにくい
+  2. マーカー interface（`IInjectedInputSource`）+ 注入者側が遵守する規則の契約化
+- **Selected Approach**: 2。注入ソースは core Domain の `IInjectedInputSource`（`ReplacedSource` = 退避原本、新規 Register 時は null）を実装する。規則: (1) 装着時、現エントリが `IInjectedInputSource` なら他者占有とみなし当該 id をスキップ + Warning（処理全体は継続、多重占有スタックは作らない）、(2) 復元時、現エントリが自分の装着インスタンスと参照同一の場合のみ Replace（原本復元）/ Unregister（原本なし装着）を行い、異なれば Warning + no-op
+- **Rationale**: A→B→A 系で B の占有が破壊されない（B は装着時スキップ or A の復元が no-op）。core は規則とマーカーのみ提供し状態を持たない
+- **Trade-offs**: 併用時に一部 id が再生に乗らない可能性（Warning で可視化）。占有の「強制解除」は提供しない（必要になれば将来 spec で検討）
+- **Follow-up**: `rec-timeline-baking` の設計がこの規則へ準拠しているかの相互確認。A→B→A 系の統合テスト
+
+### Decision: writer ファイナライズの所有権（validate-design 反映）
+- **Context**: `Join(2000ms)` タイムアウト後の FileStream 所有権が未定義で、Windows のファイルロック残留 →「次の記録が開始できない」実害の懸念が指摘された
+- **Selected Approach**: FileStream の所有権を writer thread に固定する。writer thread はループ脱出時に `finally` で必ず close する（フッタ書込の成否と独立）。Join タイムアウト時、メインスレッドは stream に触れずエラーログのみ（遅れて終了する writer が `finally` で close する）。停止系 API（`StopSession` / `Close` / `StopPlayback` / MonoBehaviour の `OnDisable`+`OnDestroy`）はすべて冪等とし、二重呼び出しで警告・例外を出さない。次の記録は常に新パス（連番）で開始するためロック競合しない
+- **Rationale**: 所有スレッドの一意化により close の競合・二重 close・ロック残留を構造的に排除する
+- **Follow-up**: 人工的に writer を遅延させた Join タイムアウト経路のテスト（close が最終的に行われること）
 
 ### Decision: 再生停止 → ライブ引き継ぎの値ジャンプは既存パイプライン挙動に委ねる
 - **Context**: Research Needed #6（Req 3.5「常に保持・自動解除なし」確定済みの残論点）
@@ -115,7 +145,9 @@
 ## Risks & Mitigations
 - 拡張内部の直接参照消費者（例: inputsystem の AnalogBonePoseProvider 経路）へ Replace 注入が届かない — 到達範囲を design.md に明文化し、ブレンド + gaze ボーン（registry 経由）で Req 3.3 を保証。残りは将来の拡張側対応（backlog 候補）
 - 記録セッション中の `SetProfile` 再初期化でバス・ソースが作り直される — rec が参照同一性チェックで再購読し、切替時に警告ログ。完全性は保証しない（既知の制限として記載）
-- writer thread の flush 取りこぼし（Play 停止・ドメインリロード） — `OnDisable`/`OnDestroy` で停止 → リング drain → フッタ書込 → `Join(timeout)`。バックストップとしてフッタ欠落ファイルのスキャン復旧
+- writer thread の flush 取りこぼし（Play 停止・ドメインリロード） — `OnDisable`/`OnDestroy` で停止 → リング drain → フッタ書込 → `Join(timeout)`。FileStream は writer thread が `finally` で必ず close（所有権固定、ロック残留防止）。バックストップとしてフッタ欠落ファイルのスキャン復旧
+- 再生開始の基準確立がライブ状態を上書きする — 意図された仕様（Req 3.8）だが、配信中の誤操作リスクとして README/Documentation~ に明記
+- 複数注入者の併用（rec + Timeline 等）で占有スキップが発生しうる — Warning で可視化。占有規則により状態破壊は起きない
 - Editor での StreamingAssets 書込直後にファイルが見えない — 記録停止時のみ `#if UNITY_EDITOR` で `AssetDatabase.Refresh()`（毎フレームは呼ばない）
 - 再生注入イベントが観測バスへ還流（再生中に記録すると注入イベントも記録される） — 仕様として容認（それも実操作イベントである）。design.md に明記
 
