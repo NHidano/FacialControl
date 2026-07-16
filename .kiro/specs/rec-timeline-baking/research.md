@@ -107,11 +107,11 @@
 - **Trade-offs**: パッケージ数が 1 増える（publish 運用コスト増）
 - **Follow-up**: rec パッケージの publish 後に version 依存を確定する
 
-### Decision: ベイク忠実度 — 60 Hz サンプリング + 線形キー補間
-- **Context**: Req 1.5「同一のブレンド結果を再現」とカーブ近似の関係
-- **Selected Approach**: 表情ソース値は 60 Hz 固定サンプリング（決定的キー削減つき）で焼く。線形遷移は厳密一致、イージング/カスタムカーブはサンプル点間の線形補間近似となるため、1.5 の等価性検証テストは許容誤差（epsilon）で比較する。sampleRate はベイク成果物に記録しハッシュに含める
-- **Trade-offs**: 曲線遷移で最大サンプル間隔相当の微小誤差（60 Hz で知覚不可レベル）。厳密一致が必要になった場合は接線付きキーまたはレート引き上げで対処可能
-- **Follow-up**: PlayMode 等価性テストの epsilon を実測で確定する
+### Decision: ベイク忠実度 — イベント時刻分割ステップ + 60 Hz 上限刻み（validate-design Issue 1 で改訂）
+- **Context**: Req 1.5「同一のブレンド結果を再現」とカーブ近似の関係。当初案「t=0 から 60Hz 固定グリッドで前進しクリップ境界で発火」は、Exporter が記録イベント時刻をリサンプルしない（境界が 60Hz グリッド外に落ちる）ため、トリガー時刻が最大 1/60 秒量子化され線形遷移の折れ点がキーに乗らない（遷移 0.25 秒なら折れ点近傍で最大約 6.7% の値誤差）。「線形遷移は厳密一致」という当初の検証前提が設計時点で成立していなかった
+- **Selected Approach**: ハーネスのステップを**イベント時刻で分割**する — 次のクリップ境界時刻まで正確に前進（`Aggregate(境界までの deltaTime)`）→ 境界時刻でサンプル → 発火 → 発火直後を再サンプル → 残り時間を 1/60 秒上限の刻みで前進。全イベント時刻に必ずキーを打ち、キー削減はイベント時刻キーを対象外とする。これにより**線形遷移は区分線形カーブとして厳密に表現され「線形 = 厳密一致」が構造的に真になる**。イージング/カスタムカーブはサンプル点間の線形補間近似のままで、等価性検証テストは許容誤差（epsilon）比較。sampleRate（刻み上限）はベイク成果物に記録しハッシュに含める
+- **Trade-offs**: 曲線遷移で最大サンプル間隔相当の微小誤差（60 Hz で知覚不可レベル）。厳密一致が必要になった場合は接線付きキーまたはレート引き上げで対処可能。ステップ制御がわずかに複雑化するが決定性は維持（イベント時刻列 + 固定刻み上限から一意に定まる）
+- **Follow-up**: PlayMode 等価性テストの epsilon（カーブ遷移用）を実測で確定する。EditMode に「境界時刻キーの存在」「線形厳密一致」の検証を追加する
 
 ### Decision: gaze のライブ⇄Timeline 切替は Replace 再バインド伝搬による一時差し替え（レビュー修正 1）
 - **Context**: 当初設計の「`GazeBindingConfig` に `timeline:gaze-{n}` を静的配線」は、gaze 消費側（`EyeBinding.Source`）が構築時固定であるためライブ gaze と Timeline gaze が共存できず（プロファイル設定でどちらか一方に固定）、「ライブ本番中の Timeline 再生」という前提と衝突した
@@ -120,9 +120,10 @@
   2. **一時差し替え**: 再生セッション開始時に `Replace(既存ライブ gaze ソース id, timeline sink)` を実行し、core 注入面（rec spec が追加する Replace 再バインド伝搬）が消費側を再バインド。停止時に元ソースへ復元
   3. gaze 解決側に複数ソースの優先度合成を新設 — 共存の表現力は最大だが core の gaze 解決コードパスの変更（Req 9.3 違反）であり、本 spec / rec spec のいずれの所掌でもない
 - **Selected Approach**: 2（一時差し替え）。差し替えの実行と復元は `FacialTimelineReceiver` が所有し、差し替え対象は binding 設定の `TakeoverSourceId`（`GazeBindingConfig` が参照している既存ライブソース id）で指定する。復元は Receiver.ReleaseAll → Receiver.OnDisable/OnDestroy → TimelineAdapterBinding.Dispose の三重防衛線で保証（すべて冪等）
+- **多重占有ガード**（validate-design Issue 2 で追加）: 同一 `TakeoverSourceId` を複数所有者が差し替える系（同一キャラに複数 PlayableDirector / rec リアルタイム再生との併用 — rec も同じ注入面を使う）では、「A 差し替え → B 差し替え（B の退避元は A の sink）→ A 先行停止で元ソース復元」の順序で B の占有が破壊され、三重防衛線では検出できない。対策として (a) **復元時ガード**: 現占有者が自分の sink の場合のみ復元し、そうでなければ Warning + no-op（三重防衛線すべての冪等条件に含める）、(b) **開始時ガード**: 既に他の差し替え sink が占有済みなら Warning + 当該チャネル無効化（TakeoverSourceId 解決不能時と同じ縮退）。多重 Replace の占有セマンティクス自体（占有照会・復元権限・開始拒否規則）は注入面の契約オーナーである rec spec が定義中で、本 spec はその契約に従う利用側
 - **Rationale**: ユーザーの `GazeBindingConfig` は既存ライブ配線のまま変更不要になり、非再生中はライブ gaze が従来どおり機能する。core への追加は rec spec 所掌の注入面のみで、本 spec は利用側に留まる
-- **Trade-offs**: 再生中は当該 gaze チャネルを Timeline が占有する（ライブ gaze と同時合成はしない — 案 3 のスコープ）。注入面の契約形状が rec spec design で確定するまで結合実装できない（Fake 境界で先行実装）
-- **Follow-up**: rec spec design 確定時に注入面の契約形状（API 名・伝搬対象・復元可否）を照合（Revalidation Trigger 登録済み）
+- **Trade-offs**: 再生中は当該 gaze チャネルを Timeline が占有する（ライブ gaze と同時合成はしない — 案 3 のスコープ）。多重占有時は後着が縮退する（先着優先）。注入面の契約形状が rec spec design で確定するまで結合実装できない（Fake 境界で先行実装）
+- **Follow-up**: rec spec design 確定時に注入面の契約形状（API 名・伝搬対象・復元可否・多重 Replace 時の占有セマンティクス）を照合（Revalidation Trigger 登録済み）
 
 ### Decision: 状態イベント列は正本クリップ列から graph 構築時に導出（レビュー修正 3）
 - **Context**: 当初設計は状態イベント列（`StateEvents`）を `FacialTimelineBakeAsset` に格納していたが、「ベイク欠落時は状態駆動のみ継続」という 6.4 の挙動記述と矛盾していた（イベント列自体がベイク成果物内にあるため欠落時は状態駆動も不能）
@@ -163,8 +164,9 @@
 
 ## Risks & Mitigations
 - **rec spec の記録モデルが再度変わる**（2026-07-16 確定版とは照合済み） — `IRecordedEventSequence` + adapter 1 ファイルに依存を封じ込め、Revalidation Trigger として明記
-- **core 注入面（Replace 再バインド伝搬）の契約形状が想定と異なる**（rec spec design 生成中） — gaze 差し替えを Receiver の `BeginPlaybackSession`/`ReleaseAll` に局所化し、注入面は Fake 境界で先行実装。rec design 確定時に照合（Revalidation Trigger 登録済み）
-- **gaze 差し替えの復元漏れ**（差し替えたままライブ gaze が死ぬ） — 三重防衛線（ReleaseAll / Receiver OnDisable/OnDestroy / Binding Dispose、すべて冪等）+ 各経路の PlayMode テストで担保
+- **core 注入面（Replace 再バインド伝搬）の契約形状が想定と異なる**（rec spec design 生成中） — gaze 差し替えを Receiver の `BeginPlaybackSession`/`ReleaseAll` に局所化し、注入面は Fake 境界で先行実装。rec design 確定時に照合（Revalidation Trigger 登録済み。多重 Replace の占有セマンティクスを含む）
+- **gaze 差し替えの復元漏れ・多重占有の破壊**（差し替えたままライブ gaze が死ぬ / 他所有者の占有を上書きする） — 三重防衛線（ReleaseAll / Receiver OnDisable/OnDestroy / Binding Dispose、すべて冪等）+ 開始時/復元時ガード（現占有者照合）+ 各経路・A/B 多重占有シナリオの PlayMode テストで担保
+- **空親 Track の mixer 非コンパイルによる無警告沈黙** — 「レーン 0 = 親 Track 自身」規約 + `FacialTimelineValidator` の `EmptyParentTrack` エラー検出。実装初期に Timeline 1.8.9 実機でコンパイル挙動を spike 確認（挙動が想定と異なれば規約を再判断）
 - **Aggregator 観測フックの perf 退行** — observer 未登録時は null チェック 1 回/ソース/フレームのみ。既存 GC ゼロゲートテストで担保
 - **Edit Mode プレビューの driven-property 復元漏れ**（過去に reflection 注入で実害事例あり） — `GatherProperties` 経由の標準 preview 機構のみを使い、独自の直接書込プレビューを作らない
 - **同一フレーム内複数イベントの順序** — レーン分割後もイベント統合はレイヤー親 Track の mixer が一元管理し、記録時刻 + 安定ソートで順序決定性を保証

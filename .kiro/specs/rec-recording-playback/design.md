@@ -31,9 +31,11 @@
 - 記録データ（sidecar `.fcrec` ファイル）のフォーマットとその正本性（操作イベントレベル、合成後 BlendShape 値は正本にしない）
 - core への以下の面の追加（実装は core パッケージ内、契約のオーナーは本 spec）:
   - トリガー観測フック（`ExpressionTriggerInputSourceBase` の per-instance observer）
+  - トリガー基準状態確立 API（`ExpressionTriggerInputSourceBase.ResetToExpressionStack` — 遷移を経ない定常状態スナップ）
   - 入力観測バス（`IFacialInputObservationBus` / `IFacialInputObserver`）とアナログ/gaze の pull サンプリング
-  - Replace 再バインド伝搬（レイヤー入力源 + GazeBonePoseProvider）
-- `IInputSourceRegistry.cs` の Replace 系 XML doc 文字化け修繕（L37-42 / L57-67 相当。挙動変更なし）
+  - Replace / Unregister 再バインド伝搬（レイヤー入力源 + GazeBonePoseProvider。Unregister は「ソース消滅 = 未解決時挙動への回帰」として伝搬）
+  - 注入ソースのマーカー契約（`IInjectedInputSource`）と多重注入の占有規則（本 spec が注入面の契約オーナー。`rec-timeline-baking` 等の他の注入利用者もこの規則に従う）
+- `IInputSourceRegistry.cs` の Replace 系 XML doc 文字化け修繕（L37-42 / L57-67 相当）+ 通知中再入の実行時ガード + Unregister 通知（null 通知）の契約追加
 
 ### Out of Boundary
 
@@ -56,7 +58,9 @@
 
 - `IFacialInputObservationBus` / `IFacialInputObserver` / `ITriggerEventObserver` の契約形状変更
 - `.fcrec` バイナリフォーマットのレコード種別・レイアウト変更（ヘッダ version を必ず上げる）
-- Replace 再バインド伝搬の到達範囲・発火順の変更
+- Replace / Unregister 再バインド伝搬の到達範囲・発火順・通知セマンティクス（Unregister = null 通知）の変更
+- 注入面の占有規則（`IInjectedInputSource` マーカー、占有中 id への注入スキップ、参照同一性による復元ガード）の変更
+- `ExpressionTriggerInputSourceBase.ResetToExpressionStack` の契約変更（観測フック非通知・遷移スキップの意味論）
 - sidecar パス規約（`StreamingAssets/FacialControl/{assetName}/recordings/`）の変更
 - `ExpressionTriggerInputSourceBase` のトリガー観測フック呼び出し位置の変更
 
@@ -164,8 +168,9 @@ com.hidano.facialcontrol.rec/
 │   │   ├── Hidano.FacialControl.Rec.Domain.asmdef
 │   │   ├── Models/
 │   │   │   ├── RecEvent.cs              # 固定レイアウトのイベント struct（kind/timestamp/idIndex/axes 参照）
-│   │   │   ├── RecEventKind.cs          # enum: IdDefine / TriggerOn / TriggerOff / AnalogSample / Footer
-│   │   │   ├── RecTimeline.cs           # 読込済み記録（イベント列 + id テーブル + 初期状態 + 総時間）
+│   │   │   ├── RecEventKind.cs          # enum: IdDefine / TriggerOn / TriggerOff / AnalogSample / BaselineTrigger / BaselineAnalog / Footer
+│   │   │   ├── RecBaselineState.cs      # 基準状態（トリガーソース別スタック + アナログソース別値）
+│   │   │   ├── RecTimeline.cs           # 読込済み記録（基準状態 + イベント列 + id テーブル + 総時間）
 │   │   │   └── RecLoadResult.cs         # 読込結果（Timeline + 欠落 expressionId リスト）
 │   │   ├── Interfaces/
 │   │   │   ├── IRecClock.cs             # 記録用単調クロック契約
@@ -181,7 +186,7 @@ com.hidano.facialcontrol.rec/
 │   ├── Application/
 │   │   ├── Hidano.FacialControl.Rec.Application.asmdef
 │   │   └── UseCases/
-│   │       ├── RecordingUseCase.cs      # セッション制御・観測イベント正規化・初期状態捕捉
+│   │       ├── RecordingUseCase.cs      # セッション制御・観測イベント正規化・基準状態捕捉
 │   │       └── PlaybackUseCase.cs       # 読込・再生制御・スケジューラ駆動・欠落 id フィルタ
 │   └── Adapters/
 │       ├── Hidano.FacialControl.Rec.Adapters.asmdef
@@ -212,13 +217,16 @@ com.hidano.facialcontrol.rec/
 ### Modified Files（core: `FacialControl/Packages/com.hidano.facialcontrol/`）
 
 - `Runtime/Domain/Interfaces/ITriggerEventObserver.cs`（**新規**）— トリガーイベント観測契約
-- `Runtime/Domain/Services/ExpressionTriggerInputSourceBase.cs` — per-instance observer フック追加（`TriggerOn`/`TriggerOff` 末尾で `_observer?.OnTriggerOn/Off(Id, expressionId)`。null 既定・alloc なし）
+- `Runtime/Domain/Interfaces/IInjectedInputSource.cs`（**新規**）— 注入ソースのマーカー契約（占有検出用）
+- `Runtime/Domain/Services/ExpressionTriggerInputSourceBase.cs` — per-instance observer フック追加（`TriggerOn`/`TriggerOff` 末尾で `_observer?.OnTriggerOn/Off(Id, expressionId)`。null 既定・alloc なし）+ 基準状態確立 API `ResetToExpressionStack`（遷移を経ない定常スナップ）
 - `Runtime/Domain/Adapters/IFacialInputObservationBus.cs` / `IFacialInputObserver.cs`（**新規**）— 入力観測バス契約
 - `Runtime/Domain/Services/FacialInputObservationBus.cs`（**新規**）— バス実装（FacialOutputBus と対称）
 - `Runtime/Adapters/InputSources/AnalogObservationSampler.cs`（**新規**）— アナログ/gaze の pull サンプリング
-- `Runtime/Adapters/Playable/FacialController.cs` — バス配線・サンプラー駆動・全宣言 id Subscribe による再バインド伝搬・gaze provider 再構築・`InputObservationBus` 公開プロパティ
+- `Runtime/Adapters/Playable/FacialController.cs` — バス配線・サンプラー駆動・全宣言 id Subscribe による再バインド伝搬（Replace = スワップ / Unregister = 除去）・gaze provider 再構築・`InputObservationBus` / `InputSourceRegistry` 公開プロパティ
+- `Runtime/Application/UseCases/LayerUseCase.cs` — `UnbindLateInputSource(int layerIdx, string id)` 追加（Unregister 伝搬時のレイヤー除去。内部 registry の `TryRemoveSource` の薄いラッパ）
 - `Runtime/Adapters/Playable/FacialControllerLifetimeScope.cs`（child scope DI 登録ファイル）— `FacialInputObservationBus` の登録追加
-- `Runtime/Domain/Adapters/IInputSourceRegistry.cs` — Replace 系 XML doc の文字化け修繕（挙動変更なし）+ 再入制約（ハンドラ内からの registry 変更禁止）の明文化
+- `Runtime/Adapters/InputSources/InputSourceRegistry.cs` — 通知中再入の実行時ガード（notify 中フラグ + `Debug.LogError` + no-op、数行・alloc なし）+ `UnregisterInternal` での `NotifySubscribers(key, null)` 発火
+- `Runtime/Domain/Adapters/IInputSourceRegistry.cs` — Replace 系 XML doc の文字化け修繕 + Subscribe 契約の明文化（Register/Replace で新ソース、Unregister で `null` を受け取る。通知中のハンドラから registry を変更する呼び出しは契約違反であり実行時に LogError + 無視される）
 
 ## System Flows
 
@@ -250,26 +258,33 @@ sequenceDiagram
 ```
 
 - 記録は観測のみで、ライブの表情出力に一切書込まない（Req 2.5）
-- 記録開始時に初期状態を捕捉する: 各トリガーソースの `ActiveExpressionIds` をスタック順（古い→新しい）で t=0 の TriggerOn として、全アナログソースの現在値を t=0 の AnalogSample として記録する（Req 1.6。再生時にスタック順・LastWins が正しく再現される）
+- **基準状態の捕捉**（Req 1.6）: 記録開始時に、各トリガーソースの `ActiveExpressionIds` をスタック順（古い→新しい）の `BaselineTrigger` レコードとして、全アナログソースの現在値を `BaselineAnalog` レコードとして書き出す。基準状態は通常イベントとは**別のレコード種別**であり、再生側が「基準確立」と「時系列イベント」を区別できる（t=0 の TriggerOn への畳み込みは行わない — 畳み込むと再生時に遷移時間ぶんの収束窓が生じ、収録時ブレンドと一致しないため）
+- 記録の構造は「基準状態 + 以降のイベント列」。基準レコードは最初の時刻付きイベントより前に必ず出現する（フォーマット不変条件）
 
-### 再生フロー + Replace 再バインド伝搬
+### 再生フロー（基準状態確立 → 時系列再生）+ Replace 再バインド伝搬
 
 ```mermaid
 sequenceDiagram
     participant Play as PlaybackUseCase
+    participant TI as RecTriggerInjector
+    participant Trig as ExpressionTriggerInputSourceBase
     participant Inj as RecAnalogInjector
     participant Reg as InputSourceRegistry
     participant FC as FacialController
     participant LUC as LayerUseCase
     participant GBP as GazeBonePoseProvider
-    participant TI as RecTriggerInjector
-    participant Trig as ExpressionTriggerInputSourceBase
-    Play->>Inj: 再生開始 記録中の各アナログid
-    Inj->>Reg: TryResolveで原本退避
-    Inj->>Reg: Replace id RecPlaybackAnalogSource
+    Note over Play,Trig: フェーズ1 基準状態の決定的確立
+    Play->>TI: EstablishBaseline 基準状態
+    TI->>Trig: ResetToExpressionStack 全トリガーソース
+    Note over Trig: 記録に基準が無いソースは空スタックへ 遷移を経ず定常値で確定
+    Play->>Inj: BeginInjection 記録中の各アナログid
+    Inj->>Reg: TryResolveで原本退避 占有検査
+    Inj->>Reg: Replace or Register RecPlaybackAnalogSource
     Reg-->>FC: Subscribeハンドラ同期発火
     FC->>LUC: BindLateInputSource スワップ
     FC->>GBP: SetupGazeBoneProvider再実行
+    Inj->>Inj: 基準アナログ値をSetAxes
+    Note over Play,GBP: フェーズ2 時系列再生
     loop 毎フレーム tick deltaTime
         Play->>Play: 経過秒累積 到達イベントを順に発火
         Play->>TI: TriggerOn Off イベント
@@ -277,15 +292,18 @@ sequenceDiagram
         Play->>Inj: AnalogSampleイベント
         Inj->>Inj: RecPlaybackAnalogSource.SetAxes
     end
-    Play->>Inj: 再生停止
-    Inj->>Reg: Replace id 原本復元
+    Play->>Inj: 再生停止 EndInjection
+    Inj->>Reg: Replace 原本復元 or Unregister 原本不在時
     Reg-->>FC: 再バインド伝搬 ライブへ引き継ぎ
 ```
 
+- **基準状態の確立**（Req 3.8）: 再生開始時、FacialController 配下の**全トリガーソース**を `ResetToExpressionStack` で基準状態へ確定する（記録に基準の無いソースは空スタック = ライブの残存トリガーを解除）。スタックは 0→1 の新遷移ではなく**遷移を経ない定常値**として立ち上がるため、収束窓なしにフレーム 0 から収録時と同一のブレンドになる。ライブ状態への重畳は行わない
+- アナログ基準値は注入直後に `SetAxes` で確定（記録に登場しないアナログソースはライブのまま — 同一構成なら記録時に全登録ソースが基準捕捉されているため差は生じない。Req 3.3 は「同一プロファイル・同一レイヤー設定」で無条件に成立する）
 - トリガーは差し替えず**原本インスタンスを直接駆動**する。停止時にスタックが sink に残り、自動解除なしの保持（Req 3.5）が構造的に成立する
-- アナログ/gaze のみ Replace 注入。停止時の原本復元で次フレームからライブ値が pull される（値差はジャンプするが、ライブのアナログ経路自体に平滑化が存在しない既存仕様と同一。research.md 参照）
+- アナログ/gaze のみ Replace 注入。原本が registry に存在しない id（別構成への記録持ち込み — preview スコープ内の正式サポート）は `Register` で装着し、停止時は `Unregister`（null 通知の再バインド伝搬で消費側が未解決時挙動へ回帰）
+- 停止時の原本復元で次フレームからライブ値が pull される（値差はジャンプするが、ライブのアナログ経路自体に平滑化が存在しない既存仕様と同一。research.md 参照）
 - 1 フレームに複数イベントのタイムスタンプが到達した場合は記録順にすべて発火する（Req 3.4: 順序と時刻の維持）
-- 再生中の記録は禁止しない（注入イベントも実操作イベントとして観測・記録される）
+- 再生中の記録は禁止しない（注入イベントも実操作イベントとして観測・記録される。`ResetToExpressionStack` は観測フックへ通知しないが、その結果状態は次の記録開始時の基準捕捉で捕らえられる）
 
 ## Requirements Traceability
 
@@ -296,16 +314,17 @@ sequenceDiagram
 | 1.3 | gaze Publish の記録 | AnalogObservationSampler（gaze は 2 軸アナログとして統一） | 同上 | 記録フロー |
 | 1.4 | 操作イベントのみ正本 | RecEvent, RecBinaryFormat | — | — |
 | 1.5 | 秒ベース相対時刻 | IRecClock, StopwatchRecClock | IRecClock | — |
-| 1.6 | 開始時の初期状態捕捉 | RecordingUseCase | ActiveExpressionIds（既存）, TryReadAxes（既存） | 記録フロー注記 |
+| 1.6 | 開始時の基準状態捕捉 | RecordingUseCase, RecBaselineState | ActiveExpressionIds（既存）, TryReadAxes（既存） | 記録フロー注記 |
 | 2.1–2.4 | セッション開始/停止/二重開始拒否/停止中非記録 | RecordingUseCase, RecCharacterBinding | RecordingUseCase Service IF | 記録フロー |
 | 2.5 | 記録は観測のみ | FacialInputObservationBus（読取専用契約） | IFacialInputObserver | 記録フロー |
 | 3.1 | 本物のパイプラインへ時系列発火 | PlaybackUseCase, RecTriggerInjector, RecAnalogInjector | ITriggerInjectionPort, IAnalogInjectionPort | 再生フロー |
 | 3.2 | ライブと同一コードパス | RecTriggerInjector（原本直呼び）, RecPlaybackAnalogSource（IAnalogInputSource 準拠） | — | 再生フロー |
-| 3.3 | 同一ブレンド再現 | 初期状態捕捉 + 消費粒度サンプリング + Replace 再バインド | — | 両フロー |
+| 3.3 | 同一ブレンド再現（同一構成で無条件成立） | 基準状態確立 + 消費粒度サンプリング + Replace 再バインド | ResetToExpressionStack | 両フロー |
 | 3.4 | フレームレート非依存の時刻発火 | RecPlaybackScheduler | — | 再生フロー |
 | 3.5 | 停止時の状態保持・自動解除なし | RecTriggerInjector（sink 残留）, RecAnalogInjector（原本復元） | — | 再生フロー |
 | 3.6 | 終端到達の検知 | PlaybackUseCase（State + Completed イベント） | PlaybackUseCase Service IF | — |
 | 3.7 | 二重再生拒否 | PlaybackUseCase | 同上 | — |
+| 3.8 | 再生開始時の基準状態確立（重畳なし） | PlaybackUseCase, RecTriggerInjector, RecAnalogInjector, ExpressionTriggerInputSourceBase | ResetToExpressionStack, ITriggerInjectionPort.EstablishBaseline | 再生フロー フェーズ1 |
 | 4.1–4.4 | gaze 別チャネル/-1..1 非正規化/同一値駆動/2軸 | AnalogObservationSampler, RecPlaybackAnalogSource | IAnalogInputSource（既存） | 両フロー |
 | 5.1–5.2 | sidecar 規約 / profile.json 非同居 | RecSidecarPath | — | — |
 | 5.3 | 停止時ファイナライズ | RecStreamWriter | IRecEventSink | 記録フロー |
@@ -315,7 +334,7 @@ sequenceDiagram
 | 6.1 | 面の追加に限定・挙動不変 | 全 core 変更（観測者ゼロ時ゼロコスト設計） | — | — |
 | 6.2 | トリガー観測面 | ExpressionTriggerInputSourceBase フック | ITriggerEventObserver | 記録フロー |
 | 6.3 | アナログ/gaze 共通観測面 | FacialInputObservationBus, AnalogObservationSampler | IFacialInputObservationBus | 記録フロー |
-| 6.4 | Replace 再バインド | FacialController（全宣言 id Subscribe）, LayerUseCase.BindLateInputSource（既存再利用） | IInputSourceRegistry（既存） | 再生フロー |
+| 6.4 | Replace / Unregister 再バインド | FacialController（全宣言 id Subscribe）, LayerUseCase.BindLateInputSource / UnbindLateInputSource | IInputSourceRegistry（Unregister null 通知追加）, IInjectedInputSource | 再生フロー |
 | 6.5 | 未使用時ゼロコスト | HasObservers ガード / null observer / Subscribe 追加のみ | — | — |
 | 6.6–6.7 | core は rec 非依存 / 拡張無改修 | パッケージ依存構成 | — | Boundary Map |
 | 7.1–7.4 | UPM 構成 / asmdef / core のみ依存 / 追加設定不要 | パッケージ構成, RecCharacterBinding | — | — |
@@ -333,19 +352,20 @@ sequenceDiagram
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|------------------|-----------|
-| ITriggerEventObserver + 基底フック | core Domain | トリガー on/off の per-instance 観測点 | 1.1, 6.2, 6.5 | なし | Event |
+| ITriggerEventObserver + 基底フック + ResetToExpressionStack | core Domain | トリガー on/off の per-instance 観測点 + 基準状態確立 API | 1.1, 3.8, 6.2, 6.5 | なし | Event, Service |
 | IFacialInputObservationBus / 実装 | core Domain | 入力操作イベントの per-FC 集約・配信 | 1.1–1.3, 2.5, 6.3, 6.5 | ITriggerEventObserver (P0) | Service, Event |
+| IInjectedInputSource + 注入占有規則 | core Domain | 注入ソースの占有検出マーカーと多重注入規則 | 6.4 | なし | State |
 | AnalogObservationSampler | core Adapters | アナログ/gaze の pull 消費点サンプリング | 1.2, 1.3, 4.1, 4.2, 6.3 | IInputSourceRegistry (P0), Bus (P0) | Service |
-| FacialController 配線 + 再バインド | core Adapters | バス配線 / 全宣言 id Subscribe / gaze 再構築 | 6.1, 6.4, 6.5 | Registry (P0), LayerUseCase (P0) | State |
+| FacialController 配線 + 再バインド | core Adapters | バス配線 / 全宣言 id Subscribe / Replace・Unregister 伝搬 / gaze 再構築 | 6.1, 6.4, 6.5 | Registry (P0), LayerUseCase (P0) | State |
 | RecEventChunkQueue | rec Domain | SPSC チャンク連結キュー | 8.1, 8.3–8.5 | なし | Service |
 | RecBinaryFormat + RecIdTable | rec Domain | `.fcrec` の追記型 serialize/deserialize | 1.4, 5.3–5.6 | なし | Batch |
 | RecPlaybackScheduler | rec Domain | 経過秒によるイベント発火カーソル | 3.4, 8.2, 8.6 | なし | Service |
 | RecValidation | rec Domain | expressionId 整合性検証 | 9.1, 9.2 | FacialProfile (P0) | Service |
-| RecordingUseCase | rec Application | セッション制御・観測正規化・初期状態捕捉 | 1.1–1.6, 2.1–2.5 | Bus (P0), Queue (P0), IRecClock (P0) | Service, State |
-| PlaybackUseCase | rec Application | 読込・再生制御・欠落フィルタ | 3.1–3.7, 9.1 | Scheduler (P0), Injection Ports (P0) | Service, State |
+| RecordingUseCase | rec Application | セッション制御・観測正規化・基準状態捕捉 | 1.1–1.6, 2.1–2.5 | Bus (P0), Queue (P0), IRecClock (P0) | Service, State |
+| PlaybackUseCase | rec Application | 読込・基準確立・再生制御・欠落フィルタ | 3.1–3.8, 9.1 | Scheduler (P0), Injection Ports (P0) | Service, State |
 | RecStreamWriter | rec Adapters | writer thread + ファイナライズ | 5.1, 5.3, 5.7, 8.3, 8.4 | Queue (P0), RecBinaryFormat (P0) | Batch |
 | RecFileReader | rec Adapters | 読込 + 復旧スキャン | 5.4, 5.5 | RecBinaryFormat (P0) | Batch |
-| RecTriggerInjector / RecAnalogInjector | rec Adapters | 再生の注入ポート実装 | 3.1, 3.2, 3.5, 4.3, 4.4 | FacialController (P0), Registry (P0) | Service |
+| RecTriggerInjector / RecAnalogInjector | rec Adapters | 再生の注入ポート実装（基準確立 + 占有規則遵守） | 3.1, 3.2, 3.5, 3.8, 4.3, 4.4 | FacialController (P0), Registry (P0) | Service |
 | RecPlaybackAnalogSource | rec Adapters | 再生用アナログ/gaze ソース | 3.2, 4.3, 4.4 | IAnalogInputSource (P0) | State |
 | RecCharacterBinding | rec Adapters | ユーザー向け MonoBehaviour ファサード | 2.x, 3.x, 7.4 | FacialController (P0) | Service |
 | RecSidecarPath | rec Adapters | sidecar パス規約 | 5.1, 5.2, 5.7 | FacialCharacterProfileSO 規約 (P1) | Service |
@@ -355,19 +375,21 @@ sequenceDiagram
 
 ### core Domain
 
-#### ITriggerEventObserver + ExpressionTriggerInputSourceBase フック
+#### ITriggerEventObserver + ExpressionTriggerInputSourceBase フック / ResetToExpressionStack
 
 | Field | Detail |
 |-------|--------|
-| Intent | 全トリガー入力が通る唯一の共通点に per-instance 観測フックを追加する |
-| Requirements | 1.1, 6.2, 6.5 |
+| Intent | 全トリガー入力が通る唯一の共通点に per-instance 観測フックと基準状態確立 API を追加する |
+| Requirements | 1.1, 3.8, 6.2, 6.5 |
 
 **Responsibilities & Constraints**
 - `TriggerOn` / `TriggerOff` の**スタック操作成立後**に observer へ通知する（TriggerOff は `Remove` 成功時のみ。既存の「不在 id は静かに無視」と整合）
 - observer は 1 インスタンスにつき高々 1 つ（多重配信はバス側の責務）。未設定時は `?.Invoke` 相当の null チェック 1 回のみで、alloc・仮想呼び出しゼロ（Req 6.5）
+- `ResetToExpressionStack` は内部スタックを与えられた列（古い→新しい）で置換し、**遷移を経ずに**合成結果を定常値として確定する（snapshot / target / current / mask を最終状態へスナップ、`_isComplete = true`）。空列 = 全解除。深度超過分は先頭（最古）から切り詰める
+- `ResetToExpressionStack` は観測フックへ**通知しない**（基準確立は操作イベントではない。記録との関係は再生フロー注記参照）
 - 派生クラス（拡張パッケージ）のコンストラクタ・既存 API は不変
 
-**Contracts**: Event [x]
+**Contracts**: Event [x] / Service [x]
 
 ##### Event Contract
 ```csharp
@@ -383,10 +405,49 @@ namespace Hidano.FacialControl.Domain.Interfaces
 
 // ExpressionTriggerInputSourceBase への追加（抜粋）
 public void SetTriggerEventObserver(ITriggerEventObserver observer); // null 許容 = 解除
+
+/// <summary>
+/// 内部スタックを指定列（古い→新しい）で置換し、遷移を経ない定常状態として確定する。
+/// 空列で全解除。observer へは通知しない。非毎フレーム呼出前提（再生開始時等）。
+/// </summary>
+public void ResetToExpressionStack(IReadOnlyList<string> expressionIds);
 ```
 - Preconditions: メインスレッドからのみ呼ばれる（TriggerOn/Off の既存前提と同一）
-- Postconditions: 通知はスタック・遷移状態の更新後。observer 内の例外は呼出元へ伝播する（core Domain では catch しない。バス実装側で隔離する）
-- Invariants: observer 未設定時の TriggerOn/Off の実行結果・性能は従来と不変
+- Postconditions: 観測通知はスタック・遷移状態の更新後。observer 内の例外は呼出元へ伝播する（core Domain では catch しない。バス実装側で隔離する）。`ResetToExpressionStack` 直後の `TryWriteValues` は最終合成値を返し、`Tick` は進行しない（遷移完了状態）
+- Invariants: observer 未設定・`ResetToExpressionStack` 未使用時の TriggerOn/Off の実行結果・性能は従来と不変
+
+#### IInjectedInputSource + 注入占有規則
+
+| Field | Detail |
+|-------|--------|
+| Intent | Replace/Register による注入ソースを他の注入者・診断ツールが識別できるマーカー契約と、多重注入時の占有規則を定義する |
+| Requirements | 6.4 |
+
+**Responsibilities & Constraints**
+- 注入面の契約オーナーは本 spec。`rec-timeline-baking` 等、Replace/Register で入力ソースを差し替えるすべての利用者はこの規則に従う
+- core は規則を「契約 + マーカー interface」として提供するのみで、占有の集中管理テーブルは持たない（core は注入者を知らない）
+
+**Contracts**: State [x]
+
+##### State Management
+```csharp
+namespace Hidano.FacialControl.Domain.Interfaces
+{
+    /// <summary>
+    /// 注入（Replace/Register）で装着された代替入力ソースのマーカー。
+    /// ReplacedSource は退避した原本（原本不在の新規 Register 時は null）。
+    /// </summary>
+    public interface IInjectedInputSource
+    {
+        IInputSource ReplacedSource { get; }
+    }
+}
+```
+- **占有規則（注入者が遵守する契約）**:
+  1. **装着（Begin）**: 対象 id の現エントリを `TryResolve` し、それが `IInjectedInputSource` を実装している場合は**他者占有**とみなし、当該 id への注入をスキップして `Debug.LogWarning`（再生等の処理全体は継続。スタック的な多重占有は行わない）
+  2. **復元（End）**: 対象 id の現エントリが**自分の装着したインスタンスと参照同一である場合のみ**、原本を `Replace`（原本不在で装着した場合は `Unregister`）する。参照が異なる場合（自分の装着後に他者が差し替えた場合）は `Debug.LogWarning` + no-op（後続占有者の状態を破壊しない）
+  3. 規則 1+2 により「A 装着 → B 装着 → A 復元」の系で B の占有が破壊されない（B は装着時にスキップされるか、A の復元が no-op になるかのいずれか）
+- Concurrency strategy: 装着・復元はメインスレッドのみ（registry の既存前提と同一）
 
 #### IFacialInputObservationBus / FacialInputObservationBus
 
@@ -480,31 +541,33 @@ namespace Hidano.FacialControl.Adapters.InputSources
 - Validation: Replace 直後のフレームで新ソースの値が観測されること、observer ゼロ時に ProfilerRecorder で alloc ゼロであることをテスト
 - Risks: フレーム内複数 Publish は最終消費値へ畳まれる（ライブブレンドも同じ値しか見ない = Req 3.3 の意味論と一致。research.md 参照）
 
-#### FacialController 配線 + Replace 再バインド伝搬
+#### FacialController 配線 + Replace / Unregister 再バインド伝搬
 
 | Field | Detail |
 |-------|--------|
-| Intent | バス/サンプラーの組み込みと、Replace 時に消費側キャッシュを新ソースへ再バインドする伝搬経路の追加 |
+| Intent | バス/サンプラーの組み込みと、Replace（差し替え）/ Unregister（消滅）時に消費側キャッシュを追従させる伝搬経路の追加 |
 | Requirements | 6.1, 6.4, 6.5, 6.7 |
 
 **Responsibilities & Constraints**
 - `InitializeInternal` で: バスを child scope から取得（`CacheChildScopeServices` 拡張）→ 解決済み `ExpressionTriggerInputSourceBase` 全てへ `SetTriggerEventObserver(bus)` → サンプラー構築
-- `ResolveLayerInputSourcesFromRegistry` を汎化: **解決成否に関わらず全宣言 id を `Subscribe`** し、通知時に (1) `BindLateInputSource`（既存の同 id スワップ経路）、(2) `PopulateLayer2Provider` 再実行、(3) 新ソースがトリガー型ならフック再配線、を行う
-- GazeConfigs 由来の gaze id（`GazeBindingConfigResolver` の解決 id 形式）も `Subscribe` し、通知時に `SetupGazeBoneProvider()` を再実行する
-- gaze snapshot（OSC 送信）経路は既存の毎フレーム再解決のため無変更
+- `ResolveLayerInputSourcesFromRegistry` を汎化: **解決成否に関わらず全宣言 id を `Subscribe`** し、通知時に:
+  - **非 null（Register/Replace）**: (1) `BindLateInputSource`（既存の同 id スワップ経路）、(2) `PopulateLayer2Provider` 再実行、(3) 新ソースがトリガー型ならフック再配線
+  - **null（Unregister = ソース消滅）**: (1) `LayerUseCase.UnbindLateInputSource(layerIdx, id)` でレイヤーから除去、(2) `PopulateLayer2Provider` 再実行。消費側は当該 id の**未解決時挙動へ回帰**する（レイヤー: 当該ソースが合成から外れる = 初期解決失敗時と同じ状態。既存の遅延バインドハンドラは `lateSource != null` ガード済みのため null 通知で誤動作しない）
+- GazeConfigs 由来の gaze id（`GazeBindingConfigResolver` の解決 id 形式）も `Subscribe` し、通知時（null 含む）に `SetupGazeBoneProvider()` を再実行する（null なら resolver が解決失敗 → 当該 binding はスキップ = 既存の未解決時挙動）
+- gaze snapshot（OSC 送信）経路は既存の毎フレーム再解決のため無変更（消滅時は `TryResolve` 失敗で自然にスキップ）
 - `LateUpdate` 冒頭に `_analogSampler?.SampleFrame()` を追加（`UpdateWeights` の直前）
-- 公開面: `public IFacialInputObservationBus InputObservationBus { get; }`（rec が購読・参照同一性チェックに使用）
+- 公開面: `public IFacialInputObservationBus InputObservationBus { get; }` / `public IInputSourceRegistry InputSourceRegistry { get; }`（rec が購読・注入・列挙・参照同一性チェックに使用）
 
 **Contracts**: State [x]
 
 ##### State Management
 - State model: バス/サンプラー/Subscribe ハンドラはすべて child scope 世代に紐づく。`Cleanup` → 再 build で全て作り直し（Subscribe の解除 API は不要 — registry 自体が世代交代する）
-- Concurrency strategy: すべてメインスレッド。**再入制約: Subscribe ハンドラ内から registry の Register/Replace/Unregister/Subscribe を呼ぶことを禁止**（`NotifySubscribers` がライブ list を index 走査するため）。この不変条件を `IInputSourceRegistry` の XML doc に明記する（文字化け修繕と同時に）
+- Concurrency strategy: すべてメインスレッド。**再入制約: Subscribe ハンドラ内から registry の Register/Replace/Unregister/Subscribe を呼ぶことを禁止**。`InputSourceRegistry` は notify 中フラグによる**実行時ガード**を持ち、通知中の再入呼び出しは `Debug.LogError` + no-op とする（数行・alloc なしの軽量実装。契約違反の早期発見が目的）。契約は `IInputSourceRegistry` の XML doc に明記する（文字化け修繕と同時に）
 
 **Implementation Notes**
-- Integration: 発火順 = `Replace` → 同期で再バインドハンドラ群 → 次フレームの `Aggregate` から新ソース反映。`BindLateInputSource` は weight 焼き込み・`_layerHasAdditionalSources` を既に処理するため追加実装は薄い
-- Validation: PlayMode 統合テストで「Replace 後 1 フレーム以内にレイヤー出力と gaze ボーンが新ソース値を反映」「Replace 後のトリガーイベントがバスへ届く」を確認
-- Risks: 観測者ゼロ・Replace 未使用時の追加コストは「宣言 id 数ぶんの Subscribe 登録（初期化時 1 回）」のみで毎フレームコストなし（Req 6.5 / 6.1 遵守）
+- Integration: 発火順 = `Replace`/`Unregister` → 同期で再バインドハンドラ群 → 次フレームの `Aggregate` から反映。`BindLateInputSource` は weight 焼き込み・`_layerHasAdditionalSources` を既に処理するため追加実装は薄い。`UnbindLateInputSource` は内部 registry の `TryRemoveSource` の薄いラッパとして LayerUseCase に追加
+- Validation: PlayMode 統合テストで「Replace 後 1 フレーム以内にレイヤー出力と gaze ボーンが新ソース値を反映」「Unregister 後に当該ソースが合成から外れ未解決時挙動へ回帰」「Replace 後のトリガーイベントがバスへ届く」「通知中再入が LogError + no-op になる」を確認
+- Risks: 観測者ゼロ・Replace 未使用時の追加コストは「宣言 id 数ぶんの Subscribe 登録（初期化時 1 回）」のみで毎フレームコストなし（Req 6.5 / 6.1 遵守）。Unregister の null 通知は新規契約のため、既存 Subscribe 利用箇所（遅延バインドハンドラ 1 箇所）の null 安全を実装時に再確認する
 
 ### rec Domain
 
@@ -630,9 +693,10 @@ namespace Hidano.FacialControl.Rec.Domain.Services
 
 **Responsibilities & Constraints**
 - `IFacialInputObserver` を実装し、受領イベントへ `IRecClock` の相対秒を刻んで `IRecEventSink`（実体 RecStreamWriter + キュー）へ渡す
-- 開始時: クロック起点をゼロリセット → 初期状態捕捉（トリガーソース群の `ActiveExpressionIds` をスタック順の t=0 TriggerOn、アナログソース群の現在値を t=0 AnalogSample として emit）→ sink オープン → バス購読
+- 開始時: クロック起点をゼロリセット → **基準状態捕捉**（トリガーソース群の `ActiveExpressionIds` をスタック順の `BaselineTrigger`、アナログソース群の現在値を `BaselineAnalog` として emit。時刻付きイベントとは別レコード種別）→ sink オープン → バス購読
 - 二重開始は拒否 + `Debug.LogWarning`、既存セッション継続（Req 2.3）。停止中はバス非購読のため記録されない（Req 2.4）
-- 初期状態の列挙は Adapters 側から注入されるスナップショット提供デリゲート経由（Application は Unity/registry を知らない）
+- `StopSession` は**冪等**: 未開始・停止済みでの呼び出しは警告を出さず静かに no-op（`OnDisable` と `OnDestroy` の二重呼び出しで安全）
+- 基準状態の列挙は Adapters 側から注入されるスナップショット提供デリゲート経由（Application は Unity/registry を知らない）
 
 **Contracts**: Service [x] / State [x]
 
@@ -643,9 +707,9 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
     public sealed class RecordingUseCase : IFacialInputObserver
     {
         public RecordingUseCase(IRecClock clock, IRecEventSink sink);
-        /// <summary>false = 二重開始拒否（警告ログ済み）。initialState は開始時点の入力状態列挙。</summary>
-        public bool StartSession(RecInitialStateProvider initialState);
-        /// <summary>sink のファイナライズ完了までを含む。未開始時は no-op + 警告。</summary>
+        /// <summary>false = 二重開始拒否（警告ログ済み）。baselineProvider は開始時点の入力状態列挙。</summary>
+        public bool StartSession(RecBaselineStateProvider baselineProvider);
+        /// <summary>sink のファイナライズ完了までを含む。冪等（未開始/停止済みは静かに no-op）。</summary>
         public void StopSession();
         public bool IsRecording { get; }
     }
@@ -660,14 +724,15 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
 
 | Field | Detail |
 |-------|--------|
-| Intent | 記録の読込・再生制御・欠落 expressionId フィルタ・終端検知 |
-| Requirements | 3.1–3.7, 9.1, 9.2 |
+| Intent | 記録の読込・基準状態確立・再生制御・欠落 expressionId フィルタ・終端検知 |
+| Requirements | 3.1–3.8, 9.1, 9.2 |
 
 **Responsibilities & Constraints**
 - `Load` 時に `RecValidation` を実行し `RecLoadResult`（timeline + 欠落 id リスト）を保持。再生開始時、欠落 id を distinct 単位で 1 回ずつ `Debug.LogWarning`（イベント毎に出さない = ログスパム回避）
+- `StartPlayback` はフェーズ1 として**基準状態を確立**する（Req 3.8）: `ITriggerInjectionPort.EstablishBaseline`（全トリガーソースの `ResetToExpressionStack`。欠落 expressionId は基準スタックからも除外）→ `IAnalogInjectionPort.BeginInjection` + 基準アナログ値の適用。ライブ状態への重畳は行わず、収束窓なしにフレーム 0 から収録時ブレンドと一致する
 - 再生 Tick で scheduler を駆動し、欠落 id を参照するトリガーイベントは**発火前にスキップ**する（未知 id の TriggerOn は表情ゼロ落ち遷移を引き起こすため。research.md 参照）
 - 二重再生は拒否 + 警告（Req 3.7）。終端到達で `State = Completed` とし `Completed` イベントを 1 回発火（Req 3.6）
-- 停止時は注入ポートへ「原本復元」を指示するのみで、トリガー・値の自動解除は行わない（Req 3.5）
+- 停止時は注入ポートへ `EndInjection`（原本復元 / 原本不在時は除去）を指示するのみで、トリガー・値の自動解除は行わない（Req 3.5）。`StopPlayback` は冪等（未再生時は静かに no-op）
 
 **Contracts**: Service [x] / State [x]
 
@@ -703,7 +768,9 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
 
 **Responsibilities & Constraints**
 - `Thread`（`IsBackground = true`）+ 事前確保 byte バッファ + `FileStream` 追記。ループは `IFacialMocapReceiverHost.ReceiveLoop` のパターン（throttled error log 含む）を踏襲
-- ファイナライズ手順: producer 停止 → 停止シグナル → キュー drain → フッタ（イベント数・総時間）書込 → `FileStream` close → `Join(timeout: 2000ms)`。Join タイムアウト時はエラーログ（ファイルはフッタ欠落でも復旧スキャン可能）
+- ファイナライズ手順: producer 停止 → 停止シグナル → キュー drain → フッタ（イベント数・総時間）書込 → `FileStream` close → `Join(timeout: 2000ms)`
+- **FileStream の所有権は writer thread に固定**する: writer thread はループ脱出時に `finally` で必ず `FileStream` を close する（フッタ書込の成否と独立）。`Join` タイムアウト時、メインスレッドは stream に一切触れない（エラーログのみ）— writer thread が遅れて終了する際に `finally` で close されるため、Windows のファイルロックが残留して「次の記録が開始できない」事態を防ぐ。次の記録は常に新パス（連番）で開始されるため、仮に旧ロックが短時間残っても衝突しない
+- `Close`（停止 API）は**冪等**: 二重呼び出し・未オープン時は静かに no-op
 - Editor では記録停止時のみ `#if UNITY_EDITOR` で `AssetDatabase.Refresh()`（.meta 生成と Project ウィンドウ反映）。毎フレーム・書込中は呼ばない
 - I/O 例外は writer thread 内で捕捉し `Debug.LogError`（メインスレッドの捕捉を阻害しない、Req 8.4）。エラー後もキュー消費は継続し捕捉側を飽和させない
 
@@ -724,13 +791,18 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
 
 | Field | Detail |
 |-------|--------|
-| Intent | 再生イベントを本物のパイプラインへ駆動する注入ポート実装 |
-| Requirements | 3.1, 3.2, 3.5, 4.3, 4.4 |
+| Intent | 再生イベントを本物のパイプラインへ駆動する注入ポート実装（基準確立 + 占有規則遵守） |
+| Requirements | 3.1, 3.2, 3.5, 3.8, 4.3, 4.4 |
 
 **Responsibilities & Constraints**
 - Trigger: `FacialController.TryGetExpressionTriggerSourceById(sourceId)` で原本を解決し `TriggerOn/Off` を直呼び（差し替えない）。解決失敗はイベント単位で警告 + スキップ（distinct 単位 1 回）
-- Analog: 再生開始時、記録に登場する各アナログ id について原本を `TryResolve` で退避 → `RecPlaybackAnalogSource` を `Replace`。イベント到達で `SetAxes`。停止時に原本を `Replace` で復元（core の再バインド伝搬がライブ引き継ぎを完了させる）
-- `RecPlaybackAnalogSource` は開始時に原本の現在値でシードする（記録に t=0 サンプルがあるため通常は直後に上書きされる）
+- Trigger 基準確立: `EstablishBaseline` は FacialController 配下の**全トリガーソース**（registry 列挙 + `is ExpressionTriggerInputSourceBase`）へ `ResetToExpressionStack` を適用する。基準に含まれるソースはそのスタックへ、含まれないソースは空スタックへ（ライブ残存トリガーの解除）
+- Analog: 再生開始時、記録に登場する各アナログ id について:
+  - 原本あり → `TryResolve` で退避 → `RecPlaybackAnalogSource` を `Replace`
+  - **原本なし**（別構成への記録持ち込み — preview スコープ内の正式サポート）→ `Register` で新規装着（`ReplacedSource = null`）
+  - 現エントリが `IInjectedInputSource`（他者占有）→ 当該 id をスキップ + Warning（占有規則 1）
+- イベント到達で `SetAxes`。`EndInjection` は占有規則 2 に従う: 現エントリが自分の装着インスタンスと参照同一の場合のみ、原本を `Replace`（原本なし装着なら `Unregister`）。参照が異なれば Warning + no-op
+- `RecPlaybackAnalogSource` は `IInjectedInputSource` を実装し、装着時に基準アナログ値でシードする
 - id 文字列 → `AdapterSlug`(+sub) の分解は既存 `InputSourceId` / slug 規約（`slug:sub`）に従う
 
 **Contracts**: Service [x]
@@ -741,21 +813,29 @@ namespace Hidano.FacialControl.Rec.Domain.Interfaces
 {
     public interface ITriggerInjectionPort
     {
+        /// <summary>全トリガーソースを基準状態へ確立（基準に無いソースは空スタックへ）。遷移を経ない。</summary>
+        void EstablishBaseline(RecBaselineState baseline);
         void InjectTriggerOn(string sourceId, string expressionId);
         void InjectTriggerOff(string sourceId, string expressionId);
     }
 
     public interface IAnalogInjectionPort
     {
-        /// <summary>timeline 中の全アナログ id へ再生ソースを装着（原本退避）。</summary>
-        void BeginInjection(IReadOnlyList<string> analogSourceIds);
+        /// <summary>
+        /// baseline 中の全アナログ id へ再生ソースを装着し基準値を適用する。
+        /// 原本あり = Replace / 原本なし = Register / 他者占有 = スキップ + Warning。
+        /// </summary>
+        void BeginInjection(RecBaselineState baseline);
         void InjectAnalogSample(string sourceId, ReadOnlySpan<float> axes);
-        /// <summary>原本復元。装着済みでなければ no-op。</summary>
+        /// <summary>
+        /// 占有規則に従い原本復元（Replace）または除去（Unregister）。
+        /// 自分の装着インスタンスが現エントリでない id は Warning + no-op。冪等。
+        /// </summary>
         void EndInjection();
     }
 }
 ```
-- Invariants: `EndInjection` 後、注入ソースはパイプラインから完全に外れる（原本復元は Replace 経由で再バインド伝搬される）
+- Invariants: `EndInjection` 後、自分の注入ソースはパイプラインから完全に外れる（復元/除去は Replace/Unregister 経由で再バインド伝搬される）。`EndInjection` は冪等
 
 #### RecCharacterBinding（MonoBehaviour ファサード）
 
@@ -768,7 +848,7 @@ namespace Hidano.FacialControl.Rec.Domain.Interfaces
 - `[RequireComponent]` はせず、Inspector 参照未設定なら `GetComponent<FacialController>()` で自動解決（Req 7.4）
 - 公開 API: `StartRecording(string recordingName = null)` / `StopRecording()` / `LoadRecording(string name)` / `StartPlayback()` / `StopPlayback()` / `IsRecording` / `PlaybackState` / `event Completed`
 - `Update` で: (1) 再生中なら `PlaybackUseCase.Tick(Time.deltaTime)`、(2) 記録中なら `controller.InputObservationBus` の参照同一性を比較し、`SetProfile` 再初期化でバスが変わっていたら再購読 + `Debug.LogWarning`（切替瞬間の欠落は既知の制限）
-- `OnDisable`/`OnDestroy` で記録・再生を安全停止（writer ファイナライズ含む）
+- `OnDisable`/`OnDestroy` で記録・再生を安全停止（writer ファイナライズ含む）。停止経路（`StopRecording` / `StopPlayback` / `OnDisable` / `OnDestroy`）はすべて冪等で、二重呼び出しでも警告・例外を出さない
 - 記録名省略時は開始時刻ベース（例: `rec_20260716_153000`）
 
 **Contracts**: Service [x]（シグネチャは上記に含む）
