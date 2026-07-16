@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Hidano.FacialControl.Rec.Adapters.FileSystem;
@@ -7,6 +8,8 @@ using Hidano.FacialControl.Rec.Adapters.Recording;
 using Hidano.FacialControl.Rec.Domain.Models;
 using Hidano.FacialControl.Rec.Domain.Services;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Hidano.FacialControl.Rec.Tests.EditMode
 {
@@ -73,6 +76,63 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             writer.Complete(0d, 0);
 
             Assert.That(File.Exists(filePath), Is.True);
+        }
+
+        [Test]
+        public void Complete_WhenWriterThreadIsBlocked_ReturnsAfterTimeout()
+        {
+            string filePath = Path.Combine(_tempDirectory, "slow-finalize.fcrec");
+            using var enteredBlockedWrite = new ManualResetEventSlim(false);
+            using var releaseBlockedWrite = new ManualResetEventSlim(false);
+            var stream = new BlockingStream(enteredBlockedWrite, releaseBlockedWrite);
+
+            using var writer = new RecStreamWriter(
+                filePath,
+                segmentCapacity: 2,
+                initialSegments: 2,
+                axisFloatCapacityPerSegment: 8,
+                streamFactory: _ => stream,
+                postFinalizeAction: null);
+
+            writer.Open(RecBaselineState.Empty);
+            writer.AppendEvent(RecEvent.CreateTriggerOn(0.1d, 0, 0), ReadOnlySpan<float>.Empty);
+
+            Assert.That(enteredBlockedWrite.Wait(TimeSpan.FromSeconds(2d)), Is.True, "The writer thread never reached the blocked write.");
+
+            LogAssert.Expect(LogType.Error, $"REC writer timed out while finalizing '{filePath}'.");
+
+            var stopwatch = Stopwatch.StartNew();
+            writer.Complete(0.1d, 1);
+            stopwatch.Stop();
+
+            Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(3000));
+
+            releaseBlockedWrite.Set();
+        }
+
+        private sealed class BlockingStream : MemoryStream
+        {
+            private readonly ManualResetEventSlim _enteredBlockedWrite;
+            private readonly ManualResetEventSlim _releaseBlockedWrite;
+            private int _writeCount;
+
+            public BlockingStream(ManualResetEventSlim enteredBlockedWrite, ManualResetEventSlim releaseBlockedWrite)
+            {
+                _enteredBlockedWrite = enteredBlockedWrite;
+                _releaseBlockedWrite = releaseBlockedWrite;
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                int writeIndex = Interlocked.Increment(ref _writeCount);
+                if (writeIndex == 2)
+                {
+                    _enteredBlockedWrite.Set();
+                    _releaseBlockedWrite.Wait(TimeSpan.FromSeconds(10d));
+                }
+
+                base.Write(buffer, offset, count);
+            }
         }
     }
 }

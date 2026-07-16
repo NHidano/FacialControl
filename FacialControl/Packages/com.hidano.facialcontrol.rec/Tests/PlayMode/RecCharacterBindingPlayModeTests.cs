@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Hidano.FacialControl.Adapters.InputSources;
@@ -41,6 +42,8 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
                 UnityEngine.Object.DestroyImmediate(_characterSo);
                 _characterSo = null;
             }
+
+            DeleteGeneratedRecordingAssets();
         }
 
         [UnityTest]
@@ -105,6 +108,26 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
             Assert.That(binding.IsRecording, Is.False);
             Assert.That(binding.LastRecordingPath, Is.Not.Null.And.Not.Empty);
             Assert.That(RecFileReader.TryRead(binding.LastRecordingPath, out _), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator OnDestroy_WhileRecording_FinalizesTheRecordingFile()
+        {
+            SetupHarness(out _, out RecCharacterBinding binding, out FakeObservationBus bus, out _, out TestTriggerSource triggerSource, out FakeAnalogSource analogSource);
+
+            Assert.That(binding.StartRecording("destroy-stop"), Is.True);
+            analogSource.Publish(0.35f, -0.15f);
+            bus.PublishTriggerOn(triggerSource.Id, "smile");
+            bus.PublishAnalog(analogSource.Id, 0.35f, -0.15f);
+
+            string recordingPath = binding.LastRecordingPath;
+            GameObject host = _gameObject;
+            _gameObject = null;
+            UnityEngine.Object.Destroy(host);
+            yield return null;
+
+            Assert.That(recordingPath, Is.Not.Null.And.Not.Empty);
+            Assert.That(RecFileReader.TryRead(recordingPath, out _), Is.True);
         }
 
         [UnityTest]
@@ -246,6 +269,30 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
             SetControllerPrivateField(controller, "_currentProfile", (FacialProfile?)profile);
             SetControllerPrivateField(controller, "_inputObservationBus", bus);
             SetControllerPrivateField(controller, "_inputSourceRegistry", registry);
+        }
+
+        private static void DeleteGeneratedRecordingAssets()
+        {
+            string recordingsDirectory = Path.Combine(
+                UnityEngine.Application.streamingAssetsPath,
+                FacialCharacterProfileSO.StreamingAssetsRootFolder,
+                "RecCharacterBindingPlayModeTestsAsset",
+                RecSidecarPath.RecordingsFolderName);
+            if (!Directory.Exists(recordingsDirectory))
+            {
+                return;
+            }
+
+            foreach (string filePath in Directory.GetFiles(recordingsDirectory))
+            {
+                File.Delete(filePath);
+
+                string metaFilePath = filePath + ".meta";
+                if (File.Exists(metaFilePath))
+                {
+                    File.Delete(metaFilePath);
+                }
+            }
         }
 
         private static FacialProfile CreateProfile()
