@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Rec.Domain.Interfaces;
 using Hidano.FacialControl.Rec.Domain.Models;
+using Hidano.FacialControl.Rec.Domain.Services;
 using NUnit.Framework;
 
 namespace Hidano.FacialControl.Rec.Tests.EditMode
@@ -128,6 +130,78 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
             Assert.That(result.HasMissingExpressionIds, Is.True);
             Assert.That(result.MissingExpressionIds.ToArray(), Is.EqualTo(new[] { "smile", "blink" }));
+        }
+
+        [Test]
+        public void RecValidation_FindMissingExpressionIds_ReturnsDistinctMissingIdsFromTimelineAndBaseline()
+        {
+            var profile = new FacialProfile(
+                "1.0.0",
+                layers: new[] { new LayerDefinition("emotion", 0, ExclusionMode.Blend) },
+                expressions: new[]
+                {
+                    new Expression("smile", "Smile", "emotion"),
+                    new Expression("blink", "Blink", "emotion"),
+                });
+
+            var baseline = new RecBaselineState(
+                new[]
+                {
+                    new RecBaselineState.TriggerEntry("input:trigger", new[] { "smile", "missing-baseline", "missing-timeline" }),
+                },
+                null);
+
+            var timeline = new RecTimeline(
+                baseline,
+                new[]
+                {
+                    RecEvent.CreateTriggerOn(0.1d, 0, 0),
+                    RecEvent.CreateTriggerOff(0.2d, 0, 2),
+                    RecEvent.CreateTriggerOn(0.3d, 0, 2),
+                },
+                new[] { "input:trigger" },
+                new[] { "smile", "blink", "missing-timeline" },
+                0.3d);
+
+            IReadOnlyList<string> missing = RecValidation.FindMissingExpressionIds(timeline, profile);
+
+            Assert.That(missing, Is.EqualTo(new[] { "missing-timeline", "missing-baseline" }));
+        }
+
+        [Test]
+        public void RecValidation_FindMissingExpressionIds_WithMatchingProfile_ReturnsEmpty()
+        {
+            var profile = new FacialProfile(
+                "1.0.0",
+                layers: new[] { new LayerDefinition("emotion", 0, ExclusionMode.Blend) },
+                expressions: new[]
+                {
+                    new Expression("smile", "Smile", "emotion"),
+                });
+
+            var timeline = new RecTimeline(
+                RecBaselineState.Empty,
+                new[]
+                {
+                    RecEvent.CreateTriggerOn(0.1d, 0, 0),
+                },
+                new[] { "input:trigger" },
+                new[] { "smile" },
+                0.1d);
+
+            IReadOnlyList<string> missing = RecValidation.FindMissingExpressionIds(timeline, profile);
+
+            Assert.That(missing, Is.Empty);
+        }
+
+        [Test]
+        public void RecValidation_FindMissingExpressionIds_WithNullTimeline_DoesNotThrow()
+        {
+            var profile = new FacialProfile("1.0.0");
+
+            IReadOnlyList<string> missing = RecValidation.FindMissingExpressionIds(null, profile);
+
+            Assert.That(missing, Is.Empty);
         }
 
         [Test]

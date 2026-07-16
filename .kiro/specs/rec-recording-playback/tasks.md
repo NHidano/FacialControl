@@ -117,7 +117,7 @@
   - _Boundary: RecPlaybackScheduler_
   - _Depends: 5.1_
 
-- [ ] 5.5 (P) 記録とプロファイルの整合性検証を実装する
+- [x] 5.5 (P) 記録とプロファイルの整合性検証を実装する
   - 記録が参照する全 expressionId のうち現在のプロファイルに存在しないものを distinct で返す検証機能（例外を投げない・カスタム例外なし）
   - TDD: 欠落検出・空リスト = 整合の EditMode テストを先に書く
   - 完了条件: 読込済み記録から欠落 expressionId を事前検知できる
