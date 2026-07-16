@@ -45,7 +45,7 @@
   - _Depends: 3.1_
 
 - [ ] 4. 入力パイプライン参加（sink 群・ベイク成果物・Receiver・Binding）
-- [ ] 4.1 (P) 状態のみ供給する trigger sink を実装する
+- [x] 4.1 (P) 状態のみ供給する trigger sink を実装する
   - テストファースト: TriggerOn/Off で ActiveExpressionIds の LIFO 意味論（再トリガー位置更新・深度制限）が base のまま維持され、値の書込み寄与が構造的にゼロ（blendShapeCount=0）であることのテストを先に書く
   - core の trigger 入力源基底を blendShapeCount: 0 で構築し、maxStackDepth・ExclusionMode をライブ側設定と一致させる（追加 API なし）
   - 完了条件: レイヤー割当時に Layer2ActiveExpressionProvider の解決対象となり、値出力ゼロを検証するテストが緑であること

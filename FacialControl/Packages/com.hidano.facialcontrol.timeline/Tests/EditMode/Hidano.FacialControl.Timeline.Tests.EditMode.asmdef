@@ -3,6 +3,7 @@
     "rootNamespace": "Hidano.FacialControl.Timeline.Tests.EditMode",
     "references": [
         "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
         "Hidano.FacialControl.Timeline",
         "Hidano.FacialControl.Timeline.Editor",
         "Hidano.FacialControl.Timeline.Tests.Shared",
