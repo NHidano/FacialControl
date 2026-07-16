@@ -52,7 +52,7 @@
   - _Requirements: 5.2, 5.4_
   - _Boundary: TimelineExpressionStateSink_
 
-- [ ] 4.2 (P) ベイク値・アナログ・gaze の ValueProvider sink 群を実装する
+- [x] 4.2 (P) ベイク値・アナログ・gaze の ValueProvider sink 群を実装する
   - テストファースト: 有効時のみ値供給・Invalidate 中は他入力源の寄与を妨げないこと、書込み経路がヒープ確保なしであることのテストを先に書く
   - ベイク値 sink: 事前確保バッファ + 有効フラグ、書込み / 無効化 API、ContributeMask をベイク対象 BlendShape 名から構築（触らない BlendShape へ干渉しない）
   - アナログ sink（可変 N 軸）と gaze sink（Publish(x, y)、値域 -1..1、clamp なし、BlendShapeCount=0）を実装。Timeline 非再生時は invalid。gaze sink への IInjectedInputSource マーカー付与は core 注入面確定後の結合タスク（8.2）で行う
