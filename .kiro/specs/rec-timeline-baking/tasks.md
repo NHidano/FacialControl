@@ -67,7 +67,7 @@
   - _Requirements: 4.1, 6.1, 7.3_
   - _Boundary: FacialTimelineBakeAsset_
 
-- [ ] 4.4 Receiver（mixer と sink の唯一の橋渡し + ベイク検査）を実装する
+- [x] 4.4 Receiver（mixer と sink の唯一の橋渡し + ベイク検査）を実装する
   - テストファースト: ベイク欠落 → Warning + 値供給なし・状態駆動継続 / ハッシュ不一致 → Warning + 再生継続 / Track の対象レイヤー名不在 → Warning + 当該 Track のみ無効化、の縮退テストを先に書く
   - sink 解決 API（レイヤー名 / sub → sink。辞書は初期化時構築・以後参照のみ）、再生セッション開始処理（ベイク有無確認 + ハッシュ照合。照合結果は Editor 側から読める形で公開）、全解除処理（state sink 全 TriggerOff + value / gaze sink invalidate）を冪等に実装する
   - ベイクカーブの BlendShape 名 → sink バッファ index 解決は初期化時 1 回のみ（以後 GC ゼロ）
