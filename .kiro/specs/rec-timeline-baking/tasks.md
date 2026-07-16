@@ -129,7 +129,7 @@
   - _Requirements: 6.2, 6.5_
 
 - [ ] 7. Editor 書き出し + 検証
-- [ ] 7.1 REC → クリップ列変換ロジックを実装する（rec 論理形の Fake で先行）
+- [x] 7.1 REC → クリップ列変換ロジックを実装する（rec 論理形の Fake で先行）
   - テストファースト: on/off 対 → クリップ / off 欠落 → 記録終端まで / 重なり → 決定的貪欲レーン割当（レーン 0 = 親 Track 自身に最初のレーンが置かれること）/ 未知 expressionId → クリップ生成 + Warning（LogAssert）/ 多軸アナログ（AxisCount > 2）の欠落なし変換 / gaze 自動推論の決定性（GazeBindingConfig 一致 + 2 軸 → Gaze、軸数不一致 → Warning + Analog フォールバック）の EditMode テストを先に書く
   - rec 論理イベント形の契約（IRecordedEventSequence / RecordedEvent。本パッケージ内定義）と Fake 実装を用意し、rec 実 API の確定を待たずに変換ロジックを完成させる
   - AnalogValue イベントは SourceId 単位で連続値 Track / クリップへ変換する（記録イベント時刻をそのまま Keyframe とし、リサンプルしない）
