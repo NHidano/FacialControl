@@ -176,7 +176,7 @@
   - 完了条件: 同一プロファイル・同一レイヤー設定での等価テストが PlayMode で緑であること
   - _Requirements: 1.3, 1.5_
 
-- [ ] 9.2 (P) スクラブ / ジャンプと override / suppress の統合テストを実装する
+- [x] 9.2 (P) スクラブ / ジャンプと override / suppress の統合テストを実装する
   - 任意時刻へのジャンプ直後の値（ベイクサンプル）と active 状態（音素 override / suppress の発火）が線形到達時と一致することを検証する
   - 完了条件: ジャンプ整合テストが PlayMode で緑であること
   - _Requirements: 5.3, 5.4_

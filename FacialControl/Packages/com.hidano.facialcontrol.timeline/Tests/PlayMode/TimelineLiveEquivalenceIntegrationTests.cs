@@ -10,6 +10,7 @@ using Hidano.FacialControl.Timeline.Adapters.Assets;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Timeline.Domain.Models;
+using Hidano.FacialControl.Timeline.Domain.Services;
 using Hidano.FacialControl.Timeline.Editor;
 using Hidano.FacialControl.Timeline.Tracks;
 using NUnit.Framework;
@@ -26,6 +27,8 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
         private const float CurveTolerance = 0.02f;
         private const double ClipStartTime = 0.025d;
         private const double ClipDuration = 0.50d;
+        private const string OverlayLayerName = "Overlay";
+        private const string OverlaySlotName = "blink";
 
         [Test]
         public void TimelinePlayback_WithLinearTransition_MatchesLivePostBlendExactly()
@@ -67,6 +70,34 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 });
         }
 
+        [Test]
+        public void TimelineJump_WithOverrideOverlay_MatchesLinearAndScrubReset()
+        {
+            AssertJumpAndScrubMatchLinear(
+                expressionId: "smile_override",
+                activeBinding: new OverlaySlotBinding(
+                    OverlaySlotName,
+                    suppress: false,
+                    snapshot: CreateOverlaySnapshot("override_blink", ("Blink", 1f))),
+                expectedActiveValue: 1f,
+                expectedResetValue: 0f,
+                expectedResetActiveExpressionIds: Array.Empty<string>());
+        }
+
+        [Test]
+        public void TimelineJump_WithSuppressOverlay_MatchesLinearAndScrubReset()
+        {
+            AssertJumpAndScrubMatchLinear(
+                expressionId: "smile_suppress",
+                activeBinding: new OverlaySlotBinding(
+                    OverlaySlotName,
+                    suppress: true,
+                    snapshot: null),
+                expectedActiveValue: 1f,
+                expectedResetValue: 0f,
+                expectedResetActiveExpressionIds: Array.Empty<string>());
+        }
+
         private static void RunEquivalenceAssertion(
             TransitionCurve transitionCurve,
             float outputTolerance,
@@ -85,6 +116,59 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                     Is.EqualTo(fixture.Live.Output[0]).Within(outputTolerance),
                     $"Post-blend output diverged at t={time:0.0000}s");
             }
+        }
+
+        private static void AssertJumpAndScrubMatchLinear(
+            string expressionId,
+            OverlaySlotBinding activeBinding,
+            float expectedActiveValue,
+            float expectedResetValue,
+            IReadOnlyList<string> expectedResetActiveExpressionIds)
+        {
+            const float targetTime = 0.30f;
+            const float baselineTime = 0f;
+
+            using var fixture = new OverlayIntegrationFixture(expressionId, activeBinding);
+            using var baseline = new OverlayIntegrationFixture(expressionId, activeBinding);
+
+            fixture.Linear.AdvanceTo(targetTime);
+            fixture.Jump.JumpTo(targetTime);
+
+            AssertHarnessState(
+                fixture.Linear,
+                expectedActiveValue,
+                new[] { expressionId },
+                $"linear target t={targetTime:0.000}s");
+            AssertHarnessState(
+                fixture.Jump,
+                expectedActiveValue,
+                new[] { expressionId },
+                $"jump target t={targetTime:0.000}s");
+
+            fixture.Jump.JumpTo(baselineTime);
+            AssertHarnessState(
+                baseline.Linear,
+                expectedResetValue,
+                expectedResetActiveExpressionIds,
+                $"baseline t={baselineTime:0.000}s");
+            AssertHarnessState(
+                fixture.Jump,
+                expectedResetValue,
+                expectedResetActiveExpressionIds,
+                $"scrub reset t={baselineTime:0.000}s");
+        }
+
+        private static void AssertHarnessState(
+            TimelineOverlayHarness harness,
+            float expectedValue,
+            IReadOnlyList<string> expectedActiveExpressionIds,
+            string label)
+        {
+            ReadOnlySpan<float> actualOutput = harness.Output;
+            Assert.That(actualOutput.Length, Is.EqualTo(1), $"{label} output length");
+            Assert.That(actualOutput[0], Is.EqualTo(expectedValue).Within(LinearTolerance), $"{label} baked value");
+
+            CollectionAssert.AreEqual(expectedActiveExpressionIds, harness.ActiveExpressionIds, $"{label} active ids");
         }
 
         private sealed class EquivalenceFixture : IDisposable
@@ -112,6 +196,43 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
             {
                 Timeline.Dispose();
                 Live.Dispose();
+                if (Bake != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(Bake);
+                }
+
+                if (_timeline != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_timeline);
+                }
+            }
+        }
+
+        private sealed class OverlayIntegrationFixture : IDisposable
+        {
+            private readonly TimelineAsset _timeline;
+
+            public OverlayIntegrationFixture(string expressionId, OverlaySlotBinding activeBinding)
+            {
+                Profile = CreateOverlayProfile(expressionId, activeBinding);
+                _timeline = CreateTimeline(expressionId);
+                Bake = TimelineBakeService.Bake(_timeline, Profile);
+                Linear = new TimelineOverlayHarness(_timeline, Profile, Bake);
+                Jump = new TimelineOverlayHarness(_timeline, Profile, Bake);
+            }
+
+            public FacialProfile Profile { get; }
+
+            public FacialTimelineBakeAsset Bake { get; }
+
+            public TimelineOverlayHarness Linear { get; }
+
+            public TimelineOverlayHarness Jump { get; }
+
+            public void Dispose()
+            {
+                Linear.Dispose();
+                Jump.Dispose();
                 if (Bake != null)
                 {
                     UnityEngine.Object.DestroyImmediate(Bake);
@@ -312,6 +433,89 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
             }
         }
 
+        private sealed class TimelineOverlayHarness : IDisposable
+        {
+            private readonly TimelineBakedValueSink _valueSink;
+            private readonly float[] _finalOutput = new float[1];
+            private readonly BlendShapeCurve[] _bakedCurves;
+            private readonly TimelineExpressionStateSink _expressionSink;
+            private readonly TimelineEventStateReconstructor _stateReconstructor = new TimelineEventStateReconstructor();
+
+            private float _currentTime;
+
+            public TimelineOverlayHarness(TimelineAsset timeline, FacialProfile profile, FacialTimelineBakeAsset bake)
+            {
+                _expressionSink = new TimelineExpressionStateSink(
+                    InputSourceId.Parse("timeline:Expressions"),
+                    maxStackDepth: 4,
+                    exclusionMode: ExclusionMode.LastWins,
+                    profile);
+
+                _bakedCurves = FindExpressionBakeCurves(bake, "Expressions");
+                _valueSink = new TimelineBakedValueSink(
+                    InputSourceId.Parse("timeline:bake"),
+                    new[] { "Smile" },
+                    CollectBakedBlendShapeNames(_bakedCurves));
+                _stateReconstructor.SetEvents(TimelineStateEventCollector.Collect((FacialExpressionTrack)timeline.GetOutputTrack(0)));
+                SampleBakeAt(0f);
+                RefreshOutput();
+            }
+
+            public IReadOnlyList<string> ActiveExpressionIds => _expressionSink.ActiveExpressionIds;
+
+            public ReadOnlySpan<float> Output => _finalOutput;
+
+            public void AdvanceTo(float targetTime)
+            {
+                if (targetTime + 1e-9f < _currentTime)
+                {
+                    throw new InvalidOperationException("Timeline overlay harness cannot scrub backward via linear advance.");
+                }
+
+                _stateReconstructor.AdvanceLinear(_currentTime, targetTime, _expressionSink);
+                _currentTime = targetTime;
+                SampleBakeAt(targetTime);
+                RefreshOutput();
+            }
+
+            public void JumpTo(float targetTime)
+            {
+                _stateReconstructor.JumpTo(targetTime, _expressionSink);
+                _currentTime = targetTime;
+                SampleBakeAt(targetTime);
+                RefreshOutput();
+            }
+
+            public void Dispose()
+            {
+            }
+
+            private void SampleBakeAt(float timeSeconds)
+            {
+                Span<float> bakedValues = stackalloc float[_bakedCurves.Length];
+                for (int i = 0; i < _bakedCurves.Length; i++)
+                {
+                    bakedValues[i] = _bakedCurves[i].Curve != null
+                        ? _bakedCurves[i].Curve.Evaluate(timeSeconds)
+                        : 0f;
+                }
+
+                Assert.That(_valueSink.SetValues(bakedValues), Is.True, "Bake sampling layout must match sink layout.");
+            }
+
+            private void RefreshOutput()
+            {
+                Span<float> bakedValue = stackalloc float[1];
+                if (_valueSink.TryWriteValues(bakedValue))
+                {
+                    _finalOutput[0] = bakedValue[0];
+                    return;
+                }
+
+                _finalOutput[0] = 0f;
+            }
+        }
+
         private sealed class LiveExpressionSource : ExpressionTriggerInputSourceBase
         {
             public LiveExpressionSource(
@@ -424,13 +628,71 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
 
         private static TimelineAsset CreateTimeline()
         {
+            return CreateTimeline("smile");
+        }
+
+        private static TimelineAsset CreateTimeline(string expressionId)
+        {
             var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             FacialExpressionTrack track = timeline.CreateTrack<FacialExpressionTrack>(null, "Expressions");
             TimelineClip clip = track.CreateClip<FacialExpressionClip>();
             clip.start = ClipStartTime;
             clip.duration = ClipDuration;
-            ((FacialExpressionClip)clip.asset).ExpressionId = "smile";
+            ((FacialExpressionClip)clip.asset).ExpressionId = expressionId;
             return timeline;
+        }
+
+        private static FacialProfile CreateOverlayProfile(string expressionId, OverlaySlotBinding activeBinding)
+        {
+            return new FacialProfile(
+                schemaVersion: "1.0.0",
+                layers: new[]
+                {
+                    new LayerDefinition("Expressions", 0, ExclusionMode.LastWins),
+                    new LayerDefinition(OverlayLayerName, 1, ExclusionMode.LastWins),
+                },
+                expressions: new[]
+                {
+                    new Expression(
+                        id: expressionId,
+                        name: expressionId,
+                        layer: "Expressions",
+                        transitionDuration: 0.10f,
+                        transitionCurve: TransitionCurve.Linear,
+                        blendShapeValues: new[]
+                        {
+                            new BlendShapeMapping("Smile", 1f),
+                        },
+                        overlays: new[] { activeBinding }),
+                },
+                rendererPaths: null,
+                layerInputSources: null,
+                defaultOverlays: new[]
+                {
+                    new OverlaySlotBinding(
+                        OverlaySlotName,
+                        suppress: false,
+                        snapshot: CreateOverlaySnapshot("default_blink", ("Blink", 0.2f))),
+                },
+                slots: new[] { OverlaySlotName });
+        }
+
+
+        private static ExpressionSnapshot CreateOverlaySnapshot(string id, params (string name, float value)[] blendShapes)
+        {
+            var snapshots = new BlendShapeSnapshot[blendShapes.Length];
+            for (int i = 0; i < blendShapes.Length; i++)
+            {
+                snapshots[i] = new BlendShapeSnapshot(string.Empty, blendShapes[i].name, blendShapes[i].value);
+            }
+
+            return new ExpressionSnapshot(
+                id: id,
+                transitionDuration: Expression.DefaultTransitionDuration,
+                transitionCurvePreset: TransitionCurvePreset.Linear,
+                blendShapes: snapshots,
+                bones: null,
+                rendererPaths: null);
         }
 
         private static string[] CollectBakedBlendShapeNames(BlendShapeCurve[] curves)
