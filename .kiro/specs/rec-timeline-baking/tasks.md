@@ -196,7 +196,7 @@
   - _Requirements: 7.2, 7.4_
   - _Depends: 8.2_
 
-- [ ] 9.5 (P) GC ゼロ・性能ゲートを検証する
+- [x] 9.5 (P) GC ゼロ・性能ゲートを検証する
   - Timeline 再生中の定常フレーム GC ゼロと、ジャンプ（キュー点移動）評価フレームの GC ゼロ（再構築スクラッチが事前確保であること）を FacialControllerGcZeroGateTests の ProfilerRecorder パターン踏襲で検証する
   - 観測フック未登録時の Aggregator アロケーション非退行を検証する
   - 完了条件: 性能ゲートテストが PlayMode で緑であること
