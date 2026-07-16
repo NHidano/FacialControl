@@ -51,6 +51,13 @@ namespace Hidano.FacialControl.Rec.Domain.Models
             return axes ?? Array.Empty<float>();
         }
 
+        public ReadOnlySpan<float> GetAnalogAxesSpan(int eventIndex)
+        {
+            ValidateEventIndex(eventIndex);
+            float[] axes = _analogAxesByEvent[eventIndex];
+            return axes == null ? ReadOnlySpan<float>.Empty : axes;
+        }
+
         private static string[] CopyIds(IEnumerable<string> ids, string paramName)
         {
             if (ids == null)

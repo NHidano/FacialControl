@@ -94,7 +94,17 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
                 RecEvent.CreateAnalogSample(0.5d, 1, 2),
             };
 
-            var timeline = new RecTimeline(RecBaselineState.Empty, events, sourceIds, expressionIds, 0.5d);
+            var timeline = new RecTimeline(
+                RecBaselineState.Empty,
+                events,
+                sourceIds,
+                expressionIds,
+                0.5d,
+                new IReadOnlyList<float>[]
+                {
+                    Array.Empty<float>(),
+                    new float[] { 0.25f, -0.5f },
+                });
             sourceIds[0] = "changed";
             expressionIds[0] = "changed";
             events[0] = RecEvent.CreateTriggerOff(0.25d, 0, 0);
