@@ -2,7 +2,8 @@
     "name": "Hidano.FacialControl.Rec.Application",
     "rootNamespace": "Hidano.FacialControl.Rec.Application",
     "references": [
-        "Hidano.FacialControl.Rec.Domain"
+        "Hidano.FacialControl.Rec.Domain",
+        "Hidano.FacialControl.Domain"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
