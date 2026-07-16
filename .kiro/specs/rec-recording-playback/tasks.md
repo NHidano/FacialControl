@@ -99,7 +99,7 @@
   - _Boundary: RecEventChunkQueue_
   - _Depends: 5.1_
 
-- [ ] 5.3 (P) .fcrec バイナリフォーマットを実装する
+- [x] 5.3 (P) .fcrec バイナリフォーマットを実装する
   - little-endian・追記型・自己記述長レコードのコンテナ: ヘッダ（magic/version/flags/開始時刻）、id 初出時インライン定義、時刻付きイベント、基準状態レコード、フッタ（総時間・イベント数）
   - 基準状態レコードは最初の時刻付きレコードより前に出現しなければならない（違反は読込エラー）。未知 version はエラー。フッタ欠落（クラッシュ）はスキャン復旧し truncated tail を警告付き破棄
   - 事前確保 byte バッファへの手書きシリアライズで writer 側 alloc ゼロ。JsonUtility は使用しない

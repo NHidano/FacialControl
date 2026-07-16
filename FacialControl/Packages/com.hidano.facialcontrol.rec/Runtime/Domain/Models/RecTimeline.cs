@@ -11,13 +11,15 @@ namespace Hidano.FacialControl.Rec.Domain.Models
         private readonly RecEvent[] _events;
         private readonly string[] _sourceIds;
         private readonly string[] _expressionIds;
+        private readonly float[][] _analogAxesByEvent;
 
         public RecTimeline(
             RecBaselineState baseline,
             IEnumerable<RecEvent> events,
             IEnumerable<string> sourceIds,
             IEnumerable<string> expressionIds,
-            double durationSeconds)
+            double durationSeconds,
+            IEnumerable<IReadOnlyList<float>> analogAxesByEvent = null)
         {
             if (durationSeconds < 0d)
             {
@@ -28,6 +30,7 @@ namespace Hidano.FacialControl.Rec.Domain.Models
             _sourceIds = CopyIds(sourceIds, nameof(sourceIds));
             _expressionIds = CopyIds(expressionIds, nameof(expressionIds));
             _events = CopyAndValidateEvents(events, _sourceIds.Length, _expressionIds.Length, durationSeconds);
+            _analogAxesByEvent = CopyAndValidateAnalogAxes(_events, analogAxesByEvent, nameof(analogAxesByEvent));
             DurationSeconds = durationSeconds;
         }
 
@@ -40,6 +43,13 @@ namespace Hidano.FacialControl.Rec.Domain.Models
         public IReadOnlyList<string> ExpressionIds => _expressionIds;
 
         public double DurationSeconds { get; }
+
+        public IReadOnlyList<float> GetAnalogAxes(int eventIndex)
+        {
+            ValidateEventIndex(eventIndex);
+            float[] axes = _analogAxesByEvent[eventIndex];
+            return axes ?? Array.Empty<float>();
+        }
 
         private static string[] CopyIds(IEnumerable<string> ids, string paramName)
         {
@@ -109,6 +119,94 @@ namespace Hidano.FacialControl.Rec.Domain.Models
             return list.Count == 0 ? Array.Empty<RecEvent>() : list.ToArray();
         }
 
+        private static float[][] CopyAndValidateAnalogAxes(
+            IReadOnlyList<RecEvent> events,
+            IEnumerable<IReadOnlyList<float>> analogAxesByEvent,
+            string paramName)
+        {
+            int eventCount = events.Count;
+            if (eventCount == 0)
+            {
+                if (analogAxesByEvent == null)
+                {
+                    return Array.Empty<float[]>();
+                }
+
+                using (IEnumerator<IReadOnlyList<float>> enumerator = analogAxesByEvent.GetEnumerator())
+                {
+                    if (enumerator.MoveNext())
+                    {
+                        throw new ArgumentException("Analog axes count must match the event count.", paramName);
+                    }
+                }
+
+                return Array.Empty<float[]>();
+            }
+
+            var copied = new float[eventCount][];
+            if (analogAxesByEvent == null)
+            {
+                for (int i = 0; i < eventCount; i++)
+                {
+                    copied[i] = events[i].Kind == RecEventKind.AnalogSample
+                        ? throw new ArgumentException("Analog events require axis payloads.", paramName)
+                        : Array.Empty<float>();
+                }
+
+                return copied;
+            }
+
+            int index = 0;
+            foreach (IReadOnlyList<float> axes in analogAxesByEvent)
+            {
+                if (index >= eventCount)
+                {
+                    throw new ArgumentException("Analog axes count must match the event count.", paramName);
+                }
+
+                copied[index] = CopyAndValidateAxes(events[index], axes, paramName);
+                index++;
+            }
+
+            if (index != eventCount)
+            {
+                throw new ArgumentException("Analog axes count must match the event count.", paramName);
+            }
+
+            return copied;
+        }
+
+        private static float[] CopyAndValidateAxes(RecEvent evt, IReadOnlyList<float> axes, string paramName)
+        {
+            if (evt.Kind != RecEventKind.AnalogSample)
+            {
+                if (axes != null && axes.Count > 0)
+                {
+                    throw new ArgumentException("Non-analog events must not carry axis payloads.", paramName);
+                }
+
+                return Array.Empty<float>();
+            }
+
+            if (axes == null)
+            {
+                throw new ArgumentException("Analog events require axis payloads.", paramName);
+            }
+
+            if (axes.Count != evt.AxisCount)
+            {
+                throw new ArgumentException("Axis payload length must match the event axis count.", paramName);
+            }
+
+            var copied = new float[axes.Count];
+            for (int i = 0; i < copied.Length; i++)
+            {
+                copied[i] = axes[i];
+            }
+
+            return copied;
+        }
+
         private static void ValidateIndexes(RecEvent evt, int sourceIdCount, int expressionIdCount, string paramName)
         {
             if (evt.Kind == RecEventKind.AnalogSample)
@@ -129,6 +227,14 @@ namespace Hidano.FacialControl.Rec.Domain.Models
             if (evt.ExpressionIdIndex >= expressionIdCount)
             {
                 throw new ArgumentException("Trigger event references an unknown expression id index.", paramName);
+            }
+        }
+
+        private void ValidateEventIndex(int eventIndex)
+        {
+            if ((uint)eventIndex >= (uint)_events.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(eventIndex));
             }
         }
     }
