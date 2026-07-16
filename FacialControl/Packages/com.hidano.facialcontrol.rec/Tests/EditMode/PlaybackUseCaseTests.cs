@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Hidano.FacialControl.Application.UseCases;
+using Hidano.FacialControl.Domain.Adapters;
+using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
+using Hidano.FacialControl.Domain.Services;
+using Hidano.FacialControl.Rec.Adapters.Playback;
 using Hidano.FacialControl.Rec.Application.UseCases;
 using Hidano.FacialControl.Rec.Domain.Interfaces;
 using Hidano.FacialControl.Rec.Domain.Models;
@@ -125,6 +130,38 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             Assert.That(useCase.State, Is.EqualTo(RecPlaybackState.Idle));
         }
 
+        [Test]
+        public void RecordingToPlayback_ReproducesIdenticalIntermediateBlendOutput()
+        {
+            FacialProfile profile = CreateBlendVerificationProfile();
+            const string triggerSourceId = "input:trigger";
+            const float deltaTime = 0.25f;
+
+            RecTimeline timeline = RecordTriggerTimeline(triggerSourceId);
+
+            float[] recordedBlend = ComputeBlendAfterTrigger(profile, CreateTriggerSource(triggerSourceId), deltaTime);
+
+            var playbackSource = CreateTriggerSource(triggerSourceId);
+            using var playbackLayer = CreateLayerUseCase(profile, playbackSource);
+            var triggerInjector = new RecTriggerInjector(
+                sourceId => sourceId == playbackSource.Id ? playbackSource : null,
+                () => new[] { playbackSource });
+            var analogPort = new FakeAnalogInjectionPort();
+            var playbackUseCase = new PlaybackUseCase(triggerInjector, analogPort);
+
+            RecLoadResult result = playbackUseCase.Load(timeline, profile);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(playbackUseCase.StartPlayback(), Is.True);
+
+            playbackUseCase.Tick(0f);
+            playbackLayer.UpdateWeights(deltaTime);
+            float[] playbackBlend = playbackLayer.GetBlendedOutput();
+            playbackUseCase.Tick(deltaTime);
+
+            Assert.That(playbackUseCase.State, Is.EqualTo(RecPlaybackState.Completed));
+            Assert.That(playbackBlend, Is.EqualTo(recordedBlend).AsCollection.Within(1e-5f));
+        }
+
         private static RecTimeline CreateTimelineWithMissingExpression()
         {
             var baseline = new RecBaselineState(
@@ -192,6 +229,65 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
                 });
         }
 
+        private static RecTimeline RecordTriggerTimeline(string triggerSourceId)
+        {
+            var bus = new FakeObservationBus();
+            var clock = new FakeClock();
+            var sink = new TimelineBuildingRecEventSink();
+            using var recordingUseCase = new RecordingUseCase(bus, clock, sink);
+
+            recordingUseCase.StartRecording(RecBaselineState.Empty);
+            bus.PublishTriggerOn(triggerSourceId, "smile");
+            clock.ElapsedSeconds = 0.25d;
+            recordingUseCase.StopRecording();
+
+            Assert.That(sink.CompletedTimeline, Is.Not.Null);
+            return sink.CompletedTimeline;
+        }
+
+        private static float[] ComputeBlendAfterTrigger(FacialProfile profile, TestTriggerSource triggerSource, float deltaTime)
+        {
+            using var layerUseCase = CreateLayerUseCase(profile, triggerSource);
+            triggerSource.TriggerOn("smile");
+            layerUseCase.UpdateWeights(deltaTime);
+            return layerUseCase.GetBlendedOutput();
+        }
+
+        private static LayerUseCase CreateLayerUseCase(FacialProfile profile, TestTriggerSource triggerSource)
+        {
+            return new LayerUseCase(
+                profile,
+                new ExpressionUseCase(profile),
+                new[] { "face", "cheek" },
+                new[] { (0, (IInputSource)triggerSource, 1f) });
+        }
+
+        private static TestTriggerSource CreateTriggerSource(string sourceId)
+        {
+            return new TestTriggerSource(sourceId, CreateBlendVerificationProfile());
+        }
+
+        private static FacialProfile CreateBlendVerificationProfile()
+        {
+            return new FacialProfile(
+                "1.0.0",
+                layers: new[] { new LayerDefinition("emotion", 0, ExclusionMode.LastWins) },
+                expressions: new[]
+                {
+                    new Expression(
+                        "smile",
+                        "Smile",
+                        "emotion",
+                        transitionDuration: 0.5f,
+                        transitionCurve: TransitionCurve.Linear,
+                        blendShapeValues: new[]
+                        {
+                            new BlendShapeMapping("face", 0.8f),
+                            new BlendShapeMapping("cheek", 0.35f),
+                        }),
+                });
+        }
+
         private sealed class FakeTriggerInjectionPort : ITriggerInjectionPort
         {
             public int EstablishBaselineCallCount { get; private set; }
@@ -243,6 +339,133 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             public void EndInjection()
             {
                 EndInjectionCallCount++;
+            }
+        }
+
+        private sealed class FakeObservationBus : IFacialInputObservationBus
+        {
+            public IFacialInputObserver CurrentObserver { get; private set; }
+
+            public bool HasObservers => CurrentObserver != null;
+
+            public void Subscribe(IFacialInputObserver observer)
+            {
+                CurrentObserver = observer;
+            }
+
+            public void Unsubscribe(IFacialInputObserver observer)
+            {
+                if (ReferenceEquals(CurrentObserver, observer))
+                {
+                    CurrentObserver = null;
+                }
+            }
+
+            public void OnTriggerOn(string sourceId, string expressionId)
+            {
+                CurrentObserver?.OnTriggerOn(sourceId, expressionId);
+            }
+
+            public void OnTriggerOff(string sourceId, string expressionId)
+            {
+                CurrentObserver?.OnTriggerOff(sourceId, expressionId);
+            }
+
+            public void PublishAnalogSample(string sourceId, ReadOnlySpan<float> axes)
+            {
+                CurrentObserver?.OnAnalogSample(sourceId, axes);
+            }
+
+            public void PublishTriggerOn(string sourceId, string expressionId)
+            {
+                OnTriggerOn(sourceId, expressionId);
+            }
+        }
+
+        private sealed class FakeClock : IRecClock
+        {
+            public double ElapsedSeconds { get; set; }
+
+            public void Reset()
+            {
+                ElapsedSeconds = 0d;
+            }
+        }
+
+        private sealed class TimelineBuildingRecEventSink : IRecEventSink
+        {
+            private readonly List<RecEvent> _timedEvents = new List<RecEvent>();
+            private readonly List<IReadOnlyList<float>> _analogAxesByEvent = new List<IReadOnlyList<float>>();
+            private readonly List<string> _sourceIds = new List<string>();
+            private readonly List<string> _expressionIds = new List<string>();
+
+            private RecBaselineState _baseline = RecBaselineState.Empty;
+
+            public RecTimeline CompletedTimeline { get; private set; }
+
+            public void Open(RecBaselineState baseline)
+            {
+                _baseline = baseline ?? RecBaselineState.Empty;
+                _timedEvents.Clear();
+                _analogAxesByEvent.Clear();
+                _sourceIds.Clear();
+                _expressionIds.Clear();
+                CompletedTimeline = null;
+            }
+
+            public void AppendEvent(in RecEvent evt, ReadOnlySpan<float> axes, string idValue = null)
+            {
+                if (evt.Kind == RecEventKind.IdDefine)
+                {
+                    if (evt.DefinedIdKind == RecEvent.IdDefinitionKind.Source)
+                    {
+                        EnsureIdSlot(_sourceIds, evt.IdIndex, idValue);
+                    }
+                    else if (evt.DefinedIdKind == RecEvent.IdDefinitionKind.Expression)
+                    {
+                        EnsureIdSlot(_expressionIds, evt.IdIndex, idValue);
+                    }
+
+                    return;
+                }
+
+                _timedEvents.Add(evt);
+                _analogAxesByEvent.Add(evt.Kind == RecEventKind.AnalogSample ? axes.ToArray() : Array.Empty<float>());
+            }
+
+            public void Complete(double durationSeconds, int eventCount)
+            {
+                CompletedTimeline = new RecTimeline(
+                    _baseline,
+                    _timedEvents,
+                    _sourceIds,
+                    _expressionIds,
+                    durationSeconds,
+                    _analogAxesByEvent);
+            }
+
+            private static void EnsureIdSlot(List<string> ids, int index, string value)
+            {
+                while (ids.Count <= index)
+                {
+                    ids.Add(null);
+                }
+
+                ids[index] = value;
+            }
+        }
+
+        private sealed class TestTriggerSource : ExpressionTriggerInputSourceBase
+        {
+            public TestTriggerSource(string sourceId, FacialProfile profile)
+                : base(
+                    InputSourceId.Parse(sourceId),
+                    blendShapeCount: 2,
+                    maxStackDepth: 4,
+                    exclusionMode: ExclusionMode.LastWins,
+                    blendShapeNames: new[] { "face", "cheek" },
+                    profile: profile)
+            {
             }
         }
     }
