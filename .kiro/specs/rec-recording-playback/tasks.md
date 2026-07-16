@@ -24,7 +24,7 @@
   - _Requirements: 3.8_
 
 - [ ] 3. core: 入力観測バスとアナログ/gaze サンプラー
-- [ ] 3.1 入力観測バスを実装する
+- [x] 3.1 入力観測バスを実装する
   - トリガーイベントとアナログ/gaze サンプルを per-FC で集約し複数観測者へ配信する読取専用契約（パイプラインへ何も書き戻さない）を core Domain に追加する
   - FacialOutputBus と対称の契約を踏襲: HasObservers ガード、publish 中 Subscribe/Unsubscribe の遅延適用、観測者例外の隔離（Debug.LogException で他観測者へ継続配信）
   - axes はコールバック中のみ有効（保持禁止）の規約を XML doc に明記。core は rec を知らない
