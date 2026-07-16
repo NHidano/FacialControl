@@ -27,6 +27,8 @@ namespace Hidano.FacialControl.Adapters.InputSources
     public sealed class InputSourceRegistry : IInputSourceRegistry
     {
         private const char CompositeSeparator = ':';
+        private const string ReentrantMutationMessage =
+            "[InputSourceRegistry] registry mutation during subscription notification is not allowed; request ignored.";
 
         private readonly Dictionary<string, IInputSource> _entries =
             new Dictionary<string, IInputSource>(StringComparer.Ordinal);
@@ -37,12 +39,19 @@ namespace Hidano.FacialControl.Adapters.InputSources
         private readonly Dictionary<string, List<Action<IInputSource>>> _subscribers =
             new Dictionary<string, List<Action<IInputSource>>>(StringComparer.Ordinal);
 
+        private bool _isNotifyingSubscribers;
+
         /// <inheritdoc />
         public IReadOnlyList<string> RegisteredIds => _registeredIds;
 
         /// <inheritdoc />
         public void Register(AdapterSlug slug, IInputSource source)
         {
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             if (source == null)
             {
                 throw new ArgumentNullException(nameof(source));
@@ -54,6 +63,11 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <inheritdoc />
         public void Replace(AdapterSlug slug, IInputSource source)
         {
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             if (source == null)
             {
                 throw new ArgumentNullException(nameof(source));
@@ -65,6 +79,11 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <inheritdoc />
         public void Register(AdapterSlug slug, string sub, IInputSource source)
         {
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(sub))
             {
                 throw new ArgumentException(
@@ -82,6 +101,11 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <inheritdoc />
         public void Replace(AdapterSlug slug, string sub, IInputSource source)
         {
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(sub))
             {
                 throw new ArgumentException(
@@ -99,12 +123,22 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <inheritdoc />
         public void Unregister(AdapterSlug slug)
         {
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             UnregisterInternal(slug.Value);
         }
 
         /// <inheritdoc />
         public void Unregister(AdapterSlug slug, string sub)
         {
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(sub))
             {
                 return;
@@ -132,6 +166,11 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 return;
             }
 
+            if (RejectMutationDuringNotification())
+            {
+                return;
+            }
+
             if (!_subscribers.TryGetValue(id, out List<Action<IInputSource>> handlers))
             {
                 handlers = new List<Action<IInputSource>>();
@@ -148,9 +187,18 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 return;
             }
 
-            for (int i = 0; i < handlers.Count; i++)
+            _isNotifyingSubscribers = true;
+
+            try
             {
-                handlers[i]?.Invoke(source);
+                for (int i = 0; i < handlers.Count; i++)
+                {
+                    handlers[i]?.Invoke(source);
+                }
+            }
+            finally
+            {
+                _isNotifyingSubscribers = false;
             }
         }
 
@@ -200,9 +248,22 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 if (string.Equals(_registeredIds[i], key, StringComparison.Ordinal))
                 {
                     _registeredIds.RemoveAt(i);
-                    return;
+                    break;
                 }
             }
+
+            NotifySubscribers(key, null);
+        }
+
+        private bool RejectMutationDuringNotification()
+        {
+            if (!_isNotifyingSubscribers)
+            {
+                return false;
+            }
+
+            Debug.LogError(ReentrantMutationMessage);
+            return true;
         }
     }
 }

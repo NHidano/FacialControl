@@ -41,7 +41,7 @@
   - _Requirements: 1.2, 1.3, 4.1, 4.2, 6.3, 6.5, 6.7_
 
 - [ ] 4. core: 注入面（registry 契約強化 + 再バインド伝搬）
-- [ ] 4.1 (P) registry の通知契約を強化する
+- [x] 4.1 (P) registry の通知契約を強化する
   - Unregister 時に購読ハンドラへ null を通知する契約を追加し、通知中の再入（Register/Replace/Unregister/Subscribe）を LogError + no-op とする実行時ガード（notify 中フラグ、数行・alloc なし）を実装する
   - Replace 系 XML doc の文字化けを修繕し、Subscribe 契約（Register/Replace = 新ソース、Unregister = null、通知中再入は契約違反）を明文化する
   - TDD: null 通知・再入ガードの EditMode テストを先に書く
