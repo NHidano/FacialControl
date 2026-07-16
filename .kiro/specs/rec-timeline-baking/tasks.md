@@ -23,7 +23,7 @@
   - _Requirements: 4.2, 9.3_
 
 - [ ] 3. Track / クリップ定義と Domain 純ロジック
-- [ ] 3.1 (P) 表情 / 連続値の Track・クリップアセットを定義する
+- [x] 3.1 (P) 表情 / 連続値の Track・クリップアセットを定義する
   - 表情 Track（binding 対象 = Receiver、対象レイヤー名プロパティ、子レーン Track 管理）と表情クリップ（保持フィールドは expressionId のみ、ClipCaps.None でTimeline 側ブレンド禁止）を定義する。遷移時間・カーブはクリップに持たせない（プロファイル read-only 参照）
   - 連続値 Track（チャネル sub-id + Analog / Gaze 種別）と連続値クリップ（軸ごとの AnimationCurve、gaze は 2 軸・値域 -1..1 のまま、クリップローカル時間、ClipCaps.None）を定義する
   - 完了条件: Timeline ウィンドウで Track 追加・クリップ配置・移動・長さ変更・削除・expressionId 差し替え・Keyframe 直接編集が Unity 標準操作で行えること
