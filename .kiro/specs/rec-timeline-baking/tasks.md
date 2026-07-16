@@ -203,7 +203,7 @@
   - _Requirements: 8.1, 9.3_
   - _Boundary: PlayMode Performance Tests_
 
-- [ ] 10. 最終回帰: 全体テスト実行と統合制約の確認
+- [x] 10. 最終回帰: 全体テスト実行と統合制約の確認
   - EditMode / PlayMode の全テストを batchmode 同期実行（`timeout: 600000`、Editor を閉じた状態）で実行し全緑を確認する
   - 既知の pre-existing 赤（SampleAssetsAreInSyncTests 4 件 / OSC heartbeat 系 / TenIndependentBindings_OneSwap）は本 spec の FAIL 判定に含めない
   - デッド PlayableGraph 経路への依存がないこと（blendshape-output-refactor による撤去の影響なし）と、core の既存入力パイプライン・遷移計算・レイヤー合成のコードパスが観測フック以外無変更であることを確認する
