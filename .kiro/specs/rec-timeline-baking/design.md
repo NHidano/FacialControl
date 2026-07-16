@@ -44,7 +44,7 @@
 
 ### Revalidation Triggers
 - rec spec の記録モデル（`RecTimeline` / `RecEvent`。2026-07-16 の design 確定内容と照合済み: AnalogSample の可変軸数対応 + gaze 専用 kind の廃止を反映）が再度変わった場合 → `RecEventSequenceAdapter` と `IRecordedEventSequence` 契約の再照合
-- **rec spec の design 確定時に、core 注入面（Replace 再バインド伝搬）の契約形状（API 名・伝搬対象範囲・元ソースへの復元可否・**多重 Replace 時の占有セマンティクス — 占有照会の有無、復元は現占有者のみ許可か、他者占有時の開始拒否/縮退規則**）を本 design の gaze 差し替え設計（Receiver / TimelineAdapterBinding の開始時/復元時ガード）と照合**
+- core 注入面（Replace 再バインド伝搬）の契約形状 — **2026-07-16 に rec spec design で契約確定・照合済み**: 多重占有は `IInjectedInputSource` マーカー（core Domain）による占有判定（現占有ソースが `IInjectedInputSource` なら他者占有としてスキップ + Warning）+ 復元は参照同一性ガード（現占有者が自分の装着ソースと同一参照の場合のみ復元、不一致は Warning + no-op）。本 design の開始時/復元時ガードはこの契約用語に整合済み。原本不在 id への注入（Register/Unregister + null 通知）と `ResetToExpressionStack` は rec のリアルタイム再生用であり、timeline は使用しない（状態駆動は既存 TriggerOn/Off、差し替え対象は既存ライブソースの実在 id のみ）。**契約が再度変わった場合のみ再照合**
 - core の `IInputSourceRegistry` / `AdapterBuildContext` / `Layer2ActiveExpressionProvider` の契約形状変更
 - `FacialTimelineBakeAsset` スキーマまたはハッシュ正規形の変更（ベイク互換性が壊れる）
 - `blendshape-output-refactor` spec によるデッド PlayableGraph 撤去（Req 9.2 の前提確認のみ。本設計は当該経路に依存しないため影響なしを確認する）
@@ -338,7 +338,7 @@ flowchart LR
 
 **Responsibilities & Constraints**
 - `OnStart`: (1) 設定された Track 対応（対象レイヤー名 / gaze・アナログチャネル定義）に従い sink 群を構築、(2) `ctx.InputSourceRegistry.Register(slug, ...)` / `Register(slug, sub, ...)` で登録（gaze: `timeline:gaze-{n}`、アナログ: `timeline:{channel}` 形式）、(3) `ctx.HostGameObject` に `FacialTimelineReceiver` を AddComponent し sink 参照・gaze 差し替え設定（`TakeoverSourceId`）を注入
-- `Dispose`: **gaze 差し替えが残っていれば元ソースへ復元（最終防衛線。復元時ガード付き — 現占有者が自分の sink の場合のみ）**した上で Receiver 破棄と sink 解除
+- `Dispose`: **gaze 差し替えが残っていれば元ソースへ復元（最終防衛線。参照同一性ガード付き — 現占有者が自分の装着 sink と同一参照の場合のみ）**した上で Receiver 破棄と sink 解除
 - OnTick/OnLateTick は不使用（駆動は Timeline の PlayableGraph 評価が担う）。Aggregator による sink の Tick はレイヤー登録経由で従来どおり行われる
 - state sink / value sink のレイヤー割当は既存の slug 駆動レイヤー入力設定に従う（core 無改修）
 - gaze の差し替え実行自体は Receiver が所有する（本 binding は設定の保持と Dispose 時の復元保証のみ）
@@ -396,9 +396,9 @@ public struct TimelineValueChannelConfig
 - mixer から `TryGetStateSink(layerName)` / `TryGetValueSink(layerName)` / `TryGetAnalogSink(sub)` で sink を解決させる（レイヤー名 → sink の辞書は初期化時に構築、以後参照のみ）
 - 再生セッション開始時（最初の graph 評価）に 1 回だけ `BeginPlaybackSession`: (1) ベイク成果物の有無確認（欠落 → `Debug.LogWarning` + 値供給なし・状態駆動は継続、Req 6.4）、(2) `FacialTimelineHashCalculator` で正本ハッシュを計算しベイク記録値と照合（不一致 → `Debug.LogWarning` + 継続、Req 6.3）、(3) **gaze ソース差し替え**: 各 gaze チャネルの `TakeoverSourceId` を registry から解決して元ソース参照を退避し、`Replace(takeoverId, timelineGazeSink)` を実行（core 注入面が消費側 `EyeBinding` へ再バインドを伝搬）。照合結果は Editor 側（DirtyWatcher）から読める static フラグ/イベントで公開する（6.5 の入力）
 - **gaze 差し替えの復元保証（三重）**: (1) `ReleaseAll`（graph 停止/破棄）で `Replace(takeoverId, 退避した元ソース)`、(2) 自身の `OnDisable`/`OnDestroy` で未復元なら復元、(3) `TimelineAdapterBinding.Dispose` が最終防衛線。復元は冪等（未差し替え時は no-op）
-- **多重占有ガード**（同一 `TakeoverSourceId` を複数所有者が差し替える系への防御。同一キャラに複数 PlayableDirector / rec リアルタイム再生との併用 — rec も同じ Replace 注入面を使う — で発生し得る。多重 Replace の占有セマンティクス自体は注入面の契約オーナーである rec spec が定義中であり、本 spec はその契約に従う利用側）:
-  - **開始時ガード**: `BeginPlaybackSession` で `TakeoverSourceId` の現在ソースが既に他の差し替え sink に占有されている場合、`Debug.LogWarning` + 当該チャネル無効化（差し替えを行わない。`TakeoverSourceId` 解決不能時と同じ縮退）。占有判定は rec spec の注入面契約が占有照会を提供する場合はそれに従い、提供しない場合は registry の現在ソース参照の照合で代用する
-  - **復元時ガード**（三重防衛線すべての冪等条件に含める）: 復元前に `TakeoverSourceId` の現在ソースが**自分の timeline sink である場合のみ** `Replace(takeoverId, 退避元ソース)` を実行する。現占有者が自分の sink でない（後から他所有者が差し替えた）場合は `Debug.LogWarning` + no-op（他所有者の占有を破壊しない。例: A 差し替え → B 差し替え → A 先行停止、で A の復元が B の占有を上書きする事故を防ぐ）
+- **多重占有ガード**（同一 `TakeoverSourceId` を複数所有者が差し替える系への防御。同一キャラに複数 PlayableDirector / rec リアルタイム再生との併用 — rec も同じ Replace 注入面を使う — で発生し得る。占有セマンティクスは rec spec design で 2026-07-16 に契約確定済みであり、本 spec はそれに従う利用側）:
+  - **開始時ガード（`IInjectedInputSource` による占有判定）**: `BeginPlaybackSession` の装着時、`TakeoverSourceId` の現占有ソースが `IInjectedInputSource`（core Domain のマーカーインターフェース。注入面契約が定義）である場合は他者占有としてスキップし、`Debug.LogWarning` + 当該チャネル無効化（`TakeoverSourceId` 解決不能時と同じ縮退）
+  - **復元時ガード（参照同一性ガード）**（三重防衛線すべての冪等条件に含める）: 復元前に `TakeoverSourceId` の現占有者が**自分の装着した timeline sink と同一参照の場合のみ** `Replace(takeoverId, 退避元ソース)` を実行する。参照不一致（後から他所有者が差し替えた）は `Debug.LogWarning` + no-op（他所有者の占有を破壊しない。例: A 差し替え → B 差し替え → A 先行停止、で A の復元が B の占有を上書きする事故を防ぐ）
 - `TakeoverSourceId` が registry で解決できない場合: `Debug.LogWarning` + 当該 gaze チャネルのみ無効化（他チャネル・他 Track は継続）
 - ベイクカーブの BlendShape 名 → sink バッファ index 解決を初期化時に 1 回だけ行う（以後 GC ゼロ）
 - graph 停止 / 破棄通知（mixer の `OnPlayableDestroy` 経由）で state sink 全 TriggerOff + value/gaze sink invalidate + gaze 元ソース復元（research.md Decision 参照）
@@ -466,7 +466,7 @@ public sealed class FacialTimelineReceiver : MonoBehaviour
 
 **Responsibilities & Constraints**
 - `TimelineBakedValueSink : ValueProviderInputSourceBase` — 事前確保 `float[]`（BlendShape 数）と有効フラグを保持。Receiver がカーブサンプル結果を書込み、`TryWriteValues` がコピーする。`ContributeMask` はベイクに含まれる BlendShape 名から初期化時に構築（触らない BlendShape へ干渉しない — ライブの ContributeMask 思想と同一）
-- `TimelineGazeInputSource` — `GazeVector2InputSource`（osc パッケージ）と同型の自前実装（`IInputSource` + `IAnalogInputSource`、`Publish(x, y)`、-1..1、clamp なし、`BlendShapeCount = 0`）。`timeline:gaze-{n}` として registry に常時登録される（診断用）が、gaze 解決への供給は**静的配線ではなく一時差し替え**で行う: 再生セッション開始時に Receiver が `Replace(TakeoverSourceId, 本 sink)` を実行し、core 注入面が消費側 `EyeBinding.Source` を再バインドする。停止時に元のライブソースへ復元される。ユーザーの `GazeBindingConfig` は既存ライブ配線のまま変更不要（Req 7.2/7.4。ボーン回転はこの sink を通らない。ライブ gaze との共存 = 再生中のみ Timeline が当該チャネルを占有し、非再生中はライブが従来どおり機能する）
+- `TimelineGazeInputSource` — `GazeVector2InputSource`（osc パッケージ）と同型の自前実装（`IInputSource` + `IAnalogInputSource`、`Publish(x, y)`、-1..1、clamp なし、`BlendShapeCount = 0`）。**加えて `IInjectedInputSource`（core Domain のマーカーインターフェース、注入面契約）を実装する** — 他所有者の開始時ガードが本 sink を「注入による占有中」と検出できるための前提条件。`timeline:gaze-{n}` として registry に常時登録される（診断用）が、gaze 解決への供給は**静的配線ではなく一時差し替え**で行う: 再生セッション開始時に Receiver が `Replace(TakeoverSourceId, 本 sink)` を実行し、core 注入面が消費側 `EyeBinding.Source` を再バインドする。停止時に元のライブソースへ復元される。ユーザーの `GazeBindingConfig` は既存ライブ配線のまま変更不要（Req 7.2/7.4。ボーン回転はこの sink を通らない。ライブ gaze との共存 = 再生中のみ Timeline が当該チャネルを占有し、非再生中はライブが従来どおり機能する）
 - `TimelineAnalogInputSource` — N-axis 版。Timeline 非再生時は invalid
 
 **Contracts**: State [x]
@@ -844,8 +844,8 @@ steering 契約どおり Unity 標準ログ（`Debug.Log/LogWarning/LogError`）
 | 警告済みセッション終了（Editor） | DirtyWatcher | 自動再ベイク試行 + 成否ダイアログ | 6.5 |
 | gaze カーブが -1..1 範囲外 | Validator | Warning のみ（値は変更しない — ライブ同等） | OQ3 |
 | gaze の TakeoverSourceId が registry で解決不能 | Receiver（セッション開始時） | Warning + 当該 gaze チャネルのみ無効化（差し替えせず、他チャネル・再生は継続） | 7.2 準拠 |
-| gaze の TakeoverSourceId が既に他の差し替え sink に占有済み | Receiver（開始時ガード） | Warning + 当該チャネル無効化（差し替えせず縮退。他所有者の占有を奪わない） | 7.2 準拠 |
-| gaze 復元時に現占有者が自分の sink でない（後発の他所有者が占有） | Receiver（復元時ガード） | Warning + no-op（他所有者の占有を破壊しない） | 7.2 準拠 |
+| gaze の TakeoverSourceId が既に他の注入ソースに占有済み（現占有ソースが `IInjectedInputSource`） | Receiver（開始時ガード） | Warning + 当該チャネル無効化（差し替えせず縮退。他所有者の占有を奪わない） | 7.2 準拠 |
+| gaze 復元時に現占有者が自分の装着 sink と参照不一致（後発の他所有者が占有） | Receiver（参照同一性ガード） | Warning + no-op（他所有者の占有を破壊しない） | 7.2 準拠 |
 | gaze 差し替え中の異常終了（graph 破棄・Receiver 破棄） | Receiver OnDisable/OnDestroy → Binding Dispose | 三重の復元保証（各段とも復元時ガード付き・冪等）で元ソースへ復元 | 7.2 準拠 |
 | 親 Track が空（クリップが全部子レーンへ移動） | FacialTimelineValidator / ClipEditor | エラー検出（EmptyParentTrack）+ 修復手段を Message 提示。ランタイムでは mixer 非コンパイルで無警告沈黙するため Editor 検証で事前検出する | 3.3 準拠 |
 | Track の対象レイヤー名が binding 設定に不在 | Receiver 初期化 | Warning + 当該 Track を無効化（他 Track は継続） | 3.3 準拠 |
@@ -898,4 +898,4 @@ steering 契約どおり Unity 標準ログ（`Debug.Log/LogWarning/LogError`）
 実装順序の制約:
 - **実装初期に spike 確認**: 「クリップを持たない親 Track（子レーンのみ）が graph にコンパイルされず mixer が生成されない」挙動を Timeline 1.8.9 実機で確認する（「レーン 0 = 親 Track 自身」規約と `EmptyParentTrack` 検証の前提。挙動が異なる場合は規約と Validator の要否を再判断する）
 - `RecEventSequenceAdapter` は rec spec の読込 API 確定後にのみ実装可能。それ以外（Track / mixer / sink / ベイク / ハッシュ）は `IRecordedEventSequence` の Fake で先行実装できる
-- gaze 差し替え（Receiver の `BeginPlaybackSession` / 復元。開始時/復元時ガードを含む）は core 注入面（rec spec が追加する Replace 再バインド伝搬）の実装後にのみ結合可能。それまでは注入面の Fake を境界にして先行実装する。多重占有の意味論は rec spec の契約定義に従う
+- gaze 差し替え（Receiver の `BeginPlaybackSession` / 復元。開始時/復元時ガードを含む）は core 注入面（rec spec が追加する Replace 再バインド伝搬）の実装後にのみ結合可能。それまでは注入面の Fake を境界にして先行実装する。多重占有の意味論は確定済みの rec spec 契約（`IInjectedInputSource` 占有判定 + 参照同一性ガード）に従う
