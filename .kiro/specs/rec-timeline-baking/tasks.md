@@ -161,7 +161,7 @@
   - _Boundary: RecEventSequenceAdapter_
   - _Depends: 7.1_
 
-- [ ] 8.2 (P) gaze ライブソース一時差し替えを core 注入面と結合する
+- [x] 8.2 (P) gaze ライブソース一時差し替えを core 注入面と結合する
   - 依存ゲート: core 注入面（rec spec 所掌の Replace 再バインド伝搬 + IInjectedInputSource マーカー）の実装後にのみ着手可能（それまでは 4.4 / 4.5 で注入面の Fake を境界に先行実装済み）
   - gaze sink へ IInjectedInputSource マーカーを付与し、再生セッション開始時の装着（TakeoverSourceId 解決 → 元ソース退避 → Replace で消費側 EyeBinding へ再バインド伝搬）、開始時ガード（現占有ソースが IInjectedInputSource なら Warning + 当該チャネル無効化）、復元時ガード（現占有者が自分の装着 sink と同一参照の場合のみ復元。不一致は Warning + no-op）を実結合する
   - 三重の復元保証（全解除 / Receiver の OnDisable・OnDestroy / Binding の Dispose。各段とも冪等・ガード付き）。TakeoverSourceId が解決不能な場合は Warning + 当該チャネルのみ無効化

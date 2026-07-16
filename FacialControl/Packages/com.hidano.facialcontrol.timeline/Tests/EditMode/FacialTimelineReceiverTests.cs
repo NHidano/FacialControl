@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Hidano.FacialControl.Adapters.InputSources;
+using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
@@ -175,6 +176,61 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
         }
 
         [Test]
+        public void BeginPlaybackSession_WithRealRegistry_RebindsGazeConsumerAndReleaseRestoresOriginalSource()
+        {
+            var receiver = CreateReceiver();
+            var registry = new InputSourceRegistry();
+            var liveSource = new TimelineAnalogInputSource(InputSourceId.Parse("live:gaze"), axisCount: 2);
+            var timelineGaze = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));
+            var config = new GazeBindingConfig
+            {
+                expressionId = "look",
+                useDistinctLeftRight = true,
+                sourceIdLeft = "live:gaze",
+                sourceIdRight = "live:gaze",
+            };
+
+            registry.Register(AdapterSlug.Parse("live"), "gaze", liveSource);
+            receiver.Configure(
+                CreateProfile(),
+                registry,
+                Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
+                Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
+                Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
+                new[] { ("gaze-main", timelineGaze, "live:gaze") });
+
+            try
+            {
+                Assert.That(
+                    GazeBindingConfigResolver.TryResolve(config, registry, out ResolvedGazeInputSources beforeResolved),
+                    Is.True);
+                Assert.That(beforeResolved.LeftSource, Is.SameAs(liveSource));
+
+                receiver.BeginPlaybackSession(CreateProfile(), timeline: null);
+
+                Assert.That(
+                    GazeBindingConfigResolver.TryResolve(config, registry, out ResolvedGazeInputSources duringResolved),
+                    Is.True);
+                Assert.That(duringResolved.LeftSource, Is.SameAs(timelineGaze));
+                Assert.That(duringResolved.RightSource, Is.SameAs(timelineGaze));
+                Assert.That(timelineGaze.ReplacedSource, Is.SameAs(liveSource));
+
+                receiver.ReleaseAll();
+
+                Assert.That(
+                    GazeBindingConfigResolver.TryResolve(config, registry, out ResolvedGazeInputSources afterResolved),
+                    Is.True);
+                Assert.That(afterResolved.LeftSource, Is.SameAs(liveSource));
+                Assert.That(afterResolved.RightSource, Is.SameAs(liveSource));
+                Assert.That(timelineGaze.ReplacedSource, Is.Null);
+            }
+            finally
+            {
+                DestroyReceiver(receiver);
+            }
+        }
+
+        [Test]
         public void BeginPlaybackSession_WhenTakeoverSourceAlreadyInjected_WarnsAndSkipsReplacement()
         {
             var receiver = CreateReceiver();
@@ -235,6 +291,41 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
 
                 Assert.That(registry.TryResolve("live:gaze", out var current), Is.True);
                 Assert.That(current, Is.SameAs(otherOwner));
+                Assert.That(timelineGaze.ReplacedSource, Is.Null);
+            }
+            finally
+            {
+                DestroyReceiver(receiver);
+            }
+        }
+
+        [Test]
+        public void ReleaseAll_WhenTakeoverSourceMissing_WarnsAndClearsInjectedOwnership()
+        {
+            var receiver = CreateReceiver();
+            var registry = new FakeInputSourceRegistry();
+            var liveSource = new FakeInputSource("live:gaze");
+            var timelineGaze = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));
+
+            registry.Register(AdapterSlug.Parse("live"), "gaze", liveSource);
+            receiver.Configure(
+                CreateProfile(),
+                registry,
+                Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
+                Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
+                Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
+                new[] { ("gaze-main", timelineGaze, "live:gaze") });
+
+            try
+            {
+                receiver.BeginPlaybackSession(CreateProfile(), timeline: null);
+                registry.Unregister(AdapterSlug.Parse("live"), "gaze");
+
+                LogAssert.Expect(LogType.Warning, "[FacialTimelineReceiver] Gaze takeover source 'live:gaze' was not found during restoration. Cleanup is skipped.");
+
+                receiver.ReleaseAll();
+
+                Assert.That(registry.TryResolve("live:gaze", out _), Is.False);
                 Assert.That(timelineGaze.ReplacedSource, Is.Null);
             }
             finally

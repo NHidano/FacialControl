@@ -8,6 +8,15 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
     public sealed class TimelineGazeInputSourceTests
     {
         [Test]
+        public void Type_ImplementsInjectedInputSourceMarker()
+        {
+            var source = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));
+
+            Assert.That(source, Is.InstanceOf<Hidano.FacialControl.Domain.Interfaces.IInjectedInputSource>());
+            Assert.That(source.ReplacedSource, Is.Null);
+        }
+
+        [Test]
         public void Publish_PreservesUnclampedVector2Values()
         {
             var source = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));

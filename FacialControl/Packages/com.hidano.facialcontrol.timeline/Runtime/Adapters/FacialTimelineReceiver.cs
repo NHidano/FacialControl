@@ -46,7 +46,6 @@ namespace Hidano.FacialControl.Timeline.Adapters
         private TimelineGazeInputSource[] _gazeSinks = EmptyGazeSinks;
         private GazeTakeoverBinding[] _gazeTakeovers = EmptyGazeBindings;
         private bool _playbackSessionBegun;
-        private bool _releaseLogged;
 
         public FacialTimelineBakeAsset BakeAsset
         {
@@ -79,7 +78,6 @@ namespace Hidano.FacialControl.Timeline.Adapters
             RebuildGazeMap(gazeSinks);
 
             _playbackSessionBegun = false;
-            _releaseLogged = false;
             LastBakeInspectionStatus = BakeInspectionStatus.NotChecked;
         }
 
@@ -135,8 +133,6 @@ namespace Hidano.FacialControl.Timeline.Adapters
             }
 
             _playbackSessionBegun = true;
-            _releaseLogged = false;
-
             InspectBake(profile, timeline);
             AttachGazeTakeovers();
         }
@@ -301,6 +297,8 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
             if (!AdapterSlug.TryParseComposite(takeover.TakeoverSourceId, out AdapterSlug slug, out string sub))
             {
+                Debug.LogWarning(
+                    $"[FacialTimelineReceiver] Could not parse gaze takeover id '{takeover.TakeoverSourceId}' during restoration. Cleanup is skipped.");
                 takeover.IsAttached = false;
                 takeover.ReplacedSource = null;
                 takeover.Sink.ClearReplacement();
@@ -309,6 +307,8 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
             if (!_inputSourceRegistry.TryResolve(takeover.TakeoverSourceId, out IInputSource currentSource))
             {
+                Debug.LogWarning(
+                    $"[FacialTimelineReceiver] Gaze takeover source '{takeover.TakeoverSourceId}' was not found during restoration. Cleanup is skipped.");
                 takeover.IsAttached = false;
                 takeover.ReplacedSource = null;
                 takeover.Sink.ClearReplacement();
@@ -317,13 +317,8 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
             if (!ReferenceEquals(currentSource, takeover.Sink))
             {
-                if (!_releaseLogged)
-                {
-                    Debug.LogWarning(
-                        $"[FacialTimelineReceiver] Gaze takeover source '{takeover.TakeoverSourceId}' is no longer owned by this receiver. Restoration is skipped.");
-                }
-
-                _releaseLogged = true;
+                Debug.LogWarning(
+                    $"[FacialTimelineReceiver] Gaze takeover source '{takeover.TakeoverSourceId}' is no longer owned by this receiver. Restoration is skipped.");
                 takeover.IsAttached = false;
                 takeover.ReplacedSource = null;
                 takeover.Sink.ClearReplacement();
