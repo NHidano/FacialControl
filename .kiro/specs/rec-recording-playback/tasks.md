@@ -73,7 +73,7 @@
   - _Requirements: 6.1, 6.3, 6.4, 6.5, 6.7_
   - _Depends: 2.1, 3.1, 3.2, 4.1, 4.3_
 
-- [ ] 4.5 core 改修の回帰ゲートを通す
+- [x] 4.5 core 改修の回帰ゲートを通す
   - 既存 EditMode / PlayMode の全スイートを batchmode 同期実行（timeout 600000）し、観測者ゼロ・注入なし時の既存挙動が不変であることを確認する
   - 既知の pre-existing 赤（SampleAssetsAreInSyncTests 4 件 / OSC heartbeat 系 / TenIndependentBindings_OneSwap）は FAIL 判定に含めない
   - 完了条件: 上記除外を除く全テストが緑（core 改修の受け入れ条件）
