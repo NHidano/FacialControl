@@ -1,0 +1,477 @@
+using System;
+using System.Collections.Generic;
+using Hidano.FacialControl.Adapters.InputSources;
+using Hidano.FacialControl.Domain.Adapters;
+using Hidano.FacialControl.Domain.Interfaces;
+using Hidano.FacialControl.Domain.Models;
+using Hidano.FacialControl.Domain.Services;
+using Hidano.FacialControl.Timeline.Adapters;
+using Hidano.FacialControl.Timeline.Adapters.Assets;
+using Hidano.FacialControl.Timeline.Adapters.InputSources;
+using Hidano.FacialControl.Timeline.Clips;
+using Hidano.FacialControl.Timeline.Domain.Models;
+using Hidano.FacialControl.Timeline.Editor;
+using Hidano.FacialControl.Timeline.Tracks;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
+
+namespace Hidano.FacialControl.Timeline.Tests.PlayMode
+{
+    [TestFixture]
+    public sealed class TimelineLiveEquivalenceIntegrationTests
+    {
+        private const float LinearTolerance = 0.0001f;
+        private const float CurveTolerance = 0.02f;
+        private const double ClipStartTime = 0.025d;
+        private const double ClipDuration = 0.50d;
+
+        [Test]
+        public void TimelinePlayback_WithLinearTransition_MatchesLivePostBlendExactly()
+        {
+            RunEquivalenceAssertion(
+                TransitionCurve.Linear,
+                LinearTolerance,
+                new[]
+                {
+                    0.0000f,
+                    0.0250f,
+                    0.0833333f,
+                    0.1500000f,
+                    0.2416667f,
+                    0.3000000f,
+                    0.4416667f,
+                    0.5250000f,
+                });
+        }
+
+        [Test]
+        public void TimelinePlayback_WithEaseInOutTransition_MatchesLivePostBlendWithinEpsilon()
+        {
+            RunEquivalenceAssertion(
+                new TransitionCurve(TransitionCurveType.EaseInOut),
+                CurveTolerance,
+                new[]
+                {
+                    0.0000f,
+                    0.0250f,
+                    0.0750f,
+                    0.1250f,
+                    0.1750f,
+                    0.2250f,
+                    0.2750f,
+                    0.3500f,
+                    0.4500f,
+                    0.5250f,
+                });
+        }
+
+        private static void RunEquivalenceAssertion(
+            TransitionCurve transitionCurve,
+            float outputTolerance,
+            IReadOnlyList<float> sampleTimes)
+        {
+            using var fixture = new EquivalenceFixture(transitionCurve);
+
+            for (int i = 0; i < sampleTimes.Count; i++)
+            {
+                float time = sampleTimes[i];
+                fixture.Live.AdvanceTo(time);
+                fixture.Timeline.AdvanceTo(time);
+
+                Assert.That(
+                    fixture.Timeline.Output[0],
+                    Is.EqualTo(fixture.Live.Output[0]).Within(outputTolerance),
+                    $"Post-blend output diverged at t={time:0.0000}s");
+            }
+        }
+
+        private sealed class EquivalenceFixture : IDisposable
+        {
+            private readonly TimelineAsset _timeline;
+
+            public EquivalenceFixture(TransitionCurve transitionCurve)
+            {
+                Profile = CreateProfile(transitionCurve);
+                _timeline = CreateTimeline();
+                Bake = TimelineBakeService.Bake(_timeline, Profile);
+                Live = new LivePathHarness(Profile);
+                Timeline = new TimelinePathHarness(_timeline, Profile, Bake);
+            }
+
+            public FacialProfile Profile { get; }
+
+            public FacialTimelineBakeAsset Bake { get; }
+
+            public LivePathHarness Live { get; }
+
+            public TimelinePathHarness Timeline { get; }
+
+            public void Dispose()
+            {
+                Timeline.Dispose();
+                Live.Dispose();
+                if (Bake != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(Bake);
+                }
+
+                if (_timeline != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_timeline);
+                }
+            }
+        }
+
+        private sealed class LivePathHarness : IDisposable
+        {
+            private readonly LiveExpressionSource _source;
+            private readonly LayerInputSourceRegistry _registry;
+            private readonly LayerInputSourceWeightBuffer _weightBuffer;
+            private readonly LayerInputSourceAggregator _aggregator;
+            private readonly int[] _priorities = { 0 };
+            private readonly float[] _layerWeights = { 1f };
+            private readonly float[] _finalOutput = new float[1];
+            private readonly TimelineStateEvent[] _events;
+
+            private double _currentTime;
+            private int _nextEventIndex;
+
+            public LivePathHarness(FacialProfile profile)
+            {
+                _source = new LiveExpressionSource(
+                    InputSourceId.Parse("live:expression"),
+                    new[] { "Smile" },
+                    profile,
+                    maxStackDepth: 4,
+                    exclusionMode: ExclusionMode.LastWins);
+                _registry = new LayerInputSourceRegistry(
+                    profile,
+                    blendShapeCount: 1,
+                    new[] { (0, 0, (IInputSource)_source) });
+                _weightBuffer = new LayerInputSourceWeightBuffer(_registry.LayerCount, _registry.MaxSourcesPerLayer);
+                _weightBuffer.SetWeight(0, 0, 1f);
+                _aggregator = new LayerInputSourceAggregator(_registry, _weightBuffer, blendShapeCount: 1);
+                _events = new[]
+                {
+                    new TimelineStateEvent(ClipStartTime, TimelineStateEvent.KindOn, "smile", "Expressions"),
+                    new TimelineStateEvent(ClipStartTime + ClipDuration, TimelineStateEvent.KindOff, "smile", "Expressions"),
+                };
+            }
+
+            public IReadOnlyList<string> ActiveExpressionIds => _source.ActiveExpressionIds;
+
+            public ReadOnlySpan<float> Output => _finalOutput;
+
+            public void AdvanceTo(float targetTime)
+            {
+                if (targetTime + 1e-9f < _currentTime)
+                {
+                    throw new InvalidOperationException("Live harness cannot scrub backward.");
+                }
+
+                while (_nextEventIndex < _events.Length && _events[_nextEventIndex].TimeSeconds <= targetTime + 1e-9d)
+                {
+                    double eventTime = _events[_nextEventIndex].TimeSeconds;
+                    float deltaToEvent = (float)Math.Max(0d, eventTime - _currentTime);
+                    _aggregator.AggregateAndBlend(deltaToEvent, _priorities, _layerWeights, _finalOutput);
+                    _currentTime = eventTime;
+
+                    Dispatch(_source, _events[_nextEventIndex]);
+                    _nextEventIndex++;
+                }
+
+                float remainingDelta = (float)Math.Max(0d, targetTime - _currentTime);
+                _aggregator.AggregateAndBlend(remainingDelta, _priorities, _layerWeights, _finalOutput);
+                _currentTime = targetTime;
+            }
+
+            public void Dispose()
+            {
+                _registry.Dispose();
+            }
+        }
+
+        private sealed class TimelinePathHarness : IDisposable
+        {
+            private readonly TimelineBakedValueSink _valueSink;
+            private readonly LayerInputSourceRegistry _registry;
+            private readonly LayerInputSourceWeightBuffer _weightBuffer;
+            private readonly LayerInputSourceAggregator _aggregator;
+            private readonly int[] _priorities = { 0 };
+            private readonly float[] _layerWeights = { 1f };
+            private readonly float[] _finalOutput = new float[1];
+            private readonly BlendShapeCurve[] _bakedCurves;
+            private readonly GameObject _directorObject;
+            private readonly GameObject _receiverObject;
+            private readonly PlayableDirector _director;
+            private readonly FacialTimelineReceiver _receiver;
+            private readonly TimelineExpressionStateSink _expressionSink;
+
+            private float _currentTime;
+
+            public TimelinePathHarness(TimelineAsset timeline, FacialProfile profile, FacialTimelineBakeAsset bake)
+            {
+                _expressionSink = new TimelineExpressionStateSink(
+                    InputSourceId.Parse("timeline:Expressions"),
+                    maxStackDepth: 4,
+                    exclusionMode: ExclusionMode.LastWins,
+                    profile);
+                _bakedCurves = FindExpressionBakeCurves(bake, "Expressions");
+                _valueSink = new TimelineBakedValueSink(
+                    InputSourceId.Parse("timeline:bake"),
+                    new[] { "Smile" },
+                    CollectBakedBlendShapeNames(_bakedCurves));
+                _registry = new LayerInputSourceRegistry(
+                    profile,
+                    blendShapeCount: 1,
+                    new[]
+                    {
+                        (0, 0, (IInputSource)_valueSink),
+                    });
+                _weightBuffer = new LayerInputSourceWeightBuffer(_registry.LayerCount, _registry.MaxSourcesPerLayer);
+                _weightBuffer.SetWeight(0, 0, 1f);
+                _aggregator = new LayerInputSourceAggregator(_registry, _weightBuffer, blendShapeCount: 1);
+
+                _directorObject = new GameObject("TimelineLiveEquivalence_Director");
+                _receiverObject = new GameObject("TimelineLiveEquivalence_Receiver");
+                _director = _directorObject.AddComponent<PlayableDirector>();
+                _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
+                _receiver.BakeAsset = bake;
+                _receiver.Configure(
+                    profile,
+                    new FakeInputSourceRegistry(),
+                    new[] { ("Expressions", _expressionSink) },
+                    new[] { ("Expressions", _valueSink) },
+                    Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
+                    Array.Empty<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>());
+
+                _director.playableAsset = timeline;
+                _director.timeUpdateMode = DirectorUpdateMode.Manual;
+                _director.SetGenericBinding(timeline.GetOutputTrack(0), _receiver);
+                _director.RebuildGraph();
+                _director.playableGraph.Evaluate(0f);
+                SampleBakeAt(0f);
+                _aggregator.AggregateAndBlend(0f, _priorities, _layerWeights, _finalOutput);
+            }
+
+            public IReadOnlyList<string> ActiveExpressionIds => _expressionSink.ActiveExpressionIds;
+
+            public ReadOnlySpan<float> Output => _finalOutput;
+
+            public void AdvanceTo(float targetTime)
+            {
+                if (targetTime + 1e-9f < _currentTime)
+                {
+                    throw new InvalidOperationException("Timeline harness cannot scrub backward.");
+                }
+
+                float deltaTime = targetTime - _currentTime;
+                if (deltaTime > 0f)
+                {
+                    _director.playableGraph.Evaluate(deltaTime);
+                }
+
+                _currentTime = targetTime;
+                SampleBakeAt(targetTime);
+                _aggregator.AggregateAndBlend(0f, _priorities, _layerWeights, _finalOutput);
+            }
+
+            public void Dispose()
+            {
+                if (_director != null && _director.playableGraph.IsValid())
+                {
+                    _director.playableGraph.Destroy();
+                }
+
+                _registry.Dispose();
+
+                if (_directorObject != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_directorObject);
+                }
+
+                if (_receiverObject != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_receiverObject);
+                }
+            }
+
+            private void SampleBakeAt(float timeSeconds)
+            {
+                Span<float> bakedValues = stackalloc float[_bakedCurves.Length];
+                for (int i = 0; i < _bakedCurves.Length; i++)
+                {
+                    bakedValues[i] = _bakedCurves[i].Curve != null
+                        ? _bakedCurves[i].Curve.Evaluate(timeSeconds)
+                        : 0f;
+                }
+
+                Assert.That(_valueSink.SetValues(bakedValues), Is.True, "Bake sampling layout must match sink layout.");
+            }
+        }
+
+        private sealed class LiveExpressionSource : ExpressionTriggerInputSourceBase
+        {
+            public LiveExpressionSource(
+                InputSourceId id,
+                IReadOnlyList<string> blendShapeNames,
+                FacialProfile profile,
+                int maxStackDepth,
+                ExclusionMode exclusionMode)
+                : base(
+                    id,
+                    blendShapeCount: blendShapeNames.Count,
+                    maxStackDepth: maxStackDepth,
+                    exclusionMode: exclusionMode,
+                    blendShapeNames: blendShapeNames,
+                    profile: profile)
+            {
+            }
+        }
+
+        private sealed class FakeInputSourceRegistry : IInputSourceRegistry
+        {
+            private readonly Dictionary<string, IInputSource> _entries =
+                new Dictionary<string, IInputSource>(StringComparer.Ordinal);
+            private readonly List<string> _registeredIds = new List<string>();
+
+            public IReadOnlyList<string> RegisteredIds => _registeredIds;
+
+            public void Register(AdapterSlug slug, IInputSource source)
+            {
+                RegisterInternal(slug.Value, source);
+            }
+
+            public void Replace(AdapterSlug slug, IInputSource source)
+            {
+                RegisterInternal(slug.Value, source);
+            }
+
+            public void Register(AdapterSlug slug, string sub, IInputSource source)
+            {
+                RegisterInternal(Compose(slug, sub), source);
+            }
+
+            public void Replace(AdapterSlug slug, string sub, IInputSource source)
+            {
+                RegisterInternal(Compose(slug, sub), source);
+            }
+
+            public void Unregister(AdapterSlug slug)
+            {
+                UnregisterInternal(slug.Value);
+            }
+
+            public void Unregister(AdapterSlug slug, string sub)
+            {
+                UnregisterInternal(Compose(slug, sub));
+            }
+
+            public bool TryResolve(string layerInputSourceId, out IInputSource source)
+            {
+                return _entries.TryGetValue(layerInputSourceId, out source);
+            }
+
+            public void Subscribe(string id, Action<IInputSource> handler)
+            {
+            }
+
+            private static string Compose(AdapterSlug slug, string sub)
+            {
+                return string.IsNullOrEmpty(sub) ? slug.Value : slug.Value + ":" + sub;
+            }
+
+            private void RegisterInternal(string id, IInputSource source)
+            {
+                _entries[id] = source;
+                if (!_registeredIds.Contains(id))
+                {
+                    _registeredIds.Add(id);
+                }
+            }
+
+            private void UnregisterInternal(string id)
+            {
+                _entries.Remove(id);
+                _registeredIds.Remove(id);
+            }
+        }
+
+        private static FacialProfile CreateProfile(TransitionCurve transitionCurve)
+        {
+            return new FacialProfile(
+                schemaVersion: "1.0.0",
+                layers: new[]
+                {
+                    new LayerDefinition("Expressions", 0, ExclusionMode.LastWins),
+                },
+                expressions: new[]
+                {
+                    new Expression(
+                        id: "smile",
+                        name: "Smile",
+                        layer: "Expressions",
+                        transitionDuration: 0.25f,
+                        transitionCurve: transitionCurve,
+                        blendShapeValues: new[]
+                        {
+                            new BlendShapeMapping("Smile", 1f),
+                        }),
+                });
+        }
+
+        private static TimelineAsset CreateTimeline()
+        {
+            var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            FacialExpressionTrack track = timeline.CreateTrack<FacialExpressionTrack>(null, "Expressions");
+            TimelineClip clip = track.CreateClip<FacialExpressionClip>();
+            clip.start = ClipStartTime;
+            clip.duration = ClipDuration;
+            ((FacialExpressionClip)clip.asset).ExpressionId = "smile";
+            return timeline;
+        }
+
+        private static string[] CollectBakedBlendShapeNames(BlendShapeCurve[] curves)
+        {
+            var names = new string[curves.Length];
+            for (int i = 0; i < curves.Length; i++)
+            {
+                names[i] = curves[i].BlendShapeName;
+            }
+
+            return names;
+        }
+
+        private static BlendShapeCurve[] FindExpressionBakeCurves(FacialTimelineBakeAsset bake, string layerName)
+        {
+            Assert.That(bake, Is.Not.Null);
+            Assert.That(bake.ExpressionBakes, Is.Not.Null);
+
+            for (int i = 0; i < bake.ExpressionBakes.Length; i++)
+            {
+                ExpressionSourceBake expressionBake = bake.ExpressionBakes[i];
+                if (string.Equals(expressionBake.LayerName, layerName, StringComparison.Ordinal))
+                {
+                    return expressionBake.Curves ?? Array.Empty<BlendShapeCurve>();
+                }
+            }
+
+            Assert.Fail($"Expression bake for layer '{layerName}' was not found.");
+            return Array.Empty<BlendShapeCurve>();
+        }
+
+        private static void Dispatch(ExpressionTriggerInputSourceBase source, TimelineStateEvent stateEvent)
+        {
+            if (stateEvent.IsOn)
+            {
+                source.TriggerOn(stateEvent.ExpressionId);
+            }
+            else if (stateEvent.IsOff)
+            {
+                source.TriggerOff(stateEvent.ExpressionId);
+            }
+        }
+    }
+}

@@ -2,8 +2,12 @@
     "name": "Hidano.FacialControl.Timeline.Tests.PlayMode",
     "rootNamespace": "Hidano.FacialControl.Timeline.Tests.PlayMode",
     "references": [
+        "Hidano.FacialControl.Adapters",
+        "Hidano.FacialControl.Domain",
         "Hidano.FacialControl.Timeline",
+        "Hidano.FacialControl.Timeline.Editor",
         "Hidano.FacialControl.Timeline.Tests.Shared",
+        "Unity.Timeline",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
