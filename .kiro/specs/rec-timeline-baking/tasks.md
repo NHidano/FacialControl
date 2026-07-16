@@ -99,7 +99,7 @@
   - _Boundary: FacialValueMixerBehaviour_
   - _Depends: 4.4_
 
-- [ ] 5.3 Editor スクラブプレビューを実装する
+- [x] 5.3 Editor スクラブプレビューを実装する
   - 非 Play 評価では sink を駆動せず、ベイクカーブのサンプル値を SkinnedMeshRenderer の BlendShape weight（+ gaze 解決結果の目ボーン localRotation）へ直接適用する（プレビュー専用経路。gaze のライブソース差し替えは行わない）
   - IPropertyPreview（GatherProperties）で driven-property 登録し、preview 解除時に Timeline が自動復元する。ベイク欠落時はプレビュー不可（Scene 変化なし + Console 通知）
   - 完了条件: Timeline ウィンドウのスクラブ位置に対応する表情が Scene に表示され、preview 解除で元の状態へ戻ること

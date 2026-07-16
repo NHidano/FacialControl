@@ -1,6 +1,7 @@
 using System;
 using Hidano.FacialControl.Timeline.Adapters;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
+using Hidano.FacialControl.Timeline.EditorPreview;
 using Hidano.FacialControl.Timeline.Tracks;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -36,6 +37,12 @@ namespace Hidano.FacialControl.Timeline.Playables
             }
 
             TimelineAsset timeline = ResolveTimeline(playable);
+            if (!UnityEngine.Application.isPlaying)
+            {
+                FacialTimelineEditorPreviewBridge.ApplyPreview?.Invoke(receiver, timeline, playable.GetTime());
+                return;
+            }
+
             receiver.BeginPlaybackSession(timeline);
 
             if (!TryResolveSink(receiver))

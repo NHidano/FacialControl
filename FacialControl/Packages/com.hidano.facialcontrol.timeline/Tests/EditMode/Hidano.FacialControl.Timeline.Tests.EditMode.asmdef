@@ -2,6 +2,7 @@
     "name": "Hidano.FacialControl.Timeline.Tests.EditMode",
     "rootNamespace": "Hidano.FacialControl.Timeline.Tests.EditMode",
     "references": [
+        "Hidano.FacialControl.Adapters",
         "Hidano.FacialControl.Domain",
         "Hidano.FacialControl.Application",
         "Hidano.FacialControl.Timeline",

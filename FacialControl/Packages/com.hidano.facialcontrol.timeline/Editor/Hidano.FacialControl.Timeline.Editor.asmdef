@@ -3,9 +3,11 @@
     "rootNamespace": "Hidano.FacialControl.Timeline.Editor",
     "references": [
         "Hidano.FacialControl.Timeline",
+        "Hidano.FacialControl.Adapters",
         "Hidano.FacialControl.Rec.Domain",
         "Hidano.FacialControl.Rec.Application",
         "Hidano.FacialControl.Rec.Adapters",
+        "Unity.Timeline",
         "Unity.Timeline.Editor"
     ],
     "includePlatforms": [

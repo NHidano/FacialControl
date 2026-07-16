@@ -1,4 +1,5 @@
 using Hidano.FacialControl.Timeline.Clips;
+using Hidano.FacialControl.Timeline.EditorPreview;
 using Hidano.FacialControl.Timeline.Playables;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace Hidano.FacialControl.Timeline.Tracks
 {
     [TrackClipType(typeof(FacialValueClip))]
     [TrackColor(0.23f, 0.56f, 0.78f)]
-    public sealed class FacialValueTrack : TrackAsset
+    public sealed class FacialValueTrack : TrackAsset, IPropertyPreview
     {
         [SerializeField] private string channelSubId = string.Empty;
         [SerializeField] private FacialValueChannelKind channelKind = FacialValueChannelKind.Analog;
@@ -33,6 +34,11 @@ namespace Hidano.FacialControl.Timeline.Tracks
                 ScriptPlayable<FacialValueMixerBehaviour>.Create(graph, inputCount);
             playable.GetBehaviour().Configure(channelSubId, channelKind, CollectClipSamples(this));
             return playable;
+        }
+
+        public override void GatherProperties(PlayableDirector director, IPropertyCollector driver)
+        {
+            FacialTimelineEditorPreviewBridge.GatherProperties?.Invoke(director, this, driver);
         }
 
         private static FacialValueMixerBehaviour.ClipSample[] CollectClipSamples(FacialValueTrack track)
