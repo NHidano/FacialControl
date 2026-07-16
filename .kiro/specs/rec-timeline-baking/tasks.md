@@ -16,7 +16,7 @@
   - 完了条件: 確認結果が research.md に記録され、レーン規約の前提（採用 / 再判断）が確定していること
   - _Requirements: 3.3_
 
-- [ ] 2. core 観測フック: Aggregator のソース単位値観測点を追加する（本 spec 唯一の core 改修）
+- [x] 2. core 観測フック: Aggregator のソース単位値観測点を追加する（本 spec 唯一の core 改修）
   - テストファースト: observer 登録時に Aggregate 呼出しごと (layer 昇順, source 昇順) で TryWriteValues 直後の pre-weight 値（isValid=false 時は全ゼロ）が同期到達すること、null 設定で解除できることの EditMode テストを先に書く
   - 観測契約インターフェースと設定 API を core Domain に追加し、AggregateInternal へ null チェック付き通知 1 箇所のみの加算的変更を行う（Editor オフラインベイク専用の想定を XML ドキュメントに明記）
   - 完了条件: observer 未登録で既存 Aggregator テストが全緑（挙動・性能不変の回帰確認）かつ新規フックテストが緑であること

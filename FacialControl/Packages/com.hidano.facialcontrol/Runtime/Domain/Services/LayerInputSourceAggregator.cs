@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 
@@ -108,6 +109,7 @@ namespace Hidano.FacialControl.Domain.Services
         private readonly double[] _layerNextLogTime;
         private StringBuilder _verboseLogBuffer;
         private bool _verboseLoggingEnabled;
+        private ILayerSourceValueObserver _sourceValueObserver;
         private const double VerboseLogIntervalSeconds = 1.0;
 
         public int LayerCount => _registry.LayerCount;
@@ -189,6 +191,7 @@ namespace Hidano.FacialControl.Domain.Services
             _layerNextLogTime = layerCount == 0 ? Array.Empty<double>() : new double[layerCount];
             _verboseLogBuffer = null;
             _verboseLoggingEnabled = false;
+            _sourceValueObserver = null;
         }
 
         /// <summary>
@@ -276,6 +279,15 @@ namespace Hidano.FacialControl.Domain.Services
             LayerBlender.Blend((ReadOnlySpan<LayerBlender.LayerInput>)scratchSpan, finalOutput);
         }
 
+        /// <summary>
+        /// Registers an optional observer for per-source pre-weight values sampled during aggregation.
+        /// Passing <c>null</c> disables the hook.
+        /// </summary>
+        public void SetSourceValueObserver(ILayerSourceValueObserver observer)
+        {
+            _sourceValueObserver = observer;
+        }
+
         private void AggregateInternal(
             float deltaTime,
             ReadOnlySpan<int> priorities,
@@ -287,6 +299,7 @@ namespace Hidano.FacialControl.Domain.Services
             int layerCount = _registry.LayerCount;
             bool useCustomPriorities = priorities.Length >= layerCount;
             bool useCustomWeights = layerWeights.Length >= layerCount;
+            ILayerSourceValueObserver sourceValueObserver = _sourceValueObserver;
 
             int snapshotWritten = 0;
 
@@ -316,6 +329,12 @@ namespace Hidano.FacialControl.Domain.Services
 
                     bool sourceIsValid = source.TryWriteValues(scratchSpan);
                     float w = _weightBuffer.GetWeight(l, s);
+                    sourceValueObserver?.OnSourceValuesObserved(
+                        layerIdx: l,
+                        sourceIdx: s,
+                        sourceId: ResolveCachedSourceId(l, s, source),
+                        isValid: sourceIsValid,
+                        preWeightValues: scratchSpan);
 
                     if (sourceIsValid)
                     {
@@ -337,10 +356,9 @@ namespace Hidano.FacialControl.Domain.Services
                     // Snapshot エントリを staging (Saturated は layer loop 完了後に確定)。
                     if (snapshotWritten < _snapshotBuffer.Length)
                     {
-                        InputSourceId sourceId = ResolveCachedSourceId(l, s, source);
                         _snapshotBuffer[snapshotWritten] = new LayerSourceWeightEntry(
                             layerIdx: l,
-                            sourceId: sourceId,
+                            sourceId: ResolveCachedSourceId(l, s, source),
                             weight: w,
                             isValid: sourceIsValid,
                             saturated: false);
