@@ -5,13 +5,13 @@
 
 ## Introduction
 
-本機能は、FacialControl の表情操作（トリガー on/off、アナログ軸値、gaze）を操作イベントレベルの時系列として記録し、本物の入力パイプラインを駆動するリアルタイム再生によって収録時プレビューと同一のブレンドを完全再現する REC 機能を提供する。新規 UPM パッケージ `com.hidano.facialcontrol.rec` として配布し、core への改修はイベント観測点の追加（数行規模）に限定する。記録の正本は合成後の BlendShape 値ではなく操作イベントであり、タイムスタンプは秒ベース（フレーム番号駆動は存在しない）とする。
+本機能は、FacialControl の表情操作（トリガー on/off、アナログ軸値、gaze）を操作イベントレベルの時系列として記録し、本物の入力パイプラインを駆動するリアルタイム再生によって収録時プレビューと同一のブレンドを完全再現する REC 機能を提供する。新規 UPM パッケージ `com.hidano.facialcontrol.rec` として配布し、core への改修は操作イベントの観測面と入力ソース差し替え（注入）面の正式な追加に限定する（既存コードパスの挙動は変更しない。当初は数行規模の観測点のみを想定していたが、gap 分析でアナログ/gaze の push 集約点が core に存在しないこと・消費側が入力ソースを構築時キャッシュすることが判明し、観測バス + Replace 再バインド伝搬を core の正式な面として追加する方針に改訂した）。記録の正本は合成後の BlendShape 値ではなく操作イベントであり、タイムスタンプは秒ベース（フレーム番号駆動は存在しない）とする。
 
 ## Boundary Context
 
-- **In scope**: 操作イベント（トリガー on/off + expressionId + アナログ軸値 + gaze）の記録、sidecar ファイルへの永続化と読み込み、本物の入力パイプラインを駆動するリアルタイム再生（イベント駆動の完全経路）、core へのイベント観測点追加（最小改修）、gaze チャネル（-1..1 Vector2）の記録・再生
+- **In scope**: 操作イベント（トリガー on/off + expressionId + アナログ軸値 + gaze）の記録、sidecar ファイルへの永続化と読み込み、本物の入力パイプラインを駆動するリアルタイム再生（イベント駆動の完全経路）、core への観測面（トリガー観測フック + アナログ/gaze 観測バス）と注入面（Replace 再バインド伝搬）の追加、gaze チャネル（-1..1 Vector2）の記録・再生
 - **Out of scope**: Timeline 独自 Track、ベイク済みカーブ書き出し、スクラブ対応、人間による Timeline 編集（後続 spec `rec-timeline-baking` で扱う）。音声解析・リップシンク音源の記録（既存方針どおりスコープ外）。ランタイム UI の提供
-- **Adjacent expectations**: core（`com.hidano.facialcontrol`）の既存入力パイプライン（ExpressionTriggerInputSourceBase / IAnalogInputSource / Aggregator / 遷移計算）は変更しない。OSC / InputSystem パッケージは REC を知らない（観測点経由で入力元を問わず記録される）
+- **Adjacent expectations**: core（`com.hidano.facialcontrol`）の既存入力パイプライン（ExpressionTriggerInputSourceBase / IAnalogInputSource / Aggregator / 遷移計算）の既存挙動は変更しない（観測・注入面の追加のみ）。既存拡張パッケージ（osc / inputsystem / lipsync / ifacialmocap）は無改修のまま REC を知らない（core の観測面経由で入力元を問わず記録される）
 
 ## Requirements
 
@@ -79,17 +79,19 @@
 6. The REC 永続化フォーマット shall 大量の操作イベント時系列を JsonUtility の制約（巨大配列・Dictionary への弱さ）に抵触せず、かつ記録中の順次追記（ストリーミング書き出し）に適した方式で格納できる
 7. The REC 永続化機能 shall Editor 上とビルド後ランタイムの両方で記録の保存・読み込みを可能にする
 
-### Requirement 6: core へのイベント観測点追加（最小改修）
+### Requirement 6: core への観測・注入面の追加
 
-**Objective:** As a ライブラリ開発者, I want core への改修をイベント観測点の追加のみに限定したい, so that 既存利用者への影響なく REC を独立パッケージとして提供できる
+**Objective:** As a ライブラリ開発者, I want core に操作イベントの観測面と入力ソース差し替えの注入面を正式に追加したい, so that REC を確実に動作させつつ、後続 spec（rec-timeline-baking）や将来機能も同じ面を再利用できる
 
 #### Acceptance Criteria
 
-1. The core（`com.hidano.facialcontrol`）改修 shall 操作イベントの観測点追加（数行規模）に限定する
+1. The core（`com.hidano.facialcontrol`）改修 shall 操作イベントの観測面と入力ソース差し替え（注入）面の追加に限定し、既存コードパスの挙動を変更しない
 2. When ExpressionTriggerInputSourceBase の TriggerOn / TriggerOff が呼び出されたとき, the core shall 登録された観測者へ該当イベント（expressionId・イベント種別）を通知可能にする
-3. When アナログ軸値または gaze 値が入力パイプラインへ供給されたとき, the core shall 登録された観測者へ該当値を通知可能にする
-4. If 観測者が 1 つも登録されていないとき, the core shall 既存の挙動・性能を一切変更しない
-5. The core shall REC パッケージへの依存を持たない（core は rec を知らない）
+3. The core shall アナログ軸値・gaze 値を登録された観測者へ通知可能にする共通の観測面を提供する（Publish 実装が拡張パッケージ側に分散しているため、core 側の共通面で観測を成立させる）
+4. When 入力ソースがレジストリ上で差し替え（Replace）されたとき, the core shall 差し替え後のソースを消費側（レイヤー入力・gaze 解決）へ再バインドする（消費側の構築時キャッシュが旧ソースを読み続けないことを保証する）
+5. If 観測者が 1 つも登録されておらず入力ソースの差し替えも行われていないとき, the core shall 既存の挙動・性能を一切変更しない
+6. The core shall REC パッケージへの依存を持たない（core は rec を知らない）
+7. The core 改修 shall 既存拡張パッケージ（osc / inputsystem / lipsync / ifacialmocap）側の改修なしで観測・注入を成立させ、これらの既存挙動を変更しない
 
 ### Requirement 7: UPM パッケージ構成
 
