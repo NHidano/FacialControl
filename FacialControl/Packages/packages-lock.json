@@ -35,6 +35,14 @@
         "com.hidano.uosc": "1.0.0"
       }
     },
+    "com.hidano.facialcontrol.rec": {
+      "version": "file:com.hidano.facialcontrol.rec",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2"
+      }
+    },
     "com.hidano.scene-view-style-camera-controller": {
       "version": "1.0.0",
       "depth": 0,
@@ -123,7 +131,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.inputsystem": {
-      "version": "1.18.0",
+      "version": "1.19.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
