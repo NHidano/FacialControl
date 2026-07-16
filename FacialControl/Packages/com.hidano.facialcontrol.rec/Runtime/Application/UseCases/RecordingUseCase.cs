@@ -36,6 +36,8 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
 
         public bool IsRecording => _state == RecordingState.Recording;
 
+        public double ElapsedSeconds => IsRecording ? _clock.ElapsedSeconds : 0d;
+
         public void StartRecording(RecBaselineState baseline)
         {
             ThrowIfDisposed();

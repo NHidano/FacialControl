@@ -48,6 +48,19 @@ namespace Hidano.FacialControl.Rec.Adapters.Playable
 
         public RecPlaybackState PlaybackState => _playbackUseCase?.State ?? RecPlaybackState.Idle;
 
+        public double ElapsedSeconds
+        {
+            get
+            {
+                if (_recordingUseCase != null && _recordingUseCase.IsRecording)
+                {
+                    return _recordingUseCase.ElapsedSeconds;
+                }
+
+                return _playbackUseCase?.ElapsedSeconds ?? 0d;
+            }
+        }
+
         public string LastRecordingPath => _lastRecordingPath;
 
         public string LoadedRecordingPath => _loadedRecordingPath;

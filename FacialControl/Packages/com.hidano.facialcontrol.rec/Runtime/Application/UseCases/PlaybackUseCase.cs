@@ -31,6 +31,8 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
 
         public RecPlaybackState State { get; private set; }
 
+        public double ElapsedSeconds => _scheduler.ElapsedSeconds;
+
         public event Action Completed;
 
         public RecLoadResult Load(RecTimeline timeline, FacialProfile profile)
