@@ -61,14 +61,33 @@ namespace Hidano.FacialControl.Adapters.OSC
         /// <summary>
         /// Swaps read and write buffers. Called from the main thread at frame boundaries.
         /// </summary>
+        /// <remarks>
+        /// Index flip 後、新 read buffer の内容を新 write buffer へ copy-forward する
+        /// (<c>LayerInputSourceWeightBuffer.SwapIfDirty</c> と同じ Critical 1 対策)。
+        /// 旧実装は新 write buffer をゼロクリアしていたため、「その frame に受信しなかった
+        /// index」が次の Swap で 0 として読者に観測され、bundle のパケット分断・ロスト・
+        /// 受信の無い tick を挟んだ瞬間に表情が一瞬素に戻る不具合があった。
+        /// copy-forward により未受信 index は前回値を保持する（受信停止時のゼロ化は
+        /// <c>OscInputSource</c> の staleness + <c>FailSafeMode</c> が担う）。
+        /// <see cref="Write"/>（受信側スレッド）との競合による書込ロストを防ぐため
+        /// <c>_resizeLock</c> で排他する。
+        /// </remarks>
         public void Swap()
         {
-            int oldWriteIndex = _writeIndex;
-            int newWriteIndex = 1 - oldWriteIndex;
-            Interlocked.Exchange(ref _writeIndex, newWriteIndex);
+            lock (_resizeLock)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
 
-            var newWriteBuffer = GetWriteBuffer();
-            ClearBuffer(newWriteBuffer);
+                int newWriteIndex = 1 - _writeIndex;
+                Interlocked.Exchange(ref _writeIndex, newWriteIndex);
+
+                var newReadBuffer = newWriteIndex == 0 ? _bufferB : _bufferA;
+                var newWriteBuffer = newWriteIndex == 0 ? _bufferA : _bufferB;
+                newReadBuffer.CopyTo(newWriteBuffer);
+            }
         }
 
         /// <summary>
@@ -166,14 +185,6 @@ namespace Hidano.FacialControl.Adapters.OSC
         private NativeArray<float> GetWriteBuffer()
         {
             return _writeIndex == 0 ? _bufferA : _bufferB;
-        }
-
-        private static void ClearBuffer(NativeArray<float> buffer)
-        {
-            for (int i = 0; i < buffer.Length; i++)
-            {
-                buffer[i] = 0f;
-            }
         }
 
         private static void CopyBuffer(NativeArray<float> source, NativeArray<float> destination)

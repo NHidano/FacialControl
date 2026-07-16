@@ -6,6 +6,10 @@
 
 本パッケージはこれが初回リリースです。
 
+### Fixed
+
+- OSC 受信中に数分に 1 回程度の頻度で表情が一瞬素の状態に戻る（例: 笑顔の目閉じが 1 tick だけ開く）不具合を修正しました。`OscDoubleBuffer.Swap()` が write buffer をゼロクリアしていたため、bundle の UDP パケット分断（accumulation timeout 超過）・パケットロス・受信の無い tick を挟んだ瞬間に、その frame へ含まれなかった BlendShape が 0 として読者に観測されていました。`LayerInputSourceWeightBuffer.SwapIfDirty` と同じ copy-forward 方式（swap 後に新 read buffer の内容を新 write buffer へ複製）に変更し、未受信 index は前回値を保持するようにしました。受信停止時のゼロ化は従来どおり `OscInputSource` の staleness + `FailSafeMode` が担います。あわせて `Swap()` を `Write()`（受信側スレッド）と同一 lock で排他し、swap 中の書込ロストを防ぎました。
+
 ### Changed
 
 - `OscReceiverAdapterBindingDrawer` の Mappings 一覧に交互背景（`AlternatingRowBackground.ContentOnly`）を付け、複数フィールドで構成される各行の境界を視認しやすくした。あわせて一覧ヘッダー Foldout の開閉状態を `SessionState` に保存し、Inspector 再構築（domain reload / asset 再読み込み）後も直前の展開状態を復元するようにした（Editor 再起動時はリセット）。

@@ -245,7 +245,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
         }
 
         [Test]
-        public void ReadFromBuffer_AfterSwapWithNoWrite_OutputReflectsCleanBuffer()
+        public void ReadFromBuffer_AfterSwapWithNoWrite_OutputRetainsPreviousValues()
         {
             _buffer = new OscDoubleBuffer(1);
             var mappings = CreateTestMappings(1);
@@ -259,10 +259,11 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
             behaviour.ReadFromBuffer();
             Assert.AreEqual(0.5f, behaviour.OutputWeights[0], 0.0001f);
 
-            // フレーム 2: 書き込みなし
+            // フレーム 2: 書き込みなし。copy-forward により前フレームの値を保持する
+            // （受信の無い tick で 0 に落ちて表情が一瞬素に戻る不具合の回帰防止）。
             _buffer.Swap();
             behaviour.ReadFromBuffer();
-            Assert.AreEqual(0f, behaviour.OutputWeights[0], 0.0001f);
+            Assert.AreEqual(0.5f, behaviour.OutputWeights[0], 0.0001f);
         }
 
         [Test]

@@ -40,7 +40,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
 
             Assert.AreEqual(1, accumulator.FlushDue(0.008d));
             Assert.AreEqual(0.9f, buffer.GetReadBuffer()[0], 0.0001f);
-            Assert.AreEqual(0f, buffer.GetReadBuffer()[1], 0.0001f);
+            // frame 200 に index 1 は含まれないが、copy-forward により前 frame (100) の
+            // 値が保持される（0 に落ちない）。
+            Assert.AreEqual(0.2f, buffer.GetReadBuffer()[1], 0.0001f);
         }
 
         [Test]

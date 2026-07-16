@@ -387,7 +387,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         // ================================================================
 
         [Test]
-        public void HandleOscMessage_AfterSwap_NewFrameStartsClean()
+        public void HandleOscMessage_AfterSwap_NewFrameRetainsPreviousValues()
         {
             _buffer = new OscDoubleBuffer(1);
             var mappings = new[]
@@ -401,9 +401,10 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
             _buffer.Swap();
             Assert.AreEqual(0.5f, _buffer.GetReadBuffer()[0], 0.0001f);
 
-            // フレーム 2: 何も書き込まずにスワップ
+            // フレーム 2: 何も書き込まずにスワップ。copy-forward により前フレーム値を
+            // 保持する（受信の無い tick で表情が一瞬素に戻る不具合の回帰防止）。
             _buffer.Swap();
-            Assert.AreEqual(0f, _buffer.GetReadBuffer()[0], 0.0001f);
+            Assert.AreEqual(0.5f, _buffer.GetReadBuffer()[0], 0.0001f);
         }
 
         // ================================================================

@@ -125,7 +125,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         }
 
         [Test]
-        public void OscReceiver_DoubleBuffering_PreviousFrameCleared()
+        public void OscReceiver_DoubleBuffering_PreviousFrameRetained()
         {
             var mappings = new OscMapping[]
             {
@@ -142,9 +142,10 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
             _buffer.Swap();
             Assert.AreEqual(0.5f, _buffer.GetReadBuffer()[0], 0.001f);
 
-            // フレーム 2: 何も書き込まず
+            // フレーム 2: 何も書き込まず。copy-forward により前フレーム値を保持する
+            // （受信の無い tick で表情が一瞬素に戻る不具合の回帰防止）。
             _buffer.Swap();
-            Assert.AreEqual(0f, _buffer.GetReadBuffer()[0], 0.001f);
+            Assert.AreEqual(0.5f, _buffer.GetReadBuffer()[0], 0.001f);
         }
 
         // ================================================================

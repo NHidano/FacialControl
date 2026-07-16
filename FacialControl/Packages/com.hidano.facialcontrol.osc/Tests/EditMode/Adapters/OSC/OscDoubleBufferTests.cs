@@ -102,15 +102,101 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
         }
 
         [Test]
-        public void Swap_ClearsWriteBuffer()
+        public void Swap_WithoutNewWrites_PreservesPreviousValues()
         {
+            // 受信が 1 tick 途切れても直前フレームの値を保持する（copy-forward）。
+            // 旧実装は Swap で write buffer をゼロクリアしていたため、受信の無い tick を
+            // 挟むと全 BlendShape が 0 に落ち、表情が一瞬素に戻る不具合があった。
             using var buffer = new OscDoubleBuffer(4);
 
             buffer.Write(0, 0.5f);
             buffer.Swap();
             buffer.Swap();
 
-            Assert.AreEqual(0f, buffer.GetReadBuffer()[0]);
+            Assert.AreEqual(0.5f, buffer.GetReadBuffer()[0], 0.0001f);
+        }
+
+        [Test]
+        public void Swap_PartialWrite_PreservesUnwrittenIndicesFromPreviousFrame()
+        {
+            // 部分 frame（bundle のパケット分断・ロスト等）を Swap しても、
+            // その frame に含まれない index は前回値を保持する。
+            using var buffer = new OscDoubleBuffer(4);
+
+            buffer.Write(0, 0.5f);
+            buffer.Write(1, 0.8f);
+            buffer.Swap();
+
+            buffer.Write(1, 0.9f);
+            buffer.Swap();
+
+            var readBuffer = buffer.GetReadBuffer();
+            Assert.AreEqual(0.5f, readBuffer[0], 0.0001f, "未書込 index は前回値を保持する");
+            Assert.AreEqual(0.9f, readBuffer[1], 0.0001f, "書込済 index は最新値になる");
+        }
+
+        [Test]
+        public void Swap_ManyAlternatingPartialWrites_NeverDropsToZero()
+        {
+            // 交互に別 index だけを書き続けても、どちらの index も 0 に落ちないこと。
+            using var buffer = new OscDoubleBuffer(2);
+
+            buffer.Write(0, 0.5f);
+            buffer.Write(1, 0.8f);
+            buffer.Swap();
+
+            for (int i = 0; i < 10; i++)
+            {
+                buffer.Write(i % 2, 0.5f + (i % 2) * 0.3f);
+                buffer.Swap();
+
+                var readBuffer = buffer.GetReadBuffer();
+                Assert.AreEqual(0.5f, readBuffer[0], 0.0001f, $"iteration {i}: index 0 が 0 に落ちた");
+                Assert.AreEqual(0.8f, readBuffer[1], 0.0001f, $"iteration {i}: index 1 が 0 に落ちた");
+            }
+        }
+
+        [Test]
+        public void Swap_ConcurrentWrites_NoCrashAndNoValueLoss()
+        {
+            // Swap（メインスレッド）と Write（受信スレッド）の並行実行で、
+            // クラッシュせず、書込済みの値が 0 に巻き戻らないこと。
+            using var buffer = new OscDoubleBuffer(4);
+            Exception exception = null;
+            const int iterations = 10000;
+
+            buffer.Write(0, 1f);
+            buffer.Swap();
+
+            var writeThread = new Thread(() =>
+            {
+                try
+                {
+                    for (int i = 0; i < iterations; i++)
+                    {
+                        buffer.Write(0, 1f);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+            });
+
+            writeThread.Start();
+            for (int i = 0; i < iterations; i++)
+            {
+                buffer.Swap();
+                float value = buffer.GetReadBuffer()[0];
+                if (value != 1f)
+                {
+                    writeThread.Join();
+                    Assert.Fail($"iteration {i}: 値が {value} に巻き戻った (期待 1.0)");
+                }
+            }
+
+            writeThread.Join();
+            Assert.IsNull(exception, $"Concurrent Swap/Write threw: {exception}");
         }
 
         [Test]
@@ -265,7 +351,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
             buffer.Swap();
 
             Assert.AreEqual(before, buffer.WriteTick);
-            Assert.AreEqual(0f, buffer.GetReadBuffer()[0]);
+            // 範囲外 Write は drop され（WriteTick 不変で検証）、既存 index の値は
+            // copy-forward により Resize 前の値を保持する。
+            Assert.AreEqual(0.5f, buffer.GetReadBuffer()[0], 0.0001f);
         }
 
         [Test]
