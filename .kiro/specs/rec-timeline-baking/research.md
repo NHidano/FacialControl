@@ -25,6 +25,24 @@
   - `ClipCaps.None` の Track では同一 Track 上のクリップ重なりは編集不可（ブレンド領域が作れない）→ 重なる表情（スタック）はレーン分割が必要
 - **Implications**: Track/mixer/プレビューはすべて Timeline 標準機構で成立。クリップ重なり制約から「レイヤー親 Track + 子レーン Track」構成を導入する
 
+### 空親 Track の mixer コンパイル挙動 spike（2026-07-16, ローカル実機解決版 Timeline 1.8.12）
+- **Context**: design の「Timeline はクリップを持たない親 Track を graph にコンパイルしない」という前提と、`EmptyParentTrack` 検証および「レーン 0 = 親 Track 自身」規約の要否を、実機で先に確定したい。spec / package 依存には `1.8.9` が書かれているが、2026-07-16 時点のこの Unity project の実解決版は `manifest.json` / `packages-lock.json` / package cache 実体ともに `com.unity.timeline 1.8.12` だったため、spike は **実機解決版 1.8.12** で実施した
+- **Verification Method**:
+  - EditMode テスト `TimelineEmptyParentTrackSpikeTests` を追加
+  - `TimelineAsset` 上に最小の親子 Track 構成を構築し、`PlayableDirector.RebuildGraph()` + `Evaluate()` で実際の graph を生成
+  - 親 Track (`ProbeTrack`) と子レーン Track (`ProbeLaneTrack`) の `CreateTrackMixer` 呼び出しを静的ログで観測
+  - 比較用に「親 Track 自身にも 1 クリップあるケース」も同じ方法で観測
+- **Findings**:
+  - 親 Track が **0 クリップ**、子レーンのみが 1 クリップを持つ構成では、`CreateTrackMixer` は **子レーン Track のみ**で呼ばれ、親 Track の mixer は生成されなかった
+  - 親 Track 自身に 1 クリップ追加した比較ケースでは、`CreateTrackMixer` は **親 Track のみ**で呼ばれ、子レーン Track の mixer は生成されなかった
+  - したがって、2026-07-16 時点のローカル実機解決版 Timeline 1.8.12 では「空親 Track は parent mixer 不在」「親にクリップがあると parent mixer が責務を持つ」という前提が成立する
+- **Re-judgment**:
+  - 「レーン 0 = 親 Track 自身」規約は **維持**でよい。親 Track に runtime 上の一元管理責務を持たせる設計では、親が空になるだけで parent mixer ベースの処理が沈黙しうる
+  - `EmptyParentTrack` 検証前提も **維持**でよい。人手編集で親 Track を空にしたケースは、Editor 側で明示的に弾く価値がある
+  - 比較ケースでは child lane 側 mixer が作られず、親 mixer に責務が集中した。したがって design の「子レーン mixer は no-op / parent mixer が一元管理」という方向性とも整合する
+- **Notes**:
+  - Timeline package source の `TrackAsset.CanCreateTrackMixer()` コメントには「child track が mixer を要求すると parent が mixer を生成しうる」と読める記述があるが、今回の最小構成の実測では少なくとも空親 Track の `CreateTrackMixer` は呼ばれなかった。設計判断は source コメントではなく実測結果を優先する
+
 ### 既存コードベース統合点分析
 - **Context**: 「もう一つの入力アダプター」としての接続点と、ソース単位ベイクの観測点の特定
 - **Sources Consulted**: `ExpressionTriggerInputSourceBase.cs` / `LayerInputSourceAggregator.cs` / `ValueProviderInputSourceBase.cs` / `AdapterBindingBase.cs` / `AdapterBuildContext.cs` / `OscReceiverAdapterBinding.cs` / `GazeVector2InputSource.cs` / `Layer2ActiveExpressionProvider.cs` / `FacialController.cs` / `IInputSourceRegistry.cs` / `IAnalogInputSource.cs`

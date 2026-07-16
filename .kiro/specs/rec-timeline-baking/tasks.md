@@ -10,7 +10,7 @@
   - 完了条件: 空実装のままプロジェクトがコンパイルされ、Runtime asmdef から rec の型が物理的に参照不能であること
   - _Requirements: 9.4_
 
-- [ ] 1.2 空親 Track の mixer 非コンパイル挙動を Timeline 1.8.9 実機で spike 確認する
+- [x] 1.2 空親 Track の mixer 非コンパイル挙動を Timeline 1.8.9 実機で spike 確認する
   - 最小の TrackAsset 構成で「クリップを持たない親 Track（子レーンのみ）が graph にコンパイルされず mixer が生成されない」ことを実機確認する
   - 挙動が設計前提と異なる場合は「レーン 0 = 親 Track 自身」規約と EmptyParentTrack 検証の要否を再判断し、design へフィードバックする
   - 完了条件: 確認結果が research.md に記録され、レーン規約の前提（採用 / 再判断）が確定していること
