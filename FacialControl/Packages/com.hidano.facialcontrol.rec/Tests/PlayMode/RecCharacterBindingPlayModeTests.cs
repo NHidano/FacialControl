@@ -9,10 +9,12 @@ using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
+using Hidano.FacialControl.Rec.Adapters.Playback;
 using Hidano.FacialControl.Rec.Adapters.FileSystem;
 using Hidano.FacialControl.Rec.Adapters.Playable;
 using Hidano.FacialControl.Rec.Adapters.Recording;
 using Hidano.FacialControl.Rec.Application.UseCases;
+using Hidano.FacialControl.Rec.Domain.Models;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -105,6 +107,114 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
             Assert.That(RecFileReader.TryRead(binding.LastRecordingPath, out _), Is.True);
         }
 
+        [UnityTest]
+        public IEnumerator StopPlayback_PreservesActiveTriggerAndRestoresOriginalAnalogSource()
+        {
+            SetupHarness(out _, out RecCharacterBinding binding, out FakeObservationBus bus, out FakeInputSourceRegistry registry, out TestTriggerSource triggerSource, out FakeAnalogSource analogSource);
+
+            Assert.That(binding.StartRecording("stop-preserve"), Is.True);
+            analogSource.Publish(0.25f, -0.5f);
+            bus.PublishTriggerOn(triggerSource.Id, "smile");
+            bus.PublishAnalog(analogSource.Id, 0.25f, -0.5f);
+            binding.StopRecording();
+
+            triggerSource.TriggerOff("smile");
+            analogSource.Publish(0.9f, -0.1f);
+
+            Assert.That(binding.LoadRecording("stop-preserve"), Is.True);
+            Assert.That(binding.StartPlayback(), Is.True);
+
+            yield return null;
+
+            Assert.That(triggerSource.ActiveExpressionIds, Is.EqualTo(new[] { "smile" }));
+            Assert.That(registry.TryResolve(analogSource.Id, out IInputSource injectedSource), Is.True);
+            Assert.That(injectedSource, Is.Not.SameAs(analogSource));
+
+            binding.StopPlayback();
+
+            Assert.That(triggerSource.ActiveExpressionIds, Is.EqualTo(new[] { "smile" }));
+            Assert.That(registry.TryResolve(analogSource.Id, out IInputSource restoredSource), Is.True);
+            Assert.That(restoredSource, Is.SameAs(analogSource));
+            Assert.That(analogSource.TryReadVector2(out float restoredX, out float restoredY), Is.True);
+            Assert.That(restoredX, Is.EqualTo(0.9f).Within(1e-5f));
+            Assert.That(restoredY, Is.EqualTo(-0.1f).Within(1e-5f));
+
+            triggerSource.TriggerOff("smile");
+
+            Assert.That(triggerSource.ActiveExpressionIds, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator AnalogInjector_EndInjection_WithoutOriginal_UnregistersInjectedSource()
+        {
+            SetupHarness(out _, out _, out _, out FakeInputSourceRegistry registry, out _, out _);
+
+            var injector = new RecAnalogInjector(registry);
+            RecBaselineState baseline = CreateAnalogOnlyBaseline("input:orphan", 0.4f, -0.2f);
+
+            injector.BeginInjection(baseline);
+            yield return null;
+
+            Assert.That(registry.TryResolve("input:orphan", out IInputSource injectedSource), Is.True);
+            Assert.That(injectedSource, Is.InstanceOf<IInjectedInputSource>());
+
+            injector.EndInjection();
+            yield return null;
+
+            Assert.That(registry.TryResolve("input:orphan", out _), Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator AnalogInjector_BeginInjection_WhenAnotherInjectedSourceAlreadyOccupiesId_LogsWarningAndSkips()
+        {
+            SetupHarness(out _, out _, out _, out FakeInputSourceRegistry registry, out _, out _);
+
+            var occupiedSource = new StubInjectedInputSource("input:occupied", replacedSource: null);
+            registry.AddSource(occupiedSource);
+
+            var injector = new RecAnalogInjector(registry);
+            RecBaselineState baseline = CreateAnalogOnlyBaseline("input:occupied", 0.6f, -0.3f);
+
+            LogAssert.Expect(
+                LogType.Warning,
+                "Playback skipped analog injection for sourceId 'input:occupied' because another injected source already occupies it.");
+
+            injector.BeginInjection(baseline);
+            yield return null;
+
+            Assert.That(registry.TryResolve("input:occupied", out IInputSource resolvedSource), Is.True);
+            Assert.That(resolvedSource, Is.SameAs(occupiedSource));
+        }
+
+        [UnityTest]
+        public IEnumerator AnalogInjector_EndInjection_WhenCurrentEntryWasReplaced_PreservesLaterOccupant()
+        {
+            SetupHarness(out _, out _, out _, out FakeInputSourceRegistry registry, out _, out _);
+
+            var originalSource = new FakeAnalogSource("input:analog", 2);
+            registry.AddSource(originalSource);
+
+            var injectorA = new RecAnalogInjector(registry);
+            RecBaselineState baseline = CreateAnalogOnlyBaseline("input:analog", 0.1f, -0.4f);
+
+            injectorA.BeginInjection(baseline);
+            Assert.That(registry.TryResolve("input:analog", out IInputSource injectorASource), Is.True);
+            Assert.That(injectorASource, Is.InstanceOf<IInjectedInputSource>());
+
+            var injectorBSource = new StubInjectedInputSource("input:analog", originalSource);
+            registry.Replace(AdapterSlug.Parse("input"), "analog", injectorBSource);
+
+            LogAssert.Expect(
+                LogType.Warning,
+                "Playback skipped restoring analog source 'input:analog' because the current registry entry is no longer owned by this playback injector.");
+
+            injectorA.EndInjection();
+            yield return null;
+
+            Assert.That(registry.TryResolve("input:analog", out IInputSource resolvedSource), Is.True);
+            Assert.That(resolvedSource, Is.SameAs(injectorBSource));
+        }
+
         private void SetupHarness(
             out FacialController controller,
             out RecCharacterBinding binding,
@@ -144,6 +254,16 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
                 "1.0.0",
                 new[] { new LayerDefinition("emotion", 0, ExclusionMode.LastWins) },
                 new[] { new Expression("smile", "Smile", "emotion") });
+        }
+
+        private static RecBaselineState CreateAnalogOnlyBaseline(string sourceId, params float[] axes)
+        {
+            return new RecBaselineState(
+                Array.Empty<RecBaselineState.TriggerEntry>(),
+                new[]
+                {
+                    new RecBaselineState.AnalogEntry(sourceId, axes),
+                });
         }
 
         private static void SetControllerPrivateField(FacialController controller, string fieldName, object value)
@@ -379,6 +499,34 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
 
                 _axes.AsSpan().CopyTo(output);
                 return true;
+            }
+        }
+
+        private sealed class StubInjectedInputSource : IInputSource, IInjectedInputSource
+        {
+            public StubInjectedInputSource(string id, IInputSource replacedSource)
+            {
+                Id = id;
+                ReplacedSource = replacedSource;
+            }
+
+            public string Id { get; }
+
+            public InputSourceType Type => InputSourceType.ValueProvider;
+
+            public int BlendShapeCount => 0;
+
+            public BitArray ContributeMask { get; } = new BitArray(0);
+
+            public IInputSource ReplacedSource { get; }
+
+            public void Tick(float deltaTime)
+            {
+            }
+
+            public bool TryWriteValues(Span<float> output)
+            {
+                return false;
             }
         }
 
