@@ -220,6 +220,71 @@ namespace Hidano.FacialControl.Domain.Services
         }
 
         /// <summary>
+        /// 指定した Expression スタックで現在状態を即時に確立する。
+        /// 遷移は開始せず、観測フックにも通知しない。
+        /// </summary>
+        /// <param name="expressionIds">古い→新しい順の Expression ID 列。空列は全解除。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="expressionIds"/> が null の場合。</exception>
+        public void ResetToExpressionStack(IReadOnlyList<string> expressionIds)
+        {
+            if (expressionIds == null)
+            {
+                throw new ArgumentNullException(nameof(expressionIds));
+            }
+
+            _activeExpressionIds.Clear();
+
+            int startIndex = expressionIds.Count > MaxStackDepth
+                ? expressionIds.Count - MaxStackDepth
+                : 0;
+
+            for (int i = startIndex; i < expressionIds.Count; i++)
+            {
+                string expressionId = expressionIds[i];
+                if (expressionId == null)
+                {
+                    continue;
+                }
+
+                _activeExpressionIds.Remove(expressionId);
+                _activeExpressionIds.Add(expressionId);
+            }
+
+            Array.Clear(_targetValues, 0, BlendShapeCount);
+            ComposeTargetValues(_targetValues);
+            Array.Copy(_targetValues, _snapshotValues, BlendShapeCount);
+            Array.Copy(_targetValues, _currentValues, BlendShapeCount);
+
+            _elapsedTime = 0f;
+            _duration = 0f;
+            _curve = TransitionCurve.Linear;
+            _isComplete = true;
+            _targetMaskUsesUnionBuffer = false;
+
+            if (_activeExpressionIds.Count == 0)
+            {
+                _activeMaskRef = _emptyMask;
+                _targetMaskRef = _emptyMask;
+                _unionMask.SetAll(false);
+                return;
+            }
+
+            if (ShouldUseActiveUnionTargetMask())
+            {
+                _unionMask.SetAll(false);
+                OrActiveExpressionMasksInto(_unionMask);
+                _activeMaskRef = _unionMask;
+                _targetMaskRef = _unionMask;
+                return;
+            }
+
+            BitArray targetMask = ResolveSingleTargetMask();
+            _activeMaskRef = targetMask;
+            _targetMaskRef = targetMask;
+            _unionMask.SetAll(false);
+        }
+
+        /// <summary>
         /// 1 フレーム分の時間進行。遷移中であれば <see cref="TransitionCalculator.ComputeBlendWeight"/>
         /// により進行度を計算し、<see cref="ExclusionResolver.ResolveLastWins"/> でクロスフェード
         /// して内部 <c>CurrentValues</c> を更新する。
@@ -302,40 +367,7 @@ namespace Hidano.FacialControl.Domain.Services
             Array.Copy(_currentValues, _snapshotValues, BlendShapeCount);
             Array.Clear(_targetValues, 0, BlendShapeCount);
             PrepareTargetMask(outgoingMask);
-
-            if (_activeExpressionIds.Count == 0)
-            {
-                _duration = DefaultReleaseTransitionDuration;
-                _curve = TransitionCurve.Linear;
-                _elapsedTime = 0f;
-                _isComplete = false;
-                return;
-            }
-
-            Expression? lastExpression = null;
-            int lastIdx = _activeExpressionIds.Count - 1;
-
-            if (ExclusionMode == ExclusionMode.LastWins)
-            {
-                string lastId = _activeExpressionIds[lastIdx];
-                lastExpression = _profile.FindExpressionById(lastId);
-                if (lastExpression.HasValue)
-                {
-                    MapBlendShapeValues(lastExpression.Value, _targetValues);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < _activeExpressionIds.Count; i++)
-                {
-                    var expr = _profile.FindExpressionById(_activeExpressionIds[i]);
-                    if (expr.HasValue)
-                    {
-                        MapBlendShapeValuesAdditive(expr.Value, _targetValues);
-                    }
-                }
-                lastExpression = _profile.FindExpressionById(_activeExpressionIds[lastIdx]);
-            }
+            Expression? lastExpression = ComposeTargetValues(_targetValues);
 
             if (lastExpression.HasValue)
             {
@@ -350,6 +382,40 @@ namespace Hidano.FacialControl.Domain.Services
 
             _elapsedTime = 0f;
             _isComplete = false;
+        }
+
+        private Expression? ComposeTargetValues(float[] target)
+        {
+            if (_activeExpressionIds.Count == 0)
+            {
+                return null;
+            }
+
+            Expression? lastExpression = null;
+            int lastIdx = _activeExpressionIds.Count - 1;
+
+            if (ExclusionMode == ExclusionMode.LastWins)
+            {
+                string lastId = _activeExpressionIds[lastIdx];
+                lastExpression = _profile.FindExpressionById(lastId);
+                if (lastExpression.HasValue)
+                {
+                    MapBlendShapeValues(lastExpression.Value, target);
+                }
+
+                return lastExpression;
+            }
+
+            for (int i = 0; i < _activeExpressionIds.Count; i++)
+            {
+                var expr = _profile.FindExpressionById(_activeExpressionIds[i]);
+                if (expr.HasValue)
+                {
+                    MapBlendShapeValuesAdditive(expr.Value, target);
+                }
+            }
+
+            return _profile.FindExpressionById(_activeExpressionIds[lastIdx]);
         }
 
         private void PrepareTargetMask(BitArray outgoingMask)

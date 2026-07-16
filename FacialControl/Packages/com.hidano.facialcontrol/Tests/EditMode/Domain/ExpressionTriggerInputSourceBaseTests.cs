@@ -279,6 +279,74 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
         }
 
         [Test]
+        public void ResetToExpressionStack_AppliesFinalStateWithoutObserverNotification()
+        {
+            var source = CreateSource("input");
+            var observer = new TestTriggerEventObserver();
+            source.SetTriggerEventObserver(observer);
+
+            source.ResetToExpressionStack(new[] { "smile", "angry" });
+
+            var buffer = new float[BlendShapeNames.Length];
+            bool wrote = source.TryWriteValues(buffer);
+
+            Assert.IsTrue(wrote);
+            Assert.AreEqual(2, source.ActiveIdsForTest.Count);
+            Assert.AreEqual("smile", source.ActiveIdsForTest[0]);
+            Assert.AreEqual("angry", source.ActiveIdsForTest[1]);
+            Assert.AreEqual(0f, buffer[0], 1e-5f);
+            Assert.AreEqual(1f, buffer[1], 1e-5f);
+            Assert.AreEqual(0, observer.OnEvents.Count);
+            Assert.AreEqual(0, observer.OffEvents.Count);
+        }
+
+        [Test]
+        public void ResetToExpressionStack_EmptyStackClearsImmediately()
+        {
+            var source = CreateSource();
+            source.TriggerOn("smile");
+            source.Tick(1.0f);
+
+            source.ResetToExpressionStack(Array.Empty<string>());
+
+            var buffer = new float[BlendShapeNames.Length];
+            bool wrote = source.TryWriteValues(buffer);
+
+            Assert.IsFalse(wrote);
+            Assert.AreEqual(0, source.ActiveIdsForTest.Count);
+            AssertMaskBits(source.ContributeMask, false, false, false, false);
+        }
+
+        [Test]
+        public void ResetToExpressionStack_BlendModeAccumulatesWithoutTransition()
+        {
+            var source = CreateSource(exclusionMode: ExclusionMode.Blend);
+
+            source.ResetToExpressionStack(new[] { "smile", "angry" });
+            source.Tick(0.1f);
+
+            var buffer = new float[BlendShapeNames.Length];
+            bool wrote = source.TryWriteValues(buffer);
+
+            Assert.IsTrue(wrote);
+            Assert.AreEqual(1f, buffer[0], 1e-5f);
+            Assert.AreEqual(1f, buffer[1], 1e-5f);
+            AssertMaskBits(source.ContributeMask, true, true, false, false);
+        }
+
+        [Test]
+        public void ResetToExpressionStack_ExcessDepthKeepsNewestEntries()
+        {
+            var source = CreateSource(maxStackDepth: 2);
+
+            source.ResetToExpressionStack(new[] { "smile", "angry", "sad" });
+
+            Assert.AreEqual(2, source.ActiveIdsForTest.Count);
+            Assert.AreEqual("angry", source.ActiveIdsForTest[0]);
+            Assert.AreEqual("sad", source.ActiveIdsForTest[1]);
+        }
+
+        [Test]
         public void TryWriteValues_EmptyStack_ReturnsFalseAndLeavesOutputUnchanged()
         {
             var source = CreateSource();
