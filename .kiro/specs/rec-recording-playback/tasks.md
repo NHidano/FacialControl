@@ -237,7 +237,7 @@
   - 完了条件: 上記 PlayMode / Performance テストが緑
   - _Requirements: 5.3, 8.4, 8.5_
 
-- [ ] 10.4 GC ゼロゲート
+- [x] 10.4 GC ゼロゲート
   - 記録中・再生中の毎フレーム GC アロケーションゼロ（既存 GC ゼロゲートの ProfilerRecorder パターン踏襲）
   - 観測者ゼロ時の core 追加コストゼロ（alloc ゲート + 既存 GC ゲートの継続緑）
   - 完了条件: 3 種の alloc ゲートテストが緑
