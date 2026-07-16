@@ -338,6 +338,31 @@ namespace Hidano.FacialControl.Application.UseCases
         /// (内部の owner 参照が null のため <c>SetWeight</c> / <c>Dispose</c> は安全)。
         /// </summary>
         /// <returns><see cref="IDisposable"/> として <c>using</c> 文で利用可能なスコープ。</returns>
+        /// <summary>
+        /// 遅延バインドされた追加入力ソースをレイヤーから除去する。
+        /// Unregister 伝搬時に当該 id を合成対象から外し、未解決時挙動へ戻すための薄いラッパ。
+        /// </summary>
+        /// <param name="layerIdx">対象レイヤー index。</param>
+        /// <param name="id">除去する入力ソース id。</param>
+        public void UnbindLateInputSource(int layerIdx, string id)
+        {
+            if (_registry == null || string.IsNullOrEmpty(id))
+            {
+                return;
+            }
+
+            if (!_registry.TryRemoveSource(layerIdx, Hidano.FacialControl.Domain.Models.InputSourceId.Parse(id)))
+            {
+                return;
+            }
+
+            if (_layerHasAdditionalSources != null
+                && (uint)layerIdx < (uint)_layerHasAdditionalSources.Length)
+            {
+                _layerHasAdditionalSources[layerIdx] = _registry.GetSourceCountForLayer(layerIdx) > 1;
+            }
+        }
+
         public LayerInputSourceWeightBuffer.BulkScope BeginInputSourceWeightBatch()
         {
             if (_weightBuffer == null)

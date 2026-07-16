@@ -1027,5 +1027,53 @@ namespace Hidano.FacialControl.Tests.EditMode.Application
             Assert.AreEqual(0.3f, output[0], 1e-4f,
                 "late-bind の宣言 weight が intra-layer 加重で反映されること (0.6 * 0.5)");
         }
+        [Test]
+        public void UnbindLateInputSource_AfterLateBind_RevertsToUnresolvedBehavior()
+        {
+            var layers = new[] { new LayerDefinition("emotion", 0, ExclusionMode.LastWins) };
+            var profile = new FacialProfile("1.0", layers, Array.Empty<Expression>());
+            var expressionUseCase = new ExpressionUseCase(profile);
+            var blendShapeNames = new[] { "bs_smile", "bs_sad", "bs_blink" };
+
+            using var useCase = new LayerUseCase(profile, expressionUseCase, blendShapeNames);
+
+            var lateSource = new FakeValueWritingSource("osc", blendShapeNames.Length, 0.6f);
+            useCase.BindLateInputSource(0, lateSource, 1.0f);
+            useCase.UpdateWeights(0.001f);
+            Assert.AreEqual(0.6f, useCase.GetBlendedOutput()[0], 1e-4f);
+
+            useCase.UnbindLateInputSource(0, "osc");
+            useCase.UpdateWeights(0.001f);
+
+            var output = useCase.GetBlendedOutput();
+            Assert.AreEqual(0f, output[0], 1e-4f,
+                "Unbind 後は late source が合成から外れ、未解決時と同じゼロ出力へ戻ること");
+        }
+
+        [Test]
+        public void UnbindLateInputSource_RemovesOnlySpecifiedId()
+        {
+            var layers = new[] { new LayerDefinition("emotion", 0, ExclusionMode.LastWins) };
+            var profile = new FacialProfile("1.0", layers, Array.Empty<Expression>());
+            var expressionUseCase = new ExpressionUseCase(profile);
+            var blendShapeNames = new[] { "bs_smile", "bs_sad", "bs_blink" };
+            var additional = new List<(int layerIdx, IInputSource source, float weight)>
+            {
+                (0, new FakeValueWritingSource("osc-a", blendShapeNames.Length, 0.4f), 1.0f),
+                (0, new FakeValueWritingSource("osc-b", blendShapeNames.Length, 0.2f), 1.0f),
+            };
+
+            using var useCase = new LayerUseCase(profile, expressionUseCase, blendShapeNames, additional);
+
+            useCase.UpdateWeights(0.001f);
+            Assert.AreEqual(0.6f, useCase.GetBlendedOutput()[0], 1e-4f);
+
+            useCase.UnbindLateInputSource(0, "osc-a");
+            useCase.UpdateWeights(0.001f);
+
+            var output = useCase.GetBlendedOutput();
+            Assert.AreEqual(0.2f, output[0], 1e-4f,
+                "指定 id のみ除去し、残存 source の寄与は維持すること");
+        }
     }
 }
