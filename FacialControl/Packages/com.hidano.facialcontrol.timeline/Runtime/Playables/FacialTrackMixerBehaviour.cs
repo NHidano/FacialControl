@@ -48,7 +48,6 @@ namespace Hidano.FacialControl.Timeline.Playables
             if (!UnityEngine.Application.isPlaying)
             {
                 FacialTimelineEditorPreviewBridge.ApplyPreview?.Invoke(receiver, timeline, playable.GetTime());
-                return;
             }
 
             receiver.BeginPlaybackSession(timeline);

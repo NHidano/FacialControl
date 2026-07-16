@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using Hidano.FacialControl.Timeline.Adapters;
 using Hidano.FacialControl.Timeline.Clips;
-using Hidano.FacialControl.Timeline.Domain.Models;
+using Hidano.FacialControl.Timeline.Domain.Services;
 using Hidano.FacialControl.Timeline.EditorPreview;
 using Hidano.FacialControl.Timeline.Playables;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace Hidano.FacialControl.Timeline.Tracks
         {
             ScriptPlayable<FacialTrackMixerBehaviour> playable =
                 ScriptPlayable<FacialTrackMixerBehaviour>.Create(graph, inputCount);
-            playable.GetBehaviour().ConfigureExpression(name, CollectStateEvents(this));
+            playable.GetBehaviour().ConfigureExpression(name, TimelineStateEventCollector.Collect(this));
             return playable;
         }
 
@@ -31,99 +30,6 @@ namespace Hidano.FacialControl.Timeline.Tracks
         public override void GatherProperties(PlayableDirector director, IPropertyCollector driver)
         {
             FacialTimelineEditorPreviewBridge.GatherProperties?.Invoke(director, this, driver);
-        }
-
-        private static TimelineStateEvent[] CollectStateEvents(FacialExpressionTrack rootTrack)
-        {
-            if (rootTrack == null)
-            {
-                return System.Array.Empty<TimelineStateEvent>();
-            }
-
-            var orderedEvents = new List<OrderedTimelineStateEvent>();
-            int sequence = 0;
-            AppendTrackEvents(rootTrack, rootTrack.name, orderedEvents, ref sequence);
-            if (orderedEvents.Count <= 1)
-            {
-                return ToStateEvents(orderedEvents);
-            }
-
-            orderedEvents.Sort(CompareEvents);
-            return ToStateEvents(orderedEvents);
-        }
-
-        private static void AppendTrackEvents(
-            TrackAsset track,
-            string layerName,
-            List<OrderedTimelineStateEvent> events,
-            ref int sequence)
-        {
-            if (track == null)
-            {
-                return;
-            }
-
-            foreach (TimelineClip clip in track.GetClips())
-            {
-                if (!(clip.asset is FacialExpressionClip expressionClip) || string.IsNullOrEmpty(expressionClip.ExpressionId))
-                {
-                    continue;
-                }
-
-                double startTime = clip.start;
-                double endTime = clip.end;
-                events.Add(new OrderedTimelineStateEvent(
-                    new TimelineStateEvent(startTime, TimelineStateEvent.KindOn, expressionClip.ExpressionId, layerName),
-                    sequence++));
-                events.Add(new OrderedTimelineStateEvent(
-                    new TimelineStateEvent(endTime, TimelineStateEvent.KindOff, expressionClip.ExpressionId, layerName),
-                    sequence++));
-            }
-
-            foreach (TrackAsset childTrack in track.GetChildTracks())
-            {
-                AppendTrackEvents(childTrack, layerName, events, ref sequence);
-            }
-        }
-
-        private static int CompareEvents(OrderedTimelineStateEvent left, OrderedTimelineStateEvent right)
-        {
-            int timeComparison = left.Event.TimeSeconds.CompareTo(right.Event.TimeSeconds);
-            if (timeComparison != 0)
-            {
-                return timeComparison;
-            }
-
-            return left.Sequence.CompareTo(right.Sequence);
-        }
-
-        private static TimelineStateEvent[] ToStateEvents(List<OrderedTimelineStateEvent> orderedEvents)
-        {
-            if (orderedEvents == null || orderedEvents.Count == 0)
-            {
-                return System.Array.Empty<TimelineStateEvent>();
-            }
-
-            var events = new TimelineStateEvent[orderedEvents.Count];
-            for (int i = 0; i < orderedEvents.Count; i++)
-            {
-                events[i] = orderedEvents[i].Event;
-            }
-
-            return events;
-        }
-
-        private readonly struct OrderedTimelineStateEvent
-        {
-            public OrderedTimelineStateEvent(TimelineStateEvent stateEvent, int sequence)
-            {
-                Event = stateEvent;
-                Sequence = sequence;
-            }
-
-            public TimelineStateEvent Event { get; }
-
-            public int Sequence { get; }
         }
     }
 }
