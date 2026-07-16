@@ -31,17 +31,20 @@
 
 ### Out of Boundary
 - REC 記録の生成・永続化・読込 API の実体（rec spec 所掌。本 spec は adapter 1 ファイルで変換）
+- **core の Replace 再バインド伝搬（注入面）の実装**（rec spec Req 6.4 所掌として core に追加予定: 「`IInputSourceRegistry.Replace` 時に消費側 — レイヤー入力・gaze 解決の `EyeBinding` — へ再バインドを伝搬する」注入面。消費側は入力ソースを構築時にキャッシュするため Replace 単体では差し替わらない、という gap 分析結果を受けたユーザー決定・案 2。本 spec はこの注入面を**利用する側**であり、実装・契約定義は行わない）
 - `ExpressionTriggerInputSourceBase` / `LayerBlender` / gaze 解決（`GazeBindingConfigResolver` / `GazeBonePoseProvider`）等、core 既存コードパスの変更
 - FacialController のデッド PlayableGraph 出力経路（相乗り禁止対象、Req 9.2）
 
 ### Allowed Dependencies
 - `com.hidano.facialcontrol`（core）: AdapterBinding 契約、入力源基底、Aggregator、gaze 解決、profile
-- `com.hidano.facialcontrol.rec`: REC 記録データの読込（Editor 書き出し時のみ。ランタイム再生は rec に依存しない）
+- **core の注入面（rec spec が追加する Replace 再バインド伝搬）**: gaze ソースのライブ⇄Timeline 一時差し替え（Components の TimelineGazeInputSource / Receiver 参照）に利用する
+- `com.hidano.facialcontrol.rec`: REC 記録データの読込。**asmdef 参照は Editor asmdef のみ**（Runtime asmdef は rec を参照せず、ランタイム再生コードは rec の型に触れない）。package.json 上は必須依存として宣言する（File Structure Plan 参照）
 - `com.unity.timeline` 1.8.9: TrackAsset / PlayableBehaviour / TimelineAsset（本パッケージの package.json でのみ宣言。core / rec へ波及させない — Req 9.4）
-- 依存方向制約: timeline → {core, rec, com.unity.timeline}。逆方向参照は禁止。osc / inputsystem / lipsync への依存は禁止
+- 依存方向制約: timeline Runtime → {core, com.unity.timeline} / timeline Editor → {timeline Runtime, rec, com.unity.timeline}。逆方向参照は禁止。osc / inputsystem / lipsync への依存は禁止
 
 ### Revalidation Triggers
 - rec spec の design 確定により論理イベント形（トリガー on/off + expressionId + アナログ軸値 + gaze + 秒タイムスタンプ）が変わった場合 → `RecEventSequenceAdapter` と本 design の照合
+- **rec spec の design 確定時に、core 注入面（Replace 再バインド伝搬）の契約形状（API 名・伝搬対象範囲・元ソースへの復元可否）を本 design の gaze 差し替え設計（Receiver / TimelineAdapterBinding）と照合**
 - core の `IInputSourceRegistry` / `AdapterBuildContext` / `Layer2ActiveExpressionProvider` の契約形状変更
 - `FacialTimelineBakeAsset` スキーマまたはハッシュ正規形の変更（ベイク互換性が壊れる）
 - `blendshape-output-refactor` spec によるデッド PlayableGraph 撤去（Req 9.2 の前提確認のみ。本設計は当該経路に依存しないため影響なしを確認する）
@@ -54,6 +57,7 @@
 - **アダプター拡張契約**: `AdapterBindingBase` 継承 + `[Serializable]` + `[FacialAdapterBinding]`、`OnStart(in AdapterBuildContext)` で helper MonoBehaviour 生成と `ctx.InputSourceRegistry.Register(slug, source)`。TypeCache 発見 + VContainer host（`AdapterBindingHost`）が lifecycle（OnStart/OnTick/OnLateTick/OnFixedTick/Dispose）を駆動する
 - **active 表情解決（系2）**: `Layer2ActiveExpressionProvider` がレイヤー割当済みの `ExpressionTriggerInputSourceBase` 群の `ActiveExpressionIds` を読む。音素 override/suppress はこの provider を参照する
 - **gaze チャネル**: 入力 binding が `IInputSource` + `IAnalogInputSource` 両実装の gaze 入力源を registry に登録し、profile の `GazeBindingConfig` 経由で `GazeBonePoseProvider` が解決・適用する。BlendShape 経路（0..1）と別チャネル、値域 -1..1、push 型 `Publish(x, y)`
+- **gaze 消費側の構築時キャッシュ**（rec spec gap 分析で実コード確認済み）: レイヤー入力源は `FacialController.InitializeInternal` で 1 回だけ解決され、`GazeBonePoseProvider` の `EyeBinding.Source` は readonly。したがって `registry.Replace` 単体では消費側の参照は差し替わらない。rec spec のユーザー決定（案 2）により「Replace 時に消費側へ再バインドを伝搬する注入面」が core に正式追加される予定で、本設計の gaze ライブ⇄Timeline 切替はこの注入面を利用する
 - **時間規約**: 遷移は deltaTime 累積、絶対時刻は `ITimeProvider.UnscaledTimeSeconds` のみ。Timeline の再生ヘッド時刻は mixer の `playable.GetTime()`（PlayableDirector 所有）から取得し、新たな絶対時刻源を追加しない
 - **Req 9.2 の明確化**: 独自 Track の mixer は Playables API（`PlayableBehaviour`）を必然的に使用するが、これは PlayableDirector が所有する Timeline 標準の PlayableGraph である。禁止されているのは FacialController 内の**デッド PlayableGraph 出力経路（OscReceiverPlayable 等）への相乗り**であり、Timeline の Playables 使用自体ではない。本設計の mixer は BlendShape 値を出力バスへ一切書かず、入力アダプターの sink を駆動するのみ（Req 1.4）
 
@@ -89,7 +93,8 @@ graph TB
         LipSync[ライブ入力 リップシンク等] --> Agg
         Agg --> Blender[LayerBlender]
         Blender --> Writer[BlendShape 出力ライター]
-        GazeSink --> GazeResolve[Gaze 解決パイプライン]
+        GazeSink -->|再生中のみ Replace 差し替え| GazeResolve[Gaze 解決パイプライン]
+        LiveGaze[ライブ gaze ソース] -->|停止中は元のまま| GazeResolve
         GazeResolve --> EyeBones[目ボーン]
     end
 
@@ -112,7 +117,9 @@ graph TB
 2. **ベイク取得点は Aggregator 観測フック**（Req 4.2）: `AggregateInternal` の `TryWriteValues` 直後の scratch 内容が「遷移補間済み・レイヤー合成前・pre-weight」の定義そのもの。フックは observer フィールド + null チェック 1 箇所の加算的変更で、未登録時は既存挙動・性能を変えない（rec spec 6.4 と同一の契約思想）
 3. **クリップ重なりはレーン分割**: `ClipCaps.None` の Track はクリップ重なりを編集できないため、スタック的に重なる表情はレイヤー親 Track（`FacialExpressionTrack`）配下の子レーン Track に振り分ける。イベントの時刻順統合はレイヤー親 Track の mixer が一元管理し、順序決定性を保証する
 4. **ベイクカーブは BlendShape 名キー**（Req 7.4 と同思想のリグ非依存）: ベイク成果物はインデックスではなく BlendShape 名でカーブを保持し、`OnStart` 時に現在のリグの名前配列へ 1 回だけ解決する
-5. **OQ1〜OQ5 の決定**: 遷移時間はプロファイル read-only（OQ1）、削除済み expressionId は「生成して警告 + 検証 API」（OQ2）、Keyframe 直接編集は全面許容・clamp なし（OQ3）、再書き出しは明示指定 + 確認ダイアログ（OQ4）、新規パッケージ配置（OQ5）。各決定の代替案とトレードオフは `research.md` の Design Decisions を参照
+5. **gaze はライブソースの一時差し替え（Replace 再バインド伝搬の利用）**: gaze 消費側（`EyeBinding.Source`）は構築時固定のため、`GazeBindingConfig` への静的 timeline 配線ではライブ gaze と Timeline gaze が共存できない。再生セッション開始時に「`GazeBindingConfig` が参照する既存ライブ gaze ソース」を `TimelineGazeInputSource` へ `Replace`（core 注入面が消費側へ再バインド伝搬）し、停止時に元ソースへ復元する。ユーザーの `GazeBindingConfig` は既存のライブ配線のまま変更不要。差し替えの所有と復元保証は `FacialTimelineReceiver`（Components 参照）
+6. **状態イベント列は正本クリップ列から graph 構築時に導出**（ベイク成果物に持たない）: 状態イベントをベイク成果物に格納するとベイク欠落時に状態駆動まで失われ、Req 6.4 の graceful degradation と矛盾する。mixer が graph 構築時（アロケーション許容）に Track（子レーン含む）のクリップ列から直接導出することで、ベイク欠落時も状態駆動（override/suppress）は継続し、値供給（表情ソース値 + 連続値）のみが欠落する。代替案は `research.md` 参照
+7. **OQ1〜OQ5 の決定**: 遷移時間はプロファイル read-only（OQ1）、削除済み expressionId は「生成して警告 + 検証 API」（OQ2）、Keyframe 直接編集は全面許容・clamp なし（OQ3）、再書き出しは明示指定 + 確認ダイアログ（OQ4）、新規パッケージ配置（OQ5）。各決定の代替案とトレードオフは `research.md` の Design Decisions を参照
 
 ### Technology Stack
 
@@ -120,8 +127,8 @@ graph TB
 |-------|------------------|-----------------|-------|
 | Timeline 統合 | `com.unity.timeline` 1.8.9 | TrackAsset / PlayableBehaviour / TimelineAsset / IPropertyPreview | 本パッケージのみが依存宣言（Req 9.4） |
 | 入力パイプライン | `com.hidano.facialcontrol`（core） | AdapterBinding 契約・入力源基底・Aggregator・gaze 解決 | 観測フック追加以外は無改修 |
-| REC 読込 | `com.hidano.facialcontrol.rec` | 書き出し時の記録読込（Editor のみ） | 論理形 `IRecordedEventSequence` で切り離す |
-| ベイク成果物 | ScriptableObject（TimelineAsset の sub-asset） | カーブ群 + 状態イベント列 + ハッシュ | JSON ではなく SO（Editor 生成物・AnimationCurve 序列化の自然形） |
+| REC 読込 | `com.hidano.facialcontrol.rec` | 書き出し時の記録読込（Editor asmdef のみが参照） | 論理形 `IRecordedEventSequence` で切り離す。package.json では必須依存 |
+| ベイク成果物 | ScriptableObject（TimelineAsset の sub-asset） | 値カーブ群 + ハッシュ（状態イベントは持たない — Key Design Decisions 6） | JSON ではなく SO（Editor 生成物・AnimationCurve 序列化の自然形） |
 | Editor UI | UI Toolkit + Timeline ClipEditor/TrackEditor | 書き出しウィンドウ・検証表示 | steering 契約（IMGUI 新規禁止。ClipEditor の描画 API は Timeline 標準の範囲で使用） |
 
 ## File Structure Plan
@@ -131,11 +138,11 @@ graph TB
 ```
 FacialControl/Packages/com.hidano.facialcontrol.timeline/
 ├── Runtime/
-│   ├── Hidano.FacialControl.Timeline.asmdef   # 参照: Domain, Application, Adapters, Unity.Timeline, rec(Runtime)
+│   ├── Hidano.FacialControl.Timeline.asmdef   # 参照: Domain, Application, Adapters, Unity.Timeline（rec は参照しない）
 │   ├── Domain/                                # Unity Timeline 非依存の純ロジック（asmdef は Runtime と共有）
 │   │   ├── Models/
-│   │   │   ├── TimelineStateEvent.cs          # 状態イベント (time, kind, expressionId, trackKey)
-│   │   │   └── RecordedEvent.cs               # IRecordedEventSequence + RecordedEvent（rec 論理形の契約）
+│   │   │   ├── TimelineStateEvent.cs          # 状態イベント (time, kind, expressionId, layerName)。graph 構築時にクリップ列から導出（非シリアライズ）
+│   │   │   └── RecordedEvent.cs               # IRecordedEventSequence + RecordedEvent（rec 論理形の契約。実装は Editor 側 adapter）
 │   │   └── Services/
 │   │       ├── TimelineEventStateReconstructor.cs  # イベント列 → 任意時刻の active 集合確定（5.3）
 │   │       └── FacialTimelineHashCalculator.cs     # 正本の正規形ハッシュ（6.1/6.3、Editor/Runtime 共用）
@@ -158,7 +165,7 @@ FacialControl/Packages/com.hidano.facialcontrol.timeline/
 │       └── Bake/
 │           └── FacialTimelineBakeAsset.cs     # ベイク成果物 SO（スキーマは Data Models 参照）
 ├── Editor/
-│   ├── Hidano.FacialControl.Timeline.Editor.asmdef
+│   ├── Hidano.FacialControl.Timeline.Editor.asmdef   # 参照: Timeline(Runtime), rec(Runtime), Unity.Timeline + TimelineEditor。rec 参照はここだけ
 │   ├── Export/
 │   │   ├── RecToTimelineExporter.cs           # REC → クリップ列変換 + 上書き確認（2.x, 3.4）
 │   │   └── RecEventSequenceAdapter.cs         # rec 実フォーマット → IRecordedEventSequence（依存封じ込め）
@@ -181,6 +188,8 @@ FacialControl/Packages/com.hidano.facialcontrol.timeline/
 ```
 
 > Tests / asmdef / package.json は既存拡張パッケージ（osc / inputsystem）と同一パターン。Samples~ はプレリリース同梱物が未定のため本 spec のスコープ外とする。
+
+**rec 依存の宣言形**: `com.hidano.facialcontrol.rec` は Editor asmdef のみが参照するが、**package.json では必須依存として宣言する**（UPM には optional 依存の表現がなく、宣言しないと rec 未導入環境で Editor asmdef がコンパイル不能になる）。本パッケージは rec の後続 spec であり、REC 書き出し（Req 9.5）が主要ユースケースであるため必須依存は妥当。versionDefines による optional 化との比較は `research.md` 参照。Runtime asmdef が rec を参照しないことは asmdef の参照リストで物理的に強制する。
 
 ### Modified Files
 - `FacialControl/Packages/com.hidano.facialcontrol/Runtime/Domain/Services/LayerInputSourceAggregator.cs` — ソース単位値観測フック（`ILayerSourceValueObserver` の設定 API + `AggregateInternal` 内の null チェック付き通知 1 箇所）を追加。observer 未登録時の挙動・性能は不変
@@ -213,9 +222,11 @@ sequenceDiagram
     Agg->>Agg: StateSink は 0 バイト書込 ValueSink がベイク値寄与
 ```
 
+- 状態イベント列は graph 構築時に正本クリップ列（子レーン含む）から導出して `Reconstructor` に設定する（ベイク成果物には格納しない — Key Design Decisions 6。構築時のためアロケーション許容）
 - 状態確定は「イベント列の走査 + 集合差分」であり遷移計算の再実行を伴わない（Req 5.3 の「再シミュレーションなし」）
 - 同一評価内の複数イベントは記録時刻 + 安定ソートで順序決定。ジャンプ時の TriggerOn 再発行は「最後に on になった時刻」昇順で行い、LIFO スタック順序を復元する
-- gaze / アナログは `FacialValueMixerBehaviour` が毎評価カーブをサンプルし `Publish` する（分岐なしの単純経路のため図から省略）
+- gaze / アナログは `FacialValueMixerBehaviour` が毎評価ベイク成果物の絶対時間カーブをサンプルし `Publish` / `Write` する（分岐なしの単純経路のため図から省略）
+- 再生セッション開始時（最初の評価）に Receiver がベイク検査（6.3/6.4）と gaze ソース差し替え（Replace 再バインド伝搬）を行い、graph 停止/破棄で全解除 + gaze 元ソース復元を行う
 
 ### Editor ベイク（再シミュレーション）
 
@@ -242,7 +253,7 @@ flowchart LR
     Detect -->|不一致| Rebake[自動再ベイク 6.2]
     RunStart[ランタイム再生開始] --> Check[Receiver がハッシュ照合]
     Check -->|不一致| Warn[Warning ログ + 再生継続 6.3]
-    Check -->|ベイク欠落| Notify[ログ通知 値供給なし 6.4]
+    Check -->|ベイク欠落| Notify[ログ通知 値供給なし 状態駆動は継続 6.4]
     Warn --> SessionEnd[Editor セッション終了]
     SessionEnd --> Repair[自動再ベイク試行 + 結果ダイアログ 6.5]
 ```
@@ -277,12 +288,12 @@ flowchart LR
 | 6.1 | ハッシュ記録 | FacialTimelineHashCalculator, BakeAsset | ComputeHash | ベイク |
 | 6.2 | Editor 自動再ベイク | TimelineBakeDirtyWatcher | IsStale | 陳腐化検知 |
 | 6.3 | ランタイム不一致警告 + 継続 | FacialTimelineReceiver | — | 陳腐化検知 |
-| 6.4 | ベイク欠落通知 | FacialTimelineReceiver | — | 陳腐化検知 |
+| 6.4 | ベイク欠落通知 | FacialTimelineReceiver（値供給なし・状態駆動は継続） | — | 陳腐化検知 |
 | 6.5 | セッション後修復ダイアログ | TimelineBakeDirtyWatcher | — | 陳腐化検知 |
 | 7.1 | gaze を Vector2 カーブで扱う | FacialValueTrack/Clip | — | — |
-| 7.2 | gaze 解決パイプラインへ供給 | TimelineGazeInputSource, ValMixer | Publish | 境界図 |
+| 7.2 | gaze 解決パイプラインへ供給 | TimelineGazeInputSource, ValMixer, Receiver（ライブソース差し替え） | Publish, Replace 再バインド伝搬 | 境界図 |
 | 7.3 | ボーン回転を焼かない | TimelineBakeService（連続値は複製のみ） | — | ベイク |
-| 7.4 | プロファイル・リグ追従 | 名前キーのカーブ + 既存 resolver 経由 | GazeBindingConfig | — |
+| 7.4 | プロファイル・リグ追従 | 名前キーのカーブ + 既存 resolver 経由（GazeBindingConfig はライブ配線のまま） | GazeBindingConfig | — |
 | 8.1 | 毎フレーム GC ゼロ | 全ランタイムコンポーネント（事前確保） | — | — |
 | 8.2 | 時間規約整合 | mixer（playable.GetTime のみ） | — | — |
 | 8.3 | ベイクはヒープ許容 | TimelineBakeService | — | — |
@@ -297,10 +308,10 @@ flowchart LR
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies (P0/P1) | Contracts |
 |-----------|--------------|--------|--------------|--------------------------|-----------|
 | TimelineAdapterBinding | Runtime/Adapters | sink 構築・登録と Receiver 生成の正道接続点 | 1.2, 9.1, 9.3 | AdapterBuildContext (P0) | Service |
-| FacialTimelineReceiver | Runtime/Adapters | Track binding 対象。sink 集約・ハッシュ照合 | 1.2, 6.3, 6.4 | BakeAsset (P0), sink 群 (P0) | Service, State |
+| FacialTimelineReceiver | Runtime/Adapters | Track binding 対象。sink 集約・ハッシュ照合・gaze ソース差し替えの所有 | 1.2, 6.3, 6.4, 7.2 | BakeAsset (P0), sink 群 (P0), core 注入面 (P0) | Service, State |
 | TimelineExpressionStateSink | Runtime/Adapters/InputSources | 状態のみ供給する trigger sink | 5.1, 5.2, 5.4 | ExpressionTriggerInputSourceBase (P0) | State |
 | TimelineBakedValueSink | Runtime/Adapters/InputSources | ベイク値の ValueProvider 供給 | 1.4, 5.1, 5.5 | ValueProviderInputSourceBase (P0) | State |
-| TimelineGazeInputSource / TimelineAnalogInputSource | Runtime/Adapters/InputSources | gaze / アナログ sink | 7.1, 7.2, 7.4 | IAnalogInputSource (P0) | State |
+| TimelineGazeInputSource / TimelineAnalogInputSource | Runtime/Adapters/InputSources | gaze / アナログ sink（gaze は再生中のみライブソースと差し替え） | 7.1, 7.2, 7.4 | IAnalogInputSource (P0), core 注入面 (P0) | State |
 | FacialExpressionTrack / Clip / レーン | Runtime/Adapters/Tracks | 表情クリップ列の Track 表現 | 1.1, 2.2, 3.1 | Unity.Timeline (P0) | — |
 | FacialValueTrack / Clip | Runtime/Adapters/Tracks | 連続値カーブクリップ | 1.1, 2.3, 3.1, 7.1 | Unity.Timeline (P0) | — |
 | FacialExpressionMixerBehaviour | Runtime/Adapters/Tracks | イベント統合・状態/値駆動・プレビュー | 1.2, 5.1, 5.3, 5.6 | Reconstructor (P0), Receiver (P0) | Service |
@@ -324,14 +335,15 @@ flowchart LR
 | Requirements | 1.2, 5.5, 9.1, 9.3 |
 
 **Responsibilities & Constraints**
-- `OnStart`: (1) 設定された Track 対応（対象レイヤー名 / gaze・アナログチャネル定義）に従い sink 群を構築、(2) `ctx.InputSourceRegistry.Register(slug, ...)` / `Register(slug, sub, ...)` で登録（gaze: `timeline:gaze-{n}`、アナログ: `timeline:{channel}` 形式）、(3) `ctx.HostGameObject` に `FacialTimelineReceiver` を AddComponent し sink 参照を注入
-- `Dispose`: Receiver 破棄と sink 解除
+- `OnStart`: (1) 設定された Track 対応（対象レイヤー名 / gaze・アナログチャネル定義）に従い sink 群を構築、(2) `ctx.InputSourceRegistry.Register(slug, ...)` / `Register(slug, sub, ...)` で登録（gaze: `timeline:gaze-{n}`、アナログ: `timeline:{channel}` 形式）、(3) `ctx.HostGameObject` に `FacialTimelineReceiver` を AddComponent し sink 参照・gaze 差し替え設定（`TakeoverSourceId`）を注入
+- `Dispose`: **gaze 差し替えが残っていれば元ソースへ復元（最終防衛線）**した上で Receiver 破棄と sink 解除
 - OnTick/OnLateTick は不使用（駆動は Timeline の PlayableGraph 評価が担う）。Aggregator による sink の Tick はレイヤー登録経由で従来どおり行われる
 - state sink / value sink のレイヤー割当は既存の slug 駆動レイヤー入力設定に従う（core 無改修）
+- gaze の差し替え実行自体は Receiver が所有する（本 binding は設定の保持と Dispose 時の復元保証のみ）
 
 **Dependencies**
 - Inbound: AdapterBindingHost — lifecycle 駆動 (P0)
-- Outbound: IInputSourceRegistry — sink 登録 (P0) / FacialTimelineReceiver — 橋渡し生成 (P0)
+- Outbound: IInputSourceRegistry — sink 登録 (P0) / FacialTimelineReceiver — 橋渡し生成 (P0) / core 注入面（Replace 再バインド伝搬）— Dispose 時の復元 (P0)
 - External: なし
 
 **Contracts**: Service [x]
@@ -356,32 +368,39 @@ public sealed class TimelineAdapterBinding : AdapterBindingBase
 [Serializable]
 public struct TimelineValueChannelConfig
 {
-    public string Sub;          // registry の slug:sub の sub 部（例: "gaze-0", "cheek-puff"）
-    public int AxisCount;       // gaze は 2 固定
-    public bool IsGaze;         // true なら TimelineGazeInputSource として登録
+    public string Sub;               // registry の slug:sub の sub 部（例: "gaze-0", "cheek-puff"）
+    public int AxisCount;            // gaze は 2 固定
+    public bool IsGaze;              // true なら TimelineGazeInputSource として登録
+
+    /// <summary>IsGaze のとき必須。差し替え対象となる既存ライブ gaze ソースの registry id
+    /// （GazeBindingConfig が参照している id。例: "osc:eye-gaze-0"）。
+    /// ユーザーの GazeBindingConfig は既存のライブ配線のまま変更しない。</summary>
+    public string TakeoverSourceId;
 }
 ```
 
 - Preconditions: `ctx.HostGameObject` 非 null（AdapterBuildContext が保証）
-- Postconditions: sink 群と Receiver が登録済み。Timeline 未再生時は sink は無効（invalid / 空スタック）で他入力へ影響しない
-- Invariants: sink の Id・レイヤー割当は OnStart 後不変
+- Postconditions: sink 群と Receiver が登録済み。Timeline 未再生時は sink は無効（invalid / 空スタック）かつ gaze 差し替え未実施で、他入力へ影響しない
+- Invariants: sink の Id・レイヤー割当は OnStart 後不変。Dispose 完了後に gaze 消費側が timeline sink を参照し続けることはない
 
 #### FacialTimelineReceiver
 
 | Field | Detail |
 |-------|--------|
-| Intent | Track binding 対象 MonoBehaviour。mixer と sink の唯一の橋渡し + ベイク参照 + ハッシュ照合 |
-| Requirements | 1.2, 6.3, 6.4 |
+| Intent | Track binding 対象 MonoBehaviour。mixer と sink の唯一の橋渡し + ベイク参照 + ハッシュ照合 + gaze ソース差し替えの所有 |
+| Requirements | 1.2, 6.3, 6.4, 7.2 |
 
 **Responsibilities & Constraints**
 - mixer から `TryGetStateSink(layerName)` / `TryGetValueSink(layerName)` / `TryGetAnalogSink(sub)` で sink を解決させる（レイヤー名 → sink の辞書は初期化時に構築、以後参照のみ）
-- 再生開始時（最初の graph 評価）に 1 回だけ: ベイク成果物の有無確認（欠落 → `Debug.LogWarning`、Req 6.4）、`FacialTimelineHashCalculator` で正本ハッシュを計算しベイク記録値と照合（不一致 → `Debug.LogWarning` + 継続、Req 6.3）。照合結果は Editor 側（DirtyWatcher）から読める static フラグ/イベントで公開する（6.5 の入力）
+- 再生セッション開始時（最初の graph 評価）に 1 回だけ `BeginPlaybackSession`: (1) ベイク成果物の有無確認（欠落 → `Debug.LogWarning` + 値供給なし・状態駆動は継続、Req 6.4）、(2) `FacialTimelineHashCalculator` で正本ハッシュを計算しベイク記録値と照合（不一致 → `Debug.LogWarning` + 継続、Req 6.3）、(3) **gaze ソース差し替え**: 各 gaze チャネルの `TakeoverSourceId` を registry から解決して元ソース参照を退避し、`Replace(takeoverId, timelineGazeSink)` を実行（core 注入面が消費側 `EyeBinding` へ再バインドを伝搬）。照合結果は Editor 側（DirtyWatcher）から読める static フラグ/イベントで公開する（6.5 の入力）
+- **gaze 差し替えの復元保証（三重）**: (1) `ReleaseAll`（graph 停止/破棄）で `Replace(takeoverId, 退避した元ソース)`、(2) 自身の `OnDisable`/`OnDestroy` で未復元なら復元、(3) `TimelineAdapterBinding.Dispose` が最終防衛線。復元は冪等（未差し替え時は no-op）
+- `TakeoverSourceId` が registry で解決できない場合: `Debug.LogWarning` + 当該 gaze チャネルのみ無効化（他チャネル・他 Track は継続）
 - ベイクカーブの BlendShape 名 → sink バッファ index 解決を初期化時に 1 回だけ行う（以後 GC ゼロ）
-- graph 停止 / 破棄通知（mixer の `OnPlayableDestroy` 経由）で state sink 全 TriggerOff + value/gaze sink invalidate（research.md Decision 参照）
+- graph 停止 / 破棄通知（mixer の `OnPlayableDestroy` 経由）で state sink 全 TriggerOff + value/gaze sink invalidate + gaze 元ソース復元（research.md Decision 参照）
 
 **Dependencies**
 - Inbound: 両 MixerBehaviour — sink 解決・ベイクサンプル値の受け渡し (P0)
-- Outbound: FacialTimelineBakeAsset — カーブ・イベント列・ハッシュ (P0) / sink 群 (P0)
+- Outbound: FacialTimelineBakeAsset — 値カーブ・ハッシュ (P0) / sink 群 (P0) / IInputSourceRegistry + core 注入面（Replace 再バインド伝搬）— gaze 差し替えと復元 (P0)
 
 **Contracts**: Service [x] / State [x]
 
@@ -398,20 +417,20 @@ public sealed class FacialTimelineReceiver : MonoBehaviour
     public bool TryGetGazeSink(string sub, out TimelineGazeInputSource sink);
     public bool TryGetAnalogSink(string sub, out TimelineAnalogInputSource sink);
 
-    /// <summary>再生セッション開始時のベイク検査（欠落 6.4 / 不一致 6.3）。冪等。</summary>
-    public void EnsureBakeChecked(FacialProfile profile, TimelineAsset timeline);
+    /// <summary>再生セッション開始処理: ベイク検査（欠落 6.4 / 不一致 6.3）+ gaze ソース差し替え。冪等。</summary>
+    public void BeginPlaybackSession(FacialProfile profile, TimelineAsset timeline);
 
-    /// <summary>graph 停止時の全解除。</summary>
+    /// <summary>graph 停止時の全解除 + gaze 元ソース復元。冪等。</summary>
     public void ReleaseAll();
 }
 ```
 
-- Preconditions: `EnsureBakeChecked` は再生経路で最初の `ProcessFrame` から呼ばれる（メインスレッド）
-- Postconditions: `ReleaseAll` 後、全 sink は「他入力源に影響しない」状態（空スタック / invalid）
-- Invariants: sink 辞書は初期化後不変。照合は Warning のみで再生を止めない
+- Preconditions: `BeginPlaybackSession` は再生経路で最初の `ProcessFrame` から呼ばれる（メインスレッド）。core 注入面（rec spec 追加予定）が存在すること
+- Postconditions: `ReleaseAll` 後、全 sink は「他入力源に影響しない」状態（空スタック / invalid）であり、gaze 消費側はライブ元ソースを参照する
+- Invariants: sink 辞書は初期化後不変。照合は Warning のみで再生を止めない。差し替えと復元は必ず対で完了する（三重の復元保証）
 
 ##### State Management
-- State model: ハッシュ照合結果（未検査 / 一致 / 不一致 / ベイク欠落）を保持
+- State model: ハッシュ照合結果（未検査 / 一致 / 不一致 / ベイク欠落）+ gaze 差し替え状態（未差し替え / 差し替え中 + 退避元ソース参照）を保持
 - Persistence & consistency: 非永続（セッション状態）。Editor の DirtyWatcher が参照
 - Concurrency strategy: メインスレッド限定（Timeline 評価 + LateUpdate）
 
@@ -442,7 +461,7 @@ public sealed class FacialTimelineReceiver : MonoBehaviour
 
 **Responsibilities & Constraints**
 - `TimelineBakedValueSink : ValueProviderInputSourceBase` — 事前確保 `float[]`（BlendShape 数）と有効フラグを保持。Receiver がカーブサンプル結果を書込み、`TryWriteValues` がコピーする。`ContributeMask` はベイクに含まれる BlendShape 名から初期化時に構築（触らない BlendShape へ干渉しない — ライブの ContributeMask 思想と同一）
-- `TimelineGazeInputSource` — `GazeVector2InputSource`（osc パッケージ）と同型の自前実装（`IInputSource` + `IAnalogInputSource`、`Publish(x, y)`、-1..1、clamp なし、`BlendShapeCount = 0`）。profile の `GazeBindingConfig` が `timeline:gaze-{n}` を参照することで既存 resolver → `GazeBonePoseProvider` が適用する（Req 7.2/7.4。ボーン回転はこの sink を通らない）
+- `TimelineGazeInputSource` — `GazeVector2InputSource`（osc パッケージ）と同型の自前実装（`IInputSource` + `IAnalogInputSource`、`Publish(x, y)`、-1..1、clamp なし、`BlendShapeCount = 0`）。`timeline:gaze-{n}` として registry に常時登録される（診断用）が、gaze 解決への供給は**静的配線ではなく一時差し替え**で行う: 再生セッション開始時に Receiver が `Replace(TakeoverSourceId, 本 sink)` を実行し、core 注入面が消費側 `EyeBinding.Source` を再バインドする。停止時に元のライブソースへ復元される。ユーザーの `GazeBindingConfig` は既存ライブ配線のまま変更不要（Req 7.2/7.4。ボーン回転はこの sink を通らない。ライブ gaze との共存 = 再生中のみ Timeline が当該チャネルを占有し、非再生中はライブが従来どおり機能する）
 - `TimelineAnalogInputSource` — N-axis 版。Timeline 非再生時は invalid
 
 **Contracts**: State [x]
@@ -499,10 +518,11 @@ public sealed class TimelineBakedValueSink : ValueProviderInputSourceBase
 
 **Responsibilities & Constraints**
 - 時刻は `playable.GetTime()` のみ使用（Req 8.2）。前回評価時刻を保持し、前進が 1 評価分を超える・後退した場合はジャンプとして扱う
-- **ランタイム再生**: System Flows のシーケンス図のとおり。状態イベント列は `FacialTimelineBakeAsset.StateEvents`（正本クリップ列から導出済み）を使用し、`TimelineEventStateReconstructor` で駆動する
-- **Editor（非 Play）プレビュー**: `Application.isPlaying == false` の評価では sink を駆動せず、ベイクカーブのサンプル値を binding 対象経由で SkinnedMeshRenderer の BlendShape weight（および gaze 解決結果の目ボーン localRotation）へ直接適用する。適用対象は Track の `GatherProperties`（`IPropertyPreview`）で driven-property 登録し、preview 解除時に Timeline が自動復元する。**この直接適用はプレビュー専用経路であり、Req 1.4（ランタイムの合成委譲）の対象外**。ベイク欠落時はプレビュー不可（Scene 変化なし + Console 通知）
-- `FacialValueMixerBehaviour`: 毎評価、有効クリップのカーブをクリップローカル時間でサンプルし `Publish` / `Write`。クリップなし区間は invalidate
-- `OnPlayableDestroy` / graph 停止で `Receiver.ReleaseAll()`
+- **状態イベント列の導出**: graph 構築時（`CreateTrackMixer` 後の初期化）に Track（子レーン含む）のクリップ列から `TimelineStateEvent` 列（クリップ開始 = on / 終了 = off、時刻昇順・安定ソート）を導出して `TimelineEventStateReconstructor` に設定する。ベイク成果物には依存しない（Key Design Decisions 6 — ベイク欠落時も状態駆動は継続）。構築時のためアロケーション許容
+- **ランタイム再生**: System Flows のシーケンス図のとおり。値は Receiver 経由でベイクカーブをサンプル。ベイク欠落時は値供給をスキップし状態駆動のみ行う
+- **Editor（非 Play）プレビュー**: `Application.isPlaying == false` の評価では sink を駆動せず、ベイクカーブのサンプル値を binding 対象経由で SkinnedMeshRenderer の BlendShape weight（および gaze 解決結果の目ボーン localRotation）へ直接適用する。適用対象は Track の `GatherProperties`（`IPropertyPreview`）で driven-property 登録し、preview 解除時に Timeline が自動復元する。**この直接適用はプレビュー専用経路であり、Req 1.4（ランタイムの合成委譲）の対象外**。Editor プレビューでは gaze のライブソース差し替えは行わない。ベイク欠落時はプレビュー不可（Scene 変化なし + Console 通知）
+- `FacialValueMixerBehaviour`: 毎評価、ベイク成果物の絶対時間カーブ（`ValueBakes`）をサンプルし `Publish` / `Write`。クリップの存在しない区間（クリップ範囲は正本 Track から構築時に取得）は invalidate。ベイク欠落時は常時 invalidate
+- `OnPlayableDestroy` / graph 停止で `Receiver.ReleaseAll()`（gaze 元ソース復元を含む）
 - 毎評価の定常処理はヒープ確保なし（イベント走査・カーブ Evaluate・差分配列は事前確保）
 
 **Dependencies**
@@ -667,7 +687,7 @@ public readonly struct RecordedEvent
 - t = 0 から `sampleRate`（既定 60 Hz、BakeAsset に記録しハッシュに含める）で前進し、各ステップでクリップ境界イベント（同時刻は記録順）を発火 → `Aggregate(1/sampleRate, ...)` → フックで per-source scratch を捕捉する
 - キー削減: 直線区間の中間キーを除去する決定的アルゴリズム（誤差しきい値固定）。同一入力 → 同一カーブ（Req 4.5）
 - 連続値（gaze / アナログ）は再シミュレーションせず、クリップカーブを絶対時間へオフセット正規化して複製する（gaze はボーン回転を焼かない — Req 7.3）
-- 状態イベント列（`StateEvents`）をクリップ列から導出して格納する（クリップ開始 = on / 終了 = off、レーン統合済み・時刻昇順）
+- 状態イベント列はベイク成果物に格納しない（mixer が graph 構築時に正本クリップ列から導出する — Key Design Decisions 6）
 - 削除済み expressionId のクリップ: core の実挙動（目標ゼロ + 既定遷移）どおりに焼き、per-clip 1 回 Warning（OQ2）
 - Editor asmdef 配置。ヒープ確保自由（Req 8.3 / 4.3）
 
@@ -750,7 +770,8 @@ public sealed class FacialTimelineBakeAsset : ScriptableObject
     public float SampleRate;              // 既定 60。ハッシュ入力に含む
     public List<ExpressionSourceBake> ExpressionBakes;
     public List<ValueChannelBake> ValueBakes;
-    public List<TimelineStateEvent> StateEvents;   // 全 Track 統合・時刻昇順
+    // 状態イベント列は持たない: mixer が graph 構築時に正本クリップ列から導出する
+    // （Key Design Decisions 6。ベイク欠落時も状態駆動を継続可能にするため）
 }
 
 [Serializable]
@@ -775,7 +796,7 @@ public sealed class ValueChannelBake
     public AnimationCurve[] Axes;         // 絶対 Timeline 時間へ正規化済み
 }
 
-[Serializable]
+// 非シリアライズのランタイムモデル（graph 構築時にクリップ列から導出）
 public struct TimelineStateEvent
 {
     public double TimeSeconds;            // Timeline 絶対時間
@@ -786,7 +807,7 @@ public struct TimelineStateEvent
 ```
 
 - 保存形態: TimelineAsset の sub-asset（アセット移動に追従）。`FacialTimelineReceiver.BakeAsset` が参照する
-- 消費: Receiver が初期化時に BlendShapeName → sink index、LayerName → sink を解決し、以後はカーブ Evaluate とイベント走査のみ（GC ゼロ）
+- 消費: Receiver が初期化時に BlendShapeName → sink index、Sub → sink を解決し、以後はカーブ Evaluate のみ（GC ゼロ）。状態イベント列は BakeAsset ではなく mixer が正本クリップ列から導出する
 
 ### Data Contracts & Integration
 - `IRecordedEventSequence` / `RecordedEvent`: rec 論理形の契約（Components 章参照）。rec spec の design 確定時に `RecEventSequenceAdapter` のみで吸収する
@@ -805,9 +826,11 @@ steering 契約どおり Unity 標準ログ（`Debug.Log/LogWarning/LogError`）
 | クリップが削除済み expressionId 参照 | Validator / Bake / ClipEditor | 検証レポート + ベイク時 per-clip Warning + クリップ UI にエラー表示。再生は core の安全挙動で継続 | 3.3 |
 | 再書き出しが既存アセットを対象 | Exporter | 確認ダイアログ必須（無警告上書きなし） | 3.4 |
 | ランタイムでハッシュ不一致 | Receiver | Warning + 再生継続 | 6.3 |
-| ベイク成果物なしで再生開始 | Receiver | ログ通知 + 値供給なし（状態駆動のみ） | 6.4 |
+| ベイク成果物なしで再生開始 | Receiver | ログ通知 + 値供給なし（状態イベントはクリップ列由来のため状態駆動は継続） | 6.4 |
 | 警告済みセッション終了（Editor） | DirtyWatcher | 自動再ベイク試行 + 成否ダイアログ | 6.5 |
 | gaze カーブが -1..1 範囲外 | Validator | Warning のみ（値は変更しない — ライブ同等） | OQ3 |
+| gaze の TakeoverSourceId が registry で解決不能 | Receiver（セッション開始時） | Warning + 当該 gaze チャネルのみ無効化（差し替えせず、他チャネル・再生は継続） | 7.2 準拠 |
+| gaze 差し替え中の異常終了（graph 破棄・Receiver 破棄） | Receiver OnDisable/OnDestroy → Binding Dispose | 三重の復元保証で元ソースへ復元（冪等） | 7.2 準拠 |
 | Track の対象レイヤー名が binding 設定に不在 | Receiver 初期化 | Warning + 当該 Track を無効化（他 Track は継続） | 3.3 準拠 |
 | rec 記録の読込失敗 | Exporter | Error ログ + 書き出し中止（アセット変更なし） | 9.5 |
 

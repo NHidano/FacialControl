@@ -22,8 +22,8 @@
 #### Acceptance Criteria
 
 1. While 記録セッションが有効な間, when ExpressionTrigger の on または off イベントが発生したとき, the REC 記録サービス shall expressionId とイベント種別（on/off）を秒ベースのタイムスタンプ付きで記録する
-2. While 記録セッションが有効な間, when アナログ軸値が更新されたとき, the REC 記録サービス shall 入力ソースの識別子と軸値を秒ベースのタイムスタンプ付きで記録する
-3. While 記録セッションが有効な間, when gaze 値の Publish(x, y) が発生したとき, the REC 記録サービス shall gaze の x/y 値（値域 -1..1）を秒ベースのタイムスタンプ付きで記録する
+2. While 記録セッションが有効な間, when そのフレームにパイプラインが消費するアナログ軸値が前回消費値から変化したとき, the REC 記録サービス shall 入力ソースの識別子と軸値を秒ベースのタイムスタンプ付きで記録する（フレーム消費粒度。同一フレーム内の複数更新はライブのブレンドが見る最終消費値へ畳まれるため、ブレンド再現性は損なわれない）
+3. While 記録セッションが有効な間, when そのフレームにパイプラインが消費する gaze 値が前回消費値から変化したとき, the REC 記録サービス shall gaze の x/y 値（値域 -1..1、無変換）を秒ベースのタイムスタンプ付きで記録する（フレーム消費粒度）
 4. The REC 記録サービス shall 記録の正本として操作イベントレベルのデータ（トリガー on/off + expressionId + アナログ軸値 + gaze）のみを保持する（合成後の BlendShape 値を正本としない）
 5. The REC 記録サービス shall タイムスタンプを記録開始時点を起点とする秒ベースの相対時間として記録する（フレーム番号に依存しない）
 6. When 記録セッションが開始されたとき, the REC 記録サービス shall 開始時点で有効な入力状態（active なトリガー・アナログ値・gaze 値）を初期状態として捕捉する
@@ -61,8 +61,8 @@
 #### Acceptance Criteria
 
 1. The REC パッケージ shall gaze を BlendShape 経路（0..1）とは別チャネル（IAnalogInputSource、push 型 Publish(x, y)）として記録・再生の必須スコープに含める
-2. When 記録中に gaze の Publish(x, y) が発生したとき, the REC 記録サービス shall 値域 -1..1 のまま正規化せずに記録する
-3. When 再生中に gaze イベントのタイムスタンプに到達したとき, the REC 再生サービス shall 記録時と同一の x/y 値を Publish で入力パイプラインへ駆動する
+2. When 記録中に gaze の消費値が変化したとき, the REC 記録サービス shall 値域 -1..1 のまま正規化せずに記録する
+3. When 再生中に gaze イベントのタイムスタンプに到達したとき, the REC 再生サービス shall 記録時と同一の x/y 値を再生用入力ソース経由で入力パイプラインへ駆動する
 4. The REC パッケージ shall gaze の記録・再生において Vector2 の 2 軸（AxisCount == 2）を欠落なく扱う
 
 ### Requirement 5: sidecar ファイルによる永続化
