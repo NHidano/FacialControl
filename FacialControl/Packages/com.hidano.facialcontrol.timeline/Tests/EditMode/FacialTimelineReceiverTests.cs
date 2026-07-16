@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Hidano.FacialControl.Adapters.InputSources;
+using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
+using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Timeline.Adapters;
 using Hidano.FacialControl.Timeline.Adapters.Assets;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
@@ -81,6 +83,57 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 DestroyReceiver(receiver);
                 UnityEngine.Object.DestroyImmediate(timeline);
                 UnityEngine.Object.DestroyImmediate(bake);
+            }
+        }
+
+        [Test]
+        public void BeginPlaybackSession_WhenBakeHashMismatches_RaisesInspectionIssue()
+        {
+            var receiver = CreateReceiver();
+            var registry = new FakeInputSourceRegistry();
+            var timeline = CreateTimeline();
+            var profile = CreateProfile();
+            var profileAsset = ScriptableObject.CreateInstance<FacialCharacterProfileSO>();
+            var controller = receiver.gameObject.AddComponent<FacialController>();
+            var bake = ScriptableObject.CreateInstance<FacialTimelineBakeAsset>();
+            BakeInspectionIssue? captured = null;
+
+            try
+            {
+                controller.CharacterSO = profileAsset;
+                bake.SourceHashHex = "deadbeef";
+                bake.SampleRate = 60f;
+                receiver.BakeAsset = bake;
+                receiver.Configure(
+                    profile,
+                    registry,
+                    Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
+                    Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
+                    Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
+                    Array.Empty<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>());
+
+                FacialTimelineReceiver.BakeIssueDetected += Capture;
+                LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(@"\[FacialTimelineReceiver\] Bake hash mismatch\..*"));
+
+                receiver.BeginPlaybackSession(profile, timeline);
+
+                Assert.That(captured.HasValue, Is.True);
+                Assert.That(captured.Value.Timeline, Is.SameAs(timeline));
+                Assert.That(captured.Value.ProfileSource, Is.SameAs(profileAsset));
+                Assert.That(captured.Value.Status, Is.EqualTo(BakeInspectionStatus.HashMismatch));
+            }
+            finally
+            {
+                FacialTimelineReceiver.BakeIssueDetected -= Capture;
+                DestroyReceiver(receiver);
+                UnityEngine.Object.DestroyImmediate(timeline);
+                UnityEngine.Object.DestroyImmediate(bake);
+                UnityEngine.Object.DestroyImmediate(profileAsset);
+            }
+
+            void Capture(BakeInspectionIssue issue)
+            {
+                captured = issue;
             }
         }
 

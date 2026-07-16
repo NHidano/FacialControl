@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Timeline.Adapters.Assets;
 using Hidano.FacialControl.Timeline.Domain.Models;
 using Hidano.FacialControl.Timeline.Domain.Services;
 using Hidano.FacialControl.Timeline.Tracks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Timeline;
 
@@ -15,8 +17,60 @@ namespace Hidano.FacialControl.Timeline.Editor
     {
         public static FacialTimelineBakeAsset Bake(
             TimelineAsset timeline,
+            FacialCharacterProfileSO profileAsset,
+            float sampleRate = FacialTimelineHashCalculator.DefaultSampleRate)
+        {
+            if (profileAsset == null)
+            {
+                throw new ArgumentNullException(nameof(profileAsset));
+            }
+
+            return Bake(
+                timeline,
+                profileAsset.BuildFallbackProfile(),
+                sampleRate,
+                AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(profileAsset)));
+        }
+
+        public static FacialTimelineBakeAsset Bake(
+            TimelineAsset timeline,
             FacialProfile profile,
             float sampleRate = FacialTimelineHashCalculator.DefaultSampleRate)
+        {
+            return Bake(timeline, profile, sampleRate, string.Empty);
+        }
+
+        public static void UpdateBakeAsset(
+            TimelineAsset timeline,
+            FacialCharacterProfileSO profileAsset,
+            FacialTimelineBakeAsset target,
+            float sampleRate = FacialTimelineHashCalculator.DefaultSampleRate)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            FacialTimelineBakeAsset baked = null;
+            try
+            {
+                baked = Bake(timeline, profileAsset, sampleRate);
+                CopyBakeData(baked, target);
+            }
+            finally
+            {
+                if (baked != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(baked);
+                }
+            }
+        }
+
+        private static FacialTimelineBakeAsset Bake(
+            TimelineAsset timeline,
+            FacialProfile profile,
+            float sampleRate,
+            string profileAssetGuid)
         {
             if (timeline == null)
             {
@@ -48,11 +102,22 @@ namespace Hidano.FacialControl.Timeline.Editor
 
             var bake = ScriptableObject.CreateInstance<FacialTimelineBakeAsset>();
             bake.SourceHashHex = FacialTimelineHashCalculator.ComputeHashHex(timeline, profile, sampleRate);
+            bake.ProfileAssetGuid = profileAssetGuid;
             bake.SampleRate = sampleRate;
             bake.ExpressionBakes = expressionBakes.ToArray();
             bake.ValueBakes = valueBakes.ToArray();
             bake.StateEvents = stateEvents.ToArray();
             return bake;
+        }
+
+        private static void CopyBakeData(FacialTimelineBakeAsset source, FacialTimelineBakeAsset target)
+        {
+            target.SourceHashHex = source.SourceHashHex;
+            target.ProfileAssetGuid = source.ProfileAssetGuid;
+            target.SampleRate = source.SampleRate;
+            target.ExpressionBakes = source.ExpressionBakes;
+            target.ValueBakes = source.ValueBakes;
+            target.StateEvents = source.StateEvents;
         }
 
         public static bool IsStale(

@@ -16,11 +16,13 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             try
             {
                 asset.SourceHashHex = null;
+                asset.ProfileAssetGuid = null;
                 asset.ExpressionBakes = null;
                 asset.ValueBakes = null;
                 asset.StateEvents = null;
 
                 Assert.That(asset.SourceHashHex, Is.EqualTo(string.Empty));
+                Assert.That(asset.ProfileAssetGuid, Is.EqualTo(string.Empty));
                 Assert.That(asset.ExpressionBakes, Is.Empty);
                 Assert.That(asset.ValueBakes, Is.Empty);
                 Assert.That(asset.StateEvents, Is.Empty);
@@ -43,6 +45,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 var gazeY = AnimationCurve.Linear(0f, 1f, 1f, -1f);
 
                 asset.SourceHashHex = "0123abcd";
+                asset.ProfileAssetGuid = "profile-guid";
                 asset.SampleRate = 120f;
                 asset.ExpressionBakes = new[]
                 {
@@ -74,6 +77,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 };
 
                 Assert.That(asset.SourceHashHex, Is.EqualTo("0123abcd"));
+                Assert.That(asset.ProfileAssetGuid, Is.EqualTo("profile-guid"));
                 Assert.That(asset.SampleRate, Is.EqualTo(120f));
                 Assert.That(asset.ExpressionBakes, Has.Length.EqualTo(1));
                 Assert.That(asset.ExpressionBakes[0].LayerName, Is.EqualTo("Expressions"));
@@ -102,6 +106,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             try
             {
                 asset.SourceHashHex = "feedbeef";
+                asset.ProfileAssetGuid = "profile-guid";
                 asset.SampleRate = 60f;
                 asset.ExpressionBakes = new[]
                 {
@@ -135,6 +140,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 string json = EditorJsonUtility.ToJson(asset);
 
                 StringAssert.Contains("\"sourceHashHex\":\"feedbeef\"", json);
+                StringAssert.Contains("\"profileAssetGuid\":\"profile-guid\"", json);
                 StringAssert.Contains("\"sampleRate\":60.0", json);
                 StringAssert.Contains("\"layerName\":\"Emotion\"", json);
                 StringAssert.Contains("\"blendShapeName\":\"Blink\"", json);

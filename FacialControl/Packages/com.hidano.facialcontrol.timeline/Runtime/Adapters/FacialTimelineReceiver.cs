@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Hidano.FacialControl.Adapters.InputSources;
+using Hidano.FacialControl.Adapters.Playable;
+using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Timeline.Adapters.Assets;
@@ -16,6 +18,8 @@ namespace Hidano.FacialControl.Timeline.Adapters
     /// </summary>
     public sealed class FacialTimelineReceiver : MonoBehaviour
     {
+        public static event Action<BakeInspectionIssue> BakeIssueDetected;
+
         private static readonly TimelineExpressionStateSink[] EmptyExpressionSinks = Array.Empty<TimelineExpressionStateSink>();
         private static readonly TimelineBakedValueSink[] EmptyValueSinks = Array.Empty<TimelineBakedValueSink>();
         private static readonly TimelineAnalogInputSource[] EmptyAnalogSinks = Array.Empty<TimelineAnalogInputSource>();
@@ -198,6 +202,7 @@ namespace Hidano.FacialControl.Timeline.Adapters
             {
                 LastBakeInspectionStatus = BakeInspectionStatus.MissingBakeAsset;
                 Debug.LogWarning("[FacialTimelineReceiver] BakeAsset is missing. Value playback is disabled, state playback continues.");
+                RaiseBakeIssue(BakeInspectionStatus.MissingBakeAsset, timeline);
                 return;
             }
 
@@ -213,10 +218,31 @@ namespace Hidano.FacialControl.Timeline.Adapters
                 LastBakeInspectionStatus = BakeInspectionStatus.HashMismatch;
                 Debug.LogWarning(
                     $"[FacialTimelineReceiver] Bake hash mismatch. expected='{expectedHash}', actual='{bakeAsset.SourceHashHex}'. Value playback continues with stale bake.");
+                RaiseBakeIssue(BakeInspectionStatus.HashMismatch, timeline);
                 return;
             }
 
             LastBakeInspectionStatus = BakeInspectionStatus.Fresh;
+        }
+
+        private void RaiseBakeIssue(BakeInspectionStatus status, TimelineAsset timeline)
+        {
+            if (!UnityEngine.Application.isEditor)
+            {
+                return;
+            }
+
+            BakeIssueDetected?.Invoke(new BakeInspectionIssue(
+                this,
+                timeline,
+                ResolveProfileSource(),
+                status));
+        }
+
+        private FacialCharacterProfileSO ResolveProfileSource()
+        {
+            FacialController controller = GetComponent<FacialController>();
+            return controller != null ? controller.CharacterSO : null;
         }
 
         private void AttachGazeTakeovers()
@@ -503,5 +529,28 @@ namespace Hidano.FacialControl.Timeline.Adapters
         MissingBakeAsset = 1,
         HashMismatch = 2,
         Fresh = 3,
+    }
+
+    public readonly struct BakeInspectionIssue
+    {
+        public BakeInspectionIssue(
+            FacialTimelineReceiver receiver,
+            TimelineAsset timeline,
+            FacialCharacterProfileSO profileSource,
+            BakeInspectionStatus status)
+        {
+            Receiver = receiver;
+            Timeline = timeline;
+            ProfileSource = profileSource;
+            Status = status;
+        }
+
+        public FacialTimelineReceiver Receiver { get; }
+
+        public TimelineAsset Timeline { get; }
+
+        public FacialCharacterProfileSO ProfileSource { get; }
+
+        public BakeInspectionStatus Status { get; }
     }
 }

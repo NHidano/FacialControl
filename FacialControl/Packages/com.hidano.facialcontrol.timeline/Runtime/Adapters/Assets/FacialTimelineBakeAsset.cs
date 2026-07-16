@@ -8,6 +8,7 @@ namespace Hidano.FacialControl.Timeline.Adapters.Assets
     public sealed class FacialTimelineBakeAsset : ScriptableObject
     {
         [SerializeField] private string sourceHashHex = string.Empty;
+        [SerializeField] private string profileAssetGuid = string.Empty;
         [SerializeField] private float sampleRate = FacialTimelineHashCalculator.DefaultSampleRate;
         [SerializeField] private ExpressionSourceBake[] expressionBakes = Array.Empty<ExpressionSourceBake>();
         [SerializeField] private ValueChannelBake[] valueBakes = Array.Empty<ValueChannelBake>();
@@ -17,6 +18,12 @@ namespace Hidano.FacialControl.Timeline.Adapters.Assets
         {
             get => sourceHashHex;
             set => sourceHashHex = value ?? string.Empty;
+        }
+
+        public string ProfileAssetGuid
+        {
+            get => profileAssetGuid;
+            set => profileAssetGuid = value ?? string.Empty;
         }
 
         public float SampleRate
