@@ -37,7 +37,7 @@
   - _Requirements: 5.3_
   - _Boundary: TimelineEventStateReconstructor_
 
-- [ ] 3.3 正本の正規形ハッシュ計算を実装する
+- [x] 3.3 正本の正規形ハッシュ計算を実装する
   - テストファースト: 同一正本 → 同一値 / クリップ移動・Keyframe 編集・プロファイル遷移時間変更・Track 並べ替えのそれぞれで不一致 / Track リネームでは不変（非意味変更）の EditMode テストを先に書く
   - design の正規形列挙順（本パッケージ Track を出現順 → 子レーン順、クリップ時刻・expressionId・全 Keyframe、プロファイル（id 昇順）、sampleRate。Track 名は含めない）で FNV-1a 64bit を計算する
   - 完了条件: 上記テストが全緑で、Editor / Runtime 共用（Runtime asmdef 配置・ビット表現ベースでプラットフォーム非依存）であること
