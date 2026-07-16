@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. rec パッケージの骨格を新設する
+- [x] 1. rec パッケージの骨格を新設する
   - 新規 UPM パッケージ `com.hidano.facialcontrol.rec`（0.1.0-preview.1）を標準構成（Runtime の Domain / Application / Adapters + Editor + Tests(EditMode / PlayMode / Shared) + Samples~ + Documentation~）で作成する
   - 4 つの asmdef で依存方向（Adapters → Application → Domain、Editor は Editor 専用）を物理的に強制し、依存は core のみ（OSC / InputSystem / lipsync / ifacialmocap への参照を持たない）とする
   - `.meta` の GUID はランダム生成の 32 桁 hex を使用する（連番・ローテーション系列は禁止）
