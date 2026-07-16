@@ -34,6 +34,8 @@ namespace Hidano.FacialControl.Timeline.Adapters
             new Dictionary<string, TimelineGazeInputSource>(StringComparer.Ordinal);
 
         private IInputSourceRegistry _inputSourceRegistry;
+        private FacialProfile _profile;
+        private bool _hasProfile;
         private TimelineExpressionStateSink[] _expressionSinks = EmptyExpressionSinks;
         private TimelineBakedValueSink[] _valueSinks = EmptyValueSinks;
         private TimelineAnalogInputSource[] _analogSinks = EmptyAnalogSinks;
@@ -51,12 +53,15 @@ namespace Hidano.FacialControl.Timeline.Adapters
         public BakeInspectionStatus LastBakeInspectionStatus { get; private set; } = BakeInspectionStatus.NotChecked;
 
         public void Configure(
+            FacialProfile profile,
             IInputSourceRegistry inputSourceRegistry,
             IReadOnlyList<(string layer, TimelineExpressionStateSink sink)> expressionSinks,
             IReadOnlyList<(string sub, TimelineBakedValueSink sink)> valueSinks,
             IReadOnlyList<(string sub, TimelineAnalogInputSource sink)> analogSinks,
             IReadOnlyList<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)> gazeSinks)
         {
+            _profile = profile;
+            _hasProfile = true;
             _inputSourceRegistry = inputSourceRegistry ?? throw new ArgumentNullException(nameof(inputSourceRegistry));
 
             _expressionSinks = CopyExpressionSinks(expressionSinks);
@@ -130,6 +135,16 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
             InspectBake(profile, timeline);
             AttachGazeTakeovers();
+        }
+
+        public void BeginPlaybackSession(TimelineAsset timeline)
+        {
+            if (!_hasProfile)
+            {
+                throw new InvalidOperationException("Timeline receiver profile was not configured.");
+            }
+
+            BeginPlaybackSession(_profile, timeline);
         }
 
         public void ReleaseAll()

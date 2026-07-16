@@ -28,6 +28,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             try
             {
                 receiver.Configure(
+                    profile,
                     registry,
                     Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
                     Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
@@ -62,6 +63,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 bake.SampleRate = 60f;
                 receiver.BakeAsset = bake;
                 receiver.Configure(
+                    profile,
                     registry,
                     Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
                     Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
@@ -92,6 +94,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
 
             registry.Register(AdapterSlug.Parse("live"), "gaze", liveSource);
             receiver.Configure(
+                CreateProfile(),
                 registry,
                 Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
                 Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
@@ -128,6 +131,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
 
             registry.Register(AdapterSlug.Parse("live"), "gaze", occupiedSource);
             receiver.Configure(
+                CreateProfile(),
                 registry,
                 Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
                 Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
@@ -160,6 +164,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
 
             registry.Register(AdapterSlug.Parse("live"), "gaze", liveSource);
             receiver.Configure(
+                CreateProfile(),
                 registry,
                 Array.Empty<(string layer, TimelineExpressionStateSink sink)>(),
                 Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
@@ -203,6 +208,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             var gazeSink = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));
 
             receiver.Configure(
+                CreateProfile(),
                 registry,
                 new[] { ("emotion", expressionSink) },
                 new[] { ("emotion-value", valueSink) },
@@ -249,6 +255,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             try
             {
                 receiver.Configure(
+                    CreateProfile(),
                     registry,
                     new[] { ("emotion", expressionSink) },
                     new[] { ("value-main", valueSink) },

@@ -122,6 +122,7 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
             }
 
             _receiver.Configure(
+                ctx.Profile,
                 ctx.InputSourceRegistry,
                 expressionSinks,
                 Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
