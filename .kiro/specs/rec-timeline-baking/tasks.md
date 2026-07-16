@@ -182,7 +182,7 @@
   - _Requirements: 5.3, 5.4_
   - _Boundary: PlayMode Integration Tests_
 
-- [ ] 9.3 (P) レイヤー共存・停止時解除・ベイク欠落 degradation の統合テストを実装する
+- [x] 9.3 (P) レイヤー共存・停止時解除・ベイク欠落 degradation の統合テストを実装する
   - Timeline 再生中に Fake リップシンク入力を並走させ、既存合成パイプラインで共存することを検証する
   - graph 停止で state sink 全解除 + value sink invalidate となり他入力源へ影響しないこと、ベイク成果物未割当の再生で値供給なし・状態駆動（override / suppress）継続 + ログ通知が出ることを検証する
   - 完了条件: 3 シナリオの PlayMode テストが全緑であること
