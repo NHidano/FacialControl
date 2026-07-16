@@ -16,7 +16,7 @@ FacialControl は、3D キャラクターの表情をリアルタイムに制御
 
 ## 開発環境
 
-- **Unity**: 6000.3.2f1 (Unity 6)
+- **Unity**: 6000.3.19f1 (Unity 6)。Editor 実体は `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe`（他バージョンでの batchmode 実行禁止 — `ProjectVersion.txt` が書き換わり全リインポートが走る）
 - **レンダリング**: URP v17.3.0（PC / モバイル別設定あり）
 - **カラースペース**: Linear
 - **Unity プロジェクトルート**: `FacialControl/` ディレクトリ配下

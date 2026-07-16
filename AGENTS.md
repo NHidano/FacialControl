@@ -2,6 +2,11 @@
 
 Kiro-style Spec-Driven Development on an agentic SDLC
 
+## Unity Editor (IMPORTANT)
+- Unity Editor executable for ALL batchmode / test commands: `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe`
+- Unity project path: `./FacialControl` (= `D:\Personal\Repositries\FacialControl\FacialControl`)
+- Do NOT use any other version under `D:\UnityEditors` (e.g. 6000.3.10f1). Using a different version rewrites `ProjectSettings/ProjectVersion.txt` and triggers a full reimport. If `ProjectVersion.txt` does not say 6000.3.19f1, that is drift caused by a wrong editor — never "fix" the editor choice to match the file.
+
 ## Project Memory
 Project memory keeps persistent guidance (steering, specs notes, component docs) so Codex honors your standards each run. Treat it as the long-lived source of truth for patterns, conventions, and decisions.
 

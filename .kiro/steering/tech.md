@@ -15,7 +15,7 @@ Domain は `Unity.Collections` のみ参照可、Adapters のみ `Unity.Animatio
 ## Core Technologies
 
 - **Language**: C# (Unity 6 同梱の Roslyn 互換)
-- **Runtime**: Unity **6000.3.2f1** (Unity 6)
+- **Runtime**: Unity **6000.3.19f1** (Unity 6)。Editor 実体: `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe`（batchmode テストは必ずこのバージョンで実行する）
 - **Render Pipeline**: URP **17.3.0**（PC / モバイル別設定あり、ただしパッケージ自体はパイプライン非依存契約）
 - **Color Space**: Linear
 - **Distribution**: UPM (Unity Package Manager)、最終的に npmjs.com `com.hidano` スコープへ公開
@@ -71,7 +71,7 @@ JSON パースは `JsonUtility` ベース（System.Text.Json は使わない）�
 ## Development Environment
 
 ### Required Tools
-- Unity Hub + Unity 6000.3.2f1
+- Unity Hub + Unity 6000.3.19f1（`D:/UnityEditors/6000.3.19f1/Editor/Unity.exe`）
 - Git（外部依存は SSH 経由で取得: lilToon / MagicaCloth2 等）
 
 ### Common Commands
