@@ -49,7 +49,7 @@
   - _Requirements: 6.4_
   - _Boundary: InputSourceRegistry, IInputSourceRegistry_
 
-- [ ] 4.2 (P) 注入ソースのマーカー契約と占有規則を定義する
+- [x] 4.2 (P) 注入ソースのマーカー契約と占有規則を定義する
   - 注入で装着された代替入力ソースのマーカー契約（IInjectedInputSource、退避原本の保持）を core Domain に追加する
   - 多重注入の占有規則（他者占有 id への装着スキップ + Warning / 参照同一性による復元ガード / 「A 装着→B 装着→A 復元」で B 非破壊）を契約として XML doc に文書化する。core は占有の集中管理テーブルを持たない
   - 完了条件: rec および後続 spec（rec-timeline-baking）の注入実装が同一規則を参照できる契約が core に存在する

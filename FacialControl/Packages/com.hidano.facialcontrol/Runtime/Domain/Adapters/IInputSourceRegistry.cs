@@ -39,6 +39,9 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <c>&lt;slug&gt;</c> primary id に対応する source を置き換える。
         /// 対象 id が未登録なら新規登録として扱う。
         /// Subscribe ハンドラには新しい source が同期通知される。
+        /// 注入者は <see cref="Hidano.FacialControl.Domain.Interfaces.IInjectedInputSource"/> を
+        /// マーカーとして用い、既存 entry が注入ソースなら他者占有とみなして
+        /// 自身の Replace をスキップする契約に従う。
         /// Subscribe 通知中に本 API を呼ぶことは契約違反であり、
         /// 実装は LogError + no-op とする。
         /// </summary>
@@ -63,6 +66,9 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <c>&lt;slug&gt;:&lt;sub&gt;</c> composite id に対応する source を置き換える。
         /// 対象 id が未登録なら新規登録として扱う。
         /// Subscribe ハンドラには新しい source が同期通知される。
+        /// 注入者は <see cref="Hidano.FacialControl.Domain.Interfaces.IInjectedInputSource"/> を
+        /// マーカーとして用い、既存 entry が注入ソースなら他者占有とみなして
+        /// 自身の Replace をスキップする契約に従う。
         /// Subscribe 通知中に本 API を呼ぶことは契約違反であり、
         /// 実装は LogError + no-op とする。
         /// </summary>
@@ -77,6 +83,10 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <summary>
         /// <c>&lt;slug&gt;</c> primary id の登録を解除する。未登録なら no-op。
         /// 登録解除された場合、Subscribe ハンドラには <c>null</c> が同期通知される。
+        /// 注入者は現エントリが自分の装着した
+        /// <see cref="Hidano.FacialControl.Domain.Interfaces.IInjectedInputSource"/> と
+        /// 参照同一である場合のみ復元または解除を行う。
+        /// 参照が異なる場合は Warning + no-op とし、後続占有者を破壊しない。
         /// Subscribe 通知中に本 API を呼ぶことは契約違反であり、
         /// 実装は LogError + no-op とする。
         /// </summary>
@@ -85,6 +95,10 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// <summary>
         /// <c>&lt;slug&gt;:&lt;sub&gt;</c> composite id の登録を解除する。未登録なら no-op。
         /// 登録解除された場合、Subscribe ハンドラには <c>null</c> が同期通知される。
+        /// 注入者は現エントリが自分の装着した
+        /// <see cref="Hidano.FacialControl.Domain.Interfaces.IInjectedInputSource"/> と
+        /// 参照同一である場合のみ復元または解除を行う。
+        /// 参照が異なる場合は Warning + no-op とし、後続占有者を破壊しない。
         /// Subscribe 通知中に本 API を呼ぶことは契約違反であり、
         /// 実装は LogError + no-op とする。
         /// </summary>

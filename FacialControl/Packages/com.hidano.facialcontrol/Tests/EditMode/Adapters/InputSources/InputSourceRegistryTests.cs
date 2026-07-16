@@ -24,7 +24,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.InputSources
         private static readonly Regex ReentrantMutationLogPattern =
             new Regex("InputSourceRegistry.*mutation during subscription notification", RegexOptions.IgnoreCase);
 
-        private sealed class StubInputSource : IInputSource
+        private class StubInputSource : IInputSource
         {
             public StubInputSource(string id)
             {
@@ -41,6 +41,17 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.InputSources
 
             public void Tick(float deltaTime) { }
             public bool TryWriteValues(Span<float> output) => false;
+        }
+
+        private sealed class StubInjectedInputSource : StubInputSource, IInjectedInputSource
+        {
+            public StubInjectedInputSource(string id, IInputSource replacedSource)
+                : base(id)
+            {
+                ReplacedSource = replacedSource;
+            }
+
+            public IInputSource ReplacedSource { get; }
         }
 
         [Test]
@@ -447,6 +458,24 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.InputSources
             Assert.IsTrue(registry.TryResolve("osc:vrchat", out compositeResolved));
             Assert.AreSame(replacedComposite, compositeResolved);
             Assert.AreEqual(1, registry.RegisteredIds.Count);
+        }
+
+        [Test]
+        public void InjectedInputSource_MarkerContract_PreservesReplacedSourceReference()
+        {
+            var original = new StubInputSource("original");
+            var injected = new StubInjectedInputSource("injected", original);
+
+            Assert.That(injected, Is.InstanceOf<IInjectedInputSource>());
+            Assert.That(injected.ReplacedSource, Is.SameAs(original));
+        }
+
+        [Test]
+        public void InjectedInputSource_MarkerContract_AllowsNullForRegisterWithoutOriginal()
+        {
+            var injected = new StubInjectedInputSource("injected", replacedSource: null);
+
+            Assert.That(injected.ReplacedSource, Is.Null);
         }
     }
 }
