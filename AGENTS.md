@@ -7,6 +7,12 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 - Unity project path: `./FacialControl` (= `D:\Personal\Repositries\FacialControl\FacialControl`)
 - Do NOT use any other version under `D:\UnityEditors` (e.g. 6000.3.10f1). Using a different version rewrites `ProjectSettings/ProjectVersion.txt` and triggers a full reimport. If `ProjectVersion.txt` does not say 6000.3.19f1, that is drift caused by a wrong editor — never "fix" the editor choice to match the file.
 
+## Test Execution (IMPORTANT)
+- The ONLY sanctioned way to run tests is Unity Test Runner in batchmode:
+  `& "D:/UnityEditors/6000.3.19f1/Editor/Unity.exe" -batchmode -nographics -projectPath <repo>/FacialControl -runTests -testPlatform EditMode|PlayMode [-testFilter <fullname>] -testResults <abs-path>.xml -logFile <abs-path>.log`
+- NEVER pass `-quit` together with `-runTests` — it makes Unity exit immediately without running tests (no XML is produced). The test runner exits by itself when the run finishes.
+- NEVER load project/test DLLs (`Library/ScriptAssemblies/*.dll`) into PowerShell via `[System.Reflection.Assembly]::LoadFrom` + `Activator.CreateInstance` to invoke NUnit methods directly. This pattern is flagged by Windows Defender as a trojan (fileless-malware heuristic), gets blocked, and bypasses Unity Test Runner semantics (SetUp/TearDown, LogAssert, Unity APIs). If a test run seems to produce no XML, fix the command line (usually the `-quit` mistake) instead of switching to reflection.
+
 ## Project Memory
 Project memory keeps persistent guidance (steering, specs notes, component docs) so Codex honors your standards each run. Treat it as the long-lived source of truth for patterns, conventions, and decisions.
 
