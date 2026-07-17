@@ -71,21 +71,29 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
 
                 Assert.That(registry.TryResolve("timeline:emotion", out IInputSource emotionSource), Is.True);
                 Assert.That(registry.TryResolve("timeline:eye", out IInputSource eyeSource), Is.True);
+                Assert.That(registry.TryResolve("timeline:emotion:state", out IInputSource emotionStateSource), Is.True);
+                Assert.That(registry.TryResolve("timeline:eye:state", out IInputSource eyeStateSource), Is.True);
                 Assert.That(registry.TryResolve("timeline:analog-main", out IInputSource analogSource), Is.True);
                 Assert.That(registry.TryResolve("timeline:gaze-0", out IInputSource gazeSource), Is.True);
 
-                Assert.That(emotionSource, Is.InstanceOf<TimelineExpressionStateSink>());
-                Assert.That(eyeSource, Is.InstanceOf<TimelineExpressionStateSink>());
+                Assert.That(emotionSource, Is.InstanceOf<TimelineBakedValueSink>());
+                Assert.That(eyeSource, Is.InstanceOf<TimelineBakedValueSink>());
+                Assert.That(emotionStateSource, Is.InstanceOf<TimelineExpressionStateSink>());
+                Assert.That(eyeStateSource, Is.InstanceOf<TimelineExpressionStateSink>());
                 Assert.That(analogSource, Is.InstanceOf<TimelineAnalogInputSource>());
                 Assert.That(gazeSource, Is.InstanceOf<TimelineGazeInputSource>());
                 Assert.That(((TimelineAnalogInputSource)analogSource).AxisCount, Is.EqualTo(3));
 
                 Assert.That(binding.Receiver.TryGetExpressionSink("emotion", out var emotionSink), Is.True);
                 Assert.That(binding.Receiver.TryGetExpressionSink("eye", out var eyeSink), Is.True);
+                Assert.That(binding.Receiver.TryGetExpressionValueSink("emotion", out var emotionValueSink), Is.True);
+                Assert.That(binding.Receiver.TryGetExpressionValueSink("eye", out var eyeValueSink), Is.True);
                 Assert.That(binding.Receiver.TryGetAnalogSink("analog-main", out var resolvedAnalog), Is.True);
                 Assert.That(binding.Receiver.TryGetGazeSink("gaze-main", out var resolvedGaze), Is.True);
-                Assert.That(emotionSink, Is.SameAs(emotionSource));
-                Assert.That(eyeSink, Is.SameAs(eyeSource));
+                Assert.That(emotionSink, Is.SameAs(emotionStateSource));
+                Assert.That(eyeSink, Is.SameAs(eyeStateSource));
+                Assert.That(emotionValueSink, Is.SameAs(emotionSource));
+                Assert.That(eyeValueSink, Is.SameAs(eyeSource));
                 Assert.That(resolvedAnalog, Is.SameAs(analogSource));
                 Assert.That(resolvedGaze, Is.SameAs(gazeSource));
             }

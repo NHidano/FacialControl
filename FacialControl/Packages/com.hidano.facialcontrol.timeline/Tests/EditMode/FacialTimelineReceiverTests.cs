@@ -407,7 +407,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                     new[] { ("gaze-main", gazeSink, string.Empty) });
 
                 Assert.That(receiver.TryGetExpressionSink("emotion", out var resolvedExpression), Is.True);
-                Assert.That(receiver.TryGetValueSink("value-main", out var resolvedValue), Is.True);
+                Assert.That(receiver.TryGetExpressionValueSink("value-main", out var resolvedValue), Is.True);
                 Assert.That(receiver.TryGetAnalogSink("analog-main", out var resolvedAnalog), Is.True);
                 Assert.That(receiver.TryGetGazeSink("gaze-main", out var resolvedGaze), Is.True);
                 Assert.That(resolvedExpression, Is.SameAs(expressionSink));

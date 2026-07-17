@@ -8,6 +8,7 @@ using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
 using Hidano.FacialControl.Timeline.Adapters;
 using Hidano.FacialControl.Timeline.Adapters.Assets;
+using Hidano.FacialControl.Timeline.Adapters.AdapterBindings;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Timeline.Editor;
@@ -183,7 +184,7 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
 
         private sealed class TimelinePlaybackFixture : IDisposable
         {
-            private readonly BlendShapeCurve[] _bakedCurves;
+            private readonly TimelineAdapterBinding _binding;
             private readonly GameObject _directorObject;
             private readonly GameObject _receiverObject;
             private readonly PlayableDirector _director;
@@ -200,30 +201,27 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 Profile = profile;
                 Timeline = timeline;
                 Bake = attachBakeAsset ? TimelineBakeService.Bake(timeline, profile) : null;
-                _bakedCurves = Bake != null ? FindExpressionBakeCurves(Bake, ExpressionLayer) : Array.Empty<BlendShapeCurve>();
+                _binding = new TimelineAdapterBinding();
+                MutableTargetLayerNames(_binding).Add(ExpressionLayer);
 
-                ExpressionSink = new TimelineExpressionStateSink(
-                    InputSourceId.Parse("timeline:Expressions"),
-                    maxStackDepth: 4,
-                    exclusionMode: ExclusionMode.LastWins,
-                    profile);
-                ValueSink = new TimelineBakedValueSink(
-                    InputSourceId.Parse("timeline:bake"),
-                    blendShapeNames,
-                    Bake != null ? CollectBakedBlendShapeNames(_bakedCurves) : bakedBlendShapeNames ?? Array.Empty<string>());
-
-                _directorObject = new GameObject("TimelineDegradation_Director");
                 _receiverObject = new GameObject("TimelineDegradation_Receiver");
-                _director = _directorObject.AddComponent<PlayableDirector>();
                 _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
                 _receiver.BakeAsset = Bake;
-                _receiver.Configure(
+                _binding.OnStart(new AdapterBuildContext(
                     profile,
+                    blendShapeNames,
                     new NoopInputSourceRegistry(),
-                    new[] { (ExpressionLayer, ExpressionSink) },
-                    new[] { (ExpressionLayer, ValueSink) },
-                    Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
-                    Array.Empty<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>());
+                    new FacialOutputBus(),
+                    new NoopTimeProvider(),
+                    _receiverObject,
+                    lipSyncProvider: null));
+                Assert.That(_receiver.TryGetExpressionSink(ExpressionLayer, out TimelineExpressionStateSink expressionSink), Is.True);
+                Assert.That(_receiver.TryGetExpressionValueSink(ExpressionLayer, out TimelineBakedValueSink valueSink), Is.True);
+                ExpressionSink = expressionSink;
+                ValueSink = valueSink;
+
+                _directorObject = new GameObject("TimelineDegradation_Director");
+                _director = _directorObject.AddComponent<PlayableDirector>();
 
                 _director.playableAsset = timeline;
                 _director.timeUpdateMode = DirectorUpdateMode.Manual;
@@ -231,7 +229,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _director.SetGenericBinding(timeline.GetOutputTrack(0), _receiver);
                 _director.Play();
                 _director.playableGraph.Evaluate(0f);
-                SampleBakeAt(0f);
             }
 
             public FacialProfile Profile { get; }
@@ -258,7 +255,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 }
 
                 _currentTime = targetTime;
-                SampleBakeAt(targetTime);
             }
 
             public void ReleaseAll()
@@ -272,6 +268,8 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 {
                     _director.playableGraph.Destroy();
                 }
+
+                _binding.Dispose();
 
                 if (Bake != null)
                 {
@@ -292,24 +290,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 {
                     UnityEngine.Object.DestroyImmediate(_receiverObject);
                 }
-            }
-
-            private void SampleBakeAt(float timeSeconds)
-            {
-                if (_bakedCurves.Length == 0)
-                {
-                    return;
-                }
-
-                Span<float> bakedValues = stackalloc float[_bakedCurves.Length];
-                for (int i = 0; i < _bakedCurves.Length; i++)
-                {
-                    bakedValues[i] = _bakedCurves[i].Curve != null
-                        ? _bakedCurves[i].Curve.Evaluate(timeSeconds)
-                        : 0f;
-                }
-
-                Assert.That(ValueSink.SetValues(bakedValues), Is.True, "Bake sampling layout must match sink layout.");
             }
         }
 
@@ -541,6 +521,20 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
             public void Subscribe(string id, Action<IInputSource> handler)
             {
             }
+        }
+
+        private sealed class NoopTimeProvider : ITimeProvider
+        {
+            public double UnscaledTimeSeconds => 0d;
+        }
+
+        private static List<string> MutableTargetLayerNames(TimelineAdapterBinding binding)
+        {
+            System.Reflection.FieldInfo field = typeof(TimelineAdapterBinding).GetField(
+                "targetLayerNames",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            return (List<string>)field.GetValue(binding);
         }
 
         private static string[] CollectBakedBlendShapeNames(BlendShapeCurve[] curves)

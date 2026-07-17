@@ -190,6 +190,9 @@
 - **同一フレーム内複数イベントの順序** — レーン分割後もイベント統合はレイヤー親 Track の mixer が一元管理し、記録時刻 + 安定ソートで順序決定性を保証
 - **ハッシュの正規化漏れ**（同一内容で不一致 / 異内容で一致） — ハッシュ入力の正規形（フィールド列挙順・浮動小数のビット表現）を design に明文化し、EditMode テストで往復検証
 
+## Hash Canonicalization Note
+- 2026-07-17: FacialExpressionTrack.name は expression mixer が実効ターゲットレイヤー名として使用するため、track rename は意味変更として扱う。FacialTimelineHashCalculator の正規形には各 expression track の実効レイヤー名を含め、rename-invariant だったテストは rename-sensitive に更新する。
+
 ## References
 - [Extending Timeline: A practical guide](https://unity.com/blog/engine-platform/extending-timeline-practical-guide) — カスタム Track / mixer / ClipEditor の公式ガイド
 - [TrackAsset API](https://docs.unity3d.com/Packages/com.unity.timeline@1.6/api/UnityEngine.Timeline.TrackAsset.html) — CreateTrackMixer / GatherProperties

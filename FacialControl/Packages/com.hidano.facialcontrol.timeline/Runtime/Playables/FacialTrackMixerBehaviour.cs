@@ -64,12 +64,9 @@ namespace Hidano.FacialControl.Timeline.Playables
                 _hasEvaluationTime = false;
             }
 
-            double currentTime = playable.GetTime();
-            double evaluatedTime = currentTime;
-            if (info.deltaTime > 0d)
-            {
-                evaluatedTime += info.deltaTime;
-            }
+            double evaluatedTime = playable.GetTime();
+
+            receiver.SampleExpressionValues(_layerName, evaluatedTime);
 
             if (!_hasEvaluationTime)
             {

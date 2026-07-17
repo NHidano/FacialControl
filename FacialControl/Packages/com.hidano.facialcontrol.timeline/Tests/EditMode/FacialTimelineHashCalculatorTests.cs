@@ -113,7 +113,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
         }
 
         [Test]
-        public void ComputeHash_WhenTrackIsRenamed_ReturnsSameValue()
+        public void ComputeHash_WhenTrackIsRenamed_ReturnsDifferentValue()
         {
             var profile = CreateProfile(0.10f);
             var original = CreateTimeline("Expressions", 0.0d, 1.0d, 0.25f);
@@ -123,7 +123,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             {
                 Assert.That(
                     FacialTimelineHashCalculator.ComputeHash(original, profile),
-                    Is.EqualTo(FacialTimelineHashCalculator.ComputeHash(renamed, profile)));
+                    Is.Not.EqualTo(FacialTimelineHashCalculator.ComputeHash(renamed, profile)));
             }
             finally
             {

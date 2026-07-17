@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
@@ -7,6 +8,7 @@ using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
 using Hidano.FacialControl.Timeline.Adapters;
 using Hidano.FacialControl.Timeline.Adapters.Assets;
+using Hidano.FacialControl.Timeline.Adapters.AdapterBindings;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Timeline.Domain.Models;
@@ -316,6 +318,7 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
 
         private sealed class TimelinePathHarness : IDisposable
         {
+            private readonly TimelineAdapterBinding _binding;
             private readonly TimelineBakedValueSink _valueSink;
             private readonly LayerInputSourceRegistry _registry;
             private readonly LayerInputSourceWeightBuffer _weightBuffer;
@@ -323,7 +326,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
             private readonly int[] _priorities = { 0 };
             private readonly float[] _layerWeights = { 1f };
             private readonly float[] _finalOutput = new float[1];
-            private readonly BlendShapeCurve[] _bakedCurves;
             private readonly GameObject _directorObject;
             private readonly GameObject _receiverObject;
             private readonly PlayableDirector _director;
@@ -334,16 +336,18 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
 
             public TimelinePathHarness(TimelineAsset timeline, FacialProfile profile, FacialTimelineBakeAsset bake)
             {
-                _expressionSink = new TimelineExpressionStateSink(
-                    InputSourceId.Parse("timeline:Expressions"),
-                    maxStackDepth: 4,
-                    exclusionMode: ExclusionMode.LastWins,
-                    profile);
-                _bakedCurves = FindExpressionBakeCurves(bake, "Expressions");
-                _valueSink = new TimelineBakedValueSink(
-                    InputSourceId.Parse("timeline:bake"),
-                    new[] { "Smile" },
-                    CollectBakedBlendShapeNames(_bakedCurves));
+                _binding = new TimelineAdapterBinding();
+                MutableTargetLayerNames(_binding).Add("Expressions");
+
+                _receiverObject = new GameObject("TimelineLiveEquivalence_Receiver");
+                _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
+                _receiver.BakeAsset = bake;
+                _binding.OnStart(CreateBindingContext(profile, new[] { "Smile" }, _receiverObject));
+
+                Assert.That(_binding.Receiver, Is.SameAs(_receiver));
+                Assert.That(_receiver.TryGetExpressionSink("Expressions", out _expressionSink), Is.True);
+                Assert.That(_receiver.TryGetExpressionValueSink("Expressions", out _valueSink), Is.True);
+
                 _registry = new LayerInputSourceRegistry(
                     profile,
                     blendShapeCount: 1,
@@ -356,24 +360,13 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _aggregator = new LayerInputSourceAggregator(_registry, _weightBuffer, blendShapeCount: 1);
 
                 _directorObject = new GameObject("TimelineLiveEquivalence_Director");
-                _receiverObject = new GameObject("TimelineLiveEquivalence_Receiver");
                 _director = _directorObject.AddComponent<PlayableDirector>();
-                _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
-                _receiver.BakeAsset = bake;
-                _receiver.Configure(
-                    profile,
-                    new FakeInputSourceRegistry(),
-                    new[] { ("Expressions", _expressionSink) },
-                    new[] { ("Expressions", _valueSink) },
-                    Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
-                    Array.Empty<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>());
-
                 _director.playableAsset = timeline;
                 _director.timeUpdateMode = DirectorUpdateMode.Manual;
+                _director.extrapolationMode = DirectorWrapMode.None;
                 _director.SetGenericBinding(timeline.GetOutputTrack(0), _receiver);
-                _director.RebuildGraph();
+                _director.Play();
                 _director.playableGraph.Evaluate(0f);
-                SampleBakeAt(0f);
                 _aggregator.AggregateAndBlend(0f, _priorities, _layerWeights, _finalOutput);
             }
 
@@ -395,7 +388,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 }
 
                 _currentTime = targetTime;
-                SampleBakeAt(targetTime);
                 _aggregator.AggregateAndBlend(0f, _priorities, _layerWeights, _finalOutput);
             }
 
@@ -407,6 +399,7 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 }
 
                 _registry.Dispose();
+                _binding.Dispose();
 
                 if (_directorObject != null)
                 {
@@ -418,46 +411,42 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                     UnityEngine.Object.DestroyImmediate(_receiverObject);
                 }
             }
-
-            private void SampleBakeAt(float timeSeconds)
-            {
-                Span<float> bakedValues = stackalloc float[_bakedCurves.Length];
-                for (int i = 0; i < _bakedCurves.Length; i++)
-                {
-                    bakedValues[i] = _bakedCurves[i].Curve != null
-                        ? _bakedCurves[i].Curve.Evaluate(timeSeconds)
-                        : 0f;
-                }
-
-                Assert.That(_valueSink.SetValues(bakedValues), Is.True, "Bake sampling layout must match sink layout.");
-            }
         }
 
         private sealed class TimelineOverlayHarness : IDisposable
         {
+            private readonly TimelineAdapterBinding _binding;
             private readonly TimelineBakedValueSink _valueSink;
             private readonly float[] _finalOutput = new float[1];
-            private readonly BlendShapeCurve[] _bakedCurves;
             private readonly TimelineExpressionStateSink _expressionSink;
-            private readonly TimelineEventStateReconstructor _stateReconstructor = new TimelineEventStateReconstructor();
+            private readonly GameObject _directorObject;
+            private readonly GameObject _receiverObject;
+            private readonly PlayableDirector _director;
+            private readonly FacialTimelineReceiver _receiver;
 
             private float _currentTime;
 
             public TimelineOverlayHarness(TimelineAsset timeline, FacialProfile profile, FacialTimelineBakeAsset bake)
             {
-                _expressionSink = new TimelineExpressionStateSink(
-                    InputSourceId.Parse("timeline:Expressions"),
-                    maxStackDepth: 4,
-                    exclusionMode: ExclusionMode.LastWins,
-                    profile);
+                _binding = new TimelineAdapterBinding();
+                MutableTargetLayerNames(_binding).Add("Expressions");
 
-                _bakedCurves = FindExpressionBakeCurves(bake, "Expressions");
-                _valueSink = new TimelineBakedValueSink(
-                    InputSourceId.Parse("timeline:bake"),
-                    new[] { "Smile" },
-                    CollectBakedBlendShapeNames(_bakedCurves));
-                _stateReconstructor.SetEvents(TimelineStateEventCollector.Collect((FacialExpressionTrack)timeline.GetOutputTrack(0)));
-                SampleBakeAt(0f);
+                _receiverObject = new GameObject("TimelineLiveEquivalence_OverlayReceiver");
+                _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
+                _receiver.BakeAsset = bake;
+                _binding.OnStart(CreateBindingContext(profile, new[] { "Smile" }, _receiverObject));
+
+                Assert.That(_receiver.TryGetExpressionSink("Expressions", out _expressionSink), Is.True);
+                Assert.That(_receiver.TryGetExpressionValueSink("Expressions", out _valueSink), Is.True);
+
+                _directorObject = new GameObject("TimelineLiveEquivalence_OverlayDirector");
+                _director = _directorObject.AddComponent<PlayableDirector>();
+                _director.playableAsset = timeline;
+                _director.timeUpdateMode = DirectorUpdateMode.Manual;
+                _director.extrapolationMode = DirectorWrapMode.None;
+                _director.SetGenericBinding(timeline.GetOutputTrack(0), _receiver);
+                _director.Play();
+                _director.playableGraph.Evaluate(0f);
                 RefreshOutput();
             }
 
@@ -472,35 +461,37 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                     throw new InvalidOperationException("Timeline overlay harness cannot scrub backward via linear advance.");
                 }
 
-                _stateReconstructor.AdvanceLinear(_currentTime, targetTime, _expressionSink);
+                _director.playableGraph.Evaluate(targetTime - _currentTime);
                 _currentTime = targetTime;
-                SampleBakeAt(targetTime);
                 RefreshOutput();
             }
 
             public void JumpTo(float targetTime)
             {
-                _stateReconstructor.JumpTo(targetTime, _expressionSink);
+                _director.time = targetTime;
+                _director.Evaluate();
                 _currentTime = targetTime;
-                SampleBakeAt(targetTime);
                 RefreshOutput();
             }
 
             public void Dispose()
             {
-            }
-
-            private void SampleBakeAt(float timeSeconds)
-            {
-                Span<float> bakedValues = stackalloc float[_bakedCurves.Length];
-                for (int i = 0; i < _bakedCurves.Length; i++)
+                if (_director != null && _director.playableGraph.IsValid())
                 {
-                    bakedValues[i] = _bakedCurves[i].Curve != null
-                        ? _bakedCurves[i].Curve.Evaluate(timeSeconds)
-                        : 0f;
+                    _director.playableGraph.Destroy();
                 }
 
-                Assert.That(_valueSink.SetValues(bakedValues), Is.True, "Bake sampling layout must match sink layout.");
+                _binding.Dispose();
+
+                if (_directorObject != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_directorObject);
+                }
+
+                if (_receiverObject != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_receiverObject);
+                }
             }
 
             private void RefreshOutput()
@@ -601,6 +592,35 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _entries.Remove(id);
                 _registeredIds.Remove(id);
             }
+        }
+
+        private static AdapterBuildContext CreateBindingContext(
+            FacialProfile profile,
+            IReadOnlyList<string> blendShapeNames,
+            GameObject host)
+        {
+            return new AdapterBuildContext(
+                profile,
+                blendShapeNames,
+                new FakeInputSourceRegistry(),
+                new FacialOutputBus(),
+                new NoopTimeProvider(),
+                host,
+                lipSyncProvider: null);
+        }
+
+        private static List<string> MutableTargetLayerNames(TimelineAdapterBinding binding)
+        {
+            FieldInfo field = typeof(TimelineAdapterBinding).GetField(
+                "targetLayerNames",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            return (List<string>)field.GetValue(binding);
+        }
+
+        private sealed class NoopTimeProvider : ITimeProvider
+        {
+            public double UnscaledTimeSeconds => 0d;
         }
 
         private static FacialProfile CreateProfile(TransitionCurve transitionCurve)

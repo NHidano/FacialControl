@@ -3,7 +3,7 @@
 > 開発方針: TDD 厳守（Red-Green-Refactor）。各タスクはテストを先に書いてから実装する。
 > テスト実行は Unity batchmode 同期実行（`timeout: 600000`、Editor を閉じた状態で実行）。
 
-- [ ] 1. Foundation: パッケージ雛形と前提 spike
+- [x] 1. Foundation: パッケージ雛形と前提 spike
 - [x] 1.1 新規パッケージ com.hidano.facialcontrol.timeline の雛形を構築する
   - package.json（core / rec / com.unity.timeline 1.8.9 の依存宣言。Timeline 依存を本パッケージに局所化し core / rec へ波及させない）、README / CHANGELOG / LICENSE / Documentation~ を既存拡張パッケージ（osc / inputsystem）と同一パターンで作成する
   - Runtime asmdef（参照: core の Domain / Application / Adapters + Unity.Timeline。rec は参照しない）と Editor asmdef（参照: timeline Runtime + rec + Unity.Timeline / TimelineEditor）、Tests（EditMode / PlayMode / Shared）の asmdef を配置する
@@ -22,7 +22,7 @@
   - 完了条件: observer 未登録で既存 Aggregator テストが全緑（挙動・性能不変の回帰確認）かつ新規フックテストが緑であること
   - _Requirements: 4.2, 9.3_
 
-- [ ] 3. Track / クリップ定義と Domain 純ロジック
+- [x] 3. Track / クリップ定義と Domain 純ロジック
 - [x] 3.1 (P) 表情 / 連続値の Track・クリップアセットを定義する
   - 表情 Track（binding 対象 = Receiver、対象レイヤー名プロパティ、子レーン Track 管理）と表情クリップ（保持フィールドは expressionId のみ、ClipCaps.None でTimeline 側ブレンド禁止）を定義する。遷移時間・カーブはクリップに持たせない（プロファイル read-only 参照）
   - 連続値 Track（チャネル sub-id + Analog / Gaze 種別）と連続値クリップ（軸ごとの AnimationCurve、gaze は 2 軸・値域 -1..1 のまま、クリップローカル時間、ClipCaps.None）を定義する
@@ -44,7 +44,7 @@
   - _Requirements: 6.1_
   - _Depends: 3.1_
 
-- [ ] 4. 入力パイプライン参加（sink 群・ベイク成果物・Receiver・Binding）
+- [x] 4. 入力パイプライン参加（sink 群・ベイク成果物・Receiver・Binding）
 - [x] 4.1 (P) 状態のみ供給する trigger sink を実装する
   - テストファースト: TriggerOn/Off で ActiveExpressionIds の LIFO 意味論（再トリガー位置更新・深度制限）が base のまま維持され、値の書込み寄与が構造的にゼロ（blendShapeCount=0）であることのテストを先に書く
   - core の trigger 入力源基底を blendShapeCount: 0 で構築し、maxStackDepth・ExclusionMode をライブ側設定と一致させる（追加 API なし）
@@ -83,7 +83,7 @@
   - 完了条件: core 無改修（観測フック以外）のまま binding 追加だけで sink 群が入力パイプラインに参加するテストが緑であること
   - _Requirements: 1.2, 9.1, 9.2, 9.3_
 
-- [ ] 5. mixer（Timeline 評価 → sink 駆動）
+- [x] 5. mixer（Timeline 評価 → sink 駆動）
 - [x] 5.1 表情 mixer の状態イベント導出と線形 / ジャンプ駆動を実装する
   - graph 構築時に Track（子レーン含む）のクリップ列から状態イベント列（開始 = On / 終了 = Off、時刻昇順・安定ソート）を導出して再構築サービスに設定する（ベイク成果物に依存しない。ベイク欠落時も状態駆動は継続）
   - 時刻は playable.GetTime() のみ使用（新規の絶対時刻源なし）。線形前進は区間イベントの順次発火、後退・1 評価超の前進はジャンプとして差分駆動。値は Receiver 経由でベイクカーブをサンプルし value sink へ書込み、ベイク欠落時は値供給をスキップ
@@ -105,7 +105,7 @@
   - 完了条件: Timeline ウィンドウのスクラブ位置に対応する表情が Scene に表示され、preview 解除で元の状態へ戻ること
   - _Requirements: 5.6_
 
-- [ ] 6. Editor ベイク（再シミュレーション + 陳腐化検知）
+- [x] 6. Editor ベイク（再シミュレーション + 陳腐化検知）
 - [x] 6.1 再シミュレーションハーネスとイベント時刻分割ステップを実装する
   - テストファースト: 60Hz グリッド外のクリップ境界時刻に必ずキーが存在すること、線形遷移のベイクカーブが任意時刻サンプルでライブ遷移計算と厳密一致すること（イベント時刻分割ステップの検証）の EditMode テストを先に書く
   - 表情 Track ごとに trigger source（blendShapeCount = プロファイル内全 Expression の BlendShape 名和集合数）+ registry + Aggregator + 観測フックのオフラインパイプラインを構築する（遷移計算は core の実コードが実行 = ライブと同一コードパス）
@@ -128,7 +128,7 @@
   - 完了条件: クリップ列 / プロファイル編集 → 保存で自動再ベイクが走り、警告済みセッション終了で結果ダイアログが表示されること
   - _Requirements: 6.2, 6.5_
 
-- [ ] 7. Editor 書き出し + 検証
+- [x] 7. Editor 書き出し + 検証
 - [x] 7.1 REC → クリップ列変換ロジックを実装する（rec 論理形の Fake で先行）
   - テストファースト: on/off 対 → クリップ / off 欠落 → 記録終端まで / 重なり → 決定的貪欲レーン割当（レーン 0 = 親 Track 自身に最初のレーンが置かれること）/ 未知 expressionId → クリップ生成 + Warning（LogAssert）/ 多軸アナログ（AxisCount > 2）の欠落なし変換 / gaze 自動推論の決定性（GazeBindingConfig 一致 + 2 軸 → Gaze、軸数不一致 → Warning + Analog フォールバック）の EditMode テストを先に書く
   - rec 論理イベント形の契約（IRecordedEventSequence / RecordedEvent。本パッケージ内定義）と Fake 実装を用意し、rec 実 API の確定を待たずに変換ロジックを完成させる
@@ -152,7 +152,7 @@
   - _Boundary: FacialTimelineValidator, FacialExpressionClipEditor, FacialExpressionTrackEditor_
   - _Depends: 3.1_
 
-- [ ] 8. 先行 spec 依存の結合（依存ゲート付き）
+- [x] 8. 先行 spec 依存の結合（依存ゲート付き）
 - [x] 8.1 (P) rec 実フォーマット読込アダプターを結合する
   - 依存ゲート: rec-recording-playback の読込 API 確定・実装後にのみ着手可能（それまでは 7.1 の Fake で先行済み。契約が変わった場合は Revalidation Trigger に従い再照合）
   - rec 実モデル（RecTimeline / RecEvent、AnalogSample 可変軸。IdDefine / Footer は adapter 内で解決・消費）→ rec 論理形への 1:1 機械変換のみを行う（kind 推論・gaze 判定は行わない）。rec 依存はこの 1 ファイル + Editor asmdef に封じ込める
@@ -170,7 +170,7 @@
   - _Boundary: FacialTimelineReceiver, TimelineGazeInputSource, TimelineAdapterBinding_
   - _Depends: 4.4, 4.5_
 
-- [ ] 9. PlayMode 統合・性能検証
+- [x] 9. PlayMode 統合・性能検証
 - [x] 9.1 ライブ等価の統合テストを実装する
   - 同一イベント列を (a) ライブ trigger 駆動、(b) 書き出し → ベイク → Timeline 線形再生の 2 経路で流し、post-blend 出力を比較する（線形遷移は厳密一致、カーブ遷移は epsilon 許容）
   - 完了条件: 同一プロファイル・同一レイヤー設定での等価テストが PlayMode で緑であること

@@ -47,8 +47,11 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 receiver.BakeAsset = bake;
 
                 director.playableAsset = configuredTimeline;
+                director.timeUpdateMode = DirectorUpdateMode.Manual;
+                director.extrapolationMode = DirectorWrapMode.None;
                 director.SetGenericBinding(configuredTimeline.GetOutputTrack(0), receiver);
-                director.RebuildGraph();
+                director.Play();
+                director.playableGraph.Evaluate(0f);
 
                 director.playableGraph.Evaluate(0.75f);
                 CollectionAssert.AreEqual(new[] { "smile", "angry" }, expressionSink.ActiveExpressionIds);
@@ -98,8 +101,11 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 receiver.BakeAsset = bake;
 
                 director.playableAsset = configuredTimeline;
+                director.timeUpdateMode = DirectorUpdateMode.Manual;
+                director.extrapolationMode = DirectorWrapMode.None;
                 director.SetGenericBinding(configuredTimeline.GetOutputTrack(0), receiver);
-                director.RebuildGraph();
+                director.Play();
+                director.playableGraph.Evaluate(0f);
 
                 director.playableGraph.Evaluate(1.25f);
                 CollectionAssert.AreEqual(new[] { "angry" }, expressionSink.ActiveExpressionIds);

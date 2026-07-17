@@ -82,6 +82,7 @@ namespace Hidano.FacialControl.Timeline.Domain.Services
         {
             writer.WriteString("expression-track");
             writer.WriteInt32(depth);
+            writer.WriteString(track.name);
 
             TimelineClip[] clips = CopyClips(track);
             writer.WriteInt32(clips.Length);

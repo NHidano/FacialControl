@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Hidano.FacialControl.Adapters.InputSources;
+using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
 using Hidano.FacialControl.Timeline.Adapters;
 using Hidano.FacialControl.Timeline.Adapters.Assets;
+using Hidano.FacialControl.Timeline.Adapters.AdapterBindings;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
 using Hidano.FacialControl.Timeline.Clips;
 using Hidano.FacialControl.Timeline.Editor;
@@ -136,8 +139,8 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
         private sealed class TimelinePlaybackFixture : IDisposable
         {
             private readonly FacialProfile _profile;
+            private readonly TimelineAdapterBinding _binding;
             private readonly TimelineBakedValueSink _valueSink;
-            private readonly BlendShapeCurve[] _bakedCurves;
             private readonly LayerInputSourceRegistry _registry;
             private readonly LayerInputSourceWeightBuffer _weightBuffer;
             private readonly LayerInputSourceAggregator _aggregator;
@@ -155,18 +158,22 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _profile = CreateProfile();
                 Timeline = CreateTimeline();
                 Bake = TimelineBakeService.Bake(Timeline, _profile);
-                _bakedCurves = FindExpressionBakeCurves(Bake, ExpressionLayerName);
 
-                var expressionSink = new TimelineExpressionStateSink(
-                    InputSourceId.Parse("timeline:Expressions"),
-                    maxStackDepth: 8,
-                    exclusionMode: ExclusionMode.LastWins,
-                    _profile);
+                _binding = new TimelineAdapterBinding();
+                MutableTargetLayerNames(_binding).Add(ExpressionLayerName);
 
-                _valueSink = new TimelineBakedValueSink(
-                    InputSourceId.Parse("timeline:bake"),
+                _receiverObject = new GameObject("TimelineGcZeroGateTests_Receiver");
+                _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
+                _receiver.BakeAsset = Bake;
+                _binding.OnStart(new AdapterBuildContext(
+                    _profile,
                     new[] { "Smile" },
-                    CollectBakedBlendShapeNames(_bakedCurves));
+                    new NoopInputSourceRegistry(),
+                    new FacialOutputBus(),
+                    new NoopTimeProvider(),
+                    _receiverObject,
+                    lipSyncProvider: null));
+                Assert.That(_receiver.TryGetExpressionValueSink(ExpressionLayerName, out _valueSink), Is.True);
 
                 _registry = new LayerInputSourceRegistry(
                     _profile,
@@ -177,17 +184,7 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _aggregator = new LayerInputSourceAggregator(_registry, _weightBuffer, blendShapeCount: 1);
 
                 _directorObject = new GameObject("TimelineGcZeroGateTests_Director");
-                _receiverObject = new GameObject("TimelineGcZeroGateTests_Receiver");
                 _director = _directorObject.AddComponent<PlayableDirector>();
-                _receiver = _receiverObject.AddComponent<FacialTimelineReceiver>();
-                _receiver.BakeAsset = Bake;
-                _receiver.Configure(
-                    _profile,
-                    new NoopInputSourceRegistry(),
-                    new[] { (ExpressionLayerName, expressionSink) },
-                    new[] { ("value-main", _valueSink) },
-                    Array.Empty<(string sub, TimelineAnalogInputSource sink)>(),
-                    Array.Empty<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>());
 
                 _director.playableAsset = Timeline;
                 _director.timeUpdateMode = DirectorUpdateMode.Manual;
@@ -196,7 +193,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _director.RebuildGraph();
                 _director.playableGraph.Evaluate(0f);
 
-                SampleBakeAt(0f);
                 AggregateCurrentValues();
             }
 
@@ -208,7 +204,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
             {
                 _director.playableGraph.Evaluate(deltaTime);
                 _currentTime += deltaTime;
-                SampleBakeAt(_currentTime);
                 AggregateCurrentValues();
             }
 
@@ -217,7 +212,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 _director.time = targetTime;
                 _director.Evaluate();
                 _currentTime = (float)targetTime;
-                SampleBakeAt((float)targetTime);
                 AggregateCurrentValues();
             }
 
@@ -230,6 +224,7 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
 
                 _registry.Dispose();
                 _weightBuffer.Dispose();
+                _binding.Dispose();
 
                 if (Bake != null)
                 {
@@ -250,19 +245,6 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
                 {
                     UnityEngine.Object.DestroyImmediate(_receiverObject);
                 }
-            }
-
-            private void SampleBakeAt(float timeSeconds)
-            {
-                Span<float> bakedValues = stackalloc float[_bakedCurves.Length];
-                for (int i = 0; i < _bakedCurves.Length; i++)
-                {
-                    bakedValues[i] = _bakedCurves[i].Curve != null
-                        ? _bakedCurves[i].Curve.Evaluate(timeSeconds)
-                        : 0f;
-                }
-
-                Assert.That(_valueSink.SetValues(bakedValues), Is.True);
             }
 
             private void AggregateCurrentValues()
@@ -348,6 +330,20 @@ namespace Hidano.FacialControl.Timeline.Tests.PlayMode
             public void Subscribe(string id, Action<IInputSource> handler)
             {
             }
+        }
+
+        private sealed class NoopTimeProvider : ITimeProvider
+        {
+            public double UnscaledTimeSeconds => 0d;
+        }
+
+        private static List<string> MutableTargetLayerNames(TimelineAdapterBinding binding)
+        {
+            FieldInfo field = typeof(TimelineAdapterBinding).GetField(
+                "targetLayerNames",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            return (List<string>)field.GetValue(binding);
         }
 
         private static TimelineAsset CreateTimeline()

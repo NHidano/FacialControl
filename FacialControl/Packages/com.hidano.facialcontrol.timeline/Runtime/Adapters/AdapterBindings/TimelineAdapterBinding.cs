@@ -4,6 +4,7 @@ using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Timeline.Adapters;
+using Hidano.FacialControl.Timeline.Adapters.Assets;
 using Hidano.FacialControl.Timeline.Adapters.InputSources;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
     {
         private const string DefaultSlug = "timeline";
         private const int DefaultMaxStackDepth = 16;
+        private const string StateSinkSuffix = ":state";
 
         [SerializeField] private List<string> targetLayerNames = new List<string>();
         [SerializeField] private List<TimelineValueChannelConfig> channelDefinitions = new List<TimelineValueChannelConfig>();
@@ -44,7 +46,14 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
 
             Slug = slug.Value;
 
+            _receiver = ctx.HostGameObject.GetComponent<FacialTimelineReceiver>();
+            if (_receiver == null)
+            {
+                _receiver = ctx.HostGameObject.AddComponent<FacialTimelineReceiver>();
+            }
+
             var expressionSinks = new List<(string layer, TimelineExpressionStateSink sink)>();
+            var valueSinks = new List<(string layer, TimelineBakedValueSink sink)>();
             var analogSinks = new List<(string sub, TimelineAnalogInputSource sink)>();
             var gazeSinks = new List<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)>();
             var seenLayers = new HashSet<string>(StringComparer.Ordinal);
@@ -69,14 +78,20 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
                         continue;
                     }
 
-                    var sink = new TimelineExpressionStateSink(
-                        InputSourceId.Parse(slug.Value + ":" + layerName),
+                    var stateSink = new TimelineExpressionStateSink(
+                        InputSourceId.Parse(slug.Value + ":" + layerName + StateSinkSuffix),
                         DefaultMaxStackDepth,
                         layer.Value.ExclusionMode,
                         ctx.Profile);
+                    var valueSink = new TimelineBakedValueSink(
+                        InputSourceId.Parse(slug.Value + ":" + layerName),
+                        ctx.BlendShapeNames,
+                        CollectBakedBlendShapeNames(_receiver.BakeAsset, layerName));
 
-                    ctx.InputSourceRegistry.Register(slug, layerName, sink);
-                    expressionSinks.Add((layerName, sink));
+                    ctx.InputSourceRegistry.Register(slug, layerName, valueSink);
+                    ctx.InputSourceRegistry.Register(slug, layerName + StateSinkSuffix, stateSink);
+                    expressionSinks.Add((layerName, stateSink));
+                    valueSinks.Add((layerName, valueSink));
                 }
             }
 
@@ -115,17 +130,11 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
                 }
             }
 
-            _receiver = ctx.HostGameObject.GetComponent<FacialTimelineReceiver>();
-            if (_receiver == null)
-            {
-                _receiver = ctx.HostGameObject.AddComponent<FacialTimelineReceiver>();
-            }
-
             _receiver.Configure(
                 ctx.Profile,
                 ctx.InputSourceRegistry,
                 expressionSinks,
-                Array.Empty<(string sub, TimelineBakedValueSink sink)>(),
+                valueSinks,
                 analogSinks,
                 gazeSinks);
         }
@@ -149,6 +158,34 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
             }
 
             _receiver = null;
+        }
+
+        private static string[] CollectBakedBlendShapeNames(FacialTimelineBakeAsset bakeAsset, string layerName)
+        {
+            if (bakeAsset == null || bakeAsset.ExpressionBakes == null || string.IsNullOrEmpty(layerName))
+            {
+                return Array.Empty<string>();
+            }
+
+            for (int bakeIndex = 0; bakeIndex < bakeAsset.ExpressionBakes.Length; bakeIndex++)
+            {
+                ExpressionSourceBake expressionBake = bakeAsset.ExpressionBakes[bakeIndex];
+                if (expressionBake == null || !string.Equals(expressionBake.LayerName, layerName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                BlendShapeCurve[] curves = expressionBake.Curves ?? Array.Empty<BlendShapeCurve>();
+                var names = new string[curves.Length];
+                for (int curveIndex = 0; curveIndex < curves.Length; curveIndex++)
+                {
+                    names[curveIndex] = curves[curveIndex]?.BlendShapeName ?? string.Empty;
+                }
+
+                return names;
+            }
+
+            return Array.Empty<string>();
         }
     }
 

@@ -30,12 +30,14 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
         private readonly Dictionary<string, TimelineExpressionStateSink> _expressionSinksByLayer =
             new Dictionary<string, TimelineExpressionStateSink>(StringComparer.Ordinal);
-        private readonly Dictionary<string, TimelineBakedValueSink> _valueSinksBySub =
+        private readonly Dictionary<string, TimelineBakedValueSink> _valueSinksByLayer =
             new Dictionary<string, TimelineBakedValueSink>(StringComparer.Ordinal);
         private readonly Dictionary<string, TimelineAnalogInputSource> _analogSinksBySub =
             new Dictionary<string, TimelineAnalogInputSource>(StringComparer.Ordinal);
         private readonly Dictionary<string, TimelineGazeInputSource> _gazeSinksBySub =
             new Dictionary<string, TimelineGazeInputSource>(StringComparer.Ordinal);
+        private readonly Dictionary<string, ExpressionBakePlayback> _expressionBakePlaybackByLayer =
+            new Dictionary<string, ExpressionBakePlayback>(StringComparer.Ordinal);
 
         private IInputSourceRegistry _inputSourceRegistry;
         private FacialProfile _profile;
@@ -59,7 +61,7 @@ namespace Hidano.FacialControl.Timeline.Adapters
             FacialProfile profile,
             IInputSourceRegistry inputSourceRegistry,
             IReadOnlyList<(string layer, TimelineExpressionStateSink sink)> expressionSinks,
-            IReadOnlyList<(string sub, TimelineBakedValueSink sink)> valueSinks,
+            IReadOnlyList<(string layer, TimelineBakedValueSink sink)> valueSinks,
             IReadOnlyList<(string sub, TimelineAnalogInputSource sink)> analogSinks,
             IReadOnlyList<(string sub, TimelineGazeInputSource sink, string takeoverSourceId)> gazeSinks)
         {
@@ -79,6 +81,7 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
             _playbackSessionBegun = false;
             LastBakeInspectionStatus = BakeInspectionStatus.NotChecked;
+            _expressionBakePlaybackByLayer.Clear();
         }
 
         public bool TryGetExpressionSink(string layerName, out TimelineExpressionStateSink sink)
@@ -92,15 +95,37 @@ namespace Hidano.FacialControl.Timeline.Adapters
             return _expressionSinksByLayer.TryGetValue(layerName, out sink);
         }
 
-        public bool TryGetValueSink(string sub, out TimelineBakedValueSink sink)
+        public bool TryGetExpressionValueSink(string layerName, out TimelineBakedValueSink sink)
         {
-            if (string.IsNullOrEmpty(sub))
+            if (string.IsNullOrEmpty(layerName))
             {
                 sink = null;
                 return false;
             }
 
-            return _valueSinksBySub.TryGetValue(sub, out sink);
+            return _valueSinksByLayer.TryGetValue(layerName, out sink);
+        }
+
+        public void SampleExpressionValues(string layerName, double timeSeconds)
+        {
+            if (!TryGetExpressionValueSink(layerName, out TimelineBakedValueSink sink))
+            {
+                return;
+            }
+
+            if (bakeAsset == null || !TryGetExpressionBakePlayback(layerName, out ExpressionBakePlayback playback))
+            {
+                sink.Invalidate();
+                return;
+            }
+
+            CurveBinding[] bindings = playback.Bindings;
+            for (int i = 0; i < bindings.Length; i++)
+            {
+                CurveBinding binding = bindings[i];
+                float value = binding.Curve != null ? binding.Curve.Evaluate((float)timeSeconds) : 0f;
+                sink.SetValue(binding.BufferIndex, value);
+            }
         }
 
         public bool TryGetAnalogSink(string sub, out TimelineAnalogInputSource sink)
@@ -358,7 +383,7 @@ namespace Hidano.FacialControl.Timeline.Adapters
             return result;
         }
 
-        private static TimelineBakedValueSink[] CopyValueSinks(IReadOnlyList<(string sub, TimelineBakedValueSink sink)> sinks)
+        private static TimelineBakedValueSink[] CopyValueSinks(IReadOnlyList<(string layer, TimelineBakedValueSink sink)> sinks)
         {
             if (sinks == null || sinks.Count == 0)
             {
@@ -431,9 +456,9 @@ namespace Hidano.FacialControl.Timeline.Adapters
             }
         }
 
-        private void RebuildValueMap(IReadOnlyList<(string sub, TimelineBakedValueSink sink)> valueSinks)
+        private void RebuildValueMap(IReadOnlyList<(string layer, TimelineBakedValueSink sink)> valueSinks)
         {
-            _valueSinksBySub.Clear();
+            _valueSinksByLayer.Clear();
             if (valueSinks == null)
             {
                 return;
@@ -441,14 +466,66 @@ namespace Hidano.FacialControl.Timeline.Adapters
 
             for (int i = 0; i < valueSinks.Count; i++)
             {
-                (string sub, TimelineBakedValueSink sink) entry = valueSinks[i];
-                if (string.IsNullOrEmpty(entry.sub) || entry.sink == null)
+                (string layer, TimelineBakedValueSink sink) entry = valueSinks[i];
+                if (string.IsNullOrEmpty(entry.layer) || entry.sink == null)
                 {
                     continue;
                 }
 
-                _valueSinksBySub[entry.sub] = entry.sink;
+                _valueSinksByLayer[entry.layer] = entry.sink;
             }
+        }
+
+        private bool TryGetExpressionBakePlayback(string layerName, out ExpressionBakePlayback playback)
+        {
+            if (_expressionBakePlaybackByLayer.TryGetValue(layerName, out playback))
+            {
+                return playback.Bindings.Length > 0;
+            }
+
+            playback = BuildExpressionBakePlayback(layerName);
+            _expressionBakePlaybackByLayer[layerName] = playback;
+            return playback.Bindings.Length > 0;
+        }
+
+        private ExpressionBakePlayback BuildExpressionBakePlayback(string layerName)
+        {
+            if (bakeAsset == null
+                || bakeAsset.ExpressionBakes == null
+                || !TryGetExpressionValueSink(layerName, out TimelineBakedValueSink sink))
+            {
+                return ExpressionBakePlayback.Empty;
+            }
+
+            for (int bakeIndex = 0; bakeIndex < bakeAsset.ExpressionBakes.Length; bakeIndex++)
+            {
+                ExpressionSourceBake expressionBake = bakeAsset.ExpressionBakes[bakeIndex];
+                if (expressionBake == null || !string.Equals(expressionBake.LayerName, layerName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                BlendShapeCurve[] curves = expressionBake.Curves ?? Array.Empty<BlendShapeCurve>();
+                var bindings = new List<CurveBinding>(curves.Length);
+                for (int curveIndex = 0; curveIndex < curves.Length; curveIndex++)
+                {
+                    BlendShapeCurve curve = curves[curveIndex];
+                    if (curve == null
+                        || string.IsNullOrEmpty(curve.BlendShapeName)
+                        || !sink.TryGetBufferIndex(curve.BlendShapeName, out int bufferIndex))
+                    {
+                        continue;
+                    }
+
+                    bindings.Add(new CurveBinding(bufferIndex, curve.Curve));
+                }
+
+                return bindings.Count == 0
+                    ? ExpressionBakePlayback.Empty
+                    : new ExpressionBakePlayback(bindings.ToArray());
+            }
+
+            return ExpressionBakePlayback.Empty;
         }
 
         private void RebuildAnalogMap(IReadOnlyList<(string sub, TimelineAnalogInputSource sink)> analogSinks)
@@ -515,6 +592,31 @@ namespace Hidano.FacialControl.Timeline.Adapters
             public string TakeoverSourceId => takeoverSourceId;
 
             public bool IsConfigured => Sink != null && !string.IsNullOrEmpty(takeoverSourceId);
+        }
+
+        private readonly struct ExpressionBakePlayback
+        {
+            public static readonly ExpressionBakePlayback Empty = new ExpressionBakePlayback(Array.Empty<CurveBinding>());
+
+            public ExpressionBakePlayback(CurveBinding[] bindings)
+            {
+                Bindings = bindings ?? Array.Empty<CurveBinding>();
+            }
+
+            public CurveBinding[] Bindings { get; }
+        }
+
+        private readonly struct CurveBinding
+        {
+            public CurveBinding(int bufferIndex, AnimationCurve curve)
+            {
+                BufferIndex = bufferIndex;
+                Curve = curve;
+            }
+
+            public int BufferIndex { get; }
+
+            public AnimationCurve Curve { get; }
         }
     }
 
