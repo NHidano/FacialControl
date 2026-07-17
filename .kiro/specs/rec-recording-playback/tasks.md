@@ -7,7 +7,7 @@
   - 完了条件: 空実装のままプロジェクト全体がコンパイルされ、rec の各 asmdef から逆方向参照・禁止パッケージ参照ができないこと
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 2. core: トリガー観測フックと基準状態確立 API
+- [x] 2. core: トリガー観測フックと基準状態確立 API
 - [x] 2.1 トリガー on/off の per-instance 観測フックを追加する
   - 観測契約（ITriggerEventObserver）を core Domain に定義し、トリガー型入力源の on/off がスタック操作成立後に観測者へ通知されるようにする（off は除去成功時のみ通知。既存の「不在 id は静かに無視」と整合）
   - 観測者は 1 インスタンスに高々 1 つ。未設定時は null チェック 1 回のみで alloc・仮想呼び出しゼロ、既存挙動・性能は不変
@@ -23,7 +23,7 @@
   - 注: 2.1 と同一クラス（ExpressionTriggerInputSourceBase）への変更のため並列不可
   - _Requirements: 3.8_
 
-- [ ] 3. core: 入力観測バスとアナログ/gaze サンプラー
+- [x] 3. core: 入力観測バスとアナログ/gaze サンプラー
 - [x] 3.1 入力観測バスを実装する
   - トリガーイベントとアナログ/gaze サンプルを per-FC で集約し複数観測者へ配信する読取専用契約（パイプラインへ何も書き戻さない）を core Domain に追加する
   - FacialOutputBus と対称の契約を踏襲: HasObservers ガード、publish 中 Subscribe/Unsubscribe の遅延適用、観測者例外の隔離（Debug.LogException で他観測者へ継続配信）
@@ -40,7 +40,7 @@
   - 完了条件: 変化のあったソースだけが 1 回ずつ観測され、定常フレームで alloc ゼロ
   - _Requirements: 1.2, 1.3, 4.1, 4.2, 6.3, 6.5, 6.7_
 
-- [ ] 4. core: 注入面（registry 契約強化 + 再バインド伝搬）
+- [x] 4. core: 注入面（registry 契約強化 + 再バインド伝搬）
 - [x] 4.1 (P) registry の通知契約を強化する
   - Unregister 時に購読ハンドラへ null を通知する契約を追加し、通知中の再入（Register/Replace/Unregister/Subscribe）を LogError + no-op とする実行時ガード（notify 中フラグ、数行・alloc なし）を実装する
   - Replace 系 XML doc の文字化けを修繕し、Subscribe 契約（Register/Replace = 新ソース、Unregister = null、通知中再入は契約違反）を明文化する
@@ -79,7 +79,7 @@
   - 完了条件: 上記除外を除く全テストが緑（core 改修の受け入れ条件）
   - _Requirements: 6.1, 6.5, 6.7_
 
-- [ ] 5. rec Domain: 記録データモデルとコア部品
+- [x] 5. rec Domain: 記録データモデルとコア部品
 - [x] 5.1 (P) 記録データモデルと契約を定義する
   - 操作イベント（種別・相対秒・id 参照・軸値参照）、基準状態（トリガーソース別スタック + アナログソース別値）、タイムライン（基準状態 + 時刻昇順イベント列 + id テーブル + 総時間）、読込結果（タイムライン + 欠落 expressionId リスト）の Domain モデルを定義する
   - 記録用単調クロック契約とその Stopwatch 実装（記録開始起点の相対秒・alloc なし）、イベント書込先契約（writer 抽象）、トリガー/アナログの注入ポート契約を定義する
@@ -125,7 +125,7 @@
   - _Boundary: RecValidation_
   - _Depends: 5.1_
 
-- [ ] 6. rec Application: 記録・再生ユースケース
+- [x] 6. rec Application: 記録・再生ユースケース
 - [x] 6.1 (P) 記録セッションのユースケースを実装する
   - 観測イベントを受領しクロックの相対秒を刻んで書込先へ渡す正規化。開始時はクロックのゼロリセット → 基準状態捕捉（トリガースタック順 + アナログ現在値。列挙は Adapters から注入されるスナップショット提供経由）→ 書込先オープン → バス購読の順で行う
   - 二重開始は拒否 + Warning で既存セッション継続。停止中は非購読のため記録されない。停止は冪等（未開始・停止済みは静かに no-op）
@@ -146,7 +146,7 @@
   - _Boundary: PlaybackUseCase_
   - _Depends: 5.4, 5.5_
 
-- [ ] 7. rec Adapters: sidecar 永続化
+- [x] 7. rec Adapters: sidecar 永続化
 - [x] 7.1 (P) sidecar パス規約を実装する
   - `StreamingAssets/FacialControl/{assetName}/recordings/` 規約（既存の sidecar 規約定数を再利用）で保存先パスを一元的に組み立てる。recordings サブフォルダで profile.json / ARKit config.json と物理分離する
   - assetName の無効文字置換とディレクトリトラバーサル（`..` 等）の拒否。Editor / ビルド後の両対応（Windows PC 前提）
@@ -175,7 +175,7 @@
   - _Boundary: RecStreamWriter_
   - _Depends: 5.2, 5.3_
 
-- [ ] 8. rec Adapters: 注入・再生入力ソース
+- [x] 8. rec Adapters: 注入・再生入力ソース
 - [x] 8.1 (P) 再生用アナログ/gaze 入力ソースを実装する
   - アナログ入力ソース契約に準拠し、注入マーカー契約（退避原本の保持）を実装する再生用ソース。再生側から値を設定され、パイプラインから pull で読める
   - 装着時に基準アナログ値でシードする。gaze の 2 軸を -1..1 のまま欠落なく扱う
@@ -201,7 +201,7 @@
   - _Requirements: 3.1, 3.5, 3.8, 4.3, 6.4_
   - _Depends: 4.4, 8.1_
 
-- [ ] 9. 統合: ユーザー向けファサードと Editor UI
+- [x] 9. 統合: ユーザー向けファサードと Editor UI
 - [x] 9.1 記録・再生の MonoBehaviour ファサードを実装する（統合）
   - FacialController の自動解決（Inspector 未設定時、追加の必須設定なし）と、記録開始/停止・読込・再生開始/停止・状態・完了イベントの公開 API を提供する
   - 毎フレーム、再生中は再生 Tick を駆動し、記録中はバスの参照同一性を比較して SetProfile 再初期化時に再購読 + Warning（切替瞬間の欠落は既知の制限）
@@ -217,7 +217,7 @@
   - 完了条件: コードを書かずに記録・再生の手動確認ができる
   - _Requirements: 2.1, 2.2_
 
-- [ ] 10. PlayMode 統合・性能検証
+- [x] 10. PlayMode 統合・性能検証
   - Unity テストランナーは batchmode 同期実行（timeout 600000）。既知の pre-existing 赤（SampleAssetsAreInSyncTests 4 件 / OSC heartbeat 系 / TenIndependentBindings_OneSwap）は FAIL 判定に含めない
 - [x] 10.1 記録→再生のブレンド完全再現テスト
   - トリガー・アナログ・gaze を含む操作列で記録→停止→読込→再生し、ブレンド出力がフレーム 0 から収録時と一致することを検証する（同一プロファイル・同一レイヤー設定で無条件成立。保持中トリガーがある状態からの収録・再生を含む）
