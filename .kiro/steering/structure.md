@@ -24,13 +24,17 @@
 
 ## Package Layout (`FacialControl/Packages/`)
 
-3 つのローカル UPM パッケージで分割配布する:
+7 つのローカル UPM パッケージで分割配布する:
 
 | パッケージ | 役割 |
 |-----------|------|
 | `com.hidano.facialcontrol` | コア（Domain / Application / Adapters / Editor） |
 | `com.hidano.facialcontrol.osc` | OSC 通信拡張（VRChat 互換、uOsc 同梱想定） |
 | `com.hidano.facialcontrol.inputsystem` | InputSystem 連携 + `Multi Source Blend Demo` サンプル提供 |
+| `com.hidano.facialcontrol.lipsync` | uLipSync 連携アダプター（音素 overlay 入力） |
+| `com.hidano.facialcontrol.ifacialmocap` | iFacialMocap 受信アダプター（ARKit 52 / gaze） |
+| `com.hidano.facialcontrol.rec` | 操作イベント記録・再生（.fcrec、基準状態 + 注入再生） |
+| `com.hidano.facialcontrol.timeline` | Timeline 統合（表情/連続値 Track、ベイク、REC 書き出し。依存: core + rec(Editor のみ) + com.unity.timeline） |
 
 各パッケージ内の標準構成:
 
