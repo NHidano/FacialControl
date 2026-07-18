@@ -215,20 +215,7 @@ namespace Hidano.FacialControl.Domain.Services
                 return;
             }
 
-            BitArray outgoingMask = _activeMaskRef;
-
-            _activeExpressionIds.Remove(expressionId);
-
-            while (_activeExpressionIds.Count >= MaxStackDepth)
-            {
-                OnStackDepthExceeded();
-                WarnStackDepthExceededOnce();
-                _activeExpressionIds.RemoveAt(0);
-            }
-
-            _activeExpressionIds.Add(expressionId);
-            StartTransition(outgoingMask);
-            _triggerEventObserver?.OnTriggerOn(Id, expressionId);
+            TriggerOnCore(expressionId);
         }
 
         /// <summary>
@@ -250,13 +237,37 @@ namespace Hidano.FacialControl.Domain.Services
                 return;
             }
 
-            BitArray outgoingMask = _activeMaskRef;
+            TriggerOffCore(expressionId);
+        }
 
-            if (_activeExpressionIds.Remove(expressionId))
+        /// <summary>
+        /// 再生駆動の注入面。ライブ入力の遮断状態に関係なく TriggerOn と同一のスタック更新と観測者通知を適用する。
+        /// </summary>
+        /// <param name="expressionId">push する Expression の ID。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="expressionId"/> が null の場合。</exception>
+        public void InjectTriggerOn(string expressionId)
+        {
+            if (expressionId == null)
             {
-                StartTransition(outgoingMask);
-                _triggerEventObserver?.OnTriggerOff(Id, expressionId);
+                throw new ArgumentNullException(nameof(expressionId));
             }
+
+            TriggerOnCore(expressionId);
+        }
+
+        /// <summary>
+        /// 再生駆動の注入面。ライブ入力の遮断状態に関係なく TriggerOff と同一のスタック更新と観測者通知を適用する。
+        /// </summary>
+        /// <param name="expressionId">remove する Expression の ID。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="expressionId"/> が null の場合。</exception>
+        public void InjectTriggerOff(string expressionId)
+        {
+            if (expressionId == null)
+            {
+                throw new ArgumentNullException(nameof(expressionId));
+            }
+
+            TriggerOffCore(expressionId);
         }
 
         /// <summary>
@@ -387,6 +398,35 @@ namespace Hidano.FacialControl.Domain.Services
         protected virtual void OnStackDepthExceeded()
         {
             // 基底では no-op。警告ログは WarnStackDepthExceededOnce が担う。
+        }
+
+        private void TriggerOnCore(string expressionId)
+        {
+            BitArray outgoingMask = _activeMaskRef;
+
+            _activeExpressionIds.Remove(expressionId);
+
+            while (_activeExpressionIds.Count >= MaxStackDepth)
+            {
+                OnStackDepthExceeded();
+                WarnStackDepthExceededOnce();
+                _activeExpressionIds.RemoveAt(0);
+            }
+
+            _activeExpressionIds.Add(expressionId);
+            StartTransition(outgoingMask);
+            _triggerEventObserver?.OnTriggerOn(Id, expressionId);
+        }
+
+        private void TriggerOffCore(string expressionId)
+        {
+            BitArray outgoingMask = _activeMaskRef;
+
+            if (_activeExpressionIds.Remove(expressionId))
+            {
+                StartTransition(outgoingMask);
+                _triggerEventObserver?.OnTriggerOff(Id, expressionId);
+            }
         }
 
         private void WarnStackDepthExceededOnce()

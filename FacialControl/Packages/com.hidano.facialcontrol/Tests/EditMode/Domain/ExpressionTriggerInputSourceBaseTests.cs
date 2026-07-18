@@ -403,6 +403,63 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
         }
 
         [Test]
+        public void InjectTriggerOn_WhenSuspended_MutatesStackAndNotifiesObserver()
+        {
+            var source = CreateSource("input");
+            var observer = new TestTriggerEventObserver();
+            source.SetTriggerEventObserver(observer);
+            source.SuspendTriggerInput();
+
+            source.InjectTriggerOn("smile");
+
+            Assert.AreEqual(1, source.ActiveIdsForTest.Count);
+            Assert.AreEqual("smile", source.ActiveIdsForTest[0]);
+            Assert.AreEqual(1, observer.OnEvents.Count);
+            Assert.AreEqual(("input", "smile"), observer.OnEvents[0]);
+            Assert.AreEqual(0, observer.OffEvents.Count);
+        }
+
+        [Test]
+        public void InjectTriggerOff_WhenSuspended_RemovesStackAndNotifiesObserver()
+        {
+            var source = CreateSource("input");
+            var observer = new TestTriggerEventObserver();
+            source.SetTriggerEventObserver(observer);
+            source.InjectTriggerOn("smile");
+            source.Tick(1.0f);
+            observer.OnEvents.Clear();
+            source.SuspendTriggerInput();
+
+            source.InjectTriggerOff("smile");
+
+            Assert.AreEqual(0, source.ActiveIdsForTest.Count);
+            Assert.AreEqual(0, observer.OnEvents.Count);
+            Assert.AreEqual(1, observer.OffEvents.Count);
+            Assert.AreEqual(("input", "smile"), observer.OffEvents[0]);
+        }
+
+        [Test]
+        public void ResumeTriggerInput_WhenInjectedDuringSuspension_PreservesInjectedState()
+        {
+            var source = CreateSource("input");
+            source.SuspendTriggerInput();
+
+            source.InjectTriggerOn("smile");
+            source.ResumeTriggerInput();
+
+            var buffer = new float[BlendShapeNames.Length];
+            source.Tick(1.0f);
+            bool wrote = source.TryWriteValues(buffer);
+
+            Assert.IsTrue(wrote);
+            Assert.IsFalse(source.IsTriggerInputSuspended);
+            Assert.AreEqual(1, source.ActiveIdsForTest.Count);
+            Assert.AreEqual("smile", source.ActiveIdsForTest[0]);
+            Assert.AreEqual(1f, buffer[0], 1e-5f);
+            Assert.AreEqual(0f, buffer[1], 1e-5f);
+        }
+
+        [Test]
         public void ResetToExpressionStack_WhenSuspended_AppliesRequestedState()
         {
             var source = CreateSource("input");
@@ -633,6 +690,22 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
             var source = CreateSource();
 
             Assert.Throws<ArgumentNullException>(() => source.TriggerOff(null));
+        }
+
+        [Test]
+        public void InjectTriggerOn_Null_Throws()
+        {
+            var source = CreateSource();
+
+            Assert.Throws<ArgumentNullException>(() => source.InjectTriggerOn(null));
+        }
+
+        [Test]
+        public void InjectTriggerOff_Null_Throws()
+        {
+            var source = CreateSource();
+
+            Assert.Throws<ArgumentNullException>(() => source.InjectTriggerOff(null));
         }
 
         [Test]
