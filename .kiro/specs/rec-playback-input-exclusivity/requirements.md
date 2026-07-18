@@ -5,13 +5,13 @@ REC 再生中の全入力排他（rec-playback-input-exclusivity）。REC 機能
 
 ## Introduction
 
-本機能は、REC（`com.hidano.facialcontrol.rec`）の再生中に、コントローラ等のライブ入力（トリガー on/off・アナログ軸値・gaze）が再生結果へ混入しないようにする入力排他を追加する。既存 spec rec-recording-playback の設計判断（design.md:302/798「トリガーは入力ソースを差し替えず、ライブと同一の原本インスタンスを直接駆動する」）は原本直接駆動という点では維持しつつ、「差し替えないためライブ入力も素通しになる」という帰結を本 spec で上書きし、core にライブ入力の遮断面と、遮断を迂回する再生駆動用の注入面を追加する。あわせてアナログ / gaze 側の残余ギャップ（記録ベースライン外のソースが遮断されない問題）も塞ぐ。排他は常時有効であり、有効/無効を切り替えるオプションは設けない。
+本機能は、REC（`com.hidano.facialcontrol.rec`）の再生中に、コントローラ等のライブ入力（トリガー on/off・アナログ軸値・gaze）が再生結果へ混入しないようにする入力排他を追加する。既存 spec rec-recording-playback の設計判断（design.md:302/798「トリガーは入力ソースを差し替えず、ライブと同一の原本インスタンスを直接駆動する」）は原本直接駆動という点では維持しつつ、「差し替えないためライブ入力も素通しになる」という帰結を本 spec で上書きし、core にライブ入力の遮断面と、遮断を迂回する再生駆動用の注入面を追加する。あわせてアナログ / gaze 側の残余ギャップ（記録ベースライン外のソースが遮断されない問題）も塞ぐ。排他は常時有効であり、有効/無効を切り替えるオプションは設けない。また、遮断中の Toggle バインド押下で inputsystem アダプタの内部状態が実スタックと乖離する問題は、inputsystem への最小改修（Toggle 状態整合）で解消する。
 
 ## Boundary Context
 
-- **In scope**: 再生中のライブトリガー入力の遮断（core への遮断面の新設）、遮断を迂回する再生駆動用のトリガー注入面（観測者通知あり＝再生中の記録維持）、rec 側トリガー注入ポートのアナログ注入ポートと対称なライフサイクルへの再形成、アナログ / gaze 遮断対象の registry 登録済み全ソースへの拡大（記録ベースライン外ソースを含む）、排他の確立・解放ライフサイクル（StopPlayback を唯一の解放点とする）、既知制限の文書化
-- **Out of scope**: 排他の on/off オプション（常時有効のため設けない）、拡張パッケージ（inputsystem / osc / lipsync / ifacialmocap / timeline）の改修、再生中に新規登録された入力ソースの遮断（開始時スナップショット方式の既知制限）、Toggle バインドの内部状態（IsActive）の自動再同期、記録機能・永続化フォーマット自体の変更
-- **Adjacent expectations**: rec-recording-playback Req 3.5（停止時のシームレスなライブ引き継ぎ）と Req 3.8（再生開始時の基準状態確立とライブ残存トリガー解除）を損なわないこと。core 改修は rec-recording-playback Req 6 の制約群（6.1 観測・注入面の追加に限定 / 6.5 未使用時の挙動・性能不変 / 6.6 core は rec を知らない / 6.7 拡張パッケージ無改修）の範囲内で行うこと
+- **In scope**: 再生中のライブトリガー入力の遮断（core への遮断面の新設）、遮断を迂回する再生駆動用のトリガー注入面（観測者通知あり＝再生中の記録維持）、rec 側トリガー注入ポートのアナログ注入ポートと対称なライフサイクルへの再形成、アナログ / gaze 遮断対象の registry 登録済み全ソースへの拡大（記録ベースライン外ソースを含む）、排他の確立・解放ライフサイクル（StopPlayback を唯一の解放点とする）、inputsystem の Toggle バインド状態整合のための最小改修、既知制限の文書化
+- **Out of scope**: 排他の on/off オプション（常時有効のため設けない）、拡張パッケージのうち osc / lipsync / ifacialmocap / timeline の改修、再生中に新規登録された入力ソースの遮断（開始時スナップショット方式の既知制限）、記録機能・永続化フォーマット自体の変更
+- **Adjacent expectations**: rec-recording-playback Req 3.5（停止時のシームレスなライブ引き継ぎ）と Req 3.8（再生開始時の基準状態確立とライブ残存トリガー解除）を損なわないこと。core 改修は rec-recording-playback Req 6 の制約群（6.1 観測・注入面の追加に限定 / 6.5 未使用時の挙動・性能不変 / 6.6 core は rec を知らない / 6.7 拡張パッケージ無改修 — ただし 6.7 は inputsystem に限り Toggle 状態整合のため本 spec で緩和する）の範囲内で行うこと
 
 ## Requirements
 
@@ -70,20 +70,31 @@ REC 再生中の全入力排他（rec-playback-input-exclusivity）。REC 機能
 1. The core 改修 shall 観測面・注入面（ライブ入力の遮断面を含む）の追加に限定し、既存コードパスの挙動を変更しない（rec-recording-playback Req 6.1 の範囲内）
 2. If トリガー入力の遮断が一度も有効化されず注入経路も使用されていないとき, the core shall 既存の挙動・性能を一切変更しない（rec-recording-playback Req 6.5 を維持）
 3. The core shall rec パッケージへの依存を持たない（rec-recording-playback Req 6.6 を維持）
-4. The 本機能 shall 拡張パッケージ（inputsystem / osc / lipsync / ifacialmocap / timeline）を無改修のまま成立させ、これらの既存挙動を変更しない（rec-recording-playback Req 6.7 を維持）
+4. The 本機能 shall 拡張パッケージのうち osc / lipsync / ifacialmocap / timeline を無改修のまま成立させ、これらの既存挙動を変更しない。inputsystem のみ Toggle バインドの状態整合（Requirement 7）のための最小改修を許容する（rec-recording-playback Req 6.7 は inputsystem に限り本 spec で緩和する）
 5. While 入力排他が有効な間, the core および REC 再生サービス shall 毎フレームの定常処理でヒープ確保を発生させない
 6. The 本機能の受け入れテスト shall Fake のみで検証可能な構造とし、EditMode テストとして配置できるようにする
 
 ### Requirement 6: 既知制限の文書化
 
-**Objective:** As a ライブラリ利用者, I want 入力排他の既知制限を事前に把握したい, so that 再生前後の運用（デバイス追加・Timeline 併用・Toggle 再同期）で想定外の挙動に混乱しない
+**Objective:** As a ライブラリ利用者, I want 入力排他の既知制限を事前に把握したい, so that 再生前後の運用（デバイス追加・Timeline 併用）で想定外の挙動に混乱しない
 
 #### Acceptance Criteria
 
 1. The 本機能のドキュメント shall 再生開始後に新規登録された入力ソースが遮断対象外であること（開始時スナップショット方式）を既知制限として文書化する
 2. The 本機能のドキュメント shall timeline パッケージ経由の TriggerOn / TriggerOff も再生中は遮断されることを既知制限として文書化する
-3. The 本機能のドキュメント shall ExpressionInputSourceAdapter の Toggle バインドが遮断中も内部状態（entry.IsActive）を反転し続けるため、再生終了後に空押しによる再同期が必要になる場合があること（拡張パッケージ無改修の制約下で許容する挙動）を既知制限として文書化する
+
+### Requirement 7: Toggle バインドの状態整合（inputsystem 改修）
+
+**Objective:** As a Unity エンジニア, I want REC 再生中に Toggle バインドを押しても再生終了後の操作が空振りしないでほしい, so that 再生前後でコントローラ操作の感触が一貫する
+
+#### Acceptance Criteria
+
+1. While トリガー入力が遮断されている間, when Toggle モードのバインドが押下されたとき, the inputsystem アダプタ shall 内部の Toggle 状態（entry.IsActive）を実際の表情スタックと乖離させない（遮断中の押下で反転を抑止するか、遮断解除時に同期する — 方式は設計フェーズで決定する）
+2. When トリガー入力の遮断が解除された後に Toggle バインドが押下されたとき, the inputsystem アダプタ shall 当該押下を期待どおりの ON/OFF 切替として動作させる（空振りを発生させない）
+3. The inputsystem 改修 shall Toggle 状態整合に必要な最小限に留め、Hold / Analog / gaze バインドの既存挙動を変更しない
+4. If トリガー入力の遮断が一度も発生しないとき, the inputsystem アダプタ shall 既存の挙動を一切変更しない
 
 ## Open Questions（設計フェーズで決定する残論点）
 
 1. **記録ベースライン外ソースの seed 値方式**: 現在消費値での凍結か 0 埋めか（Requirement 3.3。ユーザー体験＝再生開始時の表情の跳びと、再現性のどちらを優先するかを設計フェーズで比較して決定する）
+2. **Toggle 状態整合の実現方式**: 遮断中の押下で IsActive の反転自体を抑止するか、遮断解除時に実スタックと同期するか（Requirement 7.1。inputsystem アダプタが core の遮断状態を参照する方法とあわせて設計フェーズで決定する）
