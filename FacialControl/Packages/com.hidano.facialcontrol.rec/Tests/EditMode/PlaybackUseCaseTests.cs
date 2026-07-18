@@ -102,6 +102,80 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
         }
 
         [Test]
+        public void StartPlayback_WhenLoaded_EstablishesTriggerThenAnalogExclusivityBeforeFiringEvents()
+        {
+            var callOrder = new List<string>();
+            var triggerPort = new FakeTriggerInjectionPort(callOrder);
+            var analogPort = new FakeAnalogInjectionPort(callOrder);
+            var useCase = new PlaybackUseCase(triggerPort, analogPort);
+            useCase.Load(CreateSimpleTimeline(), CreateFullProfile());
+
+            bool started = useCase.StartPlayback();
+
+            Assert.That(started, Is.True);
+            Assert.That(callOrder, Is.EqualTo(new[] { "trigger.begin", "analog.begin" }));
+
+            useCase.Tick(0.10f);
+
+            Assert.That(callOrder, Is.EqualTo(new[] { "trigger.begin", "analog.begin", "trigger.on" }));
+        }
+
+        [Test]
+        public void StopPlayback_WhenPlaying_ReleasesTriggerThenAnalogExclusivity()
+        {
+            var callOrder = new List<string>();
+            var triggerPort = new FakeTriggerInjectionPort(callOrder);
+            var analogPort = new FakeAnalogInjectionPort(callOrder);
+            var useCase = new PlaybackUseCase(triggerPort, analogPort);
+            useCase.Load(CreateSimpleTimeline(), CreateFullProfile());
+            useCase.StartPlayback();
+
+            useCase.StopPlayback();
+
+            Assert.That(callOrder, Is.EqualTo(new[] { "trigger.begin", "analog.begin", "trigger.end", "analog.end" }));
+        }
+
+        [Test]
+        public void Tick_WhenPlaybackCompletesNaturally_DoesNotReleaseExclusivityUntilStopPlayback()
+        {
+            var callOrder = new List<string>();
+            var triggerPort = new FakeTriggerInjectionPort(callOrder);
+            var analogPort = new FakeAnalogInjectionPort(callOrder);
+            var useCase = new PlaybackUseCase(triggerPort, analogPort);
+            useCase.Load(CreateSimpleTimeline(), CreateFullProfile());
+            useCase.StartPlayback();
+
+            useCase.Tick(0.10f);
+
+            Assert.That(useCase.State, Is.EqualTo(RecPlaybackState.Completed));
+            Assert.That(callOrder, Is.EqualTo(new[] { "trigger.begin", "analog.begin", "trigger.on" }));
+            Assert.That(triggerPort.EndInjectionCallCount, Is.EqualTo(0));
+            Assert.That(analogPort.EndInjectionCallCount, Is.EqualTo(0));
+
+            useCase.StopPlayback();
+
+            Assert.That(callOrder, Is.EqualTo(new[] { "trigger.begin", "analog.begin", "trigger.on", "trigger.end", "analog.end" }));
+        }
+
+        [Test]
+        public void StartPlayback_WhenTimelineCompletesImmediately_DoesNotReleaseExclusivity()
+        {
+            var callOrder = new List<string>();
+            var triggerPort = new FakeTriggerInjectionPort(callOrder);
+            var analogPort = new FakeAnalogInjectionPort(callOrder);
+            var useCase = new PlaybackUseCase(triggerPort, analogPort);
+            useCase.Load(CreateImmediateCompletionTimeline(), CreateFullProfile());
+
+            bool started = useCase.StartPlayback();
+
+            Assert.That(started, Is.True);
+            Assert.That(useCase.State, Is.EqualTo(RecPlaybackState.Completed));
+            Assert.That(callOrder, Is.EqualTo(new[] { "trigger.begin", "analog.begin" }));
+            Assert.That(triggerPort.EndInjectionCallCount, Is.EqualTo(0));
+            Assert.That(analogPort.EndInjectionCallCount, Is.EqualTo(0));
+        }
+
+        [Test]
         public void StopPlayback_WhenCompleted_EndsInjectionAndReturnsToIdle()
         {
             var triggerPort = new FakeTriggerInjectionPort();
@@ -209,6 +283,17 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
                 new[] { Array.Empty<float>() });
         }
 
+        private static RecTimeline CreateImmediateCompletionTimeline()
+        {
+            return new RecTimeline(
+                RecBaselineState.Empty,
+                Array.Empty<RecEvent>(),
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                0d,
+                Array.Empty<IReadOnlyList<float>>());
+        }
+
         private static FacialProfile CreateProfileWithoutMissingExpression()
         {
             return new FacialProfile(
@@ -292,6 +377,13 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
         private sealed class FakeTriggerInjectionPort : ITriggerInjectionPort
         {
+            private readonly List<string> _callOrder;
+
+            public FakeTriggerInjectionPort(List<string> callOrder = null)
+            {
+                _callOrder = callOrder;
+            }
+
             public int BeginInjectionCallCount { get; private set; }
 
             public int EndInjectionCallCount { get; private set; }
@@ -306,26 +398,37 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             {
                 BeginInjectionCallCount++;
                 Baseline = baseline;
+                _callOrder?.Add("trigger.begin");
             }
 
             public void InjectTriggerOn(string sourceId, string expressionId)
             {
                 TriggerOnEvents.Add((sourceId, expressionId));
+                _callOrder?.Add("trigger.on");
             }
 
             public void InjectTriggerOff(string sourceId, string expressionId)
             {
                 TriggerOffEvents.Add((sourceId, expressionId));
+                _callOrder?.Add("trigger.off");
             }
 
             public void EndInjection()
             {
                 EndInjectionCallCount++;
+                _callOrder?.Add("trigger.end");
             }
         }
 
         private sealed class FakeAnalogInjectionPort : IAnalogInjectionPort
         {
+            private readonly List<string> _callOrder;
+
+            public FakeAnalogInjectionPort(List<string> callOrder = null)
+            {
+                _callOrder = callOrder;
+            }
+
             public int BeginInjectionCallCount { get; private set; }
 
             public int EndInjectionCallCount { get; private set; }
@@ -338,16 +441,19 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             {
                 BeginInjectionCallCount++;
                 Baseline = baseline;
+                _callOrder?.Add("analog.begin");
             }
 
             public void InjectAnalogSample(string sourceId, ReadOnlySpan<float> axes)
             {
                 AnalogSamples.Add((sourceId, axes.ToArray()));
+                _callOrder?.Add("analog.sample");
             }
 
             public void EndInjection()
             {
                 EndInjectionCallCount++;
+                _callOrder?.Add("analog.end");
             }
         }
 
