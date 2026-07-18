@@ -72,6 +72,7 @@ namespace Hidano.FacialControl.Domain.Services
         private TransitionCurve _curve;
         private bool _isComplete;
         private bool _hasWarnedStackDepthExceeded;
+        private int _triggerInputSuspendDepth;
         private ITriggerEventObserver _triggerEventObserver;
 
         /// <summary>
@@ -81,6 +82,12 @@ namespace Hidano.FacialControl.Domain.Services
         /// 可視化するために public 公開する。
         /// </summary>
         public IReadOnlyList<string> ActiveExpressionIds => _activeExpressionIds;
+
+        /// <summary>
+        /// ライブ TriggerOn/TriggerOff 入力が驕ｮ譁ｭ中かを返す。ResetToExpressionStack などの
+        /// 明示同期 API には影響しない。
+        /// </summary>
+        public bool IsTriggerInputSuspended => _triggerInputSuspendDepth > 0;
 
         /// <summary>
         /// 現在の補間済み BlendShape 値 (長さ <see cref="BlendShapeCount"/>)。診断/テスト用。
@@ -93,6 +100,29 @@ namespace Hidano.FacialControl.Domain.Services
         public void SetTriggerEventObserver(ITriggerEventObserver observer)
         {
             _triggerEventObserver = observer;
+        }
+
+        /// <summary>
+        /// ライブ TriggerOn/TriggerOff 入力の受け付けを 1 段階驕ｮ譁ｭする。
+        /// Resume が対応回数だけ呼ばれるまで驕ｮ譁ｭは継続する。
+        /// </summary>
+        public void SuspendTriggerInput()
+        {
+            _triggerInputSuspendDepth++;
+        }
+
+        /// <summary>
+        /// ライブ TriggerOn/TriggerOff 入力の驕ｮ譁ｭを 1 段階解除する。
+        /// 驕ｮ譁ｭされていない場合は no-op。
+        /// </summary>
+        public void ResumeTriggerInput()
+        {
+            if (_triggerInputSuspendDepth <= 0)
+            {
+                return;
+            }
+
+            _triggerInputSuspendDepth--;
         }
 
         /// <summary>
@@ -180,6 +210,11 @@ namespace Hidano.FacialControl.Domain.Services
                 throw new ArgumentNullException(nameof(expressionId));
             }
 
+            if (IsTriggerInputSuspended)
+            {
+                return;
+            }
+
             BitArray outgoingMask = _activeMaskRef;
 
             _activeExpressionIds.Remove(expressionId);
@@ -208,6 +243,11 @@ namespace Hidano.FacialControl.Domain.Services
             if (expressionId == null)
             {
                 throw new ArgumentNullException(nameof(expressionId));
+            }
+
+            if (IsTriggerInputSuspended)
+            {
+                return;
             }
 
             BitArray outgoingMask = _activeMaskRef;
