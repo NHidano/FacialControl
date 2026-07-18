@@ -46,6 +46,8 @@ namespace Hidano.FacialControl.Adapters.InputSources
         private bool _hasWarnedUnknownDevice;
         private bool _hasWarnedUnsupportedProcessor;
         private bool _isSubscribed;
+        private bool _wasKeyboardSuspended;
+        private bool _wasControllerSuspended;
 
         /// <summary>Keyboard 系入力に紐付く内部 sink（診断 / テスト用に公開）。</summary>
         public ExpressionTriggerInputSourceBase KeyboardSink => _keyboardSink;
@@ -86,6 +88,8 @@ namespace Hidano.FacialControl.Adapters.InputSources
 
             _keyboardSink = keyboardSink;
             _controllerSink = controllerSink;
+            _wasKeyboardSuspended = keyboardSink.IsTriggerInputSuspended;
+            _wasControllerSuspended = controllerSink.IsTriggerInputSuspended;
 
             if (isActiveAndEnabled)
             {
@@ -164,6 +168,8 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// </summary>
         public void Tick(float deltaTime)
         {
+            ReconcileToggleStateAfterSuspension(_keyboardSink, ref _wasKeyboardSuspended);
+            ReconcileToggleStateAfterSuspension(_controllerSink, ref _wasControllerSuspended);
             _keyboardSink?.Tick(deltaTime);
             _controllerSink?.Tick(deltaTime);
         }
@@ -183,6 +189,8 @@ namespace Hidano.FacialControl.Adapters.InputSources
             UnbindAll();
             _keyboardSink = null;
             _controllerSink = null;
+            _wasKeyboardSuspended = false;
+            _wasControllerSuspended = false;
         }
 
         private void SubscribeAll()
@@ -245,7 +253,11 @@ namespace Hidano.FacialControl.Adapters.InputSources
                 }
                 else
                 {
-                    entry.IsActive = !entry.IsActive;
+                    if (!ToggleStateReconciler.TryFlip(sink.IsTriggerInputSuspended, entry))
+                    {
+                        return;
+                    }
+
                     if (entry.IsActive)
                     {
                         sink.TriggerOn(entry.ExpressionId);
@@ -268,6 +280,45 @@ namespace Hidano.FacialControl.Adapters.InputSources
             {
                 entry.IsActive = false;
                 sink.TriggerOff(entry.ExpressionId);
+            }
+        }
+
+        private void ReconcileToggleStateAfterSuspension(
+            ExpressionTriggerInputSourceBase sink,
+            ref bool wasSuspended)
+        {
+            if (sink == null)
+            {
+                wasSuspended = false;
+                return;
+            }
+
+            bool isSuspended = sink.IsTriggerInputSuspended;
+            if (wasSuspended && !isSuspended)
+            {
+                SyncToggleBindingsWithSink(sink);
+            }
+
+            wasSuspended = isSuspended;
+        }
+
+        private void SyncToggleBindingsWithSink(ExpressionTriggerInputSourceBase sink)
+        {
+            IReadOnlyList<string> activeExpressionIds = sink.ActiveExpressionIds;
+            foreach (KeyValuePair<InputAction, BindingEntry> pair in _bindings)
+            {
+                BindingEntry entry = pair.Value;
+                if (!entry.IsToggleButton)
+                {
+                    continue;
+                }
+
+                if (!ReferenceEquals(ResolveSink(entry.Action), sink))
+                {
+                    continue;
+                }
+
+                ToggleStateReconciler.SyncWithStack(activeExpressionIds, entry);
             }
         }
 
@@ -348,13 +399,14 @@ namespace Hidano.FacialControl.Adapters.InputSources
         /// 1 件の InputAction バインディングを保持し、performed / canceled の購読状態を管理する。
         /// delegate は構築時に 1 回だけ生成しキャッシュすることで購読 / 解除に伴うヒープ確保を避ける。
         /// </summary>
-        private sealed class BindingEntry
+        private sealed class BindingEntry : IToggleStateEntry
         {
             public InputAction Action { get; }
             public string ExpressionId { get; }
             public TriggerMode TriggerMode { get; }
             public bool IsActive { get; set; }
             public bool IsSubscribed { get; private set; }
+            public bool IsToggleButton => TriggerMode == TriggerMode.Toggle && Action.type == InputActionType.Button;
 
             private readonly ExpressionInputSourceAdapter _adapter;
             private readonly Action<InputAction.CallbackContext> _onPerformed;

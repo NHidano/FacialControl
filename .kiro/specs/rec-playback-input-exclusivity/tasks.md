@@ -48,7 +48,7 @@
   - _Requirements: 7.1, 7.2, 5.6_
   - _Boundary: ToggleStateReconciler_
 
-- [ ] 4.2 アダプタへ Toggle 反転抑止と解除エッジ同期を配線する
+- [x] 4.2 アダプタへ Toggle 反転抑止と解除エッジ同期を配線する
   - 失敗するテストを先に書く（Red・実 sink インスタンス + internal 公開で EditMode 検証）: 遮断中の Toggle 押下がトリガー発行なし・内部状態不変であること、遮断解除エッジで Toggle 状態が実スタックと同期し以後の押下が空振りしないこと
   - Toggle 分岐のみ純ロジック経由の反転へ変更する（Hold / Analog / gaze 分岐は無改修）
   - 毎フレーム処理へ各 sink の遮断解除エッジ検出を追加し、エッジフレームのみ Toggle エントリを同期する（keyboard / controller が同一 sink インスタンスの場合は重複処理をスキップ）

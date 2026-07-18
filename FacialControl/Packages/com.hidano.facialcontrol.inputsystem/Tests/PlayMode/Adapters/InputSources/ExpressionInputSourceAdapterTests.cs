@@ -172,6 +172,64 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Adapters.InputSources
         // ヘルパー
         // ============================================================
 
+        [Test]
+        public void TogglePerformed_WhenSinkIsSuspended_DoesNotInvertBindingState()
+        {
+            CreateAdapter();
+            using var action = new InputAction(
+                "SmileToggle", InputActionType.Button, "<Keyboard>/1");
+            _adapter.BindExpression(action, "smile", TriggerMode.Toggle);
+            action.Enable();
+
+            Press(_keyboard.digit1Key);
+            Release(_keyboard.digit1Key);
+            CollectionAssert.Contains(_keyboardSink.ActiveExpressionIds, "smile");
+
+            _keyboardSink.SuspendTriggerInput();
+
+            Press(_keyboard.digit1Key);
+            Release(_keyboard.digit1Key);
+
+            CollectionAssert.Contains(_keyboardSink.ActiveExpressionIds, "smile");
+
+            _keyboardSink.ResumeTriggerInput();
+            _adapter.Tick(0f);
+
+            Press(_keyboard.digit1Key);
+            Release(_keyboard.digit1Key);
+
+            CollectionAssert.DoesNotContain(_keyboardSink.ActiveExpressionIds, "smile");
+        }
+
+        [Test]
+        public void Tick_AfterSuspensionEnds_SynchronizesToggleBindingStateWithSinkStack()
+        {
+            CreateAdapter();
+            using var action = new InputAction(
+                "SmileToggle", InputActionType.Button, "<Keyboard>/1");
+            _adapter.BindExpression(action, "smile", TriggerMode.Toggle);
+            action.Enable();
+
+            Press(_keyboard.digit1Key);
+            Release(_keyboard.digit1Key);
+            CollectionAssert.Contains(_keyboardSink.ActiveExpressionIds, "smile");
+
+            _keyboardSink.SuspendTriggerInput();
+            _keyboardSink.ResetToExpressionStack(System.Array.Empty<string>());
+            _keyboardSink.ResumeTriggerInput();
+
+            Press(_keyboard.digit1Key);
+            Release(_keyboard.digit1Key);
+            CollectionAssert.DoesNotContain(_keyboardSink.ActiveExpressionIds, "smile");
+
+            _adapter.Tick(0f);
+
+            Press(_keyboard.digit1Key);
+            Release(_keyboard.digit1Key);
+
+            CollectionAssert.Contains(_keyboardSink.ActiveExpressionIds, "smile");
+        }
+
         private void CreateAdapter()
         {
             _gameObject = new GameObject("ExpressionInputSourceAdapterTest");
