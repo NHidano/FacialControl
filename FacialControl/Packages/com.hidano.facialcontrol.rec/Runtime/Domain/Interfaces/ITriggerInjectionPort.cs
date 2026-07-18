@@ -7,10 +7,12 @@ namespace Hidano.FacialControl.Rec.Domain.Interfaces
     /// </summary>
     public interface ITriggerInjectionPort
     {
-        void EstablishBaseline(RecBaselineState baseline);
+        void BeginInjection(RecBaselineState baseline);
 
         void InjectTriggerOn(string sourceId, string expressionId);
 
         void InjectTriggerOff(string sourceId, string expressionId);
+
+        void EndInjection();
     }
 }

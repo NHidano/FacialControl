@@ -199,7 +199,7 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
 
         private sealed class NullTriggerInjectionPort : ITriggerInjectionPort
         {
-            public void EstablishBaseline(RecBaselineState baseline)
+            public void BeginInjection(RecBaselineState baseline)
             {
             }
 
@@ -208,6 +208,10 @@ namespace Hidano.FacialControl.Rec.Tests.PlayMode
             }
 
             public void InjectTriggerOff(string sourceId, string expressionId)
+            {
+            }
+
+            public void EndInjection()
             {
             }
         }

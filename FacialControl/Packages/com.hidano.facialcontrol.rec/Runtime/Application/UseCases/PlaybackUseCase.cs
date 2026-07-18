@@ -78,7 +78,7 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
 
             RecTimeline timeline = _loadResult.Timeline;
             RecBaselineState baseline = CreateFilteredBaseline(timeline.Baseline);
-            _triggerPort.EstablishBaseline(baseline);
+            _triggerPort.BeginInjection(baseline);
             _analogPort.BeginInjection(baseline);
             _scheduler.Load(timeline);
 
@@ -117,6 +117,7 @@ namespace Hidano.FacialControl.Rec.Application.UseCases
                 return;
             }
 
+            _triggerPort.EndInjection();
             _analogPort.EndInjection();
             _scheduler.Reset();
             State = RecPlaybackState.Idle;

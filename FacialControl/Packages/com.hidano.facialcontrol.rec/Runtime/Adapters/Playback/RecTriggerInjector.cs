@@ -18,6 +18,8 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
         private readonly Func<IReadOnlyList<ExpressionTriggerInputSourceBase>> _getAllTriggerSources;
         private readonly HashSet<string> _warnedMissingSourceIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> _resolvedSourceIdsBuffer = new HashSet<string>(StringComparer.Ordinal);
+        private readonly List<ExpressionTriggerInputSourceBase> _suspendedSources = new List<ExpressionTriggerInputSourceBase>();
+        private bool _isInjecting;
 
         public RecTriggerInjector(
             Func<string, ExpressionTriggerInputSourceBase> resolveTriggerSource,
@@ -27,12 +29,18 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
             _getAllTriggerSources = getAllTriggerSources ?? throw new ArgumentNullException(nameof(getAllTriggerSources));
         }
 
-        public void EstablishBaseline(RecBaselineState baseline)
+        public void BeginInjection(RecBaselineState baseline)
         {
+            if (_isInjecting)
+            {
+                return;
+            }
+
             IReadOnlyList<ExpressionTriggerInputSourceBase> triggerSources = _getAllTriggerSources() ?? Array.Empty<ExpressionTriggerInputSourceBase>();
             RecBaselineState safeBaseline = baseline ?? RecBaselineState.Empty;
 
             _resolvedSourceIdsBuffer.Clear();
+            _suspendedSources.Clear();
 
             for (int i = 0; i < triggerSources.Count; i++)
             {
@@ -43,6 +51,8 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
                 }
 
                 _resolvedSourceIdsBuffer.Add(triggerSource.Id);
+                triggerSource.SuspendTriggerInput();
+                _suspendedSources.Add(triggerSource);
 
                 if (safeBaseline.TryGetTriggerStack(triggerSource.Id, out IReadOnlyList<string> expressionIds))
                 {
@@ -64,6 +74,7 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
             }
 
             _resolvedSourceIdsBuffer.Clear();
+            _isInjecting = true;
         }
 
         public void InjectTriggerOn(string sourceId, string expressionId)
@@ -73,7 +84,7 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
                 return;
             }
 
-            triggerSource.TriggerOn(expressionId);
+            triggerSource.InjectTriggerOn(expressionId);
         }
 
         public void InjectTriggerOff(string sourceId, string expressionId)
@@ -83,7 +94,24 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
                 return;
             }
 
-            triggerSource.TriggerOff(expressionId);
+            triggerSource.InjectTriggerOff(expressionId);
+        }
+
+        public void EndInjection()
+        {
+            if (!_isInjecting)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _suspendedSources.Count; i++)
+            {
+                _suspendedSources[i]?.ResumeTriggerInput();
+            }
+
+            _suspendedSources.Clear();
+            _resolvedSourceIdsBuffer.Clear();
+            _isInjecting = false;
         }
 
         private bool TryResolveSource(string sourceId, out ExpressionTriggerInputSourceBase triggerSource)

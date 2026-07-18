@@ -14,40 +14,12 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
     public class RecTriggerInjectorTests
     {
         [Test]
-        public void InjectTriggerOnAndOff_WhenSourceResolved_DrivesOriginalTriggerSource()
-        {
-            var source = CreateTriggerSource("input:trigger");
-            var injector = CreateInjector(
-                id => id == source.Id ? source : null,
-                () => new[] { source });
-
-            injector.InjectTriggerOn("input:trigger", "smile");
-            injector.InjectTriggerOn("input:trigger", "angry");
-            injector.InjectTriggerOff("input:trigger", "smile");
-
-            Assert.That(source.ActiveExpressionIds, Is.EqualTo(new[] { "angry" }));
-        }
-
-        [Test]
-        public void InjectTriggerEvents_WhenSourceMissing_LogsDistinctWarningAndSkips()
-        {
-            var injector = CreateInjector(
-                _ => null,
-                () => Array.Empty<TestTriggerSource>());
-
-            LogAssert.Expect(LogType.Warning, "Playback skipped trigger injection because sourceId 'missing:trigger' could not be resolved.");
-
-            injector.InjectTriggerOn("missing:trigger", "smile");
-            injector.InjectTriggerOff("missing:trigger", "smile");
-        }
-
-        [Test]
-        public void EstablishBaseline_AppliesStacksToResolvedSourcesAndClearsUnspecifiedSources()
+        public void BeginInjection_AllTriggerSources_AreSuspendedAndBaselineApplied()
         {
             var primary = CreateTriggerSource("input:primary");
             var secondary = CreateTriggerSource("input:secondary");
             primary.TriggerOn("smile");
-            secondary.TriggerOn("angry");
+            secondary.TriggerOn("smile");
 
             var injector = CreateInjector(
                 id =>
@@ -69,19 +41,88 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             var baseline = new RecBaselineState(
                 new[]
                 {
-                    new RecBaselineState.TriggerEntry("input:primary", new[] { "smile", "angry" }),
-                    new RecBaselineState.TriggerEntry("missing:trigger", new[] { "smile" }),
+                    new RecBaselineState.TriggerEntry("input:primary", new[] { "angry" }),
+                },
+                null);
+
+            injector.BeginInjection(baseline);
+
+            Assert.That(primary.IsTriggerInputSuspended, Is.True);
+            Assert.That(secondary.IsTriggerInputSuspended, Is.True);
+            Assert.That(primary.ActiveExpressionIds, Is.EqualTo(new[] { "angry" }));
+            Assert.That(primary.ReadCurrentValues(), Is.EqualTo(new[] { 0.75f }));
+            Assert.That(secondary.ActiveExpressionIds, Is.Empty);
+            Assert.That(secondary.TryWriteValues(new float[1]), Is.False);
+        }
+
+        [Test]
+        public void BeginInjection_WhenBaselineContainsMissingSource_LogsDistinctWarningAndSkips()
+        {
+            var source = CreateTriggerSource("input:primary");
+            var injector = CreateInjector(
+                id => id == source.Id ? source : null,
+                () => new[] { source });
+
+            var baseline = new RecBaselineState(
+                new[]
+                {
+                    new RecBaselineState.TriggerEntry("input:primary", new[] { "smile" }),
+                    new RecBaselineState.TriggerEntry("missing:trigger", new[] { "angry" }),
                 },
                 null);
 
             LogAssert.Expect(LogType.Warning, "Playback skipped trigger injection because sourceId 'missing:trigger' could not be resolved.");
 
-            injector.EstablishBaseline(baseline);
+            injector.BeginInjection(baseline);
 
-            Assert.That(primary.ActiveExpressionIds, Is.EqualTo(new[] { "smile", "angry" }));
-            Assert.That(primary.ReadCurrentValues(), Is.EqualTo(new[] { 0.75f }));
-            Assert.That(secondary.ActiveExpressionIds, Is.Empty);
-            Assert.That(secondary.TryWriteValues(new float[1]), Is.False);
+            Assert.That(source.IsTriggerInputSuspended, Is.True);
+            Assert.That(source.ActiveExpressionIds, Is.EqualTo(new[] { "smile" }));
+        }
+
+        [Test]
+        public void InjectTriggerOnAndOff_DuringInjection_DrivesOriginalTriggerSource()
+        {
+            var source = CreateTriggerSource("input:trigger");
+            var injector = CreateInjector(
+                id => id == source.Id ? source : null,
+                () => new[] { source });
+
+            injector.BeginInjection(RecBaselineState.Empty);
+            injector.InjectTriggerOn("input:trigger", "smile");
+            injector.InjectTriggerOn("input:trigger", "angry");
+            injector.InjectTriggerOff("input:trigger", "smile");
+
+            Assert.That(source.ActiveExpressionIds, Is.EqualTo(new[] { "angry" }));
+        }
+
+        [Test]
+        public void EndInjection_WhenSourceWasRemovedAfterBegin_ResumesCapturedInstance()
+        {
+            var source = CreateTriggerSource("input:trigger");
+            bool isRegistered = true;
+            var injector = CreateInjector(
+                id => isRegistered && id == source.Id ? source : null,
+                () => isRegistered ? new[] { source } : Array.Empty<TestTriggerSource>());
+
+            injector.BeginInjection(RecBaselineState.Empty);
+            isRegistered = false;
+
+            injector.EndInjection();
+
+            Assert.That(source.IsTriggerInputSuspended, Is.False);
+        }
+
+        [Test]
+        public void InjectTriggerEvents_WhenSourceMissing_LogsDistinctWarningAndSkips()
+        {
+            var injector = CreateInjector(
+                _ => null,
+                () => Array.Empty<TestTriggerSource>());
+
+            LogAssert.Expect(LogType.Warning, "Playback skipped trigger injection because sourceId 'missing:trigger' could not be resolved.");
+
+            injector.InjectTriggerOn("missing:trigger", "smile");
+            injector.InjectTriggerOff("missing:trigger", "smile");
         }
 
         private static RecTriggerInjector CreateInjector(

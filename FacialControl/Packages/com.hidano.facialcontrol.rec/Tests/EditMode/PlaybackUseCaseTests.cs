@@ -36,7 +36,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
         }
 
         [Test]
-        public void StartPlayback_WhenLoaded_EstablishesFilteredBaselineAndLogsDistinctMissingIds()
+        public void StartPlayback_WhenLoaded_BeginsFilteredBaselineAndLogsDistinctMissingIds()
         {
             var triggerPort = new FakeTriggerInjectionPort();
             var analogPort = new FakeAnalogInjectionPort();
@@ -49,7 +49,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
             Assert.That(started, Is.True);
             Assert.That(useCase.State, Is.EqualTo(RecPlaybackState.Playing));
-            Assert.That(triggerPort.EstablishBaselineCallCount, Is.EqualTo(1));
+            Assert.That(triggerPort.BeginInjectionCallCount, Is.EqualTo(1));
             Assert.That(analogPort.BeginInjectionCallCount, Is.EqualTo(1));
             Assert.That(triggerPort.Baseline.TryGetTriggerStack("input:trigger", out IReadOnlyList<string> expressionIds), Is.True);
             Assert.That(expressionIds, Is.EqualTo(new[] { "smile" }));
@@ -71,7 +71,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             bool started = useCase.StartPlayback();
 
             Assert.That(started, Is.False);
-            Assert.That(triggerPort.EstablishBaselineCallCount, Is.EqualTo(1));
+            Assert.That(triggerPort.BeginInjectionCallCount, Is.EqualTo(1));
             Assert.That(analogPort.BeginInjectionCallCount, Is.EqualTo(1));
         }
 
@@ -113,6 +113,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
             useCase.StopPlayback();
 
+            Assert.That(triggerPort.EndInjectionCallCount, Is.EqualTo(1));
             Assert.That(analogPort.EndInjectionCallCount, Is.EqualTo(1));
             Assert.That(useCase.State, Is.EqualTo(RecPlaybackState.Idle));
         }
@@ -126,6 +127,7 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
             useCase.StopPlayback();
 
+            Assert.That(triggerPort.EndInjectionCallCount, Is.EqualTo(0));
             Assert.That(analogPort.EndInjectionCallCount, Is.EqualTo(0));
             Assert.That(useCase.State, Is.EqualTo(RecPlaybackState.Idle));
         }
@@ -290,7 +292,9 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
         private sealed class FakeTriggerInjectionPort : ITriggerInjectionPort
         {
-            public int EstablishBaselineCallCount { get; private set; }
+            public int BeginInjectionCallCount { get; private set; }
+
+            public int EndInjectionCallCount { get; private set; }
 
             public RecBaselineState Baseline { get; private set; }
 
@@ -298,9 +302,9 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
 
             public List<(string sourceId, string expressionId)> TriggerOffEvents { get; } = new List<(string sourceId, string expressionId)>();
 
-            public void EstablishBaseline(RecBaselineState baseline)
+            public void BeginInjection(RecBaselineState baseline)
             {
-                EstablishBaselineCallCount++;
+                BeginInjectionCallCount++;
                 Baseline = baseline;
             }
 
@@ -312,6 +316,11 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             public void InjectTriggerOff(string sourceId, string expressionId)
             {
                 TriggerOffEvents.Add((sourceId, expressionId));
+            }
+
+            public void EndInjection()
+            {
+                EndInjectionCallCount++;
             }
         }
 
