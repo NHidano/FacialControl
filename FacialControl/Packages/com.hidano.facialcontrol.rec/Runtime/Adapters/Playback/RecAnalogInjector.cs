@@ -48,45 +48,28 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
 
             for (int i = 0; i < analogEntries.Count; i++)
             {
-                RecBaselineState.AnalogEntry entry = analogEntries[i];
-                if (!TryParseRegistryKey(entry.SourceId, out AdapterSlug slug, out string sub))
+                AttachPlaybackSource(analogEntries[i].SourceId, analogEntries[i].AxesAsSpan());
+            }
+
+            IReadOnlyList<string> registeredIds = _registry.RegisteredIds ?? Array.Empty<string>();
+            for (int i = 0; i < registeredIds.Count; i++)
+            {
+                string sourceId = registeredIds[i];
+                if (_attachedSources.ContainsKey(sourceId)
+                    || !_registry.TryResolve(sourceId, out IInputSource source)
+                    || source is not IAnalogInputSource analogSource)
                 {
-                    WarnInvalidSourceIdOnce(entry.SourceId);
                     continue;
                 }
 
-                int axisCount = entry.Axes.Count;
+                int axisCount = analogSource.AxisCount;
                 if (axisCount <= 0)
                 {
-                    WarnAxisMismatchOnce(entry.SourceId);
+                    WarnAxisMismatchOnce(sourceId);
                     continue;
                 }
 
-                bool hasCurrent = _registry.TryResolve(entry.SourceId, out IInputSource currentSource);
-                if (currentSource is IInjectedInputSource)
-                {
-                    WarnOccupiedOnce(entry.SourceId);
-                    continue;
-                }
-
-                var playbackSource = new RecPlaybackAnalogSource(entry.SourceId, axisCount, hasCurrent ? currentSource : null);
-                if (!playbackSource.SetAxes(entry.AxesAsSpan()))
-                {
-                    WarnAxisMismatchOnce(entry.SourceId);
-                    continue;
-                }
-
-                if (hasCurrent)
-                {
-                    ReplaceSource(slug, sub, playbackSource);
-                }
-                else
-                {
-                    RegisterSource(slug, sub, playbackSource);
-                    LogRegisteredWithoutOriginalOnce(entry.SourceId);
-                }
-
-                _attachedSources[entry.SourceId] = playbackSource;
+                AttachPlaybackSource(sourceId, new float[axisCount]);
             }
         }
 
@@ -144,6 +127,48 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
         private static bool TryParseRegistryKey(string sourceId, out AdapterSlug slug, out string sub)
         {
             return AdapterSlug.TryParseComposite(sourceId, out slug, out sub);
+        }
+
+        private void AttachPlaybackSource(string sourceId, ReadOnlySpan<float> seedAxes)
+        {
+            if (!TryParseRegistryKey(sourceId, out AdapterSlug slug, out string sub))
+            {
+                WarnInvalidSourceIdOnce(sourceId);
+                return;
+            }
+
+            int axisCount = seedAxes.Length;
+            if (axisCount <= 0)
+            {
+                WarnAxisMismatchOnce(sourceId);
+                return;
+            }
+
+            bool hasCurrent = _registry.TryResolve(sourceId, out IInputSource currentSource);
+            if (currentSource is IInjectedInputSource)
+            {
+                WarnOccupiedOnce(sourceId);
+                return;
+            }
+
+            var playbackSource = new RecPlaybackAnalogSource(sourceId, axisCount, hasCurrent ? currentSource : null);
+            if (!playbackSource.SetAxes(seedAxes))
+            {
+                WarnAxisMismatchOnce(sourceId);
+                return;
+            }
+
+            if (hasCurrent)
+            {
+                ReplaceSource(slug, sub, playbackSource);
+            }
+            else
+            {
+                RegisterSource(slug, sub, playbackSource);
+                LogRegisteredWithoutOriginalOnce(sourceId);
+            }
+
+            _attachedSources[sourceId] = playbackSource;
         }
 
         private void RegisterSource(AdapterSlug slug, string sub, IInputSource source)

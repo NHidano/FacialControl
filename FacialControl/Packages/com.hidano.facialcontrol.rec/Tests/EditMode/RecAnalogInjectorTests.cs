@@ -44,6 +44,25 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
         }
 
         [Test]
+        public void BeginInjection_WithRegisteredAnalogOutsideBaseline_ReplacesSourceAndSeedsZeroAxes()
+        {
+            var registry = new InputSourceRegistry();
+            var original = new StubAnalogInputSource("input:gaze", 2, 0.9f, -0.4f);
+            registry.Register(AdapterSlug.Parse("input"), "gaze", original);
+            var injector = new RecAnalogInjector(registry);
+
+            injector.BeginInjection(RecBaselineState.Empty);
+
+            Assert.That(registry.TryResolve("input:gaze", out IInputSource resolved), Is.True);
+            Assert.That(resolved, Is.TypeOf<RecPlaybackAnalogSource>());
+            var playbackSource = (RecPlaybackAnalogSource)resolved;
+            Assert.That(playbackSource.ReplacedSource, Is.SameAs(original));
+            Assert.That(playbackSource.TryReadVector2(out float x, out float y), Is.True);
+            Assert.That(x, Is.Zero);
+            Assert.That(y, Is.Zero);
+        }
+
+        [Test]
         public void BeginInjection_WhenOriginalIsMissing_RegistersSourceAndLogsInfo()
         {
             LogAssert.Expect(LogType.Log, RegisteredLogPattern);
@@ -56,6 +75,24 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             Assert.That(resolved, Is.TypeOf<RecPlaybackAnalogSource>());
             var playbackSource = (RecPlaybackAnalogSource)resolved;
             Assert.That(playbackSource.ReplacedSource, Is.Null);
+            Assert.That(playbackSource.TryReadVector2(out float x, out float y), Is.True);
+            Assert.That(x, Is.EqualTo(-1f));
+            Assert.That(y, Is.EqualTo(0.75f));
+        }
+
+        [Test]
+        public void BeginInjection_WithBaselineAndRegisteredSource_PrefersBaselineSeed()
+        {
+            var registry = new InputSourceRegistry();
+            var original = new StubAnalogInputSource("input:gaze", 2, 0.9f, -0.4f);
+            registry.Register(AdapterSlug.Parse("input"), "gaze", original);
+            var injector = new RecAnalogInjector(registry);
+
+            injector.BeginInjection(CreateBaseline("input:gaze", -1f, 0.75f));
+
+            Assert.That(registry.TryResolve("input:gaze", out IInputSource resolved), Is.True);
+            Assert.That(resolved, Is.TypeOf<RecPlaybackAnalogSource>());
+            var playbackSource = (RecPlaybackAnalogSource)resolved;
             Assert.That(playbackSource.TryReadVector2(out float x, out float y), Is.True);
             Assert.That(x, Is.EqualTo(-1f));
             Assert.That(y, Is.EqualTo(0.75f));
@@ -171,6 +208,58 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
             public bool TryWriteValues(Span<float> output)
             {
                 return false;
+            }
+        }
+
+        private sealed class StubAnalogInputSource : StubInputSource, IAnalogInputSource
+        {
+            private readonly float[] _axes;
+
+            public StubAnalogInputSource(string id, params float[] axes)
+                : base(id)
+            {
+                _axes = axes ?? Array.Empty<float>();
+            }
+
+            public bool IsValid => true;
+
+            public int AxisCount => _axes.Length;
+
+            public bool TryReadScalar(out float value)
+            {
+                if (_axes.Length == 0)
+                {
+                    value = default;
+                    return false;
+                }
+
+                value = _axes[0];
+                return true;
+            }
+
+            public bool TryReadVector2(out float x, out float y)
+            {
+                if (_axes.Length < 2)
+                {
+                    x = default;
+                    y = default;
+                    return false;
+                }
+
+                x = _axes[0];
+                y = _axes[1];
+                return true;
+            }
+
+            public bool TryReadAxes(Span<float> output)
+            {
+                if (output.Length < _axes.Length)
+                {
+                    return false;
+                }
+
+                _axes.AsSpan().CopyTo(output);
+                return true;
             }
         }
 
