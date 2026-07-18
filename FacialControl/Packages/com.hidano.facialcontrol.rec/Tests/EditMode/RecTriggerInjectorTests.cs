@@ -113,6 +113,66 @@ namespace Hidano.FacialControl.Rec.Tests.EditMode
         }
 
         [Test]
+        public void BeginInjection_WhenReentered_ReleasesPreviousSnapshotBeforeReacquiring()
+        {
+            var first = CreateTriggerSource("input:first");
+            var second = CreateTriggerSource("input:second");
+            var sources = new List<TestTriggerSource> { first };
+            var injector = CreateInjector(
+                id =>
+                {
+                    for (int i = 0; i < sources.Count; i++)
+                    {
+                        if (sources[i].Id == id)
+                        {
+                            return sources[i];
+                        }
+                    }
+
+                    return null;
+                },
+                () => sources.ToArray());
+
+            injector.BeginInjection(RecBaselineState.Empty);
+            sources.Clear();
+            sources.Add(second);
+
+            var baseline = new RecBaselineState(
+                new[]
+                {
+                    new RecBaselineState.TriggerEntry("input:second", new[] { "angry" }),
+                },
+                null);
+
+            injector.BeginInjection(baseline);
+
+            Assert.That(first.IsTriggerInputSuspended, Is.False);
+            Assert.That(second.IsTriggerInputSuspended, Is.True);
+            Assert.That(second.ActiveExpressionIds, Is.EqualTo(new[] { "angry" }));
+        }
+
+        [Test]
+        public void BeginInjection_WhenReenteredWithSameSource_ReestablishesBaseline()
+        {
+            var source = CreateTriggerSource("input:trigger");
+            var injector = CreateInjector(
+                id => id == source.Id ? source : null,
+                () => new[] { source });
+
+            injector.BeginInjection(RecBaselineState.Empty);
+            injector.InjectTriggerOn("input:trigger", "smile");
+
+            injector.BeginInjection(RecBaselineState.Empty);
+
+            Assert.That(source.IsTriggerInputSuspended, Is.True);
+            Assert.That(source.ActiveExpressionIds, Is.Empty);
+
+            injector.EndInjection();
+
+            Assert.That(source.IsTriggerInputSuspended, Is.False);
+        }
+
+        [Test]
         public void InjectTriggerEvents_WhenSourceMissing_LogsDistinctWarningAndSkips()
         {
             var injector = CreateInjector(

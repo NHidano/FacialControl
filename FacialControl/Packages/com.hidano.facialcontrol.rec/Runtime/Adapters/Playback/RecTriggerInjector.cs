@@ -31,10 +31,8 @@ namespace Hidano.FacialControl.Rec.Adapters.Playback
 
         public void BeginInjection(RecBaselineState baseline)
         {
-            if (_isInjecting)
-            {
-                return;
-            }
+            // 再入吸収: 旧スナップショットの遮断を先に解放してから最新のソース集合を取り直す。
+            EndInjection();
 
             IReadOnlyList<ExpressionTriggerInputSourceBase> triggerSources = _getAllTriggerSources() ?? Array.Empty<ExpressionTriggerInputSourceBase>();
             RecBaselineState safeBaseline = baseline ?? RecBaselineState.Empty;

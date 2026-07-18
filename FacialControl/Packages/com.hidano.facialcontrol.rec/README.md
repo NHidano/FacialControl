@@ -25,5 +25,7 @@
 このパッケージではパッケージ構造と asmdef 配置を前提に、録画・再生の実装、サンプル、Inspector UI を段階的に追加します。
 
 ## 既知制限
-- REC 再生開始後に新規登録された live の analog / gaze source は再生 takeover の対象外です。再生開始時点で registry に存在した source と baseline に含まれる source のみを置換します。
+- REC 再生開始後に新規登録された live の入力ソースは遮断の対象外です（trigger / analog / gaze 共通の開始時スナップショット方式）。再生開始時点で registry に存在した source と baseline に含まれる source のみを遮断・置換します。
 - `com.hidano.facialcontrol.timeline` の `TimelineExpressionStateSink` が発火する `TriggerOn` / `TriggerOff` も REC 再生中は抑止されます。REC 再生と Timeline 再生を同時に使う場合、trigger 系の live 更新は共存しません。
+
+補足として、baseline に存在しない analog source は再生開始時に 0 seed で確定します。gaze も同様に中立 `(0, 0)` で開始されます。

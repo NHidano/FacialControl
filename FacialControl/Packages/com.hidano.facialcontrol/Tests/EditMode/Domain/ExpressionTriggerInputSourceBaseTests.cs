@@ -347,23 +347,43 @@ namespace Hidano.FacialControl.Tests.EditMode.Domain
         }
 
         [Test]
-        public void SuspendTriggerInput_TracksStateUntilMatchingResume()
+        public void SuspendTriggerInput_WhenNotSuspended_ReturnsTrueAndSuspends()
         {
             var source = CreateSource();
 
             Assert.IsFalse(source.IsTriggerInputSuspended);
 
-            source.SuspendTriggerInput();
+            bool suspended = source.SuspendTriggerInput();
+
+            Assert.IsTrue(suspended);
+            Assert.IsTrue(source.IsTriggerInputSuspended);
+        }
+
+        [Test]
+        public void SuspendTriggerInput_WhenAlreadySuspended_ReturnsFalseWithoutStateChange()
+        {
+            var source = CreateSource();
             source.SuspendTriggerInput();
 
+            bool suspendedAgain = source.SuspendTriggerInput();
+
+            Assert.IsFalse(suspendedAgain);
             Assert.IsTrue(source.IsTriggerInputSuspended);
 
-            source.ResumeTriggerInput();
+            bool resumed = source.ResumeTriggerInput();
 
-            Assert.IsTrue(source.IsTriggerInputSuspended);
+            Assert.IsTrue(resumed);
+            Assert.IsFalse(source.IsTriggerInputSuspended);
+        }
 
-            source.ResumeTriggerInput();
+        [Test]
+        public void ResumeTriggerInput_WhenNotSuspended_ReturnsFalseWithoutStateChange()
+        {
+            var source = CreateSource();
 
+            bool resumed = source.ResumeTriggerInput();
+
+            Assert.IsFalse(resumed);
             Assert.IsFalse(source.IsTriggerInputSuspended);
         }
 

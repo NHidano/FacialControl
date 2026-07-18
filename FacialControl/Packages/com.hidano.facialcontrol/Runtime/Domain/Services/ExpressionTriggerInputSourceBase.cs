@@ -72,7 +72,7 @@ namespace Hidano.FacialControl.Domain.Services
         private TransitionCurve _curve;
         private bool _isComplete;
         private bool _hasWarnedStackDepthExceeded;
-        private int _triggerInputSuspendDepth;
+        private bool _isTriggerInputSuspended;
         private ITriggerEventObserver _triggerEventObserver;
 
         /// <summary>
@@ -84,10 +84,10 @@ namespace Hidano.FacialControl.Domain.Services
         public IReadOnlyList<string> ActiveExpressionIds => _activeExpressionIds;
 
         /// <summary>
-        /// ライブ TriggerOn/TriggerOff 入力が驕ｮ譁ｭ中かを返す。ResetToExpressionStack などの
+        /// ライブ TriggerOn/TriggerOff 入力が遮断中かを返す。ResetToExpressionStack などの
         /// 明示同期 API には影響しない。
         /// </summary>
-        public bool IsTriggerInputSuspended => _triggerInputSuspendDepth > 0;
+        public bool IsTriggerInputSuspended => _isTriggerInputSuspended;
 
         /// <summary>
         /// 現在の補間済み BlendShape 値 (長さ <see cref="BlendShapeCount"/>)。診断/テスト用。
@@ -103,26 +103,35 @@ namespace Hidano.FacialControl.Domain.Services
         }
 
         /// <summary>
-        /// ライブ TriggerOn/TriggerOff 入力の受け付けを 1 段階驕ｮ譁ｭする。
-        /// Resume が対応回数だけ呼ばれるまで驕ｮ譁ｭは継続する。
+        /// ライブ TriggerOn/TriggerOff 入力の受け付けを遮断する。
+        /// 既に遮断中の場合は状態を変更せず false を返す (冪等)。
         /// </summary>
-        public void SuspendTriggerInput()
+        /// <returns>遮断状態へ遷移した場合 true、既に遮断中なら false。</returns>
+        public bool SuspendTriggerInput()
         {
-            _triggerInputSuspendDepth++;
+            if (_isTriggerInputSuspended)
+            {
+                return false;
+            }
+
+            _isTriggerInputSuspended = true;
+            return true;
         }
 
         /// <summary>
-        /// ライブ TriggerOn/TriggerOff 入力の驕ｮ譁ｭを 1 段階解除する。
-        /// 驕ｮ譁ｭされていない場合は no-op。
+        /// ライブ TriggerOn/TriggerOff 入力の遮断を解除する。
+        /// 遮断されていない場合は状態を変更せず false を返す (冪等)。
         /// </summary>
-        public void ResumeTriggerInput()
+        /// <returns>遮断を解除した場合 true、遮断されていなければ false。</returns>
+        public bool ResumeTriggerInput()
         {
-            if (_triggerInputSuspendDepth <= 0)
+            if (!_isTriggerInputSuspended)
             {
-                return;
+                return false;
             }
 
-            _triggerInputSuspendDepth--;
+            _isTriggerInputSuspended = false;
+            return true;
         }
 
         /// <summary>
