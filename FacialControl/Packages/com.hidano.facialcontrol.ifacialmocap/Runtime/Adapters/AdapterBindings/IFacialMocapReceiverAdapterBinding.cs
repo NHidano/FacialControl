@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Hidano.FacialControl.Adapters.Bone;
 using Hidano.FacialControl.Adapters.IFacialMocap;
@@ -337,13 +338,27 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 return false;
             }
 
+            // ContributeMask はメッシュの BlendShape 総数長で作る。null 渡しの自動生成に任せると
+            // 長さが「最大 mapped index + 1」に縮み、末尾に非マッピング BlendShape を持つモデルで
+            // LayerInputSourceAggregator の BitArray.Or (長さ完全一致要求) が ArgumentException を投げる。
+            int meshCount = meshNames?.Count ?? 0;
+            var contributeMask = new BitArray(meshCount);
+            for (int i = 0; i < mappingIndexToMeshIndex.Count; i++)
+            {
+                int meshIndex = mappingIndexToMeshIndex[i];
+                if (meshIndex >= 0 && meshIndex < meshCount)
+                {
+                    contributeMask[meshIndex] = true;
+                }
+            }
+
             _buffer = new OscDoubleBuffer(mappingIndexToMeshIndex.Count);
             _inputSource = new OscInputSource(
                 _buffer,
                 settings.StalenessSeconds,
                 ctx.TimeProvider,
                 settings.FailSafeMode,
-                null, // contributeMask（mapping から自動生成させる）
+                contributeMask,
                 mappingIndexToMeshIndex.ToArray());
             _registry.Register(slug, _inputSource);
             return true;

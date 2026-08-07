@@ -152,6 +152,34 @@ namespace Hidano.FacialControl.IFacialMocap.Tests.PlayMode
             Assert.That(_binding.GazeLeftSource.TryReadVector2(out _, out _), Is.True);
         }
 
+        [Test]
+        public void OnStart_MeshHasTrailingUnmappedBlendShape_ContributeMaskLengthMatchesMeshCount()
+        {
+            // ARKit マッピング対象がメッシュ末尾に無いモデルでは、mask 長が
+            // 「最大 mapped index + 1」に縮み、LayerInputSourceAggregator の
+            // BitArray.Or (長さ完全一致要求) が ArgumentException を投げる回帰の再現。
+            int port = ++s_port;
+            _settings = CreateSettings(port);
+            _binding = new IFacialMocapReceiverAdapterBinding { Slug = "ifm3" };
+            _binding.Configure(_settings);
+            var meshNames = new List<string> { "jawOpen", "customExtraShape" };
+            AdapterBuildContext ctx = CreateContext(meshNames);
+
+            _binding.OnStart(in ctx);
+            _started = true;
+
+            Assert.That(_registry.TryResolve("ifm3", out IInputSource source), Is.True);
+            Assert.That(source.ContributeMask.Length, Is.EqualTo(meshNames.Count),
+                "ContributeMask 長はメッシュの BlendShape 総数と一致すべき。");
+            Assert.That(source.BlendShapeCount, Is.EqualTo(meshNames.Count));
+            Assert.That(source.ContributeMask[0], Is.True, "jawOpen は ARKit マッピング対象。");
+            Assert.That(source.ContributeMask[1], Is.False, "customExtraShape は非マッピング対象。");
+
+            // Aggregator と同じ長さ要求で Or できること（長さ不一致なら ArgumentException）。
+            var layerMask = new System.Collections.BitArray(meshNames.Count);
+            Assert.DoesNotThrow(() => layerMask.Or(source.ContributeMask));
+        }
+
         [UnityTest]
         public IEnumerator Dispose_DestroysHost_AndUnregistersSources()
         {
