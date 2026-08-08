@@ -126,11 +126,11 @@
 - **Alternatives Considered**:
   1. 検出しない（JSON 経路のみ警告）— SO 資産（Fork 実機・サンプル）こそ主要な移行対象であり、無警告沈黙の禁止（D-3）に反する
   2. `GazeBindingConfig` 型を温存して検出に使う — D-2/D-9 で削除する型が検出のためだけに生き残り、削除の目的（死んだスキーマの一掃）と矛盾
-  3. **（採用）検出専用マーカー型 `LegacyGazeConfigEntry { public string expressionId; }` の `[SerializeField, HideInInspector] List<> _gazeConfigs` を非公開温存** — YAML の旧キーが件数と expressionId のみデシリアライズされる
+  3. **（採用）検出専用マーカー型 `LegacyGazeConfigEntry { public string expressionId; }` の `[SerializeField, HideInInspector, FormerlySerializedAs("_gazeConfigs")] List<> _legacyGazeConfigs` を非公開温存** — YAML の旧キー `_gazeConfigs` が初回ロードで件数と expressionId のみデシリアライズされ、再保存で旧キー行が消える（新キー `_legacyGazeConfigs: []` の空行は残る = 仕様）
 - **Selected Approach**: 3。検出時の警告は (a) Inspector 目線タブの HelpBox + 1 回の `Debug.LogWarning`（移行ガイド誘導 + 「クリア」ボタンで stale 行を除去）、(b) `FacialController` rebuild 時の 1 回警告（Editor を介さないランタイム構成向け）の 2 点
 - **Rationale**: AC 2.7 が明示的に許容した方式。件数 + id が取れるため警告文言に具体性を持たせられる
 - **Trade-offs**: SO に非公開フィールドが 1 本残る（AC 2.2 違反ではないと requirements が明記済み）。次の破壊的変更（1.0.0 前）で削除する
-- **Follow-up**: サンプル Profile 再保存（Req 12.5）で stale キーが実際に消えることをアセット diff で確認
+- **Follow-up**: サンプル Profile 再保存（Req 12.5）で**旧キー `_gazeConfigs` 行**が消えることをアセット diff で確認（同名フィールドを温存すると空リストでも `_gazeConfigs: []` が常に書き出され除去不能なため、`FormerlySerializedAs` + 新フィールド名方式が AC 12.5 成立の前提）
 
 ### Decision 6: ボーン path の起点 =「参照モデル内 Animator の Transform」・path 解決失敗時は単純名フォールバック（Req 7.3）
 - **Context**: ランタイム解決 root は `_animator.transform`。参照モデル root と Animator の位置がずれる構成では起点不一致が起きうる

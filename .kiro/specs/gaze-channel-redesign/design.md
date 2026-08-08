@@ -37,7 +37,7 @@ requirements.md 末尾の未決事項 3 件を以下のとおり確定する。�
 補助決定（requirements 明記外の設計判断。詳細は research.md Decisions 4〜9）:
 
 - **`_gazeExpressionIds` 系 API（sender）は廃止**（Req 11.6(a)）: serialized フィールド・`GazeExpressionIds` / `ConfigureGazeExpressionIds`・options JSON `gazeExpressionIds` キーを削除し、供給源を `IGazeChannelConsumer` 注入に一本化。`OscOutputDemo/OscSenderOptions.json` を追従。
-- **SO 経路の旧スキーマ検出**（AC 2.7）: 検出専用マーカー型 `LegacyGazeConfigEntry`（`expressionId` のみ）の非公開リスト `_gazeConfigs` を温存し、Inspector HelpBox + `FacialController` rebuild 時警告の 2 点で D-3 の明示警告を実現。
+- **SO 経路の旧スキーマ検出**（AC 2.7）: 検出専用マーカー型 `LegacyGazeConfigEntry`（`expressionId` のみ）の非公開リスト `_legacyGazeConfigs`（`[FormerlySerializedAs("_gazeConfigs")]` 付与）で旧 YAML を初回ロード時に受け取り、Inspector HelpBox + `FacialController` rebuild 時警告の 2 点で D-3 の明示警告を実現。再保存で旧キー `_gazeConfigs` 行はアセットから消え（AC 12.5 成立）、新キー `_legacyGazeConfigs: []` の空行が残るのは仕様とする。
 - **ボーン path 起点**（Req 7.3）: 「参照モデル内 Animator の Transform」起点で保存（ランタイム root `_animator.transform` と定義一致）。Animator 不在時のみ参照モデル root + 注意ログ。`BoneTransformResolver` に「path 解決失敗 → 末尾セグメント単純名フォールバック + 警告」を追加し、起点不一致構成でも現行同等へ縮退。
 - **`GazeSnapshot.ExpressionId` → `ChannelId` リネーム**（Breaking。CHANGELOG 記録）。
 - **look* 系の型ごと削除**（D-2）: `GazeBlendShapeSampleEntry` / Editor `GazeClipBlendShapeSampler` / 関連テストを削除（実装冒頭に参照ゼロの grep 検証を置く）。
@@ -205,7 +205,8 @@ FacialControl/Packages/com.hidano.facialcontrol/
 
 **core（com.hidano.facialcontrol）**:
 
-- `Runtime/Adapters/ScriptableObject/FacialCharacterProfileSO.cs` — `_gazeConfigs`（`GazeBindingConfig`）を削除し `List<GazeChannel> _gazeChannels` + 検出専用 `List<LegacyGazeConfigEntry> _gazeConfigs`（HideInInspector）に置換。`GazeChannels` アクセサで既定チャネル不変条件を自己修復。`HasLegacyGazeConfigs` 内部公開
+- `Runtime/Adapters/ScriptableObject/FacialCharacterProfileSO.cs` — `_gazeConfigs`（`GazeBindingConfig`）を削除し `List<GazeChannel> _gazeChannels` + 検出専用 `List<LegacyGazeConfigEntry> _legacyGazeConfigs`（`[FormerlySerializedAs("_gazeConfigs")]` + HideInInspector）に置換。`GazeChannels` アクセサで既定チャネル不変条件を自己修復。`HasLegacyGazeConfigs` 内部公開
+- `Runtime/Domain/Adapters/IFacialOutputObserver.cs` — XML doc の `GazeSnapshot.ExpressionId` 参照を `ChannelId` へ追従（Design Decision 3 のリネームに伴うドキュメント整合）
 - `Runtime/Adapters/ScriptableObject/IFacialCharacterProfile.cs` — `GazeConfigs` → `GazeChannels`（`IReadOnlyList<GazeChannel>`）
 - `Runtime/Adapters/ScriptableObject/Serializable/ExpressionSerializable.cs` — `isGaze` フィールド削除（Req 2.1）
 - `Runtime/Adapters/Json/Dto/ProfileSnapshotDto.cs` — `gazeConfigs` 削除、`GazeSectionDto gaze` 追加
@@ -230,13 +231,14 @@ FacialControl/Packages/com.hidano.facialcontrol/
 **inputsystem（com.hidano.facialcontrol.inputsystem）**:
 
 - `InputSystemAdapterBinding.cs` — `Configure` の末尾 gaze 引数を削除し `IGazeChannelConsumer` 実装へ。`BuildAnalogSources` の Gaze 分岐を「エイリアス後付け二重登録」から「規約 id での一貫登録」へ置換（`$"{expressionId}.left"` 補間の削除）。`IGazeSourceProvider` 実装。`GetDeclaredInputSourceIds` に gaze 規約 id を追加（Req 3.3, 4.7）
+- `Editor/AdapterBindings/InputSystemAdapterBindingDrawer.cs` — bindingMode=Gaze のとき expression ドロップダウン（`CollectExpressionIds`）を Profile の `GazeChannels` id 列挙へ切替（Req 4.7 / 6.1。`InputSystemAdapterBindingDrawerTests` 追従）
 - `ExpressionBindingEntry`（bindingMode=Gaze） — `expressionId` の意味を「チャネル id 参照」へ変更（フィールド名は維持、Tooltip / ドキュメント更新。serialized データの破壊的変更として移行ガイドに記載）
 - `Samples~/MultiSourceBlendDemo/`（Profile / JSON / README） / `CHANGELOG.md`
 
 **ifacialmocap（com.hidano.facialcontrol.ifacialmocap）**:
 
 - `IFacialMocapReceiverAdapterBinding.cs` — `GazeLeftSub` / `GazeRightSub` 定数を `GazeSourceIdConvention.ComposeSub(DefaultChannelId, side)` 経由へ置換（合成結果は現行と同一文字列 = 挙動互換）。`IGazeSourceProvider` 実装（既定チャネル・左右ペア宣言）。`_gazeInvertYaw` / `_gazeInvertPitch` は binding 側設定として存続（Req 3.3, 4.6）
-- `Samples~/IFacialMocapReceiverDemo/`（README L25 / L41-42 の旧手順置換 + Profile アセット再保存で stale `_gazeConfigs: []` 除去） / `CHANGELOG.md`
+- `Samples~/IFacialMocapReceiverDemo/`（README L25 / L41-42 の旧手順置換 + Profile アセット再保存で旧キー `_gazeConfigs` 行を除去 — `FormerlySerializedAs` 方式のため新キー `_legacyGazeConfigs: []` の空行が残るのは仕様） / `CHANGELOG.md`
 
 **timeline（com.hidano.facialcontrol.timeline）**:
 
@@ -367,7 +369,7 @@ sequenceDiagram
 | 7.5 | 明示的な再解決操作 | Inspector | チャネル別 + 一括の再解決ボタン |
 | 8.1 | 注入方式の確定 | FacialController, IGazeChannelConsumer | Design Decision（Open Question 1）: 型付き化採用 |
 | 8.2 | 置換対象に IS + OscR の Configure を含む | InputSystemAdapterBinding, OscReceiverAdapterBinding | + OscSender も実装（11.6(b) 兼） |
-| 8.3 | 新データモデルの配布 | IGazeChannelConsumer | チャネル id 列の注入 |
+| 8.3 | 新データモデルの配布 | IGazeChannelConsumer | チャネル id 列の注入（要件の「チャネル定義の配布」を id-only に絞る意図的な設計判断 — 全 4 消費者の実消費が id 列で足り、bone 情報は core の `SetupGazeBoneProvider` に閉じることを実測確認済み） |
 | 8.4 | 受け取れない構成の警告 | FacialController | 旧契約型の削除で構造的に排除 + 4.9 警告 |
 | 9.1 | look*Clip / look*Samples を新スキーマに含めない | GazeChannel, GazeChannelDto | D-2（型ごと削除） |
 | 9.2 | look* の UI / validation 撤去 | Inspector | ObjectField・validation 削除 |
@@ -554,7 +556,7 @@ namespace Hidano.FacialControl.Domain.Adapters
 **Responsibilities & Constraints**
 - `GazeChannel`（`[Serializable]`）が保持するもの: `id` / `providerSlug`（空 = 自動）/ `useDistinctLeftRight` + `sourceIdLeft` / `sourceIdRight`（上級）/ 左右の `eyeBonePath`（Animator 起点フルパス）・`initialRotation`・`yawAxisLocal`・`pitchAxisLocal` / 可動角 4 値（`lookUpAngle` / `lookDownAngle` / `outerYawAngle` / `innerYawAngle`）。**look*Clip / look*Samples は持たない**（D-2）。
 - SO は `List<GazeChannel> _gazeChannels` を保持し、公開アクセサ `GazeChannels` が不変条件を自己修復する: (1) リストが null / 空なら既定チャネル 1 件を生成、(2) 先頭要素の `id` が `"gaze"` 以外なら `"gaze"` へ矯正（外部 YAML 編集への防御）。修復は Ordinal 比較・確保最小で行う。
-- 検出専用 `[SerializeField, HideInInspector] List<LegacyGazeConfigEntry> _gazeConfigs`（Design Decision 5）。`HasLegacyGazeConfigs` / `LegacyGazeConfigCount` を Inspector / FacialController へ公開。
+- 検出専用 `[SerializeField, HideInInspector, FormerlySerializedAs("_gazeConfigs")] List<LegacyGazeConfigEntry> _legacyGazeConfigs`（Design Decision 5）。旧 YAML の `_gazeConfigs` キーを初回ロードで受け取り、再保存で旧キー行が消える。`HasLegacyGazeConfigs` / `LegacyGazeConfigCount` を Inspector / FacialController へ公開。
 - `IFacialCharacterProfile.GazeConfigs` → `GazeChannels` へ置換（旧プロパティは残さない）。
 
 **Contracts**: State [x]
@@ -704,7 +706,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
 | Requirements | 3.3, 4.2, 11.3, 11.4 |
 
 **Responsibilities & Constraints**
-- `Configure(IReadOnlyList<GazeBindingConfig>)`（Spec 1）→ `IGazeChannelConsumer.ConfigureGazeChannels` へ置換。突合警告（Spec 1 Req 4.2 由来）は「広告 id が注入チャネル id 集合に無い」場合の 1 回警告に読み替え（既定構成では恒常一致のため発火しない）。
+- `Configure(IReadOnlyList<GazeBindingConfig>)`（Spec 1）→ `IGazeChannelConsumer.ConfigureGazeChannels` へ置換。突合警告（Spec 1 Req 4.2 由来）は「広告 id が注入チャネル id 集合に無い」場合の 1 回警告に読み替え（既定構成では恒常一致のため発火しない）。**未注入時（FacialController 外での単体使用）は突合警告をスキップ**する（注入集合が空 = 突合先が無いだけであり、全広告 id への誤警告を防ぐ。Sender 側の「未注入で警告 1 回」とは役割が異なる非対称として明記）。
 - gaze source 登録（手動 entry / 広告駆動とも）の id 合成を `GazeSourceIdConvention.ComposeSub` へ置換（`.left`/`.right` 連結の根絶。Req 3.3）。`GazeAdvertisementResolver` 内の合成箇所も同様（改修はこれに限定。Req 11.4）。
 - `IGazeSourceProvider` 実装: 手動 gaze entry（`expressionId` = チャネル id 参照へ読み替え）ごとの宣言 + ワイルドカード宣言 1 件（広告駆動: `ChannelId = null`）。
 - 広告 accumulate / dirty / rebuild / immutable-swap / staleness の機構は無改修（Out of Boundary）。
@@ -723,6 +725,8 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
 - `ExpressionBindingEntry`（bindingMode=Gaze）の `expressionId` はチャネル id 参照として再解釈（Tooltip 更新。serialized 資産の意味変更 = Breaking として移行ガイド記載）。`actionName` / `actionNameLeft/Right` / `useDistinctLeftRight` は binding 側設定として存続。
 - `Configure(...)` の末尾 gaze 引数と `_injectedGazeConfigs` / `HasInjectedGazeConfig` を削除し、`IGazeChannelConsumer` 実装へ（gaze entry のチャネル id が注入集合に無い場合は警告 1 回）。
 - `IGazeSourceProvider` 実装: Gaze entry ごとに `(channelId, pair: useDistinctLeftRight)` を宣言。`GetDeclaredInputSourceIds` にも gaze 規約 id を追加（ルーティングエディタのソースポート可視化）。
+- **Drawer 追従（必須）**: `InputSystemAdapterBindingDrawer` の expression ドロップダウン（`CollectExpressionIds` — Profile の `Expressions` 列挙）は、bindingMode=Gaze のとき **Profile の `GazeChannels` の id 列挙に切り替える**（表示ラベルの Expression 名変換もやめてチャネル id を直接表示）。isGaze ダミー Expression 廃止後、これが無いと Gaze entry のチャネル id を UI で選択できず主要導線が壊れる。`InputSystemAdapterBindingDrawerTests` も追従。
+- 移行注意: 実体 `{slug}:{actionName}` Register の廃止により、distinct 上級構成で `sourceIdLeft/Right` に actionName 由来 id を書いていた既存資産は解決不能になる — 移行ガイドの記載項目に含める。
 
 **Contracts**: Service [x] / State [x]
 
@@ -733,7 +737,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
 
 #### TimelineAdapterBinding / RecToTimelineExporter（改修、summary-only）
 
-- `TimelineValueChannelConfig.isGaze` は Timeline 独自フラグとして存続（補助決定）。isGaze=true の channel config について `IGazeSourceProvider` で `(sub をチャネル id として宣言, pair: false)` を返す（sub が `IsValidChannelId` を満たさない場合は宣言から除外 + Editor validation で警告。Req 10.4 の診断連番 id はこの validation で規約整合させる）。
+- `TimelineValueChannelConfig.isGaze` は Timeline 独自フラグとして存続（補助決定）。isGaze=true の channel config について `IGazeSourceProvider` で `(sub をチャネル id として宣言, pair: false)` を返す（sub が `IsValidChannelId` を満たさない場合は宣言から除外 + Editor validation で警告。Req 10.4 の診断連番 id はこの validation で規約整合させる）。診断連番 `gaze-0` のままでは入力ソースドロップダウンに実質載らない（チャネル id 集合と不一致）ため、サンプル / ドキュメントでは **sub = `"gaze"`（既定チャネル id）を推奨**として明記する。
 - `takeoverSourceId` の合成・検証を `GazeSourceIdConvention.TryParse` 経由に（Drawer / validation で非準拠 id を警告。Req 10.1）。
 - `RecToTimelineExporter.CollectGazeSourceIds`: profile の Gaze セクションから「チャネル id 集合 + distinct 明示 id」を取り、rec 記録の source id を `TryParse` で形状分解 → channelId がチャネル id 集合に含まれるもの（+ 明示 id の Ordinal 一致）を gaze として分類する（規約合成 id を分類できない現行の穴の解消。Req 10.2, 10.3）。
 
