@@ -15,7 +15,7 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 
 - **In scope**:
   - **データモデル**: `FacialCharacterProfileSO` 直下の Gaze セクション（規約 id `"gaze"` の既定 1 件 + 上級者向け追加系統。目ボーン path・軸・可動角・入力ソース選択を保持）。`ExpressionSerializable.isGaze` と `_gazeConfigs` の廃止。JSON スキーマ / `FacialCharacterProfileConverter` / `FacialCharacterProfileExporter` / `SystemTextJsonParser` の追従
-  - **id 規約の一元化**: `GazeSourceIdConvention` ヘルパー（`Compose` / `TryParse`）の core 新設。`.left` / `.right` リテラル散在 5 箇所（`GazeBindingConfigResolver.cs:33-34` / `IFacialMocapReceiverAdapterBinding.cs:61-62` / `InputSystemAdapterBinding.cs:393,398` / `OscReceiverAdapterBinding.cs:768-769` / `RecToTimelineExporter.CollectGazeSourceIds`）の置換。Spec 1 が局所化した `GazeBindingConfigResolver.ComposeSourceId` の統合
+  - **id 規約の一元化**: `GazeSourceIdConvention` ヘルパー（`Compose` / `TryParse`）の core 新設。`.left` / `.right` リテラル散在 4 箇所（`GazeBindingConfigResolver.cs:33-34` / `IFacialMocapReceiverAdapterBinding.cs:61-62` / `InputSystemAdapterBinding.cs:393,398` / `OscReceiverAdapterBinding.cs:768-769`）の置換と、`RecToTimelineExporter` の gaze 分類ロジック（`sourceIdLeft/Right` 明示値の Ordinal 突合。リテラルは無い）の `TryParse` ベース化。Spec 1 が局所化した `GazeBindingConfigResolver.ComposeSourceId` の統合
   - **binding の gaze source 宣言**: `IGazeSourceProvider`（仮名）を OSC Receiver / InputSystem / iFacialMocap / Timeline の各 binding に実装。Gaze セクションの入力ソースドロップダウンが宣言を列挙。既定「自動」は従来の規約解決 + 明示優先度。iFM の `gaze.left/right` ハードコード吸収
   - **孤児ライフサイクルの撤去**: `GazeConfigDeletionTrigger` 3 トリガ、隠し dropdown デッドパス（`FacialCharacterProfileSOInspector.cs:1197-1202`）、isGaze Toggle 連動 validation の削除
   - **Inspector UX**: 目線タブ 1 か所完結（3 タブ往復の解消）。`useDistinctLeftRight` / `sourceIdLeft/Right` 相当の上級設定の露出。参照モデル割当時の目ボーン自動解決の自動実行
@@ -34,6 +34,7 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 - **Adjacent expectations**:
   - **Spec 1（osc-gaze-auto-mapping）から受け取るもの**: `/_facialcontrol/gaze` 広告プロトコル（アドレス・flat pairs payload・chunk 分割規約。無変更で使用し、広告 id が規約定数 `"gaze"` になるだけ）、受信側 gaze 動的登録経路（`GazeAdvertisementResolver` / rebuild 機構。id 合成箇所を `GazeSourceIdConvention` へ寄せるリファクタ対象）、`GazeBindingConfigResolver.ComposeSourceId`（統合先）、`OscReceiverAdapterBinding.Configure`（リフレクション注入の置換対象リスト入り）。本 spec の実装は Spec 1 の実装完了を前提とする
   - **Spec 1 の D-1（案 c）の完結**: Spec 1 は「受信側 gaze mapping 手入力ゼロで registry まで自動反映」までを受け入れ条件とし、GazeConfig 突合を含む完全ゼロ設定は本 spec の規約 id `"gaze"` 化で成立させると約束している
+  - **実行順制約**: Spec 1 は spec 文書完成済みだが**実装は未着手**（2026-08-09 時点。`GazeAdvertisementResolver` / `ComposeSourceId` / `OscReceiverAdapterBinding.Configure(IReadOnlyList<GazeBindingConfig>)` / `GazeInputReader` はコードベースに未存在）。本 spec の**実装着手は Spec 1 の実装完了後**とし、requirements / design 中の Spec 1 由来シンボルへの言及は行番号でなくシンボル名を正とする（現 HEAD の行番号は Spec 1 実装でずれる）
   - `gaze-config-promotion` spec（implemented）が確立した「GazeConfig の SO ルート昇格 + opt-in UX + 孤児自動削除」は、本 spec のデータモデル統合により部分的に置き換えられる（破壊的変更）
   - クリーンアーキテクチャ / asmdef 依存方向（core は OSC / InputSystem / iFacialMocap / Timeline を知らない）を維持する。宣言インターフェース・id 規約は core 側の契約として定義し、各拡張パッケージが実装する
   - docs/technical-spec.md §12/§17 の gaze_follow / gaze_camera「Expression テンプレート」構想は S2-3 の再解釈（入力ソース切替）で置き換える
@@ -65,13 +66,13 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 **Objective:** As a Profile データの保守担当, I want isGaze Expression + GazeConfigs の二重管理が廃止されてほしい, so that JSON 直編集や UI 操作で二重管理の整合が壊れるクラスの不具合が構造的に消える。
 
 #### Acceptance Criteria
-1. The ExpressionSerializable shall `isGaze` フィールドを持たない（廃止。G-2 / S2-2）。
+1. The ExpressionSerializable shall `isGaze` フィールドを持たない（廃止。G-2 / S2-2）。廃止対象は `ExpressionSerializable.isGaze` の 1 フィールドのみであり、Timeline パッケージの `TimelineValueChannelConfig.isGaze` / `FacialTimelineBakeAsset.isGaze` 等は Timeline 独自のチャネル種別フラグ（別概念）として対象外とする。
 2. The FacialCharacterProfileSO shall 旧 `_gazeConfigs` リスト（`GazeBindingConfig` の SO ルートリスト）を持たず、Gaze セクションのチャネル定義がこれを置き換える。
 3. The profile.json スキーマ shall Gaze セクションを表す root 直下の表現を持ち、旧 `gaze_configs[]` および Expression の `isGaze` を含まない（キー名・schemaVersion の扱いは Open Question 7 で確定）。
 4. The FacialCharacterProfileConverter shall 新スキーマ JSON の Gaze セクションを SO の Gaze セクションへ変換する。
 5. The FacialCharacterProfileExporter shall SO の Gaze セクションを新スキーマ JSON へ出力し、When Exporter の出力を Converter で読み戻したとき、The ラウンドトリップ結果 shall 元の Gaze セクションと値等価である。
 6. The SystemTextJsonParser shall 新スキーマの Gaze セクションをパースできる。
-7. If 旧スキーマ（`isGaze` / `gaze_configs[]`）のデータが入力された場合, the パース・変換経路 shall 自動変換を行わず、明示的な `Debug.LogWarning`（移行ガイドへの誘導を含む）を出力した上で gaze 関連部分を読み捨て、Profile のその他の内容は通常どおり読み込む（無警告の沈黙失敗と全体拒否のどちらもしない。see D-3）。
+7. If 旧スキーマのデータが入力された場合, the パース・変換経路 shall 自動変換を行わず、明示的な `Debug.LogWarning`（移行ガイドへの誘導を含む）を出力した上で gaze 関連部分を読み捨て、Profile のその他の内容は通常どおり読み込む（無警告の沈黙失敗と全体拒否のどちらもしない。see D-3）。経路別の注記: JSON 経路の検出対象は root の `gaze_configs[]` キーのみとする（現行 v2 JSON スキーマの `ExpressionDto` に `isGaze` は存在せず JSON 境界を越えないため）。SO 経路は Unity デシリアライズが旧フィールドを無警告で捨てるため、警告を実現する場合は検出専用の非公開 legacy フィールド温存が必要になるが、これは AC 2.1 / 2.2 違反とはみなさない（温存の採否・検出実装点は design で確定）。
 
 ### Requirement 3: GazeSourceIdConvention による id 規約の一元化
 **Objective:** As a コアパッケージの保守担当, I want gaze source id の合成・パースが単一ヘルパーに集約されてほしい, so that `.left` / `.right` リテラルの散在による 1 文字違いの無警告破棄を構造的に防げる。
@@ -79,7 +80,7 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 #### Acceptance Criteria
 1. The core（com.hidano.facialcontrol） shall `GazeSourceIdConvention` ヘルパー（`Compose(slug, channelId, side)` / `TryParse`）を新設し、gaze source id の合成・パースの唯一の実装点とする。
 2. The GazeSourceIdConvention shall 規約定数 `"gaze"`（既定チャネル id）を単一定義として公開する。
-3. The `.left` / `.right` リテラルが散在する 5 箇所（`GazeBindingConfigResolver.cs:33-34` / `IFacialMocapReceiverAdapterBinding.cs:61-62` / `InputSystemAdapterBinding.cs:393,398` / `OscReceiverAdapterBinding.cs:768-769` / `RecToTimelineExporter.CollectGazeSourceIds`） shall すべて `GazeSourceIdConvention` 経由に置換され、side suffix の文字列直書きを残さない。
+3. The `.left` / `.right` リテラルが散在する 4 箇所（`GazeBindingConfigResolver.cs:33-34` / `IFacialMocapReceiverAdapterBinding.cs:61-62` / `InputSystemAdapterBinding.cs:393,398` / `OscReceiverAdapterBinding.cs:768-769`。行番号は Spec 1 実装でずれるためシンボル参照を正とする） shall すべて `GazeSourceIdConvention` 経由に置換され、side suffix の文字列直書きを残さない（`RecToTimelineExporter.CollectGazeSourceIds` にはリテラルが存在しないため置換対象から除外し、Requirement 10.2 の判定ロジック置換で扱う）。
 4. The Spec 1 が局所化した `GazeBindingConfigResolver.ComposeSourceId`（および Spec 1 で追加された受信側 gaze 動的登録経路の id 合成箇所） shall `GazeSourceIdConvention` へ統合される。
 5. When `Compose` で合成した id を `TryParse` に与えたとき、The GazeSourceIdConvention shall slug / channelId / side を元の値どおりに分解する（ラウンドトリップ保証）。
 6. If `TryParse` に規約非準拠の文字列が与えられた場合, the GazeSourceIdConvention shall 例外を送出せず false を返す。
@@ -124,7 +125,7 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 #### Acceptance Criteria
 1. When 参照モデルが Profile SO に割り当てられた（null から非 null へ、または別モデルへ変更された）とき、The FacialCharacterProfileSOInspector shall 目ボーン自動解決を自動実行する（現状の `*` マーク表示のみ（`FacialCharacterProfileSOInspector.cs:1636-1643`）の置換）。
 2. While 自動解決を実行するとき、The FacialCharacterProfileSOInspector shall 手動編集済みの非空ボーン path を上書きしない。
-3. The 保存される目ボーン path shall 参照モデルルートからのフルパス（Transform 階層パス）とする（`AutoAssignGazeBonesFromReferenceModel` が `transform.name` のみ保存する問題の修正。backlog S-1 の解消）。
+3. The 保存される目ボーン path shall 単純名（`transform.name`）ではなく Transform 階層パスとする（`AutoAssignGazeBonesFromReferenceModel` が `transform.name` のみ保存する同名ボーン衝突問題（過去 backlog S-1 として記録。現 backlog にブロックは残っていないためクローズ操作は不要）の修正）。なお `BoneTransformResolver` は `/` 入り文字列を既に相対 path として解決できるため resolver 改修は不要だが、path の**起点定義**（ランタイム解決の root は `_animator.transform` であり、参照モデル root と Animator の位置がずれる構成では起点不一致が起きうる）を design で確定する。
 4. If 参照モデルから目ボーンを解決できない場合, the FacialCharacterProfileSOInspector shall その旨を UI 上で明示し、手動設定の手掛かりを案内する。
 5. The 目線タブ shall 目ボーンの再解決を明示的に実行する操作（個別または一括）を提供する。
 
@@ -149,8 +150,8 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 **Objective:** As a Timeline / rec 機能の利用者, I want gaze の記録・再生・ベイクが新 id 規約でも正しく gaze として扱われてほしい, so that identity 刷新後も rec → Timeline のワークフローが壊れない。
 
 #### Acceptance Criteria
-1. The TimelineValueChannelConfig の gaze 判定（`takeoverSourceId`） shall `GazeSourceIdConvention` による新規約で行われる。
-2. The RecToTimelineExporter.CollectGazeSourceIds shall `.left` / `.right` リテラルの直書きに代えて `GazeSourceIdConvention` で gaze source id を判定・収集する（Requirement 3.3 の置換対象）。
+1. The Timeline binding の gaze チャネル構成 shall 現行の 2 要素 — `TimelineValueChannelConfig.isGaze`（Timeline 独自のチャネル種別フラグ。存廃・channel id 判定への置換可否は design で確定）と `takeoverSourceId`（乗っ取り対象 source id）— を新規約に整合させ、`takeoverSourceId` の合成・検証を `GazeSourceIdConvention` 経由にする。
+2. The RecToTimelineExporter shall 現行の「GazeConfigs の `sourceIdLeft` / `sourceIdRight` 明示値を Ordinal 収集して rec 記録の source id と突合する」gaze 分類（規約合成 id を分類できない穴があり、かつ GazeConfigs 廃止で元データ自体が消える）に代えて、`GazeSourceIdConvention.TryParse` ベースの判定で gaze source id を分類・収集する。
 3. When 新規約の gaze チャネルを含む rec 記録を Timeline へ書き出したとき、The RecToTimelineExporter shall 当該チャネルを gaze として正しく分類・書き出しする。
 4. The Timeline binding shall 診断用連番 id（`gaze-0`, `gaze-1`…）による流儀を Requirement 4 の宣言インターフェースと新規約に整合させる。
 
@@ -163,15 +164,18 @@ preview 段階の破壊的変更として実施する（S2-4）。JSON スキー
 3. When 受信側が既定構成（規約チャネル `"gaze"` + 目ボーン設定済み）で広告を受信したとき、The 受信側（OscReceiverAdapterBinding + FacialController） shall expressionId の手動突合（mapping 手入力・GazeConfig id 一致作業）なしで gaze 値を目ボーンへ反映する（Spec 1 の D-1 案 (c) が先送りした「GazeConfig 設定も含めた完全な手入力ゼロ」の成立）。
 4. The 本 spec shall Spec 1 が実装した受信側 gaze 動的登録経路（広告駆動 rebuild）を破壊せず、id 合成箇所の `GazeSourceIdConvention` への集約に改修を限定する。
 5. The 本 spec shall 「送受信とも id 関連の手入力ゼロ（残る設定は受信側の目ボーン設定のみ）で gaze が目ボーンまで反映される」ことを検証する E2E テストを提供する。
+6. The 送信側の gaze id 供給 2 経路 shall 新データモデルに追従する: (a) serialized `_gazeExpressionIds`（公開 API `GazeExpressionIds` / `ConfigureGazeExpressionIds`、options JSON の `gazeExpressionIds` キー — `OscOutputDemo/OscSenderOptions.json` で実使用）の去就（チャネル id フィルタへの読み替え or 廃止）と、(b) `ResolveGazeExpressionIds` の `CharacterSO.GazeConfigs` 直読みフォールバックの新 Gaze セクションへの読み替えを design で確定し、広告 id と GazeSnapshot 送出の両方が新セクションから供給されるようにする。OSC options JSON スキーマに変更が及ぶ場合はその追従もスコープに含める。
 
-### Requirement 12: サンプルアセット 3 系統の更新
-**Objective:** As a サンプル利用者, I want 3 サンプルが新データモデルでそのまま動作してほしい, so that 新規ユーザーが旧スキーマの構成を手本にしてしまわない。
+### Requirement 12: サンプルアセットの更新
+**Objective:** As a サンプル利用者, I want 各サンプルが新データモデルでそのまま動作してほしい, so that 新規ユーザーが旧スキーマの構成を手本にしてしまわない。
 
 #### Acceptance Criteria
 1. The MultiSourceBlendDemo / OscOutputDemo / OscReceiverDemo の各サンプル（`Samples~/` 配下の Profile アセットおよび対応 profile.json） shall 新スキーマ（Gaze セクション、isGaze / gaze_configs[] なし）へ更新される。
 2. When 各サンプル Scene を起動したとき、The 各サンプル shall スキーマ関連の警告・エラーを出さずに gaze を含めて動作する。
 3. The 各サンプルの README shall 新しい gaze 設定手順（Gaze セクション + 入力ソース選択）を反映した記述に更新される。
 4. The サンプルの gaze 構成 shall 既定チャネル `"gaze"` + 入力ソース選択のみで成立させ、上級設定（複数系統・distinct 左右 id）を使用しない。
+5. The IFacialMocapReceiverDemo サンプル shall README の旧モデル手順（「Profile の `GazeBindingConfig` で `ifm:gaze.left` / `ifm:gaze.right` を目ボーンへ結線」）を新手順へ更新し、Profile アセットの stale な `_gazeConfigs: []` 行を再保存で除去する（iFM は「追加設定なしで既定チャネルに接続」（Requirement 4.6）の主役であり、旧手順の放置は新規ユーザーを誤誘導する）。lipsync 2 サンプル（MicLipSyncDemo / AnimationClipLipSyncDemo）の Profile アセットも再保存で stale キーを除去する。
+6. The 本 spec shall MultiSourceBlendDemo アセット更新が pre-existing 赤 `SampleAssetsAreInSyncTests` 4 件（backlog M-28: 3 コピー同期ずれ + blink overlay snapshot 欠落）と交差することを tasks に明記し、M-28 自体は取り込まない（3 コピーを同期再生成すれば一部は解消しうるが、blink snapshot 分は gaze 無関係のため M-28 は pre-existing 赤として FAIL 判定から除外する）。
 
 ### Requirement 13: 破壊的変更の移行方針とドキュメント整備
 **Objective:** As a 既存 Profile 資産の保有者 / ドキュメントの読者, I want 破壊的変更の影響範囲と移行手順が明確であってほしい, so that 既存プロジェクト（Fork 実機含む）を迷わず新スキーマへ移行できる。
