@@ -69,15 +69,15 @@ FacialControl の gaze（目線）機能は現状「開発者が LLM に聞き�
 
 | # | Spec | Status  | 依存 |
 |---|------|---------|------|
-| 1 | osc-gaze-auto-mapping | IN_PROGRESS | -    |
-| 2 | gaze-channel-redesign | PENDING | #1   |
+| 1 | osc-gaze-auto-mapping | DONE | -    |
+| 2 | gaze-channel-redesign | IN_PROGRESS | #1   |
 
 ---
 
 ## Spec: osc-gaze-auto-mapping
 
-- Status: IN_PROGRESS
-- Feature dir: (spec-init-batch が記入)
+- Status: DONE
+- Feature dir: .kiro/specs/osc-gaze-auto-mapping/
 - 依存: なし
 
 ### 概要
@@ -130,7 +130,7 @@ OSC 送信側が `/_facialcontrol/gaze` 専用アドレスで gaze の id と形
 
 ## Spec: gaze-channel-redesign
 
-- Status: PENDING
+- Status: IN_PROGRESS
 - Feature dir: (spec-init-batch が記入)
 - 依存: osc-gaze-auto-mapping（広告プロトコルと gaze 動的登録経路を前提とする。逆順に実施すると Spec 1 の設計が旧 identity モデルに縛られ手戻りする）
 
