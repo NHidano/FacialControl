@@ -41,7 +41,7 @@ osc-gaze-auto-mapping: OSC 送信側が /_facialcontrol/gaze 専用アドレス�
 | ID | 論点 | 決定 | 理由 | リスク |
 |----|------|------|------|--------|
 | D-1 | 広告 id と受信側 GazeConfig の突合範囲（旧 Open Question 1） | **案 (c): Spec 1 は route / source の自動生成まで。GazeConfig 突合の自動解決（既定フォールバック・自動補完）は行わず、不一致は警告で通知する** | 変更最小・設計が単純。既定フォールバック（案 a）の暫定ルールを作っても Spec 2 の規約 id `"gaze"` 化で不要になる。完全な「手入力ゼロ→目ボーン反映」は Spec 2 完了時に成立させる | 中: Spec 1 完了時点では受信側 GazeConfig の expressionId を広告 id に手動で一致させる作業が残る（警告 + README で案内） |
-| D-2 | 広告の送出周期と staleness（旧 Open Question 3） | **heartbeat と同周期（既定 5 秒）で周期送出。広告が途絶えても生成済み route / source は破棄せず温存し、値の staleness は既存の `stalenessSeconds` フェイルセーフ（RevertToBase / HoldLastValue）に委ねる** | UDP・コネクションレスのため受信側後起動でも次の広告で疎通する周期送出が必須。route 破棄→再購読の連鎖を避け、送信側消失の実害は既存フェイルセーフが吸収する | 低: 送信側の gaze 構成が消えた場合に古い route が残るが、値はフェイルセーフで安全側に倒れる |
+| D-2 | 広告の送出周期と staleness（旧 Open Question 3） | **heartbeat と同周期（既定 5 秒）で周期送出。広告が途絶えても生成済み route / source は破棄せず温存し、値の staleness は既存の `stalenessSeconds` フェイルセーフ（RevertToBase / HoldLastValue）に委ねる** | UDP・コネクションレスのため受信側後起動でも次の広告で疎通する周期送出が必須。route 破棄→再購読の連鎖を避け、送信側消失の実害は既存フェイルセーフが吸収する | 中: 送信側の gaze 構成が消えた場合に古い route が残る。staleness は binding 単位共有のため「BlendShape 継続 + gaze のみ途絶」ではフェイルセーフが発火せず最終値保持となる（per-route staleness の要否は Open Question 4 で design 判断） |
 | D-3 | Fork への反映を完了条件に含めるか（旧 Open Question 5） | **含めない。spec は本リポジトリ内の実装 + テストで完結し、Fork 反映・version bump・publish・実機検証は従来どおり別途の運用フローで行う** | 別リポジトリ・レジストリ操作が spec タスクに混ざるとバッチ実行（spec-run）で完結できない | 低: 実機での根治確認は spec 外のフォローアップとして明示的に管理する |
 
 ## Requirements
@@ -68,7 +68,8 @@ osc-gaze-auto-mapping: OSC 送信側が /_facialcontrol/gaze 専用アドレス�
 5. While 広告内容が前回受信時と同一であるとき、The OscReceiverAdapterBinding shall gaze route / source を再生成せず既存インスタンスを再利用する。
 6. If 広告に未知の形式識別子が含まれる場合, the OscReceiverAdapterBinding shall 当該 id の route 生成をスキップし、`Debug.LogWarning` で未知形式を 1 度だけ通知する。
 7. The OscReceiverAdapterBinding shall 広告未受信かつ手動 gaze mapping も無い状態では gaze route / source を生成せず、`Debug.LogError` を出力しない。
-8. While 広告の受信が途絶えたとき（送信側の停止・ネットワーク断など）、The OscReceiverAdapterBinding shall 生成済みの gaze route / source を破棄せず温存し、値のフェイルセーフは既存の `stalenessSeconds` 機構（RevertToBase / HoldLastValue）に委ねる（see D-2）。
+8. While 広告の受信が途絶えたとき（送信側の停止・ネットワーク断など）、The OscReceiverAdapterBinding shall 生成済みの gaze route / source を破棄せず温存し、値のフェイルセーフは既存の `stalenessSeconds` 機構（RevertToBase / HoldLastValue）に委ねる（see D-2）。なお送信側の gaze 構成が N 件→0 件になった場合は広告自体が送出されなくなり（AC 1.5）「内容変化」（AC 2.4）として検出されないため、既存 route は本 AC の温存方針に従い残る。また staleness は binding 単位の共有時刻（gaze / BlendShape どちらの受理でも更新）であるため、BlendShape が流れ続けたまま gaze だけ途絶えた場合はフェイルセーフが発火せず最終値保持となる（per-route staleness の要否は Open Question 4 として design で判断）。
+9. When 広告駆動生成の導入により現行の診断ログ「gaze mapping が未設定のため Gaze 受信は無効です（heartbeat auto-map は gaze route を生成しません）」（`StartReceiverPhase`）の前提が虚偽になるため、The OscReceiverAdapterBinding shall 同ログを削除または実態に合わせて改稿する。この変更に伴い backlog S-21（同ログの LogAssert 未追従による pre-existing 赤 4 件: `OscHeartbeatConsistencyTests` ×1 / `OscReceiverAdapterBindingAutoMappingIntegrationTests` ×2 / `OscReceiverGCAllocationTests` ×1）の解消確認と backlog 追従をスコープに含める。
 
 ### Requirement 3: 手動 gaze mapping との共存（上書きオプション・後方互換）
 **Objective:** As a 既存 OSC 構成 / 外部 OSC ソース利用者, I want 手動 `OscMappingEntry` による gaze 設定が上書き用オプションとして引き続き機能してほしい, so that 広告が来ない外部 OSC ソース（VRChat 本体等）からの受信や既存プロジェクトの運用が壊れない。
@@ -89,10 +90,10 @@ osc-gaze-auto-mapping: OSC 送信側が /_facialcontrol/gaze 専用アドレス�
 3. The 本 spec shall GazeConfig 突合の自動解決（既定フォールバック・GazeConfig 自動補完）を行わない（D-1 で案 (c) に確定）。受信側で目ボーンまで反映させるには GazeConfig の expressionId を広告 id と一致させる手動設定が引き続き必要であり、その旨を AC 4.2 の警告および README（Requirement 10.2）で案内する。完全自動化は Spec 2（gaze-channel-redesign）の規約 id `"gaze"` 化で成立させる。
 
 ### Requirement 5: 潜在バグ回収 (1) — Custom preset + gaze の送信側未捕捉例外
-**Objective:** As a Custom preset を使う送信側構成者, I want gaze 構成が存在しても送信側の起動が例外で落ちないでほしい, so that Custom preset 環境でも BlendShape 送出を含む他の機能が継続稼働する。
+**Objective:** As a Custom preset を含むマルチ endpoint 構成の送信側構成者, I want Custom preset の gaze 構成が binding 全体を無効化しないでほしい, so that 他の endpoint（VRChat / ARKit preset）への送出と heartbeat が継続稼働する。
 
 #### Acceptance Criteria
-1. If endpoint preset が Custom かつ gaze の送出構成が存在する場合, the OscSenderAdapterBinding shall `OnStart` を未捕捉例外（`OscAddressFormatter.GetGazePrefix` の throw）で停止させず、`Debug.LogWarning` を出力して gaze 送出をスキップし、他の送出処理（BlendShape / heartbeat / preset）を継続する（BlendShape 側の既存 catch 挙動と統一）。
+1. If endpoint preset が Custom かつ gaze の送出構成が存在する場合, the OscSenderAdapterBinding shall `OscAddressFormatter.GetGazePrefix` の `NotSupportedException` を binding 内で捕捉し（現状は gaze 経路のみ catch が無く、ホスト側 `AdapterBindingHost.InvokeOnStartOnce` の catch に到達して `Debug.LogError` + **binding 全体が skip され、他 endpoint・heartbeat 含め全停止**する）、`Debug.LogWarning` を出力して当該 endpoint の gaze 送出のみをスキップし、他の endpoint の送出処理（BlendShape / heartbeat / preset）と binding の起動を継続する（BlendShape 側の既存 catch 挙動と統一）。
 2. While endpoint preset が Custom であるとき、The OscSenderAdapterBinding shall 形式識別子を確定できないため `/_facialcontrol/gaze` 広告を送出せず、その旨を `Debug.LogWarning` で 1 度だけ通知する。
 
 ### Requirement 6: 潜在バグ回収 (2) — gaze source 後発登録レースの解消
@@ -134,7 +135,7 @@ osc-gaze-auto-mapping: OSC 送信側が /_facialcontrol/gaze 専用アドレス�
 
 #### Acceptance Criteria
 1. The OscReceiverDemo サンプル shall `OscReceiverDemoProfile.asset` の手入力 gaze mapping（`Gaze_VRChat_XY` 1 件）を削除し、BlendShape / gaze とも自動マッピングで疎通する構成で配布する（ハイブリッド構成の解消）。
-2. The OscReceiverDemo / OscOutputDemo の README shall gaze 自動マッピングの動作条件（`/_facialcontrol/gaze` 広告が前提であること、FacialControl 以外の外部 OSC ソースから受信する場合は手動 mapping を使うこと）を説明する内容に更新する。
+2. The OscReceiverDemo / OscOutputDemo の README shall gaze 自動マッピングの動作条件（`/_facialcontrol/gaze` 広告が前提であること、FacialControl 以外の外部 OSC ソースから受信する場合は手動 mapping を使うこと）を説明する内容に更新する。あわせて `Samples~/OscReceiverDemo/README.md` のトラブルシュート節が参照している「gaze mapping 未設定」ログ文言（Requirement 2.9 で削除・改稿対象）の記述も追従させる。
 3. The docs/backlog.md shall M-25 の番号重複（「表情 active 取得の系1/系2 二重化解消」と「Gaze の auto mapping 化」の 2 件が同番号）を解消し、一方に新番号を付番する。
 4. When 本 spec の実装が完了したとき、The docs/backlog.md shall gaze auto mapping のエントリ（現 M-25）を backlog 運用ルールに従いクローズ（ブロック削除 + commit message に理由記載）する。
 5. The docs/mental-model.md shall gaze 受信の記述（手動 mapping 必須・OnStart 固定の前提）を広告駆動自動生成後の挙動へ更新する。
@@ -151,10 +152,12 @@ osc-gaze-auto-mapping: OSC 送信側が /_facialcontrol/gaze 専用アドレス�
 
 ## Open Questions（design phase で確定する未決事項）
 
-dig インタビューで確定済みの旧 Open Question 1 / 3 / 5 は「Open Questions and Decisions (Dig)」の D-1 / D-2 / D-3 を参照。design phase に残る未決事項は以下の 2 件。
+dig インタビューで確定済みの旧 Open Question 1 / 3 / 5 は「Open Questions and Decisions (Dig)」の D-1 / D-2 / D-3 を参照。design phase に残る未決事項は以下の 4 件（3 / 4 は validate-gap で追加）。
 
 1. **広告ペイロードの詳細形式**: 左右独立性の情報を広告に載せるか（`ARKit_8BS` は形式自体が左右を運ぶため不要の可能性が高い）/ 1 メッセージに複数 id を詰めるか id ごとに 1 メッセージか / MTU との関係。heartbeat の chunk 分割方式（`GetFittingStringChunkCount`）を前例として design で確定する。
 2. **`Gaze_VRChat_XY` + `leftRightIndependent` の扱い**: 警告表示に留めるか組み合わせ自体を禁止（validation エラー化）するか（Requirement 7.3）。
+3. **先読み Subscribe の実現方式**（Requirement 6.2）: `IInputSourceRegistry.Subscribe` は未登録 id にも張れる（後発 Register で通知される契約）が per-id 購読のみで、全登録イベントの購読 API は存在しない。規約解決の候補 id `{slug}:{expressionId}[.left/.right]` は提供 slug が事前に分からないと合成できないため、(a) `ctx.AdapterBindings` の slug 一覧から候補 id を全合成して購読する / (b) registry に登録通知 API を追加する（Domain 契約変更を伴う）のいずれかを design で確定する。
+4. **per-route staleness の要否**（Requirement 2.8 注記）: staleness は binding 単位の共有時刻のため、BlendShape 継続 + gaze のみ途絶ではフェイルセーフが発火せず最終値保持となる。gaze route 単位の staleness を導入するかを design で判断する。
 
 ## Dig Summary
 
