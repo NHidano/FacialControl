@@ -69,14 +69,14 @@ FacialControl の gaze（目線）機能は現状「開発者が LLM に聞き�
 
 | # | Spec | Status  | 依存 |
 |---|------|---------|------|
-| 1 | osc-gaze-auto-mapping | PENDING | -    |
+| 1 | osc-gaze-auto-mapping | IN_PROGRESS | -    |
 | 2 | gaze-channel-redesign | PENDING | #1   |
 
 ---
 
 ## Spec: osc-gaze-auto-mapping
 
-- Status: PENDING
+- Status: IN_PROGRESS
 - Feature dir: (spec-init-batch が記入)
 - 依存: なし
 
