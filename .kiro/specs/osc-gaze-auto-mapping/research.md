@@ -119,7 +119,7 @@
   1. FacialController 側 — receiver へ「広告由来 id 一覧」を問い合わせる新 API が必要（core → osc の逆向き知識）。
   2. Receiver 側 — `Configure(IReadOnlyList<GazeBindingConfig>)` を binding に追加し、`FacialController.FindGazeConfigureMethod` の既存契約（末尾引数型で探すリフレクション注入）で受信側 GazeConfigs を受け取る。
 - **Selected Approach**: 案 2。receiver は広告再構築時に auto id と注入済み GazeConfig expressionId を Ordinal 突合し、不一致 id を 1 度だけ LogWarning（設定手順の手掛かり付き）。注入が無い（FacialController 不在・GazeConfigs 空）場合は空集合として扱い警告を出す（無警告沈黙の禁止）。
-- **Rationale**: 広告内容と route 出自（manual/auto）を知るのは receiver のみ。注入機構は `OscSenderAdapterBinding` 同様に既存の `ConfigureAdapterBindingsWithGazeConfigs` が自動で拾うため core 側変更ゼロ。警告タイミングも再構築時（メインスレッド・低頻度）に自然に収まる。
+- **Rationale**: 広告内容と route 出自（manual/auto）を知るのは receiver のみ。注入機構は `InputSystemAdapterBinding.Configure(..., IReadOnlyList<GazeBindingConfig>)` と同じ既存契約で、`FacialController.ConfigureAdapterBindingsWithGazeConfigs` が自動で拾うため core 側変更ゼロ（なお `OscSenderAdapterBinding` は注入契約ではなく `so.GazeConfigs` 直読みであり前例ではない点に注意）。警告タイミングも再構築時（メインスレッド・低頻度）に自然に収まる。
 - **Trade-offs**: リフレクション注入契約への依存が 1 箇所増える。Spec 2 のリフレクション解消（型付きインターフェース化）の置換対象リストに本 binding を追加する。
 
 ### Decision 6: `OscSender.SendBundle` は overload 追加ではなく heartbeat payload struct を導入

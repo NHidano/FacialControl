@@ -353,8 +353,8 @@ stateDiagram-v2
 | 9.5 | 広告組み立て・送出のヒープ確保回避 | OscSenderAdapterBinding, OscBundleBuilder | OnStart 事前構築ペア配列 + ArrayPool buffer 再利用 |
 | 10.1 | サンプルの gaze 手入力削除 | OscReceiverDemoProfile.asset | Mappings 空化（BlendShape / gaze とも auto） |
 | 10.2 | README 更新（動作条件 + 旧ログ文言追従） | 両 README | 広告前提 / 外部 OSC ソースは手動 mapping / トラブルシュート改稿 |
-| 10.3 | M-25 番号重複解消 | docs/backlog.md | 「表情 active 系1/系2」を新番号へ付番 |
-| 10.4 | gaze M-25 クローズ | docs/backlog.md | ブロック削除 + commit message に理由 |
+| 10.3 | M-25 番号重複解消 | docs/backlog.md | gaze ブロックへ次の空き番号を付番（表情 active 系は M-25 のまま）+ 履歴行に参照注記 |
+| 10.4 | gaze エントリ（旧 M-25、新番号）クローズ | docs/backlog.md | 新番号ブロック削除 + commit message に理由 |
 | 10.5 | mental-model 更新 | docs/mental-model.md | gaze 受信 = 広告駆動へ記述更新 + Decision 4 の制限明記 |
 | 11.1 | VRChat preset の手入力ゼロ E2E | OscGazeE2ETests | UDP loopback（port 19341〜） |
 | 11.2 | ARKit preset の手入力ゼロ E2E | OscGazeE2ETests | 同上 |
@@ -515,8 +515,8 @@ public sealed class OscReceiverAdapterBinding : AdapterBindingBase
 
 **Implementation Notes**
 - Integration: `TryHandleGazeMessage` / `PublishGazeForCurrentLifecycleState` / `GazeRuntimeEntry` は無改修で auto route にもそのまま機能する（route 辞書と runtime entry リストが差し替わるだけ）。
-- Validation: S-21 の 4 テスト（`OscHeartbeatConsistencyTests` ×1 / `OscReceiverAdapterBindingAutoMappingIntegrationTests` ×2 / `OscReceiverGCAllocationTests` ×1）がログ削除のみで緑化することを確認し、`docs/backlog.md` の S-21 をクローズする。
-- Risks: rebuild 時の一時確保（新辞書 / リスト）は広告内容変化時のみで Req 9.3 に抵触しない。auto id 消滅時の `Unregister` は Subscribe ハンドラへ null 同期通知するが、通知中の registry 再入は既存契約で禁止（LogError + no-op）のため、FacialController 側ハンドラは provider 再構築のみ行う（registry 操作をしない現行実装のまま）。
+- Validation: S-21 の 4 テスト（`OscHeartbeatConsistencyTests` ×1 / `OscReceiverAdapterBindingAutoMappingIntegrationTests` ×2 / `OscReceiverGCAllocationTests` ×1）をログ削除後に再実行し、Testing Strategy の「S-21 追従確認（分岐手順あり）」に従って緑化またはハッシュ期待値ずれの切り分けを行い、`docs/backlog.md` の S-21 をクローズ（または部分クローズ + 残件追記）する。
+- Risks: rebuild 時の一時確保（新辞書 / リスト）は広告内容変化時のみで Req 9.3 に抵触しない。広告が MTU 分割で複数 packet に跨り `OnFixedTick` を挟んだ場合、部分集合での一時 rebuild が走り「消滅」扱い id の Unregister→再 Register churn（null 通知→provider 再構築 2 回）が起きうるが、典型構成（1〜2 ペア）では発生せず、次の完全な広告で自己回復するため**既知の許容挙動**とする。auto id 消滅時の `Unregister` は Subscribe ハンドラへ null 同期通知するが、通知中の registry 再入は既存契約で禁止（LogError + no-op）のため、FacialController 側ハンドラは provider 再構築のみ行う（registry 操作をしない現行実装のまま）。
 
 #### OscSenderAdapterBinding / OscSender / OscBundleBuilder（改修）
 
@@ -692,7 +692,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
 - `OscReceiverDemoProfile.asset`: `_mappings` から `Gaze_VRChat_XY` 1 件を削除し **Mappings 完全空**で配布（BlendShape / gaze とも自動マッピング。Req 10.1）。GazeConfigs（`eye_look`）は温存 — 送信側 `OscOutputDemo` も同じ expressionId を広告するため、目ボーン反映（Req 4.1）がサンプル同士で成立する。
 - `OscReceiverDemo/README.md`: gaze 自動マッピングの動作条件（`/_facialcontrol/gaze` 広告が前提 / FacialControl 以外の外部 OSC ソースは手動 mapping を使用）、GazeConfig の expressionId 一致が引き続き必要なこと（D-1）、トラブルシュート節の旧ログ文言（「gaze mapping が未設定…」）の削除・改稿、gaze のみ途絶時は最終値保持となる制限（Decision 4）を記載（Req 10.2）。
 - `OscOutputDemo/README.md`: `/_facialcontrol/gaze` 広告の payload 仕様（pairs / 形式 2 値 / Custom preset は広告なし）を追記（Req 10.2）。
-- `docs/backlog.md`: (1) M-25 番号重複の解消 — 先発の「表情 active 取得の系1/系2 二重化解消」を M-25 のまま維持し、後発の「Gaze の auto mapping 化」ブロックを本 spec 完了でクローズ（削除）することで重複自体が消滅する（Req 10.3, 10.4）。(2) S-21 をクローズ（Req 2.9）。
+- `docs/backlog.md`: (1) M-25 番号重複の解消（Req 10.3）— 先発の「表情 active 取得の系1/系2 二重化解消」を M-25 のまま維持し、後発の「Gaze の auto mapping 化」ブロックへ**次の空き番号（実装時に採番、例 M-30）を付番**して重複を解消する。履歴行（現 L289 付近）の M-25 参照には「（旧 M-25、現 M-xx）」の注記を添えて参照曖昧化を防ぐ。(2) 本 spec 完了時に当該新番号ブロックをクローズ（ブロック削除 + commit message に理由。Req 10.4）。(3) S-21 をクローズまたは部分クローズ（Req 2.9、Testing Strategy の分岐手順参照）。
 - `docs/mental-model.md`: gaze 受信の記述（手動 mapping 必須・OnStart 固定）を「広告駆動自動生成 + 手動上書きオプション」へ更新し、staleness の binding 単位共有の制限を明記（Req 10.5）。
 
 ## Data Models
@@ -767,6 +767,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
 ### Integration Tests（PlayMode）
 
 - **OscGazeE2ETests（拡張、決定論方式は `HelperHost.Receiver.HandleOscMessage` 直接呼び出し。Req 11.4）**:
+  - テスト前提の明記: 実 UDP ケース（11.1 / 11.2）が広告の実送出周期（既定 5 秒）を待たずに成立する根拠は、sender の初回即時 heartbeat（`_sendHeartbeatOnNextTick` により起動直後の最初の `OnLateTick` で送出）である。フレーク調査時はまずこの前提（初回 heartbeat に広告が同乗しているか）を確認する。
   - `GazeAdvertisement_VrChatPreset_NoManualMappings_UdpLoopback_PublishesGazeSource`（Req 11.1 — 実 UDP、port 19341〜）
   - `GazeAdvertisement_ArKitPreset_NoManualMappings_UdpLoopback_PublishesLeftRightSources`（Req 11.2）
   - `GazeAdvertisement_SameContentTwice_DoesNotRebuildRoutes`（Req 2.5 — source インスタンス同一性 assert）
@@ -777,7 +778,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
   - `GazeAdvertisement_NoGazeConfigMatch_WarnsOnce`（Req 4.2）
   - `NoAdvertisementNoManual_NoRoutesNoErrorLog`（Req 2.7 + 2.9 — 旧ログが出ないこと）
   - `OldReceiverEquivalent_UnknownGazeAddress_Ignored`（Req 1.6 — 広告 handler 分岐前の既存経路で無警告）
-- **S-21 緑化確認**: `OscHeartbeatConsistencyTests` ×1 / `OscReceiverAdapterBindingAutoMappingIntegrationTests` ×2 / `OscReceiverGCAllocationTests` ×1 がログ削除で緑になること（Req 2.9。LogAssert 追加ではなくログ削除で解消）。
+- **S-21 追従確認（分岐手順あり）**: ログ削除後に `OscHeartbeatConsistencyTests` ×1 / `OscReceiverAdapterBindingAutoMappingIntegrationTests` ×2 / `OscReceiverGCAllocationTests` ×1 を再実行する。ただしプロジェクトメモリの実測記録（2026-07-05）では 4 件中 2 件（`HandleHeartbeat_HeartbeatHashUnchanged_DoesNotRebuildOscInputSource` / `OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation`）は heartbeat ハッシュ期待値のハードコードずれ（`Expected: 1085723225`）が原因の可能性があり、ログ削除だけでは緑化しない場合がある。手順: (0) 着手時にベース（変更前）で 4 件の失敗メッセージを再採取して原因系統を確定 → (1) ログ由来の残件は LogAssert 追加ではなくログ削除で解消 → (2) ハッシュ期待値ずれの残件はテスト側期待値の再計算（ハードコード値の値非依存化）で解消、それが本 spec のスコープを超える場合は S-21 を部分クローズし backlog へ残件を追記する（Req 2.9 の AC は「解消確認と backlog 追従」であり部分クローズも適合）。
 - **既存退行禁止**: `OscGazeE2ETests` の既存手動 mapping ケース、`OscReceiverAdapterBindingIntegrationTests` の gaze 検証部、`OscSendReceiveTests`。
 
 ### Performance Tests（PlayMode）
