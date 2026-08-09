@@ -71,10 +71,4 @@ MonoBehaviour:
       data:
         Slug: osc
         _settings: {fileID: 2279303358686531772, guid: ad0658dffa3b456490a48e50e22a0630, type: 2}
-        _mappings:
-        - mode: 1
-          expressionId: eye_look
-          addressPattern: /avatar/parameters/eye_look
-          sourceIdLeft:
-          sourceIdRight:
-          leftRightIndependent: 0
+        _mappings: []
