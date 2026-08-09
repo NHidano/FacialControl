@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.341954">
+  <test-suite type="TestSuite" id="1554" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="414" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.341954" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1357" name="Hidano.FacialControl.Osc.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Osc.Tests.PlayMode.dll" runstate="Runnable" testcasecount="158" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.330442" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="55448" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1358" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="158" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.329026" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1359" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="158" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.327806" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1360" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="158" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.326635" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1361" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="158" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.325346" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1363" name="Integration" fullname="Hidano.FacialControl.Tests.PlayMode.Integration" runstate="Runnable" testcasecount="103" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.323758" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1194" name="OscGazeE2ETests" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.320159" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1202" name="GazeAdvertisement_ManualSameId_ManualMappingWinsWithoutError" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeAdvertisement_ManualSameId_ManualMappingWinsWithoutError" methodname="GazeAdvertisement_ManualSameId_ManualMappingWinsWithoutError" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1013323445" result="Passed" start-time="2026-08-09 04:18:22Z" end-time="2026-08-09 04:18:22Z" duration="0.310178" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=1, auto=0, autoIds=[]
+Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

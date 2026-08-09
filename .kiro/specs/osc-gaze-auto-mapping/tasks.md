@@ -209,7 +209,7 @@
   - _Requirements: 1.6, 11.1, 11.2, 11.4, 11.5_
   - _Depends: 3.3, 4.5_
 
-- [ ] 8.2 再構築・温存・共存・突合の各シナリオを E2E で検証する
+- [x] 8.2 再構築・温存・共存・突合の各シナリオを E2E で検証する
   - 同一内容の広告 2 回で route / source が再生成されない（source インスタンス同一性 assert）
   - 広告内容変化で再構築され、消滅 id の source が Unregister される
   - 広告停止後も route / source が温存され、値は既存 staleness フェイルセーフ（RevertToBase / HoldLastValue）に委ねられる
