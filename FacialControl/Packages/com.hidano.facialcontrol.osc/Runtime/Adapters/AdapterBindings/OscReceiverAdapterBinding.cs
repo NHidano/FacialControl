@@ -8,6 +8,7 @@ using Hidano.FacialControl.Adapters.RuntimeSettings;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
+using Hidano.FacialControl.Adapters.ScriptableObject;
 using UnityEngine;
 
 namespace Hidano.FacialControl.Adapters.AdapterBindings
@@ -101,6 +102,39 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         [NonSerialized]
         private Dictionary<string, List<GazeRoute>> _gazeRoutes;
+
+        [NonSerialized]
+        private Dictionary<string, List<GazeRoute>> _manualGazeRoutes;
+
+        [NonSerialized]
+        private List<GazeRuntimeEntry> _manualGazeRuntimeEntries;
+
+        [NonSerialized]
+        private List<GazeVector2InputSource> _manualGazeSources;
+
+        [NonSerialized]
+        private List<string> _gazeAdProcessingScratch;
+
+        [NonSerialized]
+        private List<GazeAdvertisementResolver.GazeAdvertisement> _gazeAdPlan;
+
+        [NonSerialized]
+        private Dictionary<string, GazeVector2InputSource> _autoGazeSourcesById;
+
+        [NonSerialized]
+        private Dictionary<string, GazeRuntimeEntry> _autoGazeRuntimeEntriesById;
+
+        [NonSerialized]
+        private List<GazeAdvertisementResolver.GazeAdvertisement> _gazeAdvertisedEntries;
+
+        [NonSerialized]
+        private uint _lastGazeAdvertisementHash;
+
+        [NonSerialized]
+        private bool _hasProcessedGazeAdvertisement;
+
+        [NonSerialized]
+        private bool _warnedOnUnknownGazeFormat;
 
         [NonSerialized]
         private object _gazeBundleSync;
@@ -370,6 +404,15 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         public IReadOnlyList<GazeVector2InputSource> GazeSources =>
             _gazeSources ?? (IReadOnlyList<GazeVector2InputSource>)Array.Empty<GazeVector2InputSource>();
 
+        public uint LastGazeAdvertisementHash => _lastGazeAdvertisementHash;
+
+        public bool HasAutoGazeRoutes => _autoGazeSourcesById != null && _autoGazeSourcesById.Count > 0;
+
+        public IReadOnlyList<string> AutoGazeSourceIds =>
+            _autoGazeSourcesById == null
+                ? (IReadOnlyList<string>)Array.Empty<string>()
+                : new List<string>(_autoGazeSourcesById.Keys);
+
         /// <summary>OnStart で構築した <see cref="OscInputSource"/>（テスト/診断用、未開始は null）。</summary>
         public OscInputSource InputSource => _inputSource;
 
@@ -517,6 +560,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             if (_helperHost != null)
             {
                 ProcessPendingHeartbeatMappings();
+                ProcessPendingGazeAdvertisement();
                 _helperHost.Tick();
             }
 
@@ -548,6 +592,17 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeSources = null;
             _gazeRuntimeEntries = null;
             _gazeRoutes = null;
+            _manualGazeSources = null;
+            _manualGazeRuntimeEntries = null;
+            _manualGazeRoutes = null;
+            _gazeAdProcessingScratch = null;
+            _gazeAdPlan = null;
+            _gazeAdvertisedEntries = null;
+            _autoGazeSourcesById = null;
+            _autoGazeRuntimeEntriesById = null;
+            _lastGazeAdvertisementHash = 0u;
+            _hasProcessedGazeAdvertisement = false;
+            _warnedOnUnknownGazeFormat = false;
             ClearGazeBundleState();
             _gazeBundleSync = null;
             _readyGazeFrames = null;
@@ -646,6 +701,11 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _heartbeatSync = new object();
             _gazeAdScratch = new List<string>();
             _gazeAdSync = new object();
+            _gazeAdProcessingScratch = new List<string>();
+            _gazeAdPlan = new List<GazeAdvertisementResolver.GazeAdvertisement>();
+            _gazeAdvertisedEntries = new List<GazeAdvertisementResolver.GazeAdvertisement>();
+            _autoGazeSourcesById = new Dictionary<string, GazeVector2InputSource>(StringComparer.Ordinal);
+            _autoGazeRuntimeEntriesById = new Dictionary<string, GazeRuntimeEntry>(StringComparer.Ordinal);
             _gazeAdDirty = 0;
             _gazeAdAccumulationTimestamp = 0u;
             _gazeAdAccumulating = false;
@@ -656,7 +716,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 InitializeGazeBundleState();
                 RegisterGazeSources(ctx.InputSourceRegistry, slug, _mappings);
             }
-            else
+            else if (_started)
             {
                 // 診断: gaze mapping が 1 つも無いと、送信側が gaze を送っていても受信側は
                 // 一切 routing しない（heartbeat auto-map は BlendShape のみで gaze route を生成しない）。
@@ -757,12 +817,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             AdapterSlug slug,
             List<OscMappingEntry> mappings)
         {
-            _gazeSources = _gazeSources ?? new List<GazeVector2InputSource>();
-            _gazeRuntimeEntries = _gazeRuntimeEntries ?? new List<GazeRuntimeEntry>();
-            _gazeRoutes = _gazeRoutes ?? new Dictionary<string, List<GazeRoute>>(StringComparer.Ordinal);
-            _gazeSources.Clear();
-            _gazeRuntimeEntries.Clear();
-            _gazeRoutes.Clear();
+            _gazeSources = new List<GazeVector2InputSource>();
+            _gazeRuntimeEntries = new List<GazeRuntimeEntry>();
+            _gazeRoutes = new Dictionary<string, List<GazeRoute>>(StringComparer.Ordinal);
 
             for (int i = 0; i < mappings.Count; i++)
             {
@@ -789,6 +846,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 }
 
                 var runtime = new GazeRuntimeEntry(entry.mode);
+                runtime.ExpressionId = entry.expressionId;
+                runtime.AddressPattern = entry.addressPattern;
                 if (entry.mode == OscMappingMode.Gaze_ARKit_8BS || entry.leftRightIndependent)
                 {
                     runtime.LeftSource = RegisterGazeSource(registry, slug, entry.expressionId + ".left");
@@ -807,6 +866,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 _gazeRuntimeEntries.Add(runtime);
                 RegisterGazeRoutes(entry, runtime);
             }
+
+            _manualGazeSources = new List<GazeVector2InputSource>(_gazeSources);
+            _manualGazeRuntimeEntries = new List<GazeRuntimeEntry>(_gazeRuntimeEntries);
+            _manualGazeRoutes = _gazeRoutes;
         }
 
         private GazeVector2InputSource RegisterGazeSource(
@@ -843,20 +906,51 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
         }
 
-        private void AddGazeRoute(string address, GazeRuntimeEntry runtime, int axisIndex)
+        private static void RegisterGazeRoutes(
+            Dictionary<string, List<GazeRoute>> routes,
+            GazeRuntimeEntry runtime)
         {
-            if (string.IsNullOrEmpty(address))
+            if (runtime == null || string.IsNullOrEmpty(runtime.ExpressionId))
             {
                 return;
             }
 
-            if (!_gazeRoutes.TryGetValue(address, out var routes))
+            if (runtime.Mode == OscMappingMode.Gaze_VRChat_XY)
             {
-                routes = new List<GazeRoute>();
-                _gazeRoutes.Add(address, routes);
+                AddGazeRoute(routes, runtime.AddressPattern + "X", runtime, GazeRuntimeEntry.VrChatXIndex);
+                AddGazeRoute(routes, runtime.AddressPattern + "Y", runtime, GazeRuntimeEntry.VrChatYIndex);
+                return;
             }
 
-            routes.Add(new GazeRoute(runtime, axisIndex));
+            for (int i = 0; i < PerfectSyncEyeLook.Count; i++)
+            {
+                AddGazeRoute(routes, PerfectSyncEyeLook.ArKitAddressPrefix + PerfectSyncEyeLook.Names[i], runtime, i);
+            }
+        }
+
+        private void AddGazeRoute(string address, GazeRuntimeEntry runtime, int axisIndex)
+        {
+            AddGazeRoute(_gazeRoutes, address, runtime, axisIndex);
+        }
+
+        private static void AddGazeRoute(
+            Dictionary<string, List<GazeRoute>> routes,
+            string address,
+            GazeRuntimeEntry runtime,
+            int axisIndex)
+        {
+            if (routes == null || string.IsNullOrEmpty(address))
+            {
+                return;
+            }
+
+            if (!routes.TryGetValue(address, out var routeList))
+            {
+                routeList = new List<GazeRoute>();
+                routes.Add(address, routeList);
+            }
+
+            routeList.Add(new GazeRoute(runtime, axisIndex));
         }
 
         private void InitializeGazeBundleState()
@@ -1079,6 +1173,210 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             Volatile.Write(ref _gazeAdDirty, 1);
         }
 
+        private void ProcessPendingGazeAdvertisement()
+        {
+            if (Interlocked.Exchange(ref _gazeAdDirty, 0) == 0 ||
+                _gazeAdProcessingScratch == null ||
+                _gazeAdScratch == null)
+            {
+                return;
+            }
+
+            lock (_gazeAdSync)
+            {
+                _gazeAdProcessingScratch.Clear();
+                _gazeAdProcessingScratch.AddRange(_gazeAdScratch);
+            }
+
+            _gazeAdvertisedEntries.Clear();
+            GazeAdvertisementResolver.Parse(
+                _gazeAdProcessingScratch,
+                _gazeAdvertisedEntries,
+                ref _warnedOnUnknownGazeFormat);
+            uint hash = GazeAdvertisementResolver.ComputeNormalizedHash(_gazeAdvertisedEntries);
+            if (_hasProcessedGazeAdvertisement && hash == _lastGazeAdvertisementHash)
+            {
+                return;
+            }
+
+            _lastGazeAdvertisementHash = hash;
+            _hasProcessedGazeAdvertisement = true;
+            RebuildGazeRoutes(_gazeAdvertisedEntries);
+        }
+
+        private void RebuildGazeRoutes(
+            IReadOnlyList<GazeAdvertisementResolver.GazeAdvertisement> advertised)
+        {
+            if (_gazeBundleSync == null)
+            {
+                InitializeGazeBundleState();
+            }
+
+            if (_manualGazeRoutes == null)
+            {
+                _manualGazeRoutes = new Dictionary<string, List<GazeRoute>>(StringComparer.Ordinal);
+            }
+
+            GazeAdvertisementResolver.BuildPlan(advertised, _mappings, _gazeAdPlan);
+            var desiredSourceIds = new HashSet<string>(StringComparer.Ordinal);
+            var desiredRuntimeKeys = new HashSet<string>(StringComparer.Ordinal);
+
+            for (int i = 0; i < _gazeAdPlan.Count; i++)
+            {
+                GazeAdvertisementResolver.GazeAdvertisement advertisement = _gazeAdPlan[i];
+                string runtimeKey = advertisement.ExpressionId + "\u001f" + advertisement.Format;
+                desiredRuntimeKeys.Add(runtimeKey);
+                GazeRuntimeEntry runtime;
+                if (!_autoGazeRuntimeEntriesById.TryGetValue(runtimeKey, out runtime))
+                {
+                    runtime = CreateAutoGazeRuntime(advertisement, desiredSourceIds);
+                    _autoGazeRuntimeEntriesById[runtimeKey] = runtime;
+                }
+                else
+                {
+                    AddRuntimeSourceIds(runtime, desiredSourceIds);
+                }
+            }
+
+            var removedRuntimeKeys = new List<string>();
+            foreach (string key in _autoGazeRuntimeEntriesById.Keys)
+            {
+                if (!desiredRuntimeKeys.Contains(key))
+                {
+                    removedRuntimeKeys.Add(key);
+                }
+            }
+
+            for (int i = 0; i < removedRuntimeKeys.Count; i++)
+            {
+                _autoGazeRuntimeEntriesById.Remove(removedRuntimeKeys[i]);
+            }
+
+            var removedSourceIds = new List<string>();
+            foreach (string sourceId in _autoGazeSourcesById.Keys)
+            {
+                if (!desiredSourceIds.Contains(sourceId))
+                {
+                    removedSourceIds.Add(sourceId);
+                }
+            }
+
+            for (int i = 0; i < removedSourceIds.Count; i++)
+            {
+                string sourceId = removedSourceIds[i];
+                _autoGazeSourcesById.Remove(sourceId);
+                UnregisterGazeSource(sourceId);
+            }
+
+            var newRoutes = CloneGazeRoutes(_manualGazeRoutes);
+            var newRuntimeEntries = _manualGazeRuntimeEntries != null
+                ? new List<GazeRuntimeEntry>(_manualGazeRuntimeEntries)
+                : new List<GazeRuntimeEntry>();
+            var newSources = _manualGazeSources != null
+                ? new List<GazeVector2InputSource>(_manualGazeSources)
+                : new List<GazeVector2InputSource>();
+
+            foreach (KeyValuePair<string, GazeRuntimeEntry> pair in _autoGazeRuntimeEntriesById)
+            {
+                GazeRuntimeEntry runtime = pair.Value;
+                newRuntimeEntries.Add(runtime);
+                AddRuntimeSources(runtime, newSources);
+                RegisterGazeRoutes(newRoutes, runtime);
+            }
+
+            _gazeSources = newSources;
+            // Publish only fully-built immutable snapshots. Readers retain their local dictionary reference.
+            Volatile.Write(ref _gazeRuntimeEntries, newRuntimeEntries);
+            Volatile.Write(ref _gazeRoutes, newRoutes);
+        }
+
+        private GazeRuntimeEntry CreateAutoGazeRuntime(
+            GazeAdvertisementResolver.GazeAdvertisement advertisement,
+            ISet<string> desiredSourceIds)
+        {
+            OscMappingMode mode = string.Equals(
+                    advertisement.Format,
+                    GazeAdvertisementResolver.ArKit8BsFormat,
+                    StringComparison.Ordinal)
+                ? OscMappingMode.Gaze_ARKit_8BS
+                : OscMappingMode.Gaze_VRChat_XY;
+            var runtime = new GazeRuntimeEntry(mode);
+            runtime.ExpressionId = advertisement.ExpressionId;
+            runtime.AddressPattern = mode == OscMappingMode.Gaze_VRChat_XY
+                ? OscAddressFormatter.VRChatParameterPrefix + advertisement.ExpressionId
+                : string.Empty;
+            if (mode == OscMappingMode.Gaze_ARKit_8BS)
+            {
+                runtime.LeftSource = GetOrCreateAutoGazeSource(GazeSide.Left, advertisement.ExpressionId, desiredSourceIds);
+                runtime.RightSource = GetOrCreateAutoGazeSource(GazeSide.Right, advertisement.ExpressionId, desiredSourceIds);
+            }
+            else
+            {
+                runtime.CommonSource = GetOrCreateAutoGazeSource(GazeSide.Shared, advertisement.ExpressionId, desiredSourceIds);
+            }
+
+            return runtime;
+        }
+
+        private void AddRuntimeSourceIds(GazeRuntimeEntry runtime, ISet<string> desiredSourceIds)
+        {
+            if (runtime.CommonSource != null) desiredSourceIds.Add(runtime.CommonSource.Id);
+            if (runtime.LeftSource != null) desiredSourceIds.Add(runtime.LeftSource.Id);
+            if (runtime.RightSource != null) desiredSourceIds.Add(runtime.RightSource.Id);
+        }
+
+        private static void AddRuntimeSources(GazeRuntimeEntry runtime, IList<GazeVector2InputSource> destination)
+        {
+            if (runtime.CommonSource != null && !destination.Contains(runtime.CommonSource)) destination.Add(runtime.CommonSource);
+            if (runtime.LeftSource != null && !destination.Contains(runtime.LeftSource)) destination.Add(runtime.LeftSource);
+            if (runtime.RightSource != null && !destination.Contains(runtime.RightSource)) destination.Add(runtime.RightSource);
+        }
+
+        private GazeVector2InputSource GetOrCreateAutoGazeSource(
+            GazeSide side,
+            string expressionId,
+            ISet<string> desiredSourceIds)
+        {
+            string sourceId = GazeBindingConfigResolver.ComposeSourceId(_runtimeSlug.Value, expressionId, side);
+            desiredSourceIds.Add(sourceId);
+            if (_autoGazeSourcesById.TryGetValue(sourceId, out GazeVector2InputSource existing))
+            {
+                return existing;
+            }
+
+            string sub = GazeBindingConfigResolver.ComposeSourceSub(expressionId, side);
+            if (!InputSourceId.TryParse(sourceId, out InputSourceId parsed))
+            {
+                return null;
+            }
+
+            var source = new GazeVector2InputSource(parsed);
+            _autoGazeSourcesById.Add(sourceId, source);
+            _runtimeRegistry.Register(_runtimeSlug, sub, source);
+            return source;
+        }
+
+        private void UnregisterGazeSource(string sourceId)
+        {
+            int separator = sourceId.IndexOf(':');
+            if (separator > 0 && separator < sourceId.Length - 1)
+            {
+                _runtimeRegistry.Unregister(_runtimeSlug, sourceId.Substring(separator + 1));
+            }
+        }
+
+        private static Dictionary<string, List<GazeRoute>> CloneGazeRoutes(
+            Dictionary<string, List<GazeRoute>> source)
+        {
+            var clone = new Dictionary<string, List<GazeRoute>>(StringComparer.Ordinal);
+            if (source == null) return clone;
+            foreach (KeyValuePair<string, List<GazeRoute>> pair in source)
+            {
+                clone.Add(pair.Key, new List<GazeRoute>(pair.Value));
+            }
+            return clone;
+        }
+
         private void ProcessPendingHeartbeatMappings()
         {
             if (Interlocked.Exchange(ref _heartbeatDirty, 0) == 0 ||
@@ -1276,8 +1574,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         private bool TryHandleGazeMessage(uOSC.Message message)
         {
-            if (_gazeRoutes == null ||
-                !_gazeRoutes.TryGetValue(message.address, out var routes) ||
+            Dictionary<string, List<GazeRoute>> routesSnapshot = Volatile.Read(ref _gazeRoutes);
+            if (routesSnapshot == null ||
+                !routesSnapshot.TryGetValue(message.address, out var routes) ||
                 !TryGetFloat(message, out float value))
             {
                 return false;
@@ -1456,7 +1755,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         private void PublishGazeForCurrentLifecycleState()
         {
-            if (_gazeRuntimeEntries == null || _gazeRuntimeEntries.Count == 0)
+            List<GazeRuntimeEntry> runtimeEntries = Volatile.Read(ref _gazeRuntimeEntries);
+            if (runtimeEntries == null || runtimeEntries.Count == 0)
             {
                 return;
             }
@@ -1473,9 +1773,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
             if (stale && currentFailSafe == FailSafeMode.RevertToBase)
             {
-                for (int i = 0; i < _gazeRuntimeEntries.Count; i++)
+                for (int i = 0; i < runtimeEntries.Count; i++)
                 {
-                    _gazeRuntimeEntries[i].PublishZero();
+                    runtimeEntries[i].PublishZero();
                 }
                 _failSafeActive = true;
                 return;
@@ -1484,9 +1784,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             if (!stale)
             {
                 _failSafeActive = false;
-                for (int i = 0; i < _gazeRuntimeEntries.Count; i++)
+                for (int i = 0; i < runtimeEntries.Count; i++)
                 {
-                    _gazeRuntimeEntries[i].PublishPending();
+                    runtimeEntries[i].PublishPending();
                 }
             }
         }
@@ -1758,6 +2058,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                     _arkitValues = new float[PerfectSyncEyeLook.Count];
                 }
             }
+
+            public OscMappingMode Mode => _mode;
+
+            public string ExpressionId { get; set; }
+
+            public string AddressPattern { get; set; }
 
             public GazeVector2InputSource CommonSource { get; set; }
 
