@@ -392,6 +392,7 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
             RefreshSourceIdWarning(
                 row,
                 warning,
+                mode,
                 isGaze,
                 leftRightIndependent,
                 sourceIdLeftField != null ? sourceIdLeftField.value : string.Empty,
@@ -401,6 +402,7 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
         private static void RefreshSourceIdWarning(
             VisualElement row,
             HelpBox warning,
+            OscMappingMode mode,
             bool isGaze,
             bool leftRightIndependent,
             string sourceIdLeft,
@@ -414,8 +416,10 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
             bool missingSource = isGaze
                 && leftRightIndependent
                 && (string.IsNullOrWhiteSpace(sourceIdLeft) || string.IsNullOrWhiteSpace(sourceIdRight));
+            bool vrChatXyCannotBeIndependent = mode == OscMappingMode.Gaze_VRChat_XY
+                && leftRightIndependent;
 
-            if (!missingSource)
+            if (!missingSource && !vrChatXyCannotBeIndependent)
             {
                 warning.text = string.Empty;
                 warning.style.display = DisplayStyle.None;
@@ -423,10 +427,29 @@ namespace Hidano.FacialControl.Osc.Editor.AdapterBindings
                 return;
             }
 
-            warning.text =
-                "leftRightIndependent is enabled, but sourceIdLeft or sourceIdRight is empty. This Gaze entry is marked as skipped.";
+            var messages = new List<string>();
+            if (vrChatXyCannotBeIndependent)
+            {
+                messages.Add(
+                    "VRChat_XY 形式は単一 Vector2 のみを運ぶため左右には同値が配られます（左右独立にするには ARKit preset / ARKit_8BS を使用）。");
+            }
+
+            if (missingSource)
+            {
+                messages.Add(
+                    "leftRightIndependent is enabled, but sourceIdLeft or sourceIdRight is empty. This Gaze entry is marked as skipped.");
+            }
+
+            warning.text = string.Join("\n", messages);
             warning.style.display = DisplayStyle.Flex;
-            row?.AddToClassList(MappingSkippedClassName);
+            if (missingSource)
+            {
+                row?.AddToClassList(MappingSkippedClassName);
+            }
+            else
+            {
+                row?.RemoveFromClassList(MappingSkippedClassName);
+            }
         }
 
         private static void InsertMapping(
