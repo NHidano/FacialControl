@@ -124,6 +124,16 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         [NonSerialized]
         private Dictionary<string, GazeRuntimeEntry> _autoGazeRuntimeEntriesById;
 
+        /// <summary>
+        /// FacialController からリフレクション経由で注入された GazeConfig の
+        /// expressionId。広告由来 source の突合診断だけに使用し、設定自体は変更しない。
+        /// </summary>
+        [NonSerialized]
+        private List<string> _receiverGazeConfigExpressionIds;
+
+        [NonSerialized]
+        private HashSet<string> _warnedUnmatchedGazeConfigIds;
+
         [NonSerialized]
         private List<GazeAdvertisementResolver.GazeAdvertisement> _gazeAdvertisedEntries;
 
@@ -408,6 +418,41 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         public bool HasAutoGazeRoutes => _autoGazeSourcesById != null && _autoGazeSourcesById.Count > 0;
 
+        /// <summary>
+        /// FacialController の GazeConfigs を受け取るリフレクション注入契約。
+        /// GazeConfig の自動補完は行わず、expressionId の突合診断にのみ利用する。
+        /// </summary>
+        public void Configure(IReadOnlyList<GazeBindingConfig> gazeConfigs)
+        {
+            if (_receiverGazeConfigExpressionIds == null)
+            {
+                _receiverGazeConfigExpressionIds = new List<string>();
+            }
+
+            _receiverGazeConfigExpressionIds.Clear();
+            if (gazeConfigs != null)
+            {
+                for (int i = 0; i < gazeConfigs.Count; i++)
+                {
+                    GazeBindingConfig config = gazeConfigs[i];
+                    if (config != null && !string.IsNullOrEmpty(config.expressionId))
+                    {
+                        _receiverGazeConfigExpressionIds.Add(config.expressionId);
+                    }
+                }
+            }
+
+            if (_warnedUnmatchedGazeConfigIds == null)
+            {
+                _warnedUnmatchedGazeConfigIds = new HashSet<string>(StringComparer.Ordinal);
+            }
+
+            if (_hasProcessedGazeAdvertisement && _autoGazeRuntimeEntriesById != null)
+            {
+                WarnForUnmatchedGazeConfigs(_autoGazeRuntimeEntriesById);
+            }
+        }
+
         public IReadOnlyList<string> AutoGazeSourceIds =>
             _autoGazeSourcesById == null
                 ? (IReadOnlyList<string>)Array.Empty<string>()
@@ -602,6 +647,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeAdvertisedEntries = null;
             _autoGazeSourcesById = null;
             _autoGazeRuntimeEntriesById = null;
+            _receiverGazeConfigExpressionIds = null;
+            _warnedUnmatchedGazeConfigIds = null;
             _lastGazeAdvertisementHash = 0u;
             _hasProcessedGazeAdvertisement = false;
             _warnedOnUnknownGazeFormat = false;
@@ -734,6 +781,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeAdvertisedEntries = new List<GazeAdvertisementResolver.GazeAdvertisement>();
             _autoGazeSourcesById = new Dictionary<string, GazeVector2InputSource>(StringComparer.Ordinal);
             _autoGazeRuntimeEntriesById = new Dictionary<string, GazeRuntimeEntry>(StringComparer.Ordinal);
+            _receiverGazeConfigExpressionIds ??= new List<string>();
+            _warnedUnmatchedGazeConfigIds ??= new HashSet<string>(StringComparer.Ordinal);
             _gazeAdDirty = 0;
             _gazeAdAccumulationTimestamp = 0u;
             _gazeAdAccumulating = false;
@@ -746,15 +795,11 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
             else if (_started)
             {
-                // 診断: gaze mapping が 1 つも無いと、送信側が gaze を送っていても受信側は
-                // 一切 routing しない（heartbeat auto-map は BlendShape のみで gaze route を生成しない）。
-                // 「ゲームコントローラの目線が受信側に反映されない」典型原因。
                 Debug.Log(
                     "[OscReceiverAdapterBinding] gaze mapping が未設定のため Gaze 受信は無効です "
                     + "（heartbeat auto-map は gaze route を生成しません）。目線を反映するには "
                     + "受信側マッピングに gaze エントリ（mode=Gaze_*, expressionId, addressPattern）を明示設定してください。");
             }
-
             _buffer = new OscDoubleBuffer(runtimeMappings.Length);
             _bundleAccumulator = new OscBundleAccumulator(_buffer, settings.BundleAccumulationTimeoutMs);
 
@@ -1318,6 +1363,33 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             Volatile.Write(ref _gazeRoutes, newRoutes);
 
             LogGazeRouteDiagnostics(_manualGazeRuntimeEntries, _autoGazeRuntimeEntriesById);
+            WarnForUnmatchedGazeConfigs(_autoGazeRuntimeEntriesById);
+        }
+
+        private void WarnForUnmatchedGazeConfigs(
+            IReadOnlyDictionary<string, GazeRuntimeEntry> autoEntries)
+        {
+            if (autoEntries == null || autoEntries.Count == 0 ||
+                _receiverGazeConfigExpressionIds == null ||
+                _warnedUnmatchedGazeConfigIds == null)
+            {
+                return;
+            }
+
+            foreach (GazeRuntimeEntry entry in autoEntries.Values)
+            {
+                string expressionId = entry == null ? null : entry.ExpressionId;
+                if (string.IsNullOrEmpty(expressionId) ||
+                    _receiverGazeConfigExpressionIds.Contains(expressionId) ||
+                    !_warnedUnmatchedGazeConfigIds.Add(expressionId))
+                {
+                    continue;
+                }
+
+                Debug.LogWarning(
+                    $"[OscReceiverAdapterBinding] 広告由来 gaze id '{expressionId}' に一致する GazeConfig がありません。"
+                    + $" GazeConfig の expressionId を '{expressionId}' に一致させると目ボーンへ反映されます。");
+            }
         }
 
         private static void LogGazeRouteDiagnostics(
