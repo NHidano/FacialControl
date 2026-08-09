@@ -423,6 +423,53 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
         }
 
         [Test]
+        public void OnStart_CustomPresetWithGaze_SkipsGazeAndContinuesBinding()
+        {
+            var bus = new RecordingFacialOutputBus();
+            var binding = new OscSenderAdapterBinding { Slug = "osc-sender" };
+            binding.ConfigureEndpoints(new[]
+            {
+                new OscSenderEndpointConfig(
+                    "127.0.0.1",
+                    AllocatePort(),
+                    preset: AddressPresetKind.Custom),
+                new OscSenderEndpointConfig(
+                    "127.0.0.1",
+                    AllocatePort(),
+                    preset: AddressPresetKind.VRChat)
+            });
+            binding.BlendShapeNames.Add("smile");
+            binding.GazeExpressionIds.Add("eyeLook");
+            var host = new GameObject("OscSenderAdapterBindingCustomGazeTests");
+
+            LogAssert.Expect(LogType.Warning, new Regex("Custom address preset"));
+            LogAssert.Expect(LogType.Warning, new Regex("Custom preset.*gaze"));
+
+            try
+            {
+                binding.OnStart(CreateContext(bus, host, new[] { "smile" }));
+
+                Assert.That(binding.IsStarted, Is.True);
+                Assert.That(binding.HelperSenderCount, Is.EqualTo(1));
+                string[] addresses = GetPrivateField<string[]>(binding.HelperSender, "_oscAddresses");
+                CollectionAssert.AreEqual(
+                    new[]
+                    {
+                        "/avatar/parameters/smile",
+                        "/avatar/parameters/eyeLookX",
+                        "/avatar/parameters/eyeLookY"
+                    },
+                    addresses);
+                Assert.That(bus.Observer, Is.SameAs(binding));
+            }
+            finally
+            {
+                binding.Dispose();
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void OnStart_ARKitGazeExpressionIds_BuildsPerfectSyncEyeLookAddresses()
         {
             var bus = new RecordingFacialOutputBus();

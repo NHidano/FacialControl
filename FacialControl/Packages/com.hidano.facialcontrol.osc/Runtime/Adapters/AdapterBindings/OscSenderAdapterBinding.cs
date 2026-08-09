@@ -793,7 +793,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 }
             }
 
-            AppendGazeMappings(preset, resolvedGazeExpressionIds, mappingList, addressBytesList, gazeExpressionIdList);
+            AppendGazeMappingsSafely(
+                preset,
+                resolvedGazeExpressionIds,
+                mappingList,
+                addressBytesList,
+                gazeExpressionIdList);
 
             mappings = mappingList.ToArray();
             addressUtf8 = addressBytesList.ToArray();
@@ -801,6 +806,38 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             heartbeatBlendShapeNames = heartbeatNameList.ToArray();
             gazeExpressionIds = gazeExpressionIdList.ToArray();
             return mappings.Length > 0;
+        }
+
+        private void AppendGazeMappingsSafely(
+            AddressPresetKind preset,
+            IReadOnlyList<string> resolvedGazeExpressionIds,
+            List<OscMapping> mappingList,
+            List<byte[]> addressBytesList,
+            List<string> gazeExpressionIdList)
+        {
+            int mappingStart = mappingList.Count;
+            int addressStart = addressBytesList.Count;
+            int gazeExpressionIdStart = gazeExpressionIdList.Count;
+
+            try
+            {
+                AppendGazeMappings(
+                    preset,
+                    resolvedGazeExpressionIds,
+                    mappingList,
+                    addressBytesList,
+                    gazeExpressionIdList);
+            }
+            catch (NotSupportedException ex)
+            {
+                mappingList.RemoveRange(mappingStart, mappingList.Count - mappingStart);
+                addressBytesList.RemoveRange(addressStart, addressBytesList.Count - addressStart);
+                gazeExpressionIdList.RemoveRange(
+                    gazeExpressionIdStart,
+                    gazeExpressionIdList.Count - gazeExpressionIdStart);
+                Debug.LogWarning(
+                    $"[OscSenderAdapterBinding] {ex.Message} Gaze output was skipped for this endpoint.");
+            }
         }
 
         private void AppendGazeMappings(
