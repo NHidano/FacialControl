@@ -152,6 +152,78 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                 "heartbeat hash unchanged OnFixedTick hot path reported GC.Alloc: " + gcAllocBytes + " bytes.");
         }
 
+        [Test]
+        public void GazeAdvertisement_ContentUnchanged_ZeroAllocPerFrame()
+        {
+            var registry = new InputSourceRegistry();
+            var timeProvider = new ManualTimeProvider();
+            StartReceiverForAutoMapping(registry, timeProvider, "smile");
+
+            var advertisement = new uOSC.Message(
+                OscReceiverAdapterBinding.GazeAdvertisementAddress,
+                "eye",
+                GazeAdvertisementResolver.VrChatXyFormat);
+            _binding.HelperHost.Receiver.HandleOscMessage(advertisement);
+            _binding.OnFixedTick(1f / 60f);
+
+            Assert.That(_binding.HasAutoGazeRoutes, Is.True);
+            StabilizeManagedHeap();
+            using var recorder = ProfilerRecorder.StartNew(
+                ProfilerCategory.Memory,
+                "GC.Alloc",
+                1,
+                ProfilerRecorderOptions.SumAllSamplesInFrame
+                    | ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
+
+            for (int frame = 0; frame < FrameCount; frame++)
+            {
+                _binding.OnFixedTick(1f / 60f);
+            }
+
+            Assert.That(recorder.LastValue, Is.EqualTo(0L),
+                "unchanged gaze advertisement OnFixedTick hot path reported GC.Alloc: "
+                + recorder.LastValue + " bytes.");
+        }
+
+        [Test]
+        public void GazeVector2InputSource_ReadAfterAutoCreation_ZeroAlloc()
+        {
+            var registry = new InputSourceRegistry();
+            var timeProvider = new ManualTimeProvider();
+            StartReceiverForAutoMapping(registry, timeProvider, "smile");
+
+            _binding.HelperHost.Receiver.HandleOscMessage(new uOSC.Message(
+                OscReceiverAdapterBinding.GazeAdvertisementAddress,
+                "eye",
+                GazeAdvertisementResolver.VrChatXyFormat));
+            _binding.OnFixedTick(1f / 60f);
+            GazeVector2InputSource source = ResolveGaze(registry, Slug + ":eye");
+            source.Publish(0.25f, -0.5f);
+
+            for (int i = 0; i < 16; i++)
+            {
+                Assert.That(source.TryReadVector2(out _, out _), Is.True);
+            }
+
+            StabilizeManagedHeap();
+            using var recorder = ProfilerRecorder.StartNew(
+                ProfilerCategory.Memory,
+                "GC.Alloc",
+                1,
+                ProfilerRecorderOptions.SumAllSamplesInFrame
+                    | ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
+
+            for (int read = 0; read < FrameCount; read++)
+            {
+                Assert.That(source.TryReadVector2(out float x, out float y), Is.True);
+                Assert.That(x, Is.EqualTo(0.25f).Within(1e-6f));
+                Assert.That(y, Is.EqualTo(-0.5f).Within(1e-6f));
+            }
+
+            Assert.That(recorder.LastValue, Is.EqualTo(0L),
+                "auto-created gaze source read reported GC.Alloc: " + recorder.LastValue + " bytes.");
+        }
+
         private void StartReceiver(
             InputSourceRegistry registry,
             ManualTimeProvider timeProvider,

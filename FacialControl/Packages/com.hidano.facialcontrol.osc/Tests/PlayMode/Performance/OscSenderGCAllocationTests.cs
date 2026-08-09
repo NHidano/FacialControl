@@ -9,6 +9,7 @@ using Hidano.FacialControl.Domain.Services;
 using Hidano.FacialControl.Tests.Shared;
 using NUnit.Framework;
 using UnityEngine;
+using Unity.Profiling;
 using UnityEngine.Profiling;
 
 namespace Hidano.FacialControl.Tests.PlayMode.Performance
@@ -112,6 +113,39 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
 
             Assert.That(_binding.IsStarted, Is.True);
             LogBaseline(nameof(OscSenderGCAllocationTests), "heartbeatBundle", baseline);
+        }
+
+        [Test]
+        public void Sender_HeartbeatWithAdvertisement_NoPerHeartbeatAlloc()
+        {
+            string[] blendShapeNames = CreateBlendShapeNames(16);
+            var gazeSnapshots = new[] { new GazeSnapshot(GazeExpressionId, -0.25f, 0.5f) };
+            var bus = new FacialOutputBus();
+            StartSender(
+                bus,
+                blendShapeNames,
+                new[] { GazeExpressionId },
+                AddressPresetKind.VRChat,
+                OscSenderAdapterBinding.MinHeartbeatIntervalSeconds);
+
+            float[] values = CreateValues(blendShapeNames.Length);
+            WarmUp(bus, values, gazeSnapshots, OscSenderAdapterBinding.MinHeartbeatIntervalSeconds);
+            StabilizeManagedHeap();
+            using var recorder = ProfilerRecorder.StartNew(
+                ProfilerCategory.Memory,
+                "GC.Alloc",
+                1,
+                ProfilerRecorderOptions.SumAllSamplesInFrame
+                    | ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
+
+            for (int heartbeat = 0; heartbeat < FrameCount; heartbeat++)
+            {
+                bus.Publish(values, gazeSnapshots);
+                _binding.OnLateTick(OscSenderAdapterBinding.MinHeartbeatIntervalSeconds);
+            }
+
+            Assert.That(recorder.LastValue, Is.EqualTo(0L),
+                "heartbeat with gaze advertisement reported GC.Alloc: " + recorder.LastValue + " bytes.");
         }
 
         private void StartSender(

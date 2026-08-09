@@ -221,7 +221,7 @@
   - _Requirements: 2.4, 2.5, 2.7, 2.8, 3.2, 3.3, 4.1, 4.2, 6.1, 11.3, 11.5_
   - _Depends: 5_
 
-- [ ] 8.3 (P) 広告経路の GC 検証を追加する
+- [x] 8.3 (P) 広告経路の GC 検証を追加する
   - 広告処理済み・内容不変の状態で OnFixedTick を 100 回実行し gaze 経路由来の GC allocation が 0 byte であることを検証する
   - 広告由来で生成した GazeVector2InputSource の値読取 1 回あたり 0 byte を検証する（無改修の退行確認）
   - 広告同乗 heartbeat の送出で heartbeat ごとの新規確保が発生しないこと（事前構築ペア配列 + ArrayPool 再利用）を検証する
