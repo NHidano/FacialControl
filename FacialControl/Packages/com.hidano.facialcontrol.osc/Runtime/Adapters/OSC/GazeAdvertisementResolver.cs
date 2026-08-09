@@ -96,10 +96,59 @@ namespace Hidano.FacialControl.Adapters.OSC
             return HeartbeatHashHelper.ComputeFnv1a(interleaved);
         }
 
+        /// <summary>
+        /// Builds an auto route plan while excluding gaze expression ids that
+        /// are already covered by a valid manual gaze mapping.
+        /// </summary>
+        public static void BuildPlan(
+            IReadOnlyList<GazeAdvertisement> advertised,
+            IReadOnlyList<OscMappingEntry> manualEntries,
+            IList<GazeAdvertisement> planResults)
+        {
+            if (planResults == null)
+            {
+                throw new ArgumentNullException(nameof(planResults));
+            }
+
+            planResults.Clear();
+            if (advertised == null || advertised.Count == 0)
+            {
+                return;
+            }
+
+            var manuallyCoveredIds = new HashSet<string>(StringComparer.Ordinal);
+            if (manualEntries != null)
+            {
+                for (int i = 0; i < manualEntries.Count; i++)
+                {
+                    OscMappingEntry entry = manualEntries[i];
+                    if (entry != null && IsGazeMode(entry.mode) && !string.IsNullOrEmpty(entry.expressionId))
+                    {
+                        manuallyCoveredIds.Add(entry.expressionId);
+                    }
+                }
+            }
+
+            for (int i = 0; i < advertised.Count; i++)
+            {
+                GazeAdvertisement entry = advertised[i];
+                if (!manuallyCoveredIds.Contains(entry.ExpressionId))
+                {
+                    planResults.Add(entry);
+                }
+            }
+        }
+
         private static bool IsKnownFormat(string format)
         {
             return string.Equals(format, VrChatXyFormat, StringComparison.Ordinal) ||
                 string.Equals(format, ArKit8BsFormat, StringComparison.Ordinal);
+        }
+
+        private static bool IsGazeMode(OscMappingMode mode)
+        {
+            return mode == OscMappingMode.Gaze_VRChat_XY ||
+                mode == OscMappingMode.Gaze_ARKit_8BS;
         }
 
         private static int CompareByExpressionIdOrdinal(
