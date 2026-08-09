@@ -43,6 +43,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         public const string SenderIdentityAddress = SenderIdentity.OscAddress;
         public const string BlendShapeNamesAddress = "/_facialcontrol/blendshape_names";
         public const string PresetAddress = "/_facialcontrol/preset";
+        public const string GazeAdvertisementAddress = "/_facialcontrol/gaze";
 
         private const int MaxCachedBundleSenderDecisions = 32;
 
@@ -167,6 +168,21 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         [NonSerialized]
         private bool _heartbeatAccumulating;
+
+        [NonSerialized]
+        private List<string> _gazeAdScratch;
+
+        [NonSerialized]
+        private object _gazeAdSync;
+
+        [NonSerialized]
+        private int _gazeAdDirty;
+
+        [NonSerialized]
+        private ulong _gazeAdAccumulationTimestamp;
+
+        [NonSerialized]
+        private bool _gazeAdAccumulating;
 
         [NonSerialized]
         private bool _warnedOnEmptyHeartbeatIntersection;
@@ -554,6 +570,11 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _hasProcessedHeartbeat = false;
             _heartbeatAccumulationTimestamp = 0u;
             _heartbeatAccumulating = false;
+            _gazeAdScratch = null;
+            _gazeAdSync = null;
+            _gazeAdDirty = 0;
+            _gazeAdAccumulationTimestamp = 0u;
+            _gazeAdAccumulating = false;
             _warnedOnEmptyHeartbeatIntersection = false;
             _warnedOnAddressCollision = false;
             _warnedOnUnknownPreset = false;
@@ -623,6 +644,11 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _heartbeatScratch = new List<string>();
             _heartbeatProcessingScratch = new List<string>();
             _heartbeatSync = new object();
+            _gazeAdScratch = new List<string>();
+            _gazeAdSync = new object();
+            _gazeAdDirty = 0;
+            _gazeAdAccumulationTimestamp = 0u;
+            _gazeAdAccumulating = false;
             BuildNormalLookup(runtimeMappings);
 
             if (hasGazeMappings)
@@ -887,6 +913,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 return false;
             }
 
+            if (message.address == GazeAdvertisementAddress)
+            {
+                HandleGazeAdvertisementMessage(message);
+                return false;
+            }
+
             bool handledGaze = TryHandleGazeMessage(message);
             if (handledGaze || IsKnownNormalBlendShapeMessage(message.address))
             {
@@ -1016,6 +1048,35 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
 
             Volatile.Write(ref _heartbeatDirty, 1);
+        }
+
+        private void HandleGazeAdvertisementMessage(uOSC.Message message)
+        {
+            if (_gazeAdScratch == null || message.values == null)
+            {
+                return;
+            }
+
+            ulong timestampKey = message.timestamp.value;
+            lock (_gazeAdSync)
+            {
+                if (!_gazeAdAccumulating || timestampKey != _gazeAdAccumulationTimestamp)
+                {
+                    _gazeAdScratch.Clear();
+                    _gazeAdAccumulationTimestamp = timestampKey;
+                    _gazeAdAccumulating = true;
+                }
+
+                for (int i = 0; i < message.values.Length; i++)
+                {
+                    if (message.values[i] is string value)
+                    {
+                        _gazeAdScratch.Add(value);
+                    }
+                }
+            }
+
+            Volatile.Write(ref _gazeAdDirty, 1);
         }
 
         private void ProcessPendingHeartbeatMappings()
