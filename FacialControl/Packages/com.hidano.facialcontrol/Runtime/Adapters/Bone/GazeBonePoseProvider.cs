@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Domain.Interfaces;
 using UnityEngine;
@@ -120,14 +121,11 @@ namespace Hidano.FacialControl.Adapters.Bone
                     b.HasInitialSnapshot = true;
                 }
 
-                if (!TryReadInputXY(b.Source, out float ix, out float iy))
+                if (!GazeInputReader.TryReadXY(b.Source, out float ix, out float iy))
                 {
                     target.localRotation = b.RestRotation;
                     continue;
                 }
-
-                ix = Mathf.Clamp(ix, -1f, 1f);
-                iy = Mathf.Clamp(iy, -1f, 1f);
 
                 float yawDeg;
                 if (b.IsLeftEye)
@@ -210,39 +208,6 @@ namespace Hidano.FacialControl.Adapters.Bone
                 return fallback;
             }
             return v.normalized;
-        }
-
-        private static bool TryReadInputXY(IAnalogInputSource source, out float x, out float y)
-        {
-            if (!source.IsValid)
-            {
-                x = 0f;
-                y = 0f;
-                return false;
-            }
-
-            if (source.AxisCount >= 2)
-            {
-                if (source.TryReadVector2(out x, out y))
-                {
-                    return true;
-                }
-                x = 0f;
-                y = 0f;
-                return false;
-            }
-
-            // scalar 入力は y のみ駆動する想定にしておく (yaw のみのケースは現状想定外)。
-            if (source.TryReadScalar(out float v))
-            {
-                x = v;
-                y = 0f;
-                return true;
-            }
-
-            x = 0f;
-            y = 0f;
-            return false;
         }
 
         private struct EyeBinding

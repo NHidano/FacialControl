@@ -553,41 +553,13 @@ namespace Hidano.FacialControl.Adapters.Playable
                 return false;
             }
 
-            if (!TryReadGazeInput(sources.LeftSource, out float x, out float y)
-                && !TryReadGazeInput(sources.RightSource, out x, out y))
+            if (!GazeInputReader.TryReadXY(sources.LeftSource, out float x, out float y)
+                && !GazeInputReader.TryReadXY(sources.RightSource, out x, out y))
             {
                 return false;
             }
 
             snapshot = new GazeSnapshot(config.expressionId, x, y);
-            return true;
-        }
-
-        private static bool TryReadGazeInput(
-            IAnalogInputSource source,
-            out float x,
-            out float y)
-        {
-            x = default;
-            y = default;
-            if (source == null || !source.IsValid)
-            {
-                return false;
-            }
-
-            bool hasValue = source.AxisCount >= 2
-                ? source.TryReadVector2(out x, out y)
-                : source.TryReadScalar(out x);
-
-            if (!hasValue)
-            {
-                x = default;
-                y = default;
-                return false;
-            }
-
-            x = Mathf.Clamp(x, -1f, 1f);
-            y = Mathf.Clamp(y, -1f, 1f);
             return true;
         }
 
