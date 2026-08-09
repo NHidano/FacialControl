@@ -147,6 +147,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private bool _warnedOnUnknownGazeFormat;
 
         [NonSerialized]
+        private bool _warnedOnVrChatXyLeftRightIndependent;
+
+        [NonSerialized]
         private object _gazeBundleSync;
 
         [NonSerialized]
@@ -652,6 +655,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _lastGazeAdvertisementHash = 0u;
             _hasProcessedGazeAdvertisement = false;
             _warnedOnUnknownGazeFormat = false;
+            _warnedOnVrChatXyLeftRightIndependent = false;
             ClearGazeBundleState();
             _gazeBundleSync = null;
             _readyGazeFrames = null;
@@ -793,13 +797,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 InitializeGazeBundleState();
                 RegisterGazeSources(ctx.InputSourceRegistry, slug, _mappings);
             }
-            else if (_started)
-            {
-                Debug.Log(
-                    "[OscReceiverAdapterBinding] gaze mapping が未設定のため Gaze 受信は無効です "
-                    + "（heartbeat auto-map は gaze route を生成しません）。目線を反映するには "
-                    + "受信側マッピングに gaze エントリ（mode=Gaze_*, expressionId, addressPattern）を明示設定してください。");
-            }
             _buffer = new OscDoubleBuffer(runtimeMappings.Length);
             _bundleAccumulator = new OscBundleAccumulator(_buffer, settings.BundleAccumulationTimeoutMs);
 
@@ -900,6 +897,16 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 if (entry == null || !IsGazeMode(entry.mode) || string.IsNullOrEmpty(entry.expressionId))
                 {
                     continue;
+                }
+
+                if (entry.mode == OscMappingMode.Gaze_VRChat_XY &&
+                    entry.leftRightIndependent &&
+                    !_warnedOnVrChatXyLeftRightIndependent)
+                {
+                    Debug.LogWarning(
+                        "[OscReceiverAdapterBinding] VRChat_XY 形式は単一 Vector2 のみを運ぶため左右には同値が配られます。"
+                        + "左右独立にするには ARKit_8BS を使用してください。");
+                    _warnedOnVrChatXyLeftRightIndependent = true;
                 }
 
                 if (entry.leftRightIndependent &&

@@ -120,6 +120,41 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         }
 
         [Test]
+        public void OnStart_VrChatXyLeftRightIndependent_LogsRuntimeWarningOnceAndKeepsRoute()
+        {
+            var mappings = new[]
+            {
+                new OscMappingEntry
+                {
+                    mode = OscMappingMode.Gaze_VRChat_XY,
+                    expressionId = "look",
+                    addressPattern = "/avatar/parameters/look",
+                    leftRightIndependent = true,
+                    sourceIdLeft = "look.left",
+                    sourceIdRight = "look.right"
+                },
+                new OscMappingEntry
+                {
+                    mode = OscMappingMode.Gaze_VRChat_XY,
+                    expressionId = "look2",
+                    addressPattern = "/avatar/parameters/look2",
+                    leftRightIndependent = true,
+                    sourceIdLeft = "look2.left",
+                    sourceIdRight = "look2.right"
+                }
+            };
+
+            LogAssert.Expect(
+                LogType.Warning,
+                new System.Text.RegularExpressions.Regex("VRChat_XY.*Vector2.*左右には同値"));
+            StartBindingWithMesh(mappings, "smile");
+
+            Assert.That(_registry.TryResolve(Slug + ":look.left", out _), Is.True);
+            Assert.That(_registry.TryResolve(Slug + ":look.right", out _), Is.True);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
         public void OnStart_PartialManualMappingsAndHeartbeat_AppendsDiffPreservingManualAddress()
         {
             StartBindingWithMesh(
