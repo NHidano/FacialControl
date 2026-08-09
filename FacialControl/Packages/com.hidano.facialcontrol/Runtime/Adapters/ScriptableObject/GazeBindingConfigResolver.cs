@@ -5,6 +5,13 @@ using UnityEngine;
 
 namespace Hidano.FacialControl.Adapters.ScriptableObject
 {
+    public enum GazeSide
+    {
+        Shared,
+        Left,
+        Right
+    }
+
     public readonly struct ResolvedGazeInputSources
     {
         public ResolvedGazeInputSources(
@@ -32,6 +39,29 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject
     {
         private const string LeftSuffix = ".left";
         private const string RightSuffix = ".right";
+
+        /// <summary>
+        /// 規約に従った gaze source id を合成する。
+        /// Shared は "{slug}:{expressionId}"、Left/Right はそれぞれサフィックスを付ける。
+        /// </summary>
+        public static string ComposeSourceId(string slug, string expressionId, GazeSide side)
+        {
+            return $"{slug}:{ComposeSourceSub(expressionId, side)}";
+        }
+
+        /// <summary>
+        /// Register の sub 部分を規約に従って合成する。
+        /// </summary>
+        public static string ComposeSourceSub(string expressionId, GazeSide side)
+        {
+            return side switch
+            {
+                GazeSide.Shared => expressionId,
+                GazeSide.Left => expressionId + LeftSuffix,
+                GazeSide.Right => expressionId + RightSuffix,
+                _ => throw new ArgumentOutOfRangeException(nameof(side), side, "Unknown gaze side.")
+            };
+        }
 
         public static bool TryResolve(
             GazeBindingConfig config,

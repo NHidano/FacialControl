@@ -14,6 +14,26 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.ScriptableObjectTests
     [TestFixture]
     public class GazeBindingConfigResolverTests
     {
+        [TestCase(GazeSide.Shared, "eye")]
+        [TestCase(GazeSide.Left, "eye.left")]
+        [TestCase(GazeSide.Right, "eye.right")]
+        public void ComposeSourceSub_AllSides_ReturnsConventionSub(GazeSide side, string expected)
+        {
+            Assert.That(
+                GazeBindingConfigResolver.ComposeSourceSub("eye", side),
+                Is.EqualTo(expected));
+        }
+
+        [TestCase(GazeSide.Shared, "receiver:eye")]
+        [TestCase(GazeSide.Left, "receiver:eye.left")]
+        [TestCase(GazeSide.Right, "receiver:eye.right")]
+        public void ComposeSourceId_AllSides_ReturnsConventionId(GazeSide side, string expected)
+        {
+            Assert.That(
+                GazeBindingConfigResolver.ComposeSourceId("receiver", "eye", side),
+                Is.EqualTo(expected));
+        }
+
         [Test]
         public void TryResolve_DefaultMode_MultipleLeftRightProviders_SelectsLexicographicallyFirstSlug()
         {
