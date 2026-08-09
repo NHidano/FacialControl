@@ -79,7 +79,7 @@
   - _Requirements: 1.1, 1.2, 9.5_
   - _Boundary: OscBundleBuilder_
 
-- [ ] 3.3 送信 binding の広告ペア事前構築と heartbeat payload 経路への移行を実装する
+- [x] 3.3 送信 binding の広告ペア事前構築と heartbeat payload 経路への移行を実装する
   - OnStart で endpoint slot ごとに広告ペア配列を事前構築する（preset から形式名を確定: VRChat → `VRChat_XY` / ARKit → `ARKit_8BS`、構成済み gaze id 全件を対象、gaze ゼロ構成なら広告なし）
   - Custom preset slot は形式を確定できないため広告対象外とし、gaze 構成が存在する場合のみ警告を 1 度だけ通知する
   - heartbeat 送出分岐を payload struct 経路へ移行し、事前構築配列の参照使い回しで heartbeat ごとの新規確保ゼロを維持する

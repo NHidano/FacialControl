@@ -387,6 +387,42 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
         }
 
         [Test]
+        public void OnStart_GazeExpressionIds_PrebuildsPresetSpecificAdvertisementPairsPerSlot()
+        {
+            var bus = new RecordingFacialOutputBus();
+            var binding = new OscSenderAdapterBinding { Slug = "osc-sender" };
+            binding.ConfigureEndpoints(new[]
+            {
+                new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.VRChat),
+                new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.ARKit)
+            });
+            binding.GazeExpressionIds.Add("eyeLook");
+            binding.GazeExpressionIds.Add("brow");
+            var host = new GameObject("OscSenderAdapterBindingGazeAdvertisementPairTests");
+
+            try
+            {
+                binding.OnStart(CreateContext(bus, host, new[] { "smile" }));
+
+                IList slots = GetPrivateField<IList>(binding, "_sendSlots");
+                object vrchatSlot = slots[0];
+                object arkitSlot = slots[1];
+                CollectionAssert.AreEqual(
+                    new[] { "eyeLook", "VRChat_XY", "brow", "VRChat_XY" },
+                    GetPrivateField<string[]>(vrchatSlot, "GazeAdvertisementPairs"));
+                CollectionAssert.AreEqual(
+                    new[] { "eyeLook", "ARKit_8BS", "brow", "ARKit_8BS" },
+                    GetPrivateField<string[]>(arkitSlot, "GazeAdvertisementPairs"));
+                Assert.That(GetPrivateField<int>(vrchatSlot, "GazeAdvertisementPairCount"), Is.EqualTo(2));
+            }
+            finally
+            {
+                binding.Dispose();
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void OnStart_ARKitGazeExpressionIds_BuildsPerfectSyncEyeLookAddresses()
         {
             var bus = new RecordingFacialOutputBus();

@@ -9,6 +9,45 @@ using uOSC;
 
 namespace Hidano.FacialControl.Adapters.OSC
 {
+    /// <summary>heartbeat と同一 frame bundle に載せる metadata。</summary>
+    public readonly struct OscHeartbeatPayload
+    {
+        public string[] HeartbeatNames { get; }
+        public int HeartbeatNameCount { get; }
+        public string PresetName { get; }
+        public string CustomPrefix { get; }
+        public string[] GazeAdvertisementPairs { get; }
+        public int GazeAdvertisementPairCount { get; }
+
+        public OscHeartbeatPayload(
+            string[] heartbeatNames,
+            int heartbeatNameCount,
+            string presetName,
+            string customPrefix,
+            string[] gazeAdvertisementPairs,
+            int gazeAdvertisementPairCount)
+        {
+            if (heartbeatNames == null)
+                throw new ArgumentNullException(nameof(heartbeatNames));
+            if (heartbeatNameCount < 0 || heartbeatNameCount > heartbeatNames.Length)
+                throw new ArgumentOutOfRangeException(nameof(heartbeatNameCount));
+            if (gazeAdvertisementPairCount < 0 ||
+                (gazeAdvertisementPairs == null
+                    ? gazeAdvertisementPairCount != 0
+                    : gazeAdvertisementPairCount > gazeAdvertisementPairs.Length / 2))
+            {
+                throw new ArgumentOutOfRangeException(nameof(gazeAdvertisementPairCount));
+            }
+
+            HeartbeatNames = heartbeatNames;
+            HeartbeatNameCount = heartbeatNameCount;
+            PresetName = presetName;
+            CustomPrefix = customPrefix;
+            GazeAdvertisementPairs = gazeAdvertisementPairs;
+            GazeAdvertisementPairCount = gazeAdvertisementPairCount;
+        }
+    }
+
     /// <summary>
     /// uOsc クライアントをラップし、BlendShape 値を OSC メッセージとして送信する。
     /// uOscClient の内部スレッドで非同期送信を行い、メインスレッドの負荷をゼロにする。
@@ -17,6 +56,7 @@ namespace Hidano.FacialControl.Adapters.OSC
     {
         private const string BlendShapeNamesAddress = "/_facialcontrol/blendshape_names";
         private const string PresetAddress = "/_facialcontrol/preset";
+        private const string GazeAdvertisementAddress = "/_facialcontrol/gaze";
 
         private static readonly byte[] SenderIdentityAddressUtf8 =
             Encoding.UTF8.GetBytes(SenderIdentity.OscAddress);
@@ -26,6 +66,9 @@ namespace Hidano.FacialControl.Adapters.OSC
 
         private static readonly byte[] PresetAddressUtf8 =
             Encoding.UTF8.GetBytes(PresetAddress);
+
+        private static readonly byte[] GazeAdvertisementAddressUtf8 =
+            Encoding.UTF8.GetBytes(GazeAdvertisementAddress);
 
         [SerializeField]
         private string _endpoint = "127.0.0.1";
@@ -355,6 +398,51 @@ namespace Hidano.FacialControl.Adapters.OSC
                     addressUtf8,
                     values,
                     messageCount);
+
+            EnsureBundleClient();
+            for (int i = 0; i < packetCount; i++)
+            {
+                OscBundlePacket packet = _bundleBuilder.GetPacket(i);
+                _bundleClient.Send(packet.Buffer, packet.Length, _bundleEndpoint);
+            }
+        }
+
+        /// <summary>frame bundle に heartbeat / preset / gaze 広告を同一 timestamp で載せて送信する。</summary>
+        public void SendBundle(
+            byte[] senderUuidBytes,
+            string startedAtUnixMs,
+            byte[][] addressUtf8,
+            float[] values,
+            int count,
+            in OscHeartbeatPayload heartbeat)
+        {
+            if (!_initialized || _client == null || !_client.isRunning)
+                return;
+
+            if (senderUuidBytes == null || senderUuidBytes.Length != SenderIdentity.UuidByteLength)
+                return;
+
+            if (string.IsNullOrEmpty(startedAtUnixMs) || addressUtf8 == null || values == null)
+                return;
+
+            int messageCount = Math.Min(Math.Min(Math.Max(count, 0), values.Length), addressUtf8.Length);
+            int packetCount = _bundleBuilder.BuildFrameBundle(
+                Timestamp.Now.value,
+                SenderIdentityAddressUtf8,
+                senderUuidBytes,
+                startedAtUnixMs,
+                addressUtf8,
+                values,
+                messageCount,
+                BlendShapeNamesAddressUtf8,
+                heartbeat.HeartbeatNames,
+                heartbeat.HeartbeatNameCount,
+                heartbeat.PresetName == null ? null : PresetAddressUtf8,
+                heartbeat.PresetName,
+                heartbeat.CustomPrefix,
+                heartbeat.GazeAdvertisementPairs == null ? null : GazeAdvertisementAddressUtf8,
+                heartbeat.GazeAdvertisementPairs,
+                heartbeat.GazeAdvertisementPairCount);
 
             EnsureBundleClient();
             for (int i = 0; i < packetCount; i++)
