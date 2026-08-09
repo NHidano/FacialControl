@@ -101,16 +101,8 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
             int port = AllocatePort();
             var expected = new Vector2(0.64f, -0.37f);
 
-            OscReceiverAdapterBinding receiver = CreateReceiver(
-                "vrchat-gaze-receiver",
-                port,
-                new OscMappingEntry
-                {
-                    mode = OscMappingMode.Gaze_VRChat_XY,
-                    expressionId = ExpressionId,
-                    addressPattern = OscAddressFormatter.VRChatParameterPrefix + ExpressionId,
-                    leftRightIndependent = false,
-                });
+            // 手動 mapping は空。送信側の初回 heartbeat に同乗する広告だけで route を生成する。
+            OscReceiverAdapterBinding receiver = CreateReceiver("vrchat-gaze-receiver", port);
 
             OscSenderAdapterBinding sender = CreateSender(
                 "vrchat-gaze-sender",
@@ -141,15 +133,8 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
             int port = AllocatePort();
             var expected = new Vector2(-0.42f, 0.58f);
 
-            OscReceiverAdapterBinding receiver = CreateReceiver(
-                "arkit-gaze-receiver",
-                port,
-                new OscMappingEntry
-                {
-                    mode = OscMappingMode.Gaze_ARKit_8BS,
-                    expressionId = ExpressionId,
-                    leftRightIndependent = false,
-                });
+            // 手動 mapping は空。広告受信後に ARKit の左右 source が自動生成される。
+            OscReceiverAdapterBinding receiver = CreateReceiver("arkit-gaze-receiver", port);
 
             OscSenderAdapterBinding sender = CreateSender(
                 "arkit-gaze-sender",
@@ -207,6 +192,29 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 expectedLeft,
                 expectedRight,
                 () => sender.SendAll(values));
+        }
+
+        [Test]
+        public void OldReceiverEquivalent_UnknownGazeAdvertisement_IsIgnoredWithoutLogs()
+        {
+            GameObject receiverObject = CreateGameObject("OscGazeE2E_OldReceiver");
+            OscReceiver receiver = receiverObject.AddComponent<OscReceiver>();
+            var buffer = new OscDoubleBuffer(0);
+            try
+            {
+                receiver.Initialize(buffer, Array.Empty<OscMapping>());
+
+                // 旧 receiver は広告 route を知らないが、通常の未知アドレスとして無警告で読み飛ばす。
+                receiver.HandleOscMessage(new uOSC.Message(
+                    OscReceiverAdapterBinding.GazeAdvertisementAddress,
+                    ExpressionId,
+                    GazeAdvertisementResolver.VrChatXyFormat));
+                LogAssert.NoUnexpectedReceived();
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
 
         [UnityTest]
@@ -329,7 +337,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         private OscReceiverAdapterBinding CreateReceiver(
             string slug,
             int port,
-            OscMappingEntry entry)
+            params OscMappingEntry[] entries)
         {
             return new OscReceiverAdapterBinding
             {
@@ -337,7 +345,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 Endpoint = Endpoint,
                 Port = port,
                 BundleMode = BundleInterpretationMode.AtomicSwap,
-                Mappings = new List<OscMappingEntry> { entry },
+                Mappings = new List<OscMappingEntry>(entries ?? Array.Empty<OscMappingEntry>()),
             };
         }
 

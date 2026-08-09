@@ -200,7 +200,7 @@
 
 - [ ] 8. Validation: 手入力ゼロ E2E・GC 検証・全体テストと backlog クローズ
 
-- [ ] 8.1 手入力ゼロの E2E と後方互換を検証する
+- [x] 8.1 手入力ゼロの E2E と後方互換を検証する
   - 決定論方式は受信 handler 直接呼び出し（既存 heartbeat テストと同方式）とし、広告の実送出周期の待ち時間を発生させない。実 UDP ケースの成立根拠（初回即時 heartbeat に広告が同乗）をテストコメントに明記する
   - VRChat preset: 受信側 gaze mapping 手入力ゼロ + 実 UDP loopback（port 19341〜）で、広告受信後に VRChat_XY route 経由の gaze 値が GazeVector2InputSource へ反映される
   - ARKit preset: 同条件で ARKit_8BS（eyeLook 8 BlendShape）route 経由で `.left` / `.right` source へ反映される
