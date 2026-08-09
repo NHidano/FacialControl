@@ -13,7 +13,7 @@
 
 - [ ] 1. Foundation: S-21 ベースライン再採取・gaze 読取共通化・source id 合成 helper
 
-- [ ] 1.1 S-21 pre-existing 赤 4 件のベースライン失敗メッセージを再採取する
+- [x] 1.1 S-21 pre-existing 赤 4 件のベースライン失敗メッセージを再採取する
   - 一切の変更を加える前のベースで、S-21 の 4 件（`OscHeartbeatConsistencyTests` ×1 / `OscReceiverAdapterBindingAutoMappingIntegrationTests` ×2 / `OscReceiverGCAllocationTests` ×1）を PlayMode batchmode で再実行し失敗メッセージを採取する（design Testing Strategy の分岐手順 (0)）
   - 各件を「gaze 未設定ログの LogAssert 未追従由来」か「heartbeat ハッシュ期待値のハードコードずれ由来（`Expected: 1085723225` 系）」かに分類する
   - 4 件の失敗メッセージと原因系統の分類が、タスク 4.6 実施時に参照できる形で記録されている (観測可能な完了条件)
