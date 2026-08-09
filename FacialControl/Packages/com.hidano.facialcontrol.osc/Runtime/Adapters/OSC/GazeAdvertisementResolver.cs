@@ -122,7 +122,7 @@ namespace Hidano.FacialControl.Adapters.OSC
                 for (int i = 0; i < manualEntries.Count; i++)
                 {
                     OscMappingEntry entry = manualEntries[i];
-                    if (entry != null && IsGazeMode(entry.mode) && !string.IsNullOrEmpty(entry.expressionId))
+                    if (IsValidManualGazeEntry(entry))
                     {
                         manuallyCoveredIds.Add(entry.expressionId);
                     }
@@ -149,6 +149,22 @@ namespace Hidano.FacialControl.Adapters.OSC
         {
             return mode == OscMappingMode.Gaze_VRChat_XY ||
                 mode == OscMappingMode.Gaze_ARKit_8BS;
+        }
+
+        private static bool IsValidManualGazeEntry(OscMappingEntry entry)
+        {
+            if (entry == null || !IsGazeMode(entry.mode) || string.IsNullOrEmpty(entry.expressionId))
+            {
+                return false;
+            }
+
+            if (entry.mode == OscMappingMode.Gaze_VRChat_XY && string.IsNullOrEmpty(entry.addressPattern))
+            {
+                return false;
+            }
+
+            return !entry.leftRightIndependent ||
+                (!string.IsNullOrEmpty(entry.sourceIdLeft) && !string.IsNullOrEmpty(entry.sourceIdRight));
         }
 
         private static int CompareByExpressionIdOrdinal(

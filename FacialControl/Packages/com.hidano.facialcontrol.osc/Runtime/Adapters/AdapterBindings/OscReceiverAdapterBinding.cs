@@ -570,6 +570,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         /// <inheritdoc />
         public override void Dispose()
         {
+            UnregisterAllGazeSources();
+
             if (_helperHost != null)
             {
                 if (_helperHost.Receiver != null)
@@ -660,6 +662,32 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _runtimeManualEntries = null;
 
             _started = false;
+        }
+
+        private void UnregisterAllGazeSources()
+        {
+            if (_runtimeRegistry == null)
+            {
+                return;
+            }
+
+            var sourceIds = new HashSet<string>(StringComparer.Ordinal);
+            if (_gazeSources != null)
+            {
+                for (int i = 0; i < _gazeSources.Count; i++)
+                {
+                    GazeVector2InputSource source = _gazeSources[i];
+                    if (source != null && !string.IsNullOrEmpty(source.Id))
+                    {
+                        sourceIds.Add(source.Id);
+                    }
+                }
+            }
+
+            foreach (string sourceId in sourceIds)
+            {
+                UnregisterGazeSource(sourceId);
+            }
         }
 
         private static AddressPresetKind? ParseCurrentPreset(string presetName)
@@ -1288,6 +1316,32 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             // Publish only fully-built immutable snapshots. Readers retain their local dictionary reference.
             Volatile.Write(ref _gazeRuntimeEntries, newRuntimeEntries);
             Volatile.Write(ref _gazeRoutes, newRoutes);
+
+            LogGazeRouteDiagnostics(_manualGazeRuntimeEntries, _autoGazeRuntimeEntriesById);
+        }
+
+        private static void LogGazeRouteDiagnostics(
+            IReadOnlyList<GazeRuntimeEntry> manualEntries,
+            IReadOnlyDictionary<string, GazeRuntimeEntry> autoEntries)
+        {
+            int manualCount = manualEntries == null ? 0 : manualEntries.Count;
+            int autoCount = autoEntries == null ? 0 : autoEntries.Count;
+            var autoIds = new List<string>(autoCount);
+            if (autoEntries != null)
+            {
+                foreach (GazeRuntimeEntry entry in autoEntries.Values)
+                {
+                    if (entry != null && !string.IsNullOrEmpty(entry.ExpressionId))
+                    {
+                        autoIds.Add(entry.ExpressionId);
+                    }
+                }
+            }
+
+            autoIds.Sort(StringComparer.Ordinal);
+            Debug.Log(
+                $"[OscReceiverAdapterBinding] gaze routes published: manual={manualCount}, auto={autoCount}, " +
+                $"autoIds=[{string.Join(", ", autoIds.ToArray())}]");
         }
 
         private GazeRuntimeEntry CreateAutoGazeRuntime(
@@ -1358,6 +1412,11 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         private void UnregisterGazeSource(string sourceId)
         {
+            if (_runtimeRegistry == null || string.IsNullOrEmpty(sourceId))
+            {
+                return;
+            }
+
             int separator = sourceId.IndexOf(':');
             if (separator > 0 && separator < sourceId.Length - 1)
             {
