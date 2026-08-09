@@ -71,7 +71,7 @@
   - _Requirements: 1.1, 1.2_
   - _Boundary: OscSender_
 
-- [ ] 3.2 bundle builder に広告 message 組み立て（ペア境界 chunk 分割）を追加する
+- [x] 3.2 bundle builder に広告 message 組み立て（ペア境界 chunk 分割）を追加する
   - `/_facialcontrol/gaze` の string message を heartbeat / preset と同一 frame bundle（同一 timestamp）に追加する
   - MTU 超過時はペア境界（2 要素単位・chunk 内は常に偶数要素）で分割し、分割時も sender identity の継続 packet 添付が働くようにする
   - ArrayPool buffer 再利用の既存機構に乗り、送出ごとの新規確保を増やさない

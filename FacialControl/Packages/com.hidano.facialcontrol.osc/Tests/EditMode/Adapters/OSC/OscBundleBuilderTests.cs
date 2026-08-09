@@ -342,6 +342,121 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
             CollectionAssert.AreEqual(names, parsedNames);
         }
 
+        [Test]
+        public void BuildFrameBundle_WithGazeAdvertisement_WritesStringPairsWithFrameMetadata()
+        {
+            using var builder = new OscBundleBuilder();
+            const ulong timestamp = 0x0000000600000000UL;
+            byte[][] addresses = { Utf8("/avatar/parameters/A") };
+            float[] values = { 0.25f };
+            string[] names = { "JawOpen" };
+            string[] gazePairs = { "look", "ARKit_8BS", "blink", "VRChat_XY" };
+
+            int packetCount = builder.BuildFrameBundle(
+                timestamp,
+                Utf8(SenderIdentity.OscAddress),
+                new byte[SenderIdentity.UuidByteLength],
+                "123456789",
+                addresses,
+                values,
+                values.Length,
+                Utf8("/_facialcontrol/blendshape_names"),
+                names,
+                names.Length,
+                Utf8("/_facialcontrol/preset"),
+                "vrchat",
+                null,
+                Utf8("/_facialcontrol/gaze"),
+                gazePairs,
+                2);
+
+            Assert.AreEqual(1, packetCount);
+            List<uOSC.Message> messages = ParseMessages(builder.GetPacket(0));
+            Assert.AreEqual(5, messages.Count);
+            Assert.AreEqual(SenderIdentity.OscAddress, messages[0].address);
+            Assert.AreEqual("/_facialcontrol/blendshape_names", messages[2].address);
+            Assert.AreEqual("/_facialcontrol/preset", messages[3].address);
+            Assert.AreEqual("/_facialcontrol/gaze", messages[4].address);
+            Assert.AreEqual(timestamp, messages[4].timestamp.value);
+            CollectionAssert.AreEqual(gazePairs, messages[4].values);
+        }
+
+        [Test]
+        public void BuildFrameBundle_LargeGazeAdvertisement_SplitsOnlyAtPairBoundariesWithSenderIdentity()
+        {
+            using var builder = new OscBundleBuilder(maxPacketSize: 160);
+            const ulong timestamp = 0x0000000700000000UL;
+            string[] gazePairs = new string[20];
+            for (int i = 0; i < gazePairs.Length; i += 2)
+            {
+                gazePairs[i] = "gaze_expression_" + i.ToString("D2", CultureInfo.InvariantCulture);
+                gazePairs[i + 1] = "ARKit_8BS";
+            }
+
+            LogAssert.Expect(LogType.Warning, new Regex("OscBundleBuilder.*MTU.*split"));
+            int packetCount = builder.BuildFrameBundle(
+                timestamp,
+                Utf8(SenderIdentity.OscAddress),
+                new byte[SenderIdentity.UuidByteLength],
+                "123456789",
+                Array.Empty<byte[]>(),
+                Array.Empty<float>(),
+                0,
+                null,
+                null,
+                0,
+                null,
+                null,
+                null,
+                Utf8("/_facialcontrol/gaze"),
+                gazePairs,
+                gazePairs.Length / 2);
+
+            Assert.Greater(packetCount, 1);
+            int parsedPairCount = 0;
+            for (int i = 0; i < packetCount; i++)
+            {
+                OscBundlePacket packet = builder.GetPacket(i);
+                Assert.LessOrEqual(packet.Length, 160);
+                List<uOSC.Message> messages = ParseMessages(packet);
+                Assert.AreEqual(SenderIdentity.OscAddress, messages[0].address);
+                for (int messageIndex = 1; messageIndex < messages.Count; messageIndex++)
+                {
+                    Assert.AreEqual("/_facialcontrol/gaze", messages[messageIndex].address);
+                    Assert.AreEqual(0, messages[messageIndex].values.Length % 2);
+                    parsedPairCount += messages[messageIndex].values.Length / 2;
+                }
+            }
+
+            Assert.AreEqual(gazePairs.Length / 2, parsedPairCount);
+        }
+
+        [Test]
+        public void BuildFrameBundle_WithoutGazeAdvertisement_PreservesExistingPayload()
+        {
+            using var builder = new OscBundleBuilder();
+            const ulong timestamp = 0x0000000800000000UL;
+            byte[][] addresses = { Utf8("/avatar/parameters/A") };
+            float[] values = { 0.5f };
+
+            int packetCount = builder.BuildFrameBundle(
+                timestamp,
+                Utf8(SenderIdentity.OscAddress),
+                new byte[SenderIdentity.UuidByteLength],
+                "123456789",
+                addresses,
+                values,
+                values.Length,
+                Utf8("/_facialcontrol/blendshape_names"),
+                new[] { "JawOpen" },
+                1);
+
+            Assert.AreEqual(1, packetCount);
+            List<uOSC.Message> messages = ParseMessages(builder.GetPacket(0));
+            Assert.AreEqual(3, messages.Count);
+            Assert.AreEqual("/_facialcontrol/blendshape_names", messages[2].address);
+        }
+
         private static byte[] Utf8(string value)
         {
             return Encoding.UTF8.GetBytes(value);

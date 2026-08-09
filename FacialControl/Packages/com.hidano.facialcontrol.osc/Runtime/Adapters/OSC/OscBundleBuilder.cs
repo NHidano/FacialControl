@@ -236,7 +236,47 @@ namespace Hidano.FacialControl.Adapters.OSC
                 heartbeatNameCount,
                 presetAddressUtf8,
                 presetName,
-                customPrefix);
+                customPrefix,
+                gazeAdvertisementAddressUtf8: null,
+                gazeAdvertisementPairs: null,
+                gazeAdvertisementPairCount: 0);
+        }
+
+        public int BuildFrameBundle(
+            ulong timestamp,
+            byte[] senderIdentityAddressUtf8,
+            byte[] senderUuidBytes,
+            string startedAtUnixMs,
+            byte[][] floatAddressUtf8,
+            float[] floatValues,
+            int floatCount,
+            byte[] heartbeatAddressUtf8,
+            string[] heartbeatNames,
+            int heartbeatNameCount,
+            byte[] presetAddressUtf8,
+            string presetName,
+            string customPrefix,
+            byte[] gazeAdvertisementAddressUtf8,
+            string[] gazeAdvertisementPairs,
+            int gazeAdvertisementPairCount)
+        {
+            return BuildFrameBundleCore(
+                timestamp,
+                senderIdentityAddressUtf8,
+                senderUuidBytes,
+                startedAtUnixMs,
+                floatAddressUtf8,
+                floatValues,
+                floatCount,
+                heartbeatAddressUtf8,
+                heartbeatNames,
+                heartbeatNameCount,
+                presetAddressUtf8,
+                presetName,
+                customPrefix,
+                gazeAdvertisementAddressUtf8,
+                gazeAdvertisementPairs,
+                gazeAdvertisementPairCount);
         }
 
         public int BuildFrameBundle(
@@ -264,7 +304,10 @@ namespace Hidano.FacialControl.Adapters.OSC
                 heartbeatNameCount,
                 presetAddressUtf8: null,
                 presetName: null,
-                customPrefix: null);
+                customPrefix: null,
+                gazeAdvertisementAddressUtf8: null,
+                gazeAdvertisementPairs: null,
+                gazeAdvertisementPairCount: 0);
         }
 
         private int BuildFrameBundleCore(
@@ -280,7 +323,10 @@ namespace Hidano.FacialControl.Adapters.OSC
             int heartbeatNameCount,
             byte[] presetAddressUtf8,
             string presetName,
-            string customPrefix)
+            string customPrefix,
+            byte[] gazeAdvertisementAddressUtf8,
+            string[] gazeAdvertisementPairs,
+            int gazeAdvertisementPairCount)
         {
             ThrowIfDisposed();
             ValidateAddress(senderIdentityAddressUtf8, nameof(senderIdentityAddressUtf8));
@@ -345,6 +391,38 @@ namespace Hidano.FacialControl.Adapters.OSC
                     nameof(presetAddressUtf8));
             }
 
+            bool includeGazeAdvertisement = gazeAdvertisementAddressUtf8 != null;
+            if (includeGazeAdvertisement)
+            {
+                ValidateAddress(gazeAdvertisementAddressUtf8, nameof(gazeAdvertisementAddressUtf8));
+                if (gazeAdvertisementPairs == null)
+                {
+                    throw new ArgumentNullException(nameof(gazeAdvertisementPairs));
+                }
+
+                if (gazeAdvertisementPairCount < 0 ||
+                    gazeAdvertisementPairCount > gazeAdvertisementPairs.Length / 2)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(gazeAdvertisementPairCount));
+                }
+
+                for (int i = 0; i < gazeAdvertisementPairCount * 2; i++)
+                {
+                    if (string.IsNullOrEmpty(gazeAdvertisementPairs[i]))
+                    {
+                        throw new ArgumentException(
+                            "Gaze advertisement pairs must contain non-empty strings.",
+                            nameof(gazeAdvertisementPairs));
+                    }
+                }
+            }
+            else if (gazeAdvertisementPairs != null || gazeAdvertisementPairCount != 0)
+            {
+                throw new ArgumentException(
+                    "Gaze advertisement address must be provided when advertisement pairs are provided.",
+                    nameof(gazeAdvertisementAddressUtf8));
+            }
+
             ResetBuildState();
             SetFrameSplitSenderIdentity(senderIdentityAddressUtf8, senderUuidBytes, startedAtUnixMs);
             try
@@ -367,6 +445,15 @@ namespace Hidano.FacialControl.Adapters.OSC
                 if (includePreset)
                 {
                     AddPresetMessage(timestamp, presetAddressUtf8, presetName, customPrefix);
+                }
+
+                if (includeGazeAdvertisement && gazeAdvertisementPairCount > 0)
+                {
+                    AddGazeAdvertisementMessages(
+                        timestamp,
+                        gazeAdvertisementAddressUtf8,
+                        gazeAdvertisementPairs,
+                        gazeAdvertisementPairCount);
                 }
 
                 LogMtuSplitIfNeeded();
@@ -542,6 +629,34 @@ namespace Hidano.FacialControl.Adapters.OSC
 
                 AddStringMessage(timestamp, addressUtf8, nameSpan.Slice(index, chunkCount));
                 index += chunkCount;
+            }
+        }
+
+        private void AddGazeAdvertisementMessages(
+            ulong timestamp,
+            byte[] addressUtf8,
+            string[] pairs,
+            int pairCount)
+        {
+            ReadOnlySpan<string> pairSpan = new ReadOnlySpan<string>(pairs, 0, pairCount * 2);
+            int index = 0;
+            while (index < pairSpan.Length)
+            {
+                int chunkPairCount = GetFittingGazeAdvertisementPairCount(
+                    addressUtf8.Length,
+                    pairSpan,
+                    index);
+                if (chunkPairCount <= 0)
+                {
+                    throw new InvalidOperationException(
+                        "A single OSC gaze advertisement pair message exceeds the configured packet size.");
+                }
+
+                AddStringMessage(
+                    timestamp,
+                    addressUtf8,
+                    pairSpan.Slice(index, chunkPairCount * 2));
+                index += chunkPairCount * 2;
             }
         }
 
@@ -787,6 +902,41 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
 
             return count;
+        }
+
+        private int GetFittingGazeAdvertisementPairCount(
+            int addressByteCount,
+            ReadOnlySpan<string> values,
+            int startIndex)
+        {
+            int pairCount = 0;
+            int stringsSize = 0;
+            int maxElementPayloadSize = _maxPacketSize
+                - BundleHeaderSize
+                - 4
+                - GetFrameSplitSenderIdentityElementSize();
+
+            for (int i = startIndex; i < values.Length; i += 2)
+            {
+                int nextPairCount = pairCount + 1;
+                int nextStringsSize = stringsSize
+                    + GetOscStringSize(GetUtf8ByteCount(values[i]))
+                    + GetOscStringSize(GetUtf8ByteCount(values[i + 1]));
+                int nextMessageSize =
+                    GetOscStringSize(addressByteCount)
+                    + GetOscStringSize(1 + (nextPairCount * 2))
+                    + nextStringsSize;
+
+                if (nextMessageSize > maxElementPayloadSize)
+                {
+                    break;
+                }
+
+                stringsSize = nextStringsSize;
+                pairCount = nextPairCount;
+            }
+
+            return pairCount;
         }
 
         private void SetFrameSplitSenderIdentity(
