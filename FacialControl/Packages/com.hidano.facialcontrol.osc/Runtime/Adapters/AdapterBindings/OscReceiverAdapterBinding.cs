@@ -138,6 +138,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private List<GazeAdvertisementResolver.GazeAdvertisement> _gazeAdvertisedEntries;
 
         [NonSerialized]
+        private List<GazeAdvertisementResolver.GazeAdvertisement> _gazeAdNormalizedScratch;
+
+        [NonSerialized]
         private uint _lastGazeAdvertisementHash;
 
         [NonSerialized]
@@ -648,6 +651,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeAdProcessingScratch = null;
             _gazeAdPlan = null;
             _gazeAdvertisedEntries = null;
+            _gazeAdNormalizedScratch = null;
             _autoGazeSourcesById = null;
             _autoGazeRuntimeEntriesById = null;
             _receiverGazeConfigExpressionIds = null;
@@ -783,6 +787,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeAdProcessingScratch = new List<string>();
             _gazeAdPlan = new List<GazeAdvertisementResolver.GazeAdvertisement>();
             _gazeAdvertisedEntries = new List<GazeAdvertisementResolver.GazeAdvertisement>();
+            _gazeAdNormalizedScratch = new List<GazeAdvertisementResolver.GazeAdvertisement>();
             _autoGazeSourcesById = new Dictionary<string, GazeVector2InputSource>(StringComparer.Ordinal);
             _autoGazeRuntimeEntriesById = new Dictionary<string, GazeRuntimeEntry>(StringComparer.Ordinal);
             _receiverGazeConfigExpressionIds ??= new List<string>();
@@ -1273,7 +1278,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 _gazeAdProcessingScratch,
                 _gazeAdvertisedEntries,
                 ref _warnedOnUnknownGazeFormat);
-            uint hash = GazeAdvertisementResolver.ComputeNormalizedHash(_gazeAdvertisedEntries);
+            uint hash = GazeAdvertisementResolver.ComputeNormalizedHash(
+                _gazeAdvertisedEntries,
+                _gazeAdNormalizedScratch);
             if (_hasProcessedGazeAdvertisement && hash == _lastGazeAdvertisementHash)
             {
                 return;

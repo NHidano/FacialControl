@@ -82,6 +82,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
         [Test]
         public void ComputeNormalizedHash_OrderChangesDoNotChangeHash()
         {
+            var scratch = new List<GazeAdvertisementResolver.GazeAdvertisement>();
             var first = new[]
             {
                 new GazeAdvertisementResolver.GazeAdvertisement("z", "VRChat_XY"),
@@ -94,23 +95,41 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
             };
 
             Assert.That(
-                GazeAdvertisementResolver.ComputeNormalizedHash(first),
-                Is.EqualTo(GazeAdvertisementResolver.ComputeNormalizedHash(second)));
+                GazeAdvertisementResolver.ComputeNormalizedHash(first, scratch),
+                Is.EqualTo(GazeAdvertisementResolver.ComputeNormalizedHash(second, scratch)));
         }
 
         [Test]
         public void ComputeNormalizedHash_ContentOrFormatChangesChangeHash()
         {
             var baseline = new[] { new GazeAdvertisementResolver.GazeAdvertisement("gaze", "VRChat_XY") };
+            var scratch = new List<GazeAdvertisementResolver.GazeAdvertisement>();
 
             Assert.That(
                 GazeAdvertisementResolver.ComputeNormalizedHash(
-                    new[] { new GazeAdvertisementResolver.GazeAdvertisement("other", "VRChat_XY") }),
-                Is.Not.EqualTo(GazeAdvertisementResolver.ComputeNormalizedHash(baseline)));
+                    new[] { new GazeAdvertisementResolver.GazeAdvertisement("other", "VRChat_XY") }, scratch),
+                Is.Not.EqualTo(GazeAdvertisementResolver.ComputeNormalizedHash(baseline, scratch)));
             Assert.That(
                 GazeAdvertisementResolver.ComputeNormalizedHash(
-                    new[] { new GazeAdvertisementResolver.GazeAdvertisement("gaze", "ARKit_8BS") }),
-                Is.Not.EqualTo(GazeAdvertisementResolver.ComputeNormalizedHash(baseline)));
+                    new[] { new GazeAdvertisementResolver.GazeAdvertisement("gaze", "ARKit_8BS") }, scratch),
+                Is.Not.EqualTo(GazeAdvertisementResolver.ComputeNormalizedHash(baseline, scratch)));
+        }
+
+        [Test]
+        public void ComputeNormalizedHash_ReusedScratch_ProducesStableHash()
+        {
+            var entries = new[]
+            {
+                new GazeAdvertisementResolver.GazeAdvertisement("z", "VRChat_XY"),
+                new GazeAdvertisementResolver.GazeAdvertisement("a", "ARKit_8BS")
+            };
+            var scratch = new List<GazeAdvertisementResolver.GazeAdvertisement>();
+            uint expected = GazeAdvertisementResolver.ComputeNormalizedHash(entries, scratch);
+
+            for (int i = 0; i < 10; i++)
+            {
+                Assert.That(GazeAdvertisementResolver.ComputeNormalizedHash(entries, scratch), Is.EqualTo(expected));
+            }
         }
 
         [Test]

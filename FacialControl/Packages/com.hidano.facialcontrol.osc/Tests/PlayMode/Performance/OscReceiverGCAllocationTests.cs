@@ -153,7 +153,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
         }
 
         [Test]
-        public void GazeAdvertisement_ContentUnchanged_ZeroAllocPerFrame()
+        public void GazeAdvertisement_ContentUnchanged_ArrivesEveryTick_ZeroAllocPerFrame()
         {
             var registry = new InputSourceRegistry();
             var timeProvider = new ManualTimeProvider();
@@ -177,6 +177,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
 
             for (int frame = 0; frame < FrameCount; frame++)
             {
+                _binding.HelperHost.Receiver.HandleOscMessage(advertisement);
                 _binding.OnFixedTick(1f / 60f);
             }
 

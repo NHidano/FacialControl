@@ -12,6 +12,8 @@ namespace Hidano.FacialControl.Adapters.OSC
     {
         public const string VrChatXyFormat = "VRChat_XY";
         public const string ArKit8BsFormat = "ARKit_8BS";
+        private static readonly Comparison<GazeAdvertisement> s_compareByExpressionIdOrdinal =
+            CompareByExpressionIdOrdinal;
 
         public readonly struct GazeAdvertisement
         {
@@ -45,7 +47,6 @@ namespace Hidano.FacialControl.Adapters.OSC
                 return;
             }
 
-            var seenIds = new HashSet<string>(StringComparer.Ordinal);
             int pairCount = payload.Count / 2;
             for (int i = 0; i < pairCount; i++)
             {
@@ -61,39 +62,60 @@ namespace Hidano.FacialControl.Adapters.OSC
                     continue;
                 }
 
-                if (seenIds.Add(expressionId))
+                bool isDuplicate = false;
+                for (int existingIndex = 0; existingIndex < destination.Count; existingIndex++)
+                {
+                    if (string.Equals(
+                            destination[existingIndex].ExpressionId,
+                            expressionId,
+                            StringComparison.Ordinal))
+                    {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+
+                if (!isDuplicate)
                 {
                     destination.Add(new GazeAdvertisement(expressionId, format));
                 }
             }
         }
 
-        public static uint ComputeNormalizedHash(IReadOnlyList<GazeAdvertisement> entries)
+        public static uint ComputeNormalizedHash(
+            IReadOnlyList<GazeAdvertisement> entries,
+            List<GazeAdvertisement> normalizedScratch)
         {
+            if (normalizedScratch == null)
+            {
+                throw new ArgumentNullException(nameof(normalizedScratch));
+            }
+
+            normalizedScratch.Clear();
             if (entries == null || entries.Count == 0)
             {
                 return HeartbeatHashHelper.Fnv1aOffsetBasis;
             }
 
-            var normalized = new List<GazeAdvertisement>(entries.Count);
             for (int i = 0; i < entries.Count; i++)
             {
                 GazeAdvertisement entry = entries[i];
                 if (!string.IsNullOrEmpty(entry.ExpressionId) && IsKnownFormat(entry.Format))
                 {
-                    normalized.Add(entry);
+                    normalizedScratch.Add(entry);
                 }
             }
 
-            normalized.Sort(CompareByExpressionIdOrdinal);
-            var interleaved = new string[normalized.Count * 2];
-            for (int i = 0; i < normalized.Count; i++)
+            normalizedScratch.Sort(s_compareByExpressionIdOrdinal);
+            uint hash = HeartbeatHashHelper.Fnv1aOffsetBasis;
+            for (int i = 0; i < normalizedScratch.Count; i++)
             {
-                interleaved[i * 2] = normalized[i].ExpressionId;
-                interleaved[i * 2 + 1] = normalized[i].Format;
+                GazeAdvertisement entry = normalizedScratch[i];
+                hash = HeartbeatHashHelper.AppendFnv1aString(hash, entry.ExpressionId);
+                hash = HeartbeatHashHelper.AppendFnv1aString(hash, entry.Format);
             }
 
-            return HeartbeatHashHelper.ComputeFnv1a(interleaved);
+            return hash;
         }
 
         /// <summary>
@@ -116,23 +138,28 @@ namespace Hidano.FacialControl.Adapters.OSC
                 return;
             }
 
-            var manuallyCoveredIds = new HashSet<string>(StringComparer.Ordinal);
-            if (manualEntries != null)
-            {
-                for (int i = 0; i < manualEntries.Count; i++)
-                {
-                    OscMappingEntry entry = manualEntries[i];
-                    if (IsValidManualGazeEntry(entry))
-                    {
-                        manuallyCoveredIds.Add(entry.expressionId);
-                    }
-                }
-            }
-
             for (int i = 0; i < advertised.Count; i++)
             {
                 GazeAdvertisement entry = advertised[i];
-                if (!manuallyCoveredIds.Contains(entry.ExpressionId))
+                bool manuallyCovered = false;
+                if (manualEntries != null)
+                {
+                    for (int manualIndex = 0; manualIndex < manualEntries.Count; manualIndex++)
+                    {
+                        OscMappingEntry manualEntry = manualEntries[manualIndex];
+                        if (IsValidManualGazeEntry(manualEntry) &&
+                            string.Equals(
+                                manualEntry.expressionId,
+                                entry.ExpressionId,
+                                StringComparison.Ordinal))
+                        {
+                            manuallyCovered = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!manuallyCovered)
                 {
                     planResults.Add(entry);
                 }

@@ -55,6 +55,24 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
         }
 
+        public static uint AppendFnv1aString(uint hash, string value)
+        {
+            unchecked
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    for (int charIndex = 0; charIndex < value.Length; charIndex++)
+                    {
+                        char character = value[charIndex];
+                        hash = AppendByte(hash, (byte)character);
+                        hash = AppendByte(hash, (byte)(character >> 8));
+                    }
+                }
+
+                return AppendByte(hash, 0);
+            }
+        }
+
         private static uint AppendByte(uint hash, byte value)
         {
             unchecked
