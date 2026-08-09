@@ -132,7 +132,8 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
                 new OscMappingEntry
                 {
                     mode = OscMappingMode.Gaze_VRChat_XY,
-                    expressionId = "gaze"
+                    expressionId = "gaze",
+                    addressPattern = "/avatar/parameters/gaze"
                 },
                 new OscMappingEntry
                 {

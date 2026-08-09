@@ -29,16 +29,10 @@
 - **トリガ**: `OscOutputDemo` Scene の OSC 出力動作確認が完了したタイミング
 - **影響範囲**: `Packages/com.hidano.facialcontrol.osc/Samples~/OscOutputDemo/OscOutputDemoBootstrap.cs`（`OscOutputDemoSignalBinding` / `DemoSignalState` / `DemoBlendShapeSource` / `DemoGazeSource` の削除）, 同 `OscOutputDemoProfile.asset`, 同 `README.md`, 関連 `.meta`
 
-### S-21: OSC PlayMode テスト 4 件の LogAssert 追従（gaze mapping 未設定ログ由来の pre-existing 赤）
-- **出典**: 2026-07-02 セッション「gaze 目ボーン適用の FacialController 集約」のフル PlayMode 検証で検出。**集約変更とは無関係な pre-existing failure**（base への `git stash` 実行で同 4 件が落ちることを確認済み）。
-- **背景**: 2026-07-01 のコミット `724ebbb` / `ef62e04` が `OscReceiverAdapterBinding.StartReceiverPhase` に「gaze mapping が未設定のため Gaze 受信は無効です」の `Debug.Log` を追加したが、gaze mapping 無しで receiver を起動する既存テストが `LogAssert` 未追従のまま赤になっている。
-- **赤の内訳**（PlayMode、いずれも `com.hidano.facialcontrol.osc/Tests/PlayMode/`）:
-  - `OscHeartbeatConsistencyTests.OnFixedTick_HeartbeatMissingReceiverBlendShape_LogsMismatchWarning`（Unhandled log message）
-  - `OscReceiverAdapterBindingAutoMappingIntegrationTests.HandleHeartbeat_HeartbeatHashUnchanged_DoesNotRebuildOscInputSource` / 同 `OnStart_EmptyMappingsAndNoHeartbeat_DoesNotRegisterOscInputSourceOrChangeRenderer`
-  - `OscReceiverGCAllocationTests.OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation`（ログ由来のハッシュ不一致）
-- **方針**: 各テストに `LogAssert.Expect(LogType.Log, ...)` を追加する（もしくは gaze mapping 未設定ログの出し方をテスト非干渉な形に調整する）。
-- **トリガ**: 次に OSC パッケージのテストを触る PR / フル PlayMode の赤ゼロ化を狙うタイミング
-- **影響範囲**: 上記テスト 4 ファイル（もしくは `OscReceiverAdapterBinding` のログ出力 1 箇所）
+### S-21: OSC PlayMode テスト 4 件の LogAssert 追従（部分クローズ）
+- **出典**: 2026-08-09 `osc-gaze-auto-mapping` タスク 4.6 / 8.4 のフル PlayMode 検証。
+- **決着**: gaze mapping 未設定ログは本 spec の実装で削除され、当該ログ由来の赤は解消した。残る 2 件の heartbeat ハッシュ期待値（実測 `122830949` / `133301657`）と、別系統の `OscInputSource` 診断ログ追従は本 spec の範囲外として残件化する。
+- **残件トリガ**: heartbeat payload のハッシュ仕様または診断ログ契約を変更する OSC テスト改修時。
 
 ---
 
@@ -202,14 +196,6 @@
 - **関連**: M-18（ベース表情の Layer/OverrideMask 保持）, M-14（Domain への動的 Expression driver 概念導入）
 - **影響範囲**: `com.hidano.facialcontrol.lipsync` の Editor 検証 UI、`AnimationClipPhonemeEntry` の Inspector 表示、AnimationClip path 解決 helper、対応 EditMode テスト
 - **関連**: `lipsync-animationclip-rework` spec（S-9 本体対応済み）、将来の AnimationClip 作成支援ツール
-
-### M-30: Gaze の auto mapping 化（heartbeat / preset address への Gaze id 追加）
-- **出典**: [`.kiro/specs/osc-receiver-auto-mapping/requirements.md`](../.kiro/specs/osc-receiver-auto-mapping/requirements.md) Boundary Context（Out of scope）/ Requirement 7.8（2026-05-26 設計セッション）
-- **内容**: `osc-receiver-auto-mapping` spec は受信側 BlendShape mapping を heartbeat (`/_facialcontrol/blendshape_names`) と新設 preset address (`/_facialcontrol/preset`) から自動生成する。しかし heartbeat / preset address には **Gaze id (`Gaze_VRChat_XY` / `Gaze_ARKit_8BS`) が含まれない**ため Gaze の auto mapping は対象外とし、本 spec では `OscReceiverDemoProfile.asset` に Gaze 手入力 mapping 1 件を残すハイブリッド構成で対応した。follow-up spec として「送信側が Gaze id を heartbeat もしくは preset address（または Gaze 専用 address）で広告し、受信側が Gaze mapping も自動生成する」経路を設計する。
-  - 設計判断項目: (a) Gaze id を heartbeat の BlendShape 名一覧に混ぜるか、`/_facialcontrol/gaze` のような Gaze 専用 address を新設するか、(b) Gaze は `GazeVector2InputSource` (ValueProvider 型、`BlendShapeCount=0`) のため Normal_BlendShape とは生成経路が別。auto mapping resolver を Gaze 対応に拡張する設計、(c) VRChat 形式 (`Gaze_VRChat_XY` = 単一 Vector2) と ARKit 形式 (`Gaze_ARKit_8BS` = 8 BlendShape) の推定ロジック。
-- **トリガ**: `osc-receiver-auto-mapping` 完了後、空 Mappings で Gaze も含めて完全自動化したい要望が出たとき / VTuber 実機で「Gaze も手入力なしで疎通させたい」需要が顕在化したとき
-- **影響範囲**: 送信側 `OscBundleBuilder` / `OscSenderAdapterBinding`（Gaze id 広告）、受信側 `OscReceiverAdapterBinding` の auto mapping resolver（Gaze 経路追加）、`OscReceiverDemoProfile.asset`（Gaze 手入力削除）、対応テスト
-- **関連**: `osc-receiver-auto-mapping` spec（BlendShape auto mapping 本体）、M-13（multi-source gaze blending）
 
 ### M-26: OscReceiverAdapterBinding の Inspector に手入力/自動 mapping の出自表示（Manual/Auto badge）
 - **出典**: [`.kiro/specs/osc-receiver-auto-mapping/requirements.md`](../.kiro/specs/osc-receiver-auto-mapping/requirements.md) Requirement 2.5（2026-05-26 設計セッション 論点 7）

@@ -230,7 +230,7 @@
   - _Boundary: OscReceiverGCAllocationTests, 送信側性能テスト_
   - _Depends: 4.3_
 
-- [ ] 8.4 EditMode / PlayMode 全体スイープと backlog クローズ（第 2 段）を実施する
+- [x] 8.4 EditMode / PlayMode 全体スイープと backlog クローズ（第 2 段）を実施する
   - EditMode / PlayMode の全テストを batchmode で実行し、本 spec の変更起因の赤がゼロであることを確認する（冒頭一覧の pre-existing 赤は除外判定。S-21 の 4 件は緑化または 4.6 で確定した残件方針どおりであること）
   - backlog の gaze auto mapping エントリ（7.1 で付番した新番号ブロック）を運用ルールに従いクローズする（ブロック削除 + commit message に理由記載）
   - backlog の S-21 を 4.6 の結果に従いクローズまたは部分クローズ + 残件追記する
