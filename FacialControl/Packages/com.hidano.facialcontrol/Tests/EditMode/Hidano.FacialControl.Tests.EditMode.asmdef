@@ -30,6 +30,22 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.hidano.facialcontrol.osc",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_OSC_MODULE"
+        },
+        {
+            "name": "com.hidano.facialcontrol.lipsync",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_LIPSYNC_MODULE"
+        },
+        {
+            "name": "com.hidano.facialcontrol.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_INPUTSYSTEM_MODULE"
+        }
+    ],
     "noEngineReferences": false
 }

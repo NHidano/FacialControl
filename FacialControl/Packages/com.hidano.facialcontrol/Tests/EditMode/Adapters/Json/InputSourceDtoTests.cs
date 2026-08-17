@@ -57,6 +57,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
             Assert.AreEqual(src.optionsJson, dst.optionsJson);
         }
 
+#if FACIALCONTROL_HAS_OSC_MODULE
         // ================================================================
         // OscOptionsDto — Critical 2 観測完了条件
         // ================================================================
@@ -99,7 +100,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
 
             Assert.IsInstanceOf<InputSourceOptionsDto>(options);
         }
+#endif
 
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE
         // ================================================================
         // ExpressionTriggerOptionsDto
         // ================================================================
@@ -141,6 +144,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
 
             Assert.IsInstanceOf<InputSourceOptionsDto>(options);
         }
+#endif
 
         // ================================================================
         // LipSyncOptionsDto

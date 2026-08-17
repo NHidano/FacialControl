@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE && FACIALCONTROL_HAS_OSC_MODULE
 using System;
 using NUnit.Framework;
 using Hidano.FacialControl.Adapters.AdapterBindings;
@@ -158,3 +159,4 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.ScriptableObjectTests.Ada
         }
     }
 }
+#endif

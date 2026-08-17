@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE && FACIALCONTROL_HAS_OSC_MODULE
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -306,3 +307,4 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
         }
     }
 }
+#endif

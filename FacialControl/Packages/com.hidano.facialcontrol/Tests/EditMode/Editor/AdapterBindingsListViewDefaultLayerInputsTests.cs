@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_LIPSYNC_MODULE
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -234,3 +235,4 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor
         }
     }
 }
+#endif

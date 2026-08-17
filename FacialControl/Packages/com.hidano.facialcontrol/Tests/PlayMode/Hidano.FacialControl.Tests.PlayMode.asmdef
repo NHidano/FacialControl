@@ -10,10 +10,8 @@
         "Hidano.FacialControl.Tests.Shared",
         "Unity.Collections",
         "Unity.InputSystem",
-        "Unity.InputSystem.TestFramework",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "uOSC.Runtime",
         "VContainer"
     ],
     "includePlatforms": [],
@@ -27,6 +25,22 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_UNITY_INPUTSYSTEM"
+        },
+        {
+            "name": "com.hidano.facialcontrol.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_INPUTSYSTEM_MODULE"
+        },
+        {
+            "name": "com.hidano.facialcontrol.osc",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_OSC_MODULE"
+        }
+    ],
     "noEngineReferences": false
 }

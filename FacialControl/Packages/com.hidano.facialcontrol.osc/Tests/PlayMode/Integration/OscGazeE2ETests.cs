@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE && FACIALCONTROL_HAS_UNITY_INPUTSYSTEM
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -689,3 +690,4 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         }
     }
 }
+#endif

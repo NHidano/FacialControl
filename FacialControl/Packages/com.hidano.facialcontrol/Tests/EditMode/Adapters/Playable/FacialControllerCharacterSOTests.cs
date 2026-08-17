@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE
 using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
+#endif
 using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Adapters;
@@ -97,6 +99,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Playable
             }
         }
 
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE
         [Test]
         public void Initialize_InputSystemBinding_InjectsSORootGazeConfigsByReferenceInEditMode()
         {
@@ -122,6 +125,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Playable
                 Object.DestroyImmediate(go);
             }
         }
+#endif
 
         private static GameObject CreateControllerHost()
         {
@@ -133,6 +137,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Playable
             return go;
         }
 
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE
         private static object ReadInjectedGazeConfigs(InputSystemAdapterBinding binding)
         {
             var field = typeof(InputSystemAdapterBinding).GetField(
@@ -142,5 +147,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Playable
                 "InputSystemAdapterBinding._injectedGazeConfigs は runtime 注入ハンドルとして存在するべき。");
             return field.GetValue(binding);
         }
+#endif
     }
 }

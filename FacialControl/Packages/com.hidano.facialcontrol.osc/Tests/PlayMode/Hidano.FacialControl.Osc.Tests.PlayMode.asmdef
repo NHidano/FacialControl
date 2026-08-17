@@ -26,6 +26,17 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_UNITY_INPUTSYSTEM"
+        },
+        {
+            "name": "com.hidano.facialcontrol.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_INPUTSYSTEM_MODULE"
+        }
+    ],
     "noEngineReferences": false
 }

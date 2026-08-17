@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_LIPSYNC_MODULE
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -148,3 +149,4 @@ namespace Hidano.FacialControl.LipSync.Tests.EditMode.Adapters
         public List<PhonemeEntryBase> PhonemeEntries => _phonemeEntries;
     }
 }
+#endif

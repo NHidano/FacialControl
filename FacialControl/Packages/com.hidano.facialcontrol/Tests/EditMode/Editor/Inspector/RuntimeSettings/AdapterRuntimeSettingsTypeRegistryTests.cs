@@ -28,6 +28,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector.RuntimeSettings
         {
         }
 
+#if FACIALCONTROL_HAS_OSC_MODULE
         [Test]
         public void GetConcreteTypes_IncludesOscRuntimeSettingsSO()
         {
@@ -38,6 +39,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector.RuntimeSettings
             CollectionAssert.Contains(types, typeof(OscRuntimeSettingsSO),
                 "registry の列挙結果に OscRuntimeSettingsSO が含まれていない。");
         }
+#endif
 
         [Test]
         public void GetConcreteTypes_DoesNotIncludeAbstractBase()

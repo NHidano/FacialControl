@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_OSC_MODULE
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -210,3 +211,4 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.InputSources
         }
     }
 }
+#endif

@@ -913,6 +913,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Application
 
         // --- additional IInputSource だけで駆動するレイヤーが blend に含まれる契約 ---
 
+#if FACIALCONTROL_HAS_INPUTSYSTEM_MODULE
         /// <summary>
         /// Profile で additional IInputSource を宣言したレイヤーは、LayerExpressionSource
         /// (sourceIdx=0) が一度も activate されていなくても blend 対象となり、
@@ -953,6 +954,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Application
             Assert.AreEqual(1.0f, output[0], 1e-4f,
                 "additional source のみで triggered した bs_smile が最終出力に反映されること");
         }
+#endif
 
         // --- late-bind 経路 (BindLateInputSource) の回帰 ---
         //

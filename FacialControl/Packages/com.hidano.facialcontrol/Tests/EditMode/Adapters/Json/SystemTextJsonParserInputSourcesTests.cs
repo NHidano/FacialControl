@@ -208,6 +208,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                 $"optionsJson が値 2.5 を含むべき。実際: {entry.optionsJson}");
         }
 
+#if FACIALCONTROL_HAS_OSC_MODULE
         [Test]
         public void ParseLayerInputSources_OptionsJson_CanBeDeserializedToTypedDto()
         {
@@ -230,6 +231,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
             Assert.IsNotNull(options);
             Assert.AreEqual(2.5f, options.stalenessSeconds);
         }
+#endif
 
         [Test]
         public void ParseLayerInputSources_NestedOptionsObject_CapturedIncludingNestedBraces()

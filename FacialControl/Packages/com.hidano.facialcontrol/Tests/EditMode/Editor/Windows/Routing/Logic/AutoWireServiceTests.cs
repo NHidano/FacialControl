@@ -1,3 +1,4 @@
+#if FACIALCONTROL_HAS_LIPSYNC_MODULE
 using System.Linq;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Editor.Windows.Routing.Logic;
@@ -103,3 +104,4 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Windows.Routing.Logic
         }
     }
 }
+#endif
