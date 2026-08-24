@@ -116,5 +116,87 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             StringAssert.DoesNotContain("ボーンポーズ", FacialControllerEditor.ExpressionCountLabelFormat);
             StringAssert.DoesNotContain("ボーンポーズ", FacialControllerEditor.SnapshotCountLabelFormat);
         }
+
+        // ================================================================
+        // 重複 FacialController の警告
+        // ================================================================
+
+        [Test]
+        public void CreateInspectorGUI_NoDuplicateController_DoesNotShowWarning()
+        {
+            var root = BuildInspectorRoot();
+
+            var helpBox = root.Q<HelpBox>(name: FacialControllerEditor.DuplicateWarningHelpBoxName);
+
+            Assert.IsNull(helpBox, "重複が無いのに警告 HelpBox が表示されています。");
+        }
+
+        [Test]
+        public void CreateInspectorGUI_DuplicateControllerInChild_ShowsWarning()
+        {
+            var child = new GameObject("Model");
+            child.transform.SetParent(_host.transform, false);
+            child.AddComponent<Animator>();
+            child.AddComponent<FacialController>();
+
+            var root = BuildInspectorRoot();
+
+            var helpBox = root.Q<HelpBox>(name: FacialControllerEditor.DuplicateWarningHelpBoxName);
+
+            Assert.IsNotNull(helpBox, "子孫に FacialController があるのに警告 HelpBox がありません。");
+            StringAssert.Contains("Model", helpBox.text, "警告に重複相手のパスが含まれていません。");
+        }
+
+        [Test]
+        public void FindHierarchyDuplicate_ControllerInParent_ReturnsParentController()
+        {
+            var parent = new GameObject("Root");
+            parent.AddComponent<Animator>();
+            var parentController = parent.AddComponent<FacialController>();
+            _host.transform.SetParent(parent.transform, false);
+
+            try
+            {
+                var duplicate = FacialControllerEditor.FindHierarchyDuplicate(_controller);
+
+                Assert.That(duplicate, Is.SameAs(parentController));
+            }
+            finally
+            {
+                // TearDown が _host を破棄できるよう、親から切り離してから親を破棄する。
+                _host.transform.SetParent(null, false);
+                Object.DestroyImmediate(parent);
+            }
+        }
+
+        [Test]
+        public void FindHierarchyDuplicate_SiblingController_ReturnsNull()
+        {
+            var parent = new GameObject("Root");
+            _host.transform.SetParent(parent.transform, false);
+
+            var sibling = new GameObject("OtherCharacter");
+            sibling.transform.SetParent(parent.transform, false);
+            sibling.AddComponent<Animator>();
+            sibling.AddComponent<FacialController>();
+
+            try
+            {
+                var duplicate = FacialControllerEditor.FindHierarchyDuplicate(_controller);
+
+                Assert.IsNull(duplicate, "兄弟関係の FacialController は重複として扱わない。");
+            }
+            finally
+            {
+                _host.transform.SetParent(null, false);
+                Object.DestroyImmediate(parent);
+            }
+        }
+
+        [Test]
+        public void FindHierarchyDuplicate_Null_ReturnsNull()
+        {
+            Assert.IsNull(FacialControllerEditor.FindHierarchyDuplicate(null));
+        }
     }
 }

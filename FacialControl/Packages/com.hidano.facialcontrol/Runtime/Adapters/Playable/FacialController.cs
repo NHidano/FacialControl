@@ -30,6 +30,18 @@ namespace Hidano.FacialControl.Adapters.Playable
     public class FacialController : MonoBehaviour, IBonePoseProvider, IBonePoseSource
     {
         /// <summary>
+        /// 同一 SkinnedMeshRenderer の重複制御を検出したときに出すログの共通接頭辞。
+        /// テストおよび Editor 側の警告表示から参照する。
+        /// </summary>
+        public const string DuplicateOwnershipLogPrefix =
+            "[FacialControl] FacialController: 同じ SkinnedMeshRenderer を複数の FacialController が制御しています";
+
+        /// <summary>
+        /// 重複制御の解決を繰り返す上限。3 つ以上が同じ renderer を掴んでいる場合に備えたループの安全弁。
+        /// </summary>
+        private const int MaxOwnershipResolutionIterations = 16;
+
+        /// <summary>
         /// 統合キャラクター SO 参照。
         /// 設定されていれば SO 名から StreamingAssets/FacialControl/{name}/profile.json を自動探索し、
         /// 存在すれば JSON、不在なら SO の Inspector データから FacialProfile を構築する。
@@ -186,6 +198,13 @@ namespace Hidano.FacialControl.Adapters.Playable
                 return;
             }
 
+            // 同じ renderer を別の FacialController が既に制御していないか確認する。
+            // 譲る側になった場合はこのコンポーネントが無効化され、初期化は行われない。
+            if (!TryClaimRendererOwnership(renderers))
+            {
+                return;
+            }
+
             // BlendShape 名を収集
             _blendShapeNames = CollectBlendShapeNames(renderers);
 
@@ -212,6 +231,11 @@ namespace Hidano.FacialControl.Adapters.Playable
 
             // SkinnedMeshRenderer を取得
             var renderers = ResolveSkinnedMeshRenderers();
+
+            if (!TryClaimRendererOwnership(renderers))
+            {
+                return;
+            }
 
             // BlendShape 名を収集
             _blendShapeNames = CollectBlendShapeNames(renderers);
@@ -256,6 +280,9 @@ namespace Hidano.FacialControl.Adapters.Playable
             // 各 binding が登録した gaze 入力源(osc:eye_look 等)を registry から解決できる。
             SetupGazeBoneProvider();
             SetupObservationAndRebindIntegration(profile, additionalSources);
+
+            // Cleanup() が冒頭で登録を解除しているため、初期化完了後に登録し直す。
+            FacialControllerRendererOwnership.Register(this, renderers);
 
             _isInitialized = true;
         }
@@ -989,6 +1016,12 @@ namespace Hidano.FacialControl.Adapters.Playable
             }
 
             var renderers = ResolveSkinnedMeshRenderers();
+
+            if (!TryClaimRendererOwnership(renderers))
+            {
+                return;
+            }
+
             _blendShapeNames = CollectBlendShapeNames(renderers);
 
             var profile = LoadProfileFromCharacterSO(characterSO);
@@ -1178,6 +1211,85 @@ namespace Hidano.FacialControl.Adapters.Playable
             return _skinnedMeshRenderers;
         }
 
+        /// <summary>
+        /// <paramref name="renderers"/> を制御して良いかを判定し、必要なら競合相手を無効化する。
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// 「モデルを載せる空 GameObject」と「モデル prefab のルート」の両方に FacialController を
+        /// 付けてしまうと、2 つの LateUpdate が同じ BlendShape を奪い合い、入力を受けていない側が
+        /// 0 で上書きして表情が止まる。この誤設定を初期化時に検出して片方だけ生かす。
+        /// </para>
+        /// <para>
+        /// 生き残るのは階層上位（祖先側）。<c>GetComponentsInChildren</c> による自動検索では
+        /// 祖先が子孫の renderer をすべて包含するため、祖先を残せば制御対象の取りこぼしが出ない。
+        /// </para>
+        /// </remarks>
+        /// <returns>初期化を続行して良ければ true。譲る側になった場合は false。</returns>
+        private bool TryClaimRendererOwnership(SkinnedMeshRenderer[] renderers)
+        {
+            for (int iteration = 0; iteration < MaxOwnershipResolutionIterations; iteration++)
+            {
+                FacialController conflict = FacialControllerRendererOwnership.FindConflict(this, renderers);
+                if (conflict == null)
+                {
+                    return true;
+                }
+
+                var resolution = FacialControllerConflictResolver.Resolve(transform, conflict.transform);
+                if (resolution == FacialControllerConflictResolution.TakeOverFromExisting)
+                {
+                    Debug.LogWarning(
+                        $"{DuplicateOwnershipLogPrefix}。'{GetHierarchyPath(conflict.transform)}' は "
+                        + $"階層上位の '{GetHierarchyPath(transform)}' に制御を引き継ぎ、無効化されました。"
+                        + " 1 つのモデルに対して FacialController は 1 つだけにしてください。");
+
+                    conflict.enabled = false;
+                    // enabled=false の OnDisable で登録は解除されるが、
+                    // 既に無効だった場合に備えて明示的にも解除しておく。
+                    FacialControllerRendererOwnership.Unregister(conflict);
+                    continue;
+                }
+
+                Debug.LogWarning(
+                    $"{DuplicateOwnershipLogPrefix}。'{GetHierarchyPath(transform)}' は "
+                    + $"既に制御中の '{GetHierarchyPath(conflict.transform)}' に譲り、無効化されました。"
+                    + " 1 つのモデルに対して FacialController は 1 つだけにしてください。");
+
+                enabled = false;
+                return false;
+            }
+
+            Debug.LogWarning(
+                $"{DuplicateOwnershipLogPrefix}。'{GetHierarchyPath(transform)}' の競合解決が "
+                + $"{MaxOwnershipResolutionIterations} 回で収束しなかったため無効化されました。");
+
+            enabled = false;
+            return false;
+        }
+
+        /// <summary>
+        /// 診断ログ用に Transform のルートからのパスを組み立てる。
+        /// </summary>
+        private static string GetHierarchyPath(Transform target)
+        {
+            if (target == null)
+            {
+                return "(missing)";
+            }
+
+            var builder = new System.Text.StringBuilder(target.name);
+            Transform current = target.parent;
+            while (current != null)
+            {
+                builder.Insert(0, '/');
+                builder.Insert(0, current.name);
+                current = current.parent;
+            }
+
+            return builder.ToString();
+        }
+
         private string[] CollectBlendShapeNames(SkinnedMeshRenderer[] renderers)
         {
             var names = new List<string>();
@@ -1207,6 +1319,8 @@ namespace Hidano.FacialControl.Adapters.Playable
         }
         private void Cleanup()
         {
+            FacialControllerRendererOwnership.Unregister(this);
+
             ClearObservedTriggerSources();
             _analogObservationSampler = null;
 
