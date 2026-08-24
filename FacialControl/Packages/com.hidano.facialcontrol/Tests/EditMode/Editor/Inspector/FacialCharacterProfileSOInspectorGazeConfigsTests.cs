@@ -218,8 +218,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
         }
 
         [Test]
-        public void ResolveGazeConfigFromReferenceModel_OverwritesExistingBoneValues()
+        public void ResolveGazeConfigFromReferenceModel_OverwritesBonesButKeepsManualAngleRanges()
         {
+            // ボーン名・初期角度は参照モデルで上書きするが、
+            // 数値入力済みの可動範囲はユーザーの調整値なので初期値へ戻さない。
             _so = CreateProfile();
             _so.ReferenceModel = CreateReferenceModel();
             _so.Expressions.Add(CreateExpression("analog-one", "Analog One", true));
@@ -239,10 +241,40 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
 
             Assert.That(_so.GazeConfigs[0].leftEyeBonePath, Is.EqualTo("LeftEye"));
             Assert.That(_so.GazeConfigs[0].rightEyeBonePath, Is.EqualTo("RightEye"));
-            Assert.That(_so.GazeConfigs[0].lookUpAngle, Is.EqualTo(15f));
-            Assert.That(_so.GazeConfigs[0].lookDownAngle, Is.EqualTo(9f));
-            Assert.That(_so.GazeConfigs[0].outerYawAngle, Is.EqualTo(15f));
-            Assert.That(_so.GazeConfigs[0].innerYawAngle, Is.EqualTo(18f));
+            Assert.That(_so.GazeConfigs[0].lookUpAngle, Is.EqualTo(42f));
+            Assert.That(_so.GazeConfigs[0].lookDownAngle, Is.EqualTo(43f));
+            Assert.That(_so.GazeConfigs[0].outerYawAngle, Is.EqualTo(44f));
+            Assert.That(_so.GazeConfigs[0].innerYawAngle, Is.EqualTo(45f));
+        }
+
+        [Test]
+        public void AutoAssignGazeConfigForExpression_ExistingConfig_KeepsManualAngleRanges()
+        {
+            _so = CreateProfile();
+            _so.ReferenceModel = CreateReferenceModel();
+            _so.Expressions.Add(CreateExpression("analog-one", "Analog One", true));
+            _so.WritableGazeConfigs.Add(new GazeBindingConfig
+            {
+                expressionId = "analog-one",
+                leftEyeBonePath = "ManualLeft",
+                rightEyeBonePath = "ManualRight",
+                lookUpAngle = 42f,
+                lookDownAngle = 43f,
+                outerYawAngle = 44f,
+                innerYawAngle = 45f,
+            });
+            BuildInspectorRoot();
+
+            InvokeAutoAssignGazeConfigForExpression(0);
+
+            var config = FindGazeConfig("analog-one");
+            Assert.That(config, Is.Not.Null);
+            Assert.That(config.leftEyeBonePath, Is.EqualTo("LeftEye"));
+            Assert.That(config.rightEyeBonePath, Is.EqualTo("RightEye"));
+            Assert.That(config.lookUpAngle, Is.EqualTo(42f));
+            Assert.That(config.lookDownAngle, Is.EqualTo(43f));
+            Assert.That(config.outerYawAngle, Is.EqualTo(44f));
+            Assert.That(config.innerYawAngle, Is.EqualTo(45f));
         }
 
         [Test]
@@ -514,6 +546,15 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
             method.Invoke(_editor, new object[] { index });
+        }
+
+        private void InvokeAutoAssignGazeConfigForExpression(int exprIndex)
+        {
+            var method = typeof(FacialCharacterProfileSOInspector).GetMethod(
+                "AutoAssignGazeConfigForExpression",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(_editor, new object[] { exprIndex });
         }
 
         private void InvokeBulkRegenerateGazeConfigs()

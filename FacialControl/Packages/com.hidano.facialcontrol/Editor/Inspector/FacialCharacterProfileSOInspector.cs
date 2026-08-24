@@ -43,6 +43,10 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string BaseExpressionUnsetHelpName = "facial-character-base-expression-unset-help";
         public const string GazeConfigsFoldoutName = "facial-character-gaze-configs-foldout";
         public const string DebugFoldoutName = "facial-character-debug-foldout";
+        /// <summary>
+        /// Adapter Bindings セクションのルート要素名。折りたたみは廃止したため
+        /// <see cref="Foldout"/> ではなく素の <see cref="VisualElement"/> に付く（名前は互換のため据え置き）。
+        /// </summary>
         public const string AdapterBindingsFoldoutName = "facial-character-adapter-bindings-foldout";
 
         public const string TabViewName = "facial-character-tabview";
@@ -627,8 +631,9 @@ namespace Hidano.FacialControl.Editor.Inspector
         {
             if (_adapterBindingsProperty == null) return;
 
-            var foldout = MakeSectionFoldout(AdapterBindingsFoldoutName, "Adapter Bindings", open: true);
-            foldout.Add(MakeHelpBox(
+            // タブ直下に 1 つしかないセクションのため折りたたみは設けず、内容を直接並べる。
+            var section = new VisualElement { name = AdapterBindingsFoldoutName };
+            section.Add(MakeHelpBox(
                 "入力源（OSC / Input System / ARKit など）の Adapter Binding を登録します。"
                 + "Add ボタンから利用可能な binding を追加し、各 binding は SO 内に直接保存されます。"));
 
@@ -641,9 +646,9 @@ namespace Hidano.FacialControl.Editor.Inspector
                 UpdateValidation();
             };
             listView.Bind(serializedObject);
-            foldout.Add(listView);
+            section.Add(listView);
 
-            root.Add(foldout);
+            root.Add(section);
         }
 
         // ====================================================================
@@ -1609,9 +1614,10 @@ namespace Hidano.FacialControl.Editor.Inspector
             serializedObject.Update();
             if (configIndex < 0 || configIndex >= _rootGazeConfigsProperty.arraySize) return;
 
+            // 既存 GazeConfig の再解決なので、ユーザーが数値入力した可動範囲は温存する。
             AssignGazeConfigFromReferenceModel(
                 _rootGazeConfigsProperty.GetArrayElementAtIndex(configIndex),
-                resetRangesToDefaults: true);
+                resetRangesToDefaults: false);
             RebuildGazeConfigsUI();
             UpdateValidation();
         }
@@ -1662,6 +1668,14 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
         }
 
+        /// <summary>
+        /// 参照モデルから目線ボーン名・初期角度・回転軸を <paramref name="cfg"/> に書き込む。
+        /// </summary>
+        /// <param name="resetRangesToDefaults">
+        /// 可動範囲（lookUp / lookDown / outerYaw / innerYaw）を既定値へ戻すか。
+        /// 新規作成した GazeConfig の初期化時のみ true。既存 GazeConfig の再解決では
+        /// ユーザーが数値入力した調整値を失わないよう false を指定する。
+        /// </param>
         private void AssignGazeConfigFromReferenceModel(
             SerializedProperty cfg,
             bool resetRangesToDefaults)
@@ -1678,9 +1692,11 @@ namespace Hidano.FacialControl.Editor.Inspector
                 cfg.FindPropertyRelative("rightEyeYawAxisLocal"),
                 cfg.FindPropertyRelative("rightEyePitchAxisLocal"));
 
-            if (!resetRangesToDefaults) return;
+            if (resetRangesToDefaults)
+            {
+                SetDefaultGazeConfigRanges(cfg);
+            }
 
-            SetDefaultGazeConfigRanges(cfg);
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -2682,7 +2698,8 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
 
             int cfgIndex = FindRootGazeConfigIndex(expressionId);
-            if (cfgIndex < 0)
+            bool createdNewConfig = cfgIndex < 0;
+            if (createdNewConfig)
             {
                 cfgIndex = _rootGazeConfigsProperty.arraySize;
                 _rootGazeConfigsProperty.InsertArrayElementAtIndex(cfgIndex);
@@ -2692,9 +2709,10 @@ namespace Hidano.FacialControl.Editor.Inspector
                 if (newIdProp != null) newIdProp.stringValue = expressionId;
             }
 
+            // 既存 GazeConfig への再適用では、ユーザーが数値入力した可動範囲を初期値に戻さない。
             AssignGazeConfigFromReferenceModel(
                 _rootGazeConfigsProperty.GetArrayElementAtIndex(cfgIndex),
-                resetRangesToDefaults: true);
+                resetRangesToDefaults: createdNewConfig);
 
             ApplyModifiedPropertiesAndCollapseUndo(undoGroup);
 

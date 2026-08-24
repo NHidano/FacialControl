@@ -21,6 +21,7 @@
 - Editor 共通ユーティリティ `ListViewFoldoutStatePersistence` を追加した。`showFoldoutHeader` 付き `ListView` のヘッダー Foldout 開閉状態を `SessionState` に保存・復元する（InputSystem のキーバインディング / LipSync の音素エントリ / OSC の Mappings 各リストで使用。Editor 再起動時はリセット）。
 - `FacialCharacterProfileSO` Inspector の Expression List overlay 行で、Default / Suppress / Override の 3 状態選択を `RadioButtonGroup` から `DropdownField` に変更した（要素名 `expression-overlay-state-radio` → `expression-overlay-state-dropdown`）。あわせて Override 用 AnimationClip 欄の内部ラベルを撤去し、状態 dropdown のすぐ脇に表示するようにした（従来はラベル込みで flexGrow していたため欄が右端まで寄って見つけづらかった）。Default Overlays 行の AnimationClip 欄も同様に Slot dropdown 直後へ隣接配置した。
 - `FacialCharacterProfileSO` Inspector の選択タブと各 Foldout（セクション / Expression 行の Overlays / Phoneme Overlays）の展開状態を `SessionState` に保存し、domain reload や asset 再読み込みで Inspector が再構築されても直前の表示状態を復元するようにした（従来は毎回「表情ライブラリ」タブ先頭・既定の展開状態にリセットされていた）。Editor 再起動時はリセットされる。
+- `FacialCharacterProfileSO` Inspector の Adapter Bindings タブから、タブ直下のセクション Foldout（「Adapter Bindings」見出しの折りたたみ）を撤去した。タブ内にセクションが 1 つしか無く、折りたたみが階層を 1 段増やすだけだったため。ルート要素名 `facial-character-adapter-bindings-foldout` は互換のため据え置き（型のみ `Foldout` → 素の `VisualElement`）。
 - 保存ステータスバーの「今すぐ書き出し」ボタンを削除した。profile.json のエクスポートはパラメータ変更時の自動保存（`ScheduleAutoSave`）と Play 突入 / ビルド時の `FacialCharacterProfileAutoExporter` で自動実行されるため、手動操作は不要になった。
 
 ### Breaking Changes
@@ -31,6 +32,7 @@
 
 ### Fixed
 
+- 目線タブの「参照モデルから自動設定」（GazeConfig 行のボタン / Expression 行のボタン）が、既存 GazeConfig に対しても可動範囲（上方向 / 下方向 / 外側 / 内側の各角度）を既定値 15 / 9 / 15 / 18 へ書き戻し、ユーザーが数値入力した調整値を破棄する不具合を修正。ボーン名・初期角度・回転軸は従来どおり参照モデルの値で上書きし、可動範囲は GazeConfig を新規作成したときだけ既定値で初期化する。
 - Expression 作成ツールの「全 Expression プレビューを PNG 書き出し」が、全 Expression 分同じ画像（実行時点でプレビューに表示されていた表情）を書き出す不具合を修正。原因は 2 点: (1) SRP(URP) では GUI コンテキスト外（ボタンクリックのイベントハンドラ等）から呼ぶ `PreviewRenderUtility.Render()`（`camera.Render()` 経由）が実際には何も描画せず、`EndPreview()` が直前に画面へ描画された内容の残る RenderTexture を返していた（単発の「プレビューを PNG として保存」は画面表示と同一内容になるため露見しなかった）。(2) 同一エディタフレーム内で `SetBlendShapeWeight` → 描画を繰り返してもスキニング再計算がフレームあたり 1 回に間引かれ、2 枚目以降に BlendShape 変更が反映されなかった。対策として `PreviewRenderWrapper.CapturePreviewTexture` を SRP 時は `RenderPipeline.SubmitRenderRequest`（StandardRequest）による明示オフスクリーン描画へ切り替え（Built-in RP は従来経路のまま）、プレビューインスタンスの全 SkinnedMeshRenderer に `forceMatrixRecalculationPerRender = true` を設定した。
 - `ListViewFoldoutStatePersistence` の detach 時保存が、Inspector を別オブジェクトへ切り替えた際に破棄済み `SerializedObject` からキーを再計算しようとして `NullReferenceException` を出す問題を修正。保存キーは `Register` 時に確定し、`DetachFromPanelEvent` ではキー文字列をそのまま使うようにした（キー指定の `SaveState(ListView, string)` overload を追加）。
 - 予約音素 slot（a/i/u/e/o）の `OverlayInputSource` が override snapshot を静的出力し、表情が有効な間ずっと（音声と無関係に）口形状が 100% 出力される不具合を修正。音素 Override の意図は「リップシンクに使う口形状 snapshot の差し替え」であり、駆動 weight（音素 weight × 音量）ごと `com.hidano.facialcontrol.lipsync` の `LipSyncPhonemeOverlayInputSource` 側で合成される。予約音素 slot の `OverlayInputSource` は常に無効ソースとした（`overlay:{slot}` のレイヤー宣言・registry 登録は互換のため残る）。blink 等の非予約 slot は従来どおり。あわせてクロスフェードの「フォニーム予約 slot は 1 フレーム切替」特例は不活性化に置き換わり廃止。
