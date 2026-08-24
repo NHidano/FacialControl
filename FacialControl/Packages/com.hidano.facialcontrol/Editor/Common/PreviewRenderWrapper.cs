@@ -28,6 +28,11 @@ namespace Hidano.FacialControl.Editor.Common
         private const float DollyDragSensitivity = 0.02f;
         private const float MinPivotDistance = 0.1f;
 
+        /// <summary>
+        /// プレビュー RenderTexture の 1 辺の上限（px）。これを超える要求は描画をスキップする。
+        /// </summary>
+        private const float MaxPreviewTextureSize = 4096f;
+
         private PreviewRenderUtility _previewRenderUtility;
         private GameObject _previewInstance;
         private bool _disposed;
@@ -37,6 +42,9 @@ namespace Hidano.FacialControl.Editor.Common
 
         private int _dragButton = -1;
         private bool _dragAlt;
+
+        /// <summary>異常 rect の警告を毎フレーム出さないための 1 回きりフラグ。</summary>
+        private bool _invalidRectWarned;
 
         public bool IsInitialized => _previewRenderUtility != null && _previewInstance != null;
 
@@ -135,6 +143,15 @@ namespace Hidano.FacialControl.Editor.Common
             if (_previewRenderUtility == null || _previewInstance == null)
                 return;
 
+            // BeginPreview は RenderTexture を確保するため、実際に画面へ描く Repaint 以外では実行しない。
+            // Layout / Used などレイアウトが確定していないイベントでは rect が正しい値にならず、
+            // 無駄な RenderTexture 生成（＋サイズ不正）の原因になる。
+            if (Event.current == null || Event.current.type != EventType.Repaint)
+                return;
+
+            if (!IsRenderableRect(rect))
+                return;
+
             _previewRenderUtility.camera.transform.position = _state.position;
             _previewRenderUtility.camera.transform.rotation = _state.rotation;
 
@@ -143,6 +160,39 @@ namespace Hidano.FacialControl.Editor.Common
             var texture = _previewRenderUtility.EndPreview();
 
             GUI.DrawTexture(rect, texture, ScaleMode.StretchToFill, false);
+        }
+
+        /// <summary>
+        /// <see cref="PreviewRenderUtility.BeginPreview"/> に渡せる rect かを判定する。
+        /// <para>
+        /// PreviewRenderUtility は rect のサイズ × <see cref="EditorGUIUtility.pixelsPerPoint"/> で
+        /// RenderTexture を確保し、上限クランプを行わない。そのためレイアウト未確定などで
+        /// 異常な rect が渡ると巨大な RenderTexture の生成に失敗し
+        /// "RenderTexture.Create failed" が Console に出る。
+        /// </para>
+        /// 弾いた場合は原因調査のため実際の rect と要求サイズを 1 度だけ警告出力する。
+        /// </summary>
+        private bool IsRenderableRect(Rect rect)
+        {
+            float scale = Mathf.Max(EditorGUIUtility.pixelsPerPoint, 1f);
+            float width = rect.width * scale;
+            float height = rect.height * scale;
+
+            bool renderable = width >= 1f && height >= 1f
+                && width <= MaxPreviewTextureSize && height <= MaxPreviewTextureSize;
+            if (renderable)
+                return true;
+
+            if (!_invalidRectWarned)
+            {
+                _invalidRectWarned = true;
+                Debug.LogWarning(
+                    "[PreviewRenderWrapper] 異常なプレビュー rect を検出したため描画をスキップしました。"
+                        + $" rect={rect}, pixelsPerPoint={EditorGUIUtility.pixelsPerPoint},"
+                        + $" 要求 RenderTexture サイズ={(int)width}x{(int)height}。");
+            }
+
+            return false;
         }
 
         public Texture2D CapturePreviewTexture(int width, int height)

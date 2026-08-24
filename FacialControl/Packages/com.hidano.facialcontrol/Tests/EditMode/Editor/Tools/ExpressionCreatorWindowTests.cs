@@ -463,6 +463,88 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Tools
         }
 
         [Test]
+        public void RestoreSliderValues_RendererPathMismatch_ResolvesByBlendShapeName()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            // モデル側の RendererPath は "Face"
+            var model = CreateModelWithBlendShapes(("Face", new[] { "Smile" }));
+            InvokePrivateMethod(window, "ApplyModelChange", model);
+
+            // Clip 側の binding.path は別階層。BlendShape 名だけが一致する
+            var clip = CreateTrackedClip();
+            ExpressionClipBakery.Bake(clip, new List<ExpressionClipBakery.BlendShapeBakeEntry>
+            {
+                new ExpressionClipBakery.BlendShapeBakeEntry("Armature/Body/Face", "Smile", 0.5f),
+            }, 0.25f, TransitionCurvePreset.Linear);
+
+            SetPrivateField(window, "_targetClip", clip);
+            InvokePrivateMethod(window, "RestoreSliderValuesFromTargetClip");
+
+            // ランタイムと同じく BlendShape 名で解決され、スライダー値が復元される
+            var listView = (ScrollView)GetPrivateField(window, "_blendShapeListView");
+            var slider = listView.contentContainer.Q<Slider>();
+            Assert.IsNotNull(slider);
+            Assert.AreEqual(50f, slider.value, 1e-3f);
+
+            // RendererPath 違いだけでは「存在しない BlendShape」警告を出さない
+            var warning = window.rootVisualElement.Q<Label>("expression-creator-missing-blendshape-warning");
+            Assert.AreEqual(DisplayStyle.None, warning.style.display.value);
+
+            var deleteButton = window.rootVisualElement.Q<Button>(
+                "expression-creator-delete-missing-blendshape-button");
+            Assert.AreEqual(DisplayStyle.None, deleteButton.style.display.value);
+        }
+
+        [Test]
+        public void DeleteMissingBlendShapes_RendererPathMismatch_KeepsNameMatchedCurve()
+        {
+            var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();
+            _trackedObjects.Add(window);
+            InvokeCreateGUI(window);
+
+            var model = CreateModelWithBlendShapes(("Face", new[] { "Smile" }));
+            InvokePrivateMethod(window, "ApplyModelChange", model);
+
+            var clip = CreateTrackedClip();
+            ExpressionClipBakery.Bake(clip, new List<ExpressionClipBakery.BlendShapeBakeEntry>
+            {
+                // パス違い・名前一致 → 残る
+                new ExpressionClipBakery.BlendShapeBakeEntry("Armature/Body/Face", "Smile", 0.5f),
+                // 名前ごと存在しない → 削除対象
+                new ExpressionClipBakery.BlendShapeBakeEntry("Face", "Unknown", 1.0f),
+            }, 0.25f, TransitionCurvePreset.Linear);
+
+            SetPrivateField(window, "_targetClip", clip);
+            InvokePrivateMethod(window, "RestoreSliderValuesFromTargetClip");
+            InvokePrivateMethod(window, "OnDeleteMissingBlendShapesClicked");
+
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            Assert.AreEqual(1, bindings.Length);
+            Assert.AreEqual("Armature/Body/Face", bindings[0].path);
+            Assert.AreEqual("blendShape.Smile", bindings[0].propertyName);
+        }
+
+        [Test]
+        public void BuildBlendShapeNameFallback_SameNameDifferentPaths_KeepsLargerMagnitude()
+        {
+            var values = new Dictionary<(string rendererPath, string blendShapeName), float>
+            {
+                [("Body/Face", "Smile")] = 0.25f,
+                [("Head", "Smile")] = 0.75f,
+                [("Head", "Anger")] = 0.5f,
+            };
+
+            var fallback = ExpressionClipBakery.BuildBlendShapeNameFallback(values);
+
+            Assert.AreEqual(2, fallback.Count);
+            Assert.AreEqual(0.75f, fallback["Smile"], 1e-5f);
+            Assert.AreEqual(0.5f, fallback["Anger"], 1e-5f);
+        }
+
+        [Test]
         public void BlendShapeSliderRow_UsesZeroToHundredRange()
         {
             var window = ScriptableObject.CreateInstance<ExpressionCreatorWindow>();

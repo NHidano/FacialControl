@@ -127,6 +127,41 @@ namespace Hidano.FacialControl.Editor.Tools
             return result;
         }
 
+        /// <summary>
+        /// <see cref="LoadBlendShapeValues"/> の戻り値から、BlendShape 名のみをキーにした
+        /// フォールバックマップを作る。
+        /// <para>
+        /// ランタイムの出力経路（<c>SkinnedMeshRendererBlendShapeWriter</c>）は RendererPath を
+        /// 一切参照せず BlendShape 名だけで SkinnedMeshRenderer / BlendShapeIndex を解決する。
+        /// そのため Editor 側も、Clip の binding.path がモデル階層と一致しない場合は
+        /// BlendShape 名で解決する必要がある（そうしないと Editor 上だけ「存在しない」扱いになる）。
+        /// </para>
+        /// 同名 BlendShape が複数の RendererPath に存在する場合は、ランタイムが 1 つの出力 index に
+        /// 集約するのと同様に 1 値へ畳み込む（絶対値が大きい方を採用）。
+        /// </summary>
+        public static Dictionary<string, float> BuildBlendShapeNameFallback(
+            IReadOnlyDictionary<(string rendererPath, string blendShapeName), float> values)
+        {
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+
+            var result = new Dictionary<string, float>(values.Count, StringComparer.Ordinal);
+            foreach (var kv in values)
+            {
+                var name = kv.Key.blendShapeName;
+                if (string.IsNullOrEmpty(name))
+                    continue;
+
+                if (!result.TryGetValue(name, out var existing)
+                    || Mathf.Abs(kv.Value) > Mathf.Abs(existing))
+                {
+                    result[name] = kv.Value;
+                }
+            }
+
+            return result;
+        }
+
         private static void ClearExistingCurves(AnimationClip clip)
         {
             var existing = AnimationUtility.GetCurveBindings(clip);

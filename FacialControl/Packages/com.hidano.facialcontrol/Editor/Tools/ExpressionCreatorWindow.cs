@@ -830,12 +830,7 @@ namespace Hidano.FacialControl.Editor.Tools
                         continue;
 
                     var values = ExpressionClipBakery.LoadBlendShapeValues(expression.animationClip, _sampler);
-                    for (int i = 0; i < _blendShapeEntries.Count; i++)
-                    {
-                        var entry = _blendShapeEntries[i];
-                        var key = (entry.RendererPath ?? string.Empty, entry.BlendShapeName ?? string.Empty);
-                        entry.Value = values.TryGetValue(key, out var value) ? Mathf.Clamp01(value) : 0f;
-                    }
+                    ApplyClipValuesToEntries(values);
 
                     ApplyAllBlendShapesToPreview();
 
@@ -1170,12 +1165,7 @@ namespace Hidano.FacialControl.Editor.Tools
             try
             {
                 var values = ExpressionClipBakery.LoadBlendShapeValues(_targetClip, _sampler);
-                for (int i = 0; i < _blendShapeEntries.Count; i++)
-                {
-                    var entry = _blendShapeEntries[i];
-                    var key = (entry.RendererPath ?? string.Empty, entry.BlendShapeName ?? string.Empty);
-                    entry.Value = values.TryGetValue(key, out var value) ? Mathf.Clamp01(value) : 0f;
-                }
+                ApplyClipValuesToEntries(values);
 
                 UpdateMissingBlendShapeWarning(values);
                 RebuildBlendShapeList();
@@ -1190,8 +1180,42 @@ namespace Hidano.FacialControl.Editor.Tools
         }
 
         /// <summary>
+        /// Clip から読み込んだ (RendererPath, BlendShapeName) → 値のマップをスライダーへ適用する。
+        /// <para>
+        /// RendererPath の完全一致を優先し、一致しない場合は BlendShape 名のみで解決する。
+        /// これはランタイムの出力経路（<c>SkinnedMeshRendererBlendShapeWriter</c>）が
+        /// RendererPath を参照せず BlendShape 名だけで SkinnedMeshRenderer を解決する仕様に合わせるため。
+        /// Clip を別階層のモデルで作った場合でも、名前さえ合っていれば値が復元される。
+        /// </para>
+        /// </summary>
+        private void ApplyClipValuesToEntries(
+            Dictionary<(string rendererPath, string blendShapeName), float> clipValues)
+        {
+            var valuesByName = ExpressionClipBakery.BuildBlendShapeNameFallback(clipValues);
+
+            for (int i = 0; i < _blendShapeEntries.Count; i++)
+            {
+                var entry = _blendShapeEntries[i];
+                var blendShapeName = entry.BlendShapeName ?? string.Empty;
+                var key = (entry.RendererPath ?? string.Empty, blendShapeName);
+
+                if (clipValues.TryGetValue(key, out var value)
+                    || valuesByName.TryGetValue(blendShapeName, out value))
+                {
+                    entry.Value = Mathf.Clamp01(value);
+                }
+                else
+                {
+                    entry.Value = 0f;
+                }
+            }
+        }
+
+        /// <summary>
         /// Clip に含まれる BlendShape のうち設定中モデルに存在しないものを黄色の警告として表示し、
         /// 一括削除ボタン用に (RendererPath, BlendShapeName) のキーを保持する。
+        /// RendererPath だけが違い BlendShape 名がモデルに存在するものは
+        /// <see cref="ApplyClipValuesToEntries"/> が名前で解決するため、警告対象に含めない。
         /// </summary>
         private void UpdateMissingBlendShapeWarning(
             Dictionary<(string rendererPath, string blendShapeName), float> clipValues)
@@ -1200,10 +1224,12 @@ namespace Hidano.FacialControl.Editor.Tools
                 return;
 
             var known = new HashSet<(string, string)>();
+            var knownNames = new HashSet<string>(StringComparer.Ordinal);
             for (int i = 0; i < _blendShapeEntries.Count; i++)
             {
                 var entry = _blendShapeEntries[i];
                 known.Add((entry.RendererPath ?? string.Empty, entry.BlendShapeName ?? string.Empty));
+                knownNames.Add(entry.BlendShapeName ?? string.Empty);
             }
 
             _missingBlendShapeKeys.Clear();
@@ -1211,6 +1237,11 @@ namespace Hidano.FacialControl.Editor.Tools
             foreach (var kv in clipValues)
             {
                 if (known.Contains(kv.Key))
+                    continue;
+
+                // RendererPath がズレていても BlendShape 名がモデルに存在すれば名前で解決されるため、
+                // 「存在しない BlendShape」としては扱わない（一括削除の対象にもしない）。
+                if (knownNames.Contains(kv.Key.blendShapeName ?? string.Empty))
                     continue;
 
                 _missingBlendShapeKeys.Add(kv.Key);
