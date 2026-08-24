@@ -345,6 +345,124 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Bone
             Assert.IsNull(result, "存在しない相対 path は null を返すこと");
         }
 
+        // ================================================================
+        // 相対 path が完全一致しない場合の suffix フォールバック
+        //
+        // 同じ Face Mesh を持つ衣装違いモデルのように、ボーン名は同じでも
+        // 上位階層だけが異なるモデル間で path を使い回せるようにする。
+        // ================================================================
+
+        [Test]
+        public void Resolve_RelativePath_UpperHierarchyDiffers_FallsBackToSuffixMatch()
+        {
+            // モデル側は Root/Armature/Neck/Head だが、path は別モデルの階層 "Rig/Neck/Head"。
+            // 末尾 2 セグメント (Neck/Head) が一致するのでフォールバックで解決する。
+            _root = BuildHierarchy("Root", "Armature", "Neck", "Head");
+            var resolver = new BoneTransformResolver(_root.transform);
+
+            LogAssert.Expect(LogType.Warning, new Regex("Rig/Neck/Head"));
+
+            var result = resolver.Resolve("Rig/Neck/Head");
+
+            Assert.IsNotNull(result, "階層が異なっても末尾一致で解決できること");
+            Assert.AreEqual("Head", result.name);
+        }
+
+        [Test]
+        public void Resolve_RelativePath_OnlyLeafMatches_FallsBackToLeafName()
+        {
+            // 末端のボーン名しか一致しないケース。1 セグメント一致でも解決する。
+            _root = BuildHierarchy("Root", "Head");
+            var resolver = new BoneTransformResolver(_root.transform);
+
+            LogAssert.Expect(LogType.Warning, new Regex("Foo/Bar/Head"));
+
+            var result = resolver.Resolve("Foo/Bar/Head");
+
+            Assert.IsNotNull(result, "末端名だけの一致でも解決できること");
+            Assert.AreEqual("Head", result.name);
+        }
+
+        [Test]
+        public void Resolve_RelativePath_PrefersLongestSuffixMatch()
+        {
+            // Root
+            //   ├── Head        (末尾 1 セグメント一致)
+            //   └── Neck
+            //         └── Head  (末尾 2 セグメント一致 ← こちらを採用)
+            _root = new GameObject("Root");
+            var shallowHead = new GameObject("Head");
+            shallowHead.transform.SetParent(_root.transform);
+
+            var neck = new GameObject("Neck");
+            neck.transform.SetParent(_root.transform);
+            var deepHead = new GameObject("Head");
+            deepHead.transform.SetParent(neck.transform);
+
+            var resolver = new BoneTransformResolver(_root.transform);
+
+            LogAssert.Expect(LogType.Warning, new Regex("Rig/Neck/Head"));
+
+            var result = resolver.Resolve("Rig/Neck/Head");
+
+            Assert.AreSame(deepHead.transform, result,
+                "一致セグメント数が多い Neck/Head を優先すること");
+        }
+
+        [Test]
+        public void Resolve_RelativePath_AmbiguousSuffixMatch_WarnsAndReturnsFirst()
+        {
+            // 同名 "Eye" が同じスコアで 2 件。最初の発見を採用しつつ件数を警告に含める。
+            _root = new GameObject("Root");
+            var left = new GameObject("Left");
+            left.transform.SetParent(_root.transform);
+            var leftEye = new GameObject("Eye");
+            leftEye.transform.SetParent(left.transform);
+
+            var right = new GameObject("Right");
+            right.transform.SetParent(_root.transform);
+            var rightEye = new GameObject("Eye");
+            rightEye.transform.SetParent(right.transform);
+
+            var resolver = new BoneTransformResolver(_root.transform);
+
+            LogAssert.Expect(LogType.Warning, new Regex("2 件"));
+
+            var result = resolver.Resolve("Rig/Eye");
+
+            Assert.AreSame(leftEye.transform, result, "同スコア複数なら最初の発見を返すこと");
+        }
+
+        [Test]
+        public void Resolve_RelativePath_FallbackResult_IsCachedAndWarnsOnce()
+        {
+            _root = BuildHierarchy("Root", "Armature", "Neck", "Head");
+            var resolver = new BoneTransformResolver(_root.transform);
+
+            // 警告は 1 回だけ。2 回目以降はキャッシュから返るため再警告しない。
+            LogAssert.Expect(LogType.Warning, new Regex("Rig/Neck/Head"));
+
+            var first = resolver.Resolve("Rig/Neck/Head");
+            var second = resolver.Resolve("Rig/Neck/Head");
+
+            Assert.IsNotNull(first);
+            Assert.AreSame(first, second, "フォールバック結果もキャッシュされること");
+        }
+
+        [Test]
+        public void Resolve_RelativePath_LeafNameNotFoundAnywhere_ReturnsNull()
+        {
+            // 末端名すら存在しない場合はフォールバックしても解決できず、従来どおり null + 警告。
+            _root = BuildHierarchy("Root", "Armature", "Neck", "Head");
+            var resolver = new BoneTransformResolver(_root.transform);
+
+            LogAssert.Expect(LogType.Warning, new Regex("Rig/Neck/Tail"));
+
+            var result = resolver.Resolve("Rig/Neck/Tail");
+
+            Assert.IsNull(result, "末端名が存在しなければ null を返すこと");
+        }
+
         [Test]
         public void Resolve_SameNameMultipleCalls_ReturnsSameInstance()
         {
