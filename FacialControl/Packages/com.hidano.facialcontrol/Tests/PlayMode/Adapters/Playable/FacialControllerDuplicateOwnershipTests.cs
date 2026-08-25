@@ -19,6 +19,10 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
     /// FacialController を付けてしまう誤設定が起きる。この状態では 2 つの LateUpdate が
     /// 同じ BlendShape を奪い合い、入力を受けていない側が 0 で上書きして表情が動かなくなる。
     /// </para>
+    /// <para>
+    /// 逆に、シーンルート直下へ 1 体ずつ並べた複数キャラ（兄弟関係）は renderer を共有しないため
+    /// 競合ではない。全キャラが有効なまま動くことも本 fixture で固定する。
+    /// </para>
     /// </summary>
     [TestFixture]
     public class FacialControllerDuplicateOwnershipTests
@@ -108,6 +112,36 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
             Assert.That(second.enabled, Is.False);
         }
 
+        /// <summary>
+        /// MagicaCloth の Burst 処理都合で、複数キャラはシーンルート直下に 1 体ずつ並べる構成が一般的。
+        /// この兄弟関係は renderer を共有しないため競合として扱ってはならない。
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Initialize_SiblingRootsWithSeparateModels_KeepsBothEnabled()
+        {
+            BuildCharacterRoot("CharacterA", out FacialController first, out SkinnedMeshRenderer firstRenderer);
+            BuildCharacterRoot("CharacterB", out FacialController second, out SkinnedMeshRenderer secondRenderer);
+
+            first.Initialize();
+            second.Initialize();
+
+            yield return null;
+
+            Assert.That(first.IsInitialized, Is.True, "兄弟ルートの 1 体目は初期化される");
+            Assert.That(first.enabled, Is.True, "兄弟ルートの 1 体目は無効化されない");
+            Assert.That(second.IsInitialized, Is.True, "兄弟ルートの 2 体目も初期化される");
+            Assert.That(second.enabled, Is.True, "兄弟ルートの 2 体目も無効化されない");
+
+            Assert.That(
+                FacialControllerRendererOwnership.FindConflict(first, new[] { firstRenderer }),
+                Is.Null,
+                "別モデルの renderer は競合として検出されない");
+            Assert.That(
+                FacialControllerRendererOwnership.FindConflict(second, new[] { secondRenderer }),
+                Is.Null,
+                "別モデルの renderer は競合として検出されない");
+        }
+
         [UnityTest]
         public IEnumerator Initialize_SingleController_StaysEnabled()
         {
@@ -168,6 +202,25 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
 
             descendant = model.AddComponent<FacialController>();
             descendant.CharacterSO = CreateProfileAsset();
+        }
+
+        /// <summary>
+        /// {name}(FacialController) -&gt; Face(SkinnedMeshRenderer) のキャラクター 1 体分を
+        /// シーンルート直下に作る。複数回呼べば互いに兄弟関係のルートになる。
+        /// </summary>
+        private void BuildCharacterRoot(string name, out FacialController controller, out SkinnedMeshRenderer renderer)
+        {
+            var root = new GameObject(name);
+            _created.Add(root);
+            root.AddComponent<Animator>();
+
+            var faceObject = new GameObject("Face");
+            faceObject.transform.SetParent(root.transform, false);
+            renderer = faceObject.AddComponent<SkinnedMeshRenderer>();
+            renderer.sharedMesh = CreateMeshWithBlendShape("smile");
+
+            controller = root.AddComponent<FacialController>();
+            controller.CharacterSO = CreateProfileAsset();
         }
 
         private FacialController CreateControllerHost(string name)
