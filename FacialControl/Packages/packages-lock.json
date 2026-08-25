@@ -8,6 +8,15 @@
         "com.hidano.scene-view-style-camera-controller": "1.0.0"
       }
     },
+    "com.hidano.facialcontrol.ifacialmocap": {
+      "version": "file:com.hidano.facialcontrol.ifacialmocap",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2",
+        "com.hidano.facialcontrol.osc": "0.1.0-preview.2"
+      }
+    },
     "com.hidano.facialcontrol.inputsystem": {
       "version": "file:com.hidano.facialcontrol.inputsystem",
       "depth": 0,
@@ -275,15 +284,6 @@
         "com.unity.ugui": "1.0.0"
       },
       "url": "https://package.openupm.com"
-    },
-    "jp.co.com.hidano.facialcontrol.ifacialmocap": {
-      "version": "file:com.hidano.facialcontrol.ifacialmocap",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.hidano.facialcontrol": "0.1.0-preview.2",
-        "com.hidano.facialcontrol.osc": "0.1.0-preview.2"
-      }
     },
     "jp.hadashikick.vcontainer": {
       "version": "1.17.0",

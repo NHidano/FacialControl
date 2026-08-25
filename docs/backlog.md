@@ -219,17 +219,14 @@
 - **影響範囲**: 新規 `Editor/Windows/Routing/`（Graph 薄層 + Logic 純粋層一式）、`Editor/Inspector/AdapterBindings/AdapterBindingsListView.cs`（id 列挙ロジック抽出→ラッパ化）、`Editor/Inspector/FacialCharacterProfileSOInspector.cs`（slot 初期化ロジック抽出 + 「ルーティングを編集」ボタン追加）、対応 EditMode テスト一式
 - **関連**: M-19（Layer / InputSource / Adapter の関係視認性改善 — 同じ「関係が見えない」痛点の UI 解。本 spec はその抜本解にあたり、統合 or 棲み分けを着手時に判断）、S-8（slug 編集を candidate ドロップダウン + 手動 override に変更済み — 本 spec はさらに手入力自体を廃する方向）
 
-### M-28: MultiSourceBlendDemo サンプル資産の同期ずれ修復（SampleAssetsAreInSyncTests 4 件赤）
-- **出典**: 2026-06-21 `/kiro:spec-run input-source-routing-graph-editor` 完了後のフル EditMode 検証で検出。**本 spec とは無関係な pre-existing failure**（spec の 21 コミットがサンプル資産・`Samples~`・`StreamingAssets` を一切変更していないことを `git log 4b1f2cb..HEAD -- <sample paths>` が空であることで確認済み）。
-- **背景**: preview.2 移行の過程で `MultiSourceBlendDemo` のサンプル資産が 3 コピー（dev `Assets/StreamingAssets/`、package `Packages/com.hidano.facialcontrol.inputsystem/Samples~/`、imported `Assets/Samples/FacialControl InputSystem/0.1.0-preview.2/`）間で同期ずれを起こしており、`SampleAssetsAreInSyncTests` が 4 件赤のまま放置されている。フル EditMode スイートは 1736 件中 passed=1730 / failed=4 / skipped=2。
-- **赤の内訳**（いずれも `Tests/EditMode/Editor/Inspector/SampleAssetsAreInSyncTests.cs`）:
-  - (1) `MultiSourceBlendDemoCharacterAsset_DefaultOverlaysBlinkSnapshot_HasNonZeroMabataki` — サンプル asset の `_defaultOverlays[*].cachedSnapshot.blendShapes` に「まばたき」エントリ無し。preview.2 移行で旧 `blink_overlay` の snapshot が転写されていない疑い。
-  - (2) `MultiSourceBlendDemoCharacterAsset_YamlKeySetMatchesPackageSample_WhenPackageAssetExists` — dev サンプル asset と package `Samples~` asset で YAML キー構造がドリフト（一方は `_baseExpression.cachedSnapshot` 系、他方は `_defaultOverlays.cachedSnapshot.blendShapes.{name,rendererPath,value}` 系）。
-  - (3) `ProfileJson_DevStreamingAssetsAndPackageSample_AreByteIdentical` / (4) `ProfileJson_ImportedSampleStreamingAssets_AreByteIdenticalToDev` — `profile.json` が dev(12313B) と package/imported(10637B) で byte 非一致（index 38 で分岐）。
-- **方針**: 3 コピーの正本を 1 つに定め（dev `StreamingAssets` を正とするのが既存テストの前提）、package `Samples~` と imported コピーを再生成して byte 一致させる + blink overlay snapshot を再転写する。`overlay-clip-redesign` / preview.2 移行系の spec、または独立の sample-resync PR で対処。
-- **トリガ**: preview.2 移行の仕上げフェーズ / サンプル Import 経路の動作確認時 / これらの赤が他 spec の `spec-run` バッチで継続的にノイズ（保守的 FAIL 判定）になっているとき
-- **影響範囲**: `Assets/StreamingAssets/FacialControl/MultiSourceBlendDemoCharacter/profile.json`、`Packages/com.hidano.facialcontrol.inputsystem/Samples~/MultiSourceBlendDemo/`（asset + StreamingAssets）、`Assets/Samples/FacialControl InputSystem/0.1.0-preview.2/Multi Source Blend Demo/`、`Tests/EditMode/Editor/Inspector/SampleAssetsAreInSyncTests.cs`
-- **関連**: M-27（入力源ルーティング・グラフエディタ — 本件はその `spec-run` 検証中に顕在化したが原因は別系統）、`overlay-clip-redesign` / `phoneme-overlay-slots`（preview.2 overlay 移行系）
+### M-28: MultiSourceBlendDemo の profile.json 同期ずれ修復（SampleAssetsAreInSyncTests 残 1 件赤）
+- **出典**: 2026-06-21 `/kiro:spec-run input-source-routing-graph-editor` 完了後のフル EditMode 検証で検出。**当該 spec とは無関係な pre-existing failure**（spec の 21 コミットがサンプル資産・`Samples~`・`StreamingAssets` を一切変更していないことを `git log 4b1f2cb..HEAD -- <sample paths>` が空であることで確認済み）。
+- **背景**: preview.2 移行の過程で `MultiSourceBlendDemo` のサンプル資産が 3 コピー（dev `Assets/StreamingAssets/`、package `Samples~/`、imported `Assets/Samples/...`）間で同期ずれを起こし、`SampleAssetsAreInSyncTests` が 4 件赤だった。**2026-08-25 に imported コピー（`Assets/Samples/` の dev ミラー）を削除**したことで、imported 起因の 3 件（旧 (1) (2) (4)）は解消（テストは対象ファイル不在時に skip-pass する実装）。実測 8 件中 passed=7 / failed=1。
+- **残る赤**: `ProfileJson_DevStreamingAssetsAndPackageSample_AreByteIdentical` — `profile.json` が dev(12313B) と package `Samples~`(10637B) で byte 非一致（index 38 で分岐）。
+- **方針**: dev `Assets/StreamingAssets/FacialControl/MultiSourceBlendDemoCharacter/profile.json` を正本とし（既存テストの前提）、`Samples~/MultiSourceBlendDemo/StreamingAssets/` 側を再生成して byte 一致させる。
+- **トリガ**: preview.1 リリース前のサンプル最終確認 / サンプル Import 経路の動作確認時 / この赤が他 spec の `spec-run` バッチでノイズ（保守的 FAIL 判定）になっているとき
+- **影響範囲**: `Assets/StreamingAssets/FacialControl/MultiSourceBlendDemoCharacter/profile.json`、`Packages/com.hidano.facialcontrol.inputsystem/Samples~/MultiSourceBlendDemo/StreamingAssets/`、`Tests/EditMode/Editor/Inspector/SampleAssetsAreInSyncTests.cs`
+- **関連**: `overlay-clip-redesign` / `phoneme-overlay-slots`（preview.2 overlay 移行系）
 
 ### M-29: BlendShape ベース gaze の runtime 配線復活（`lookXxxSamples` 消費経路が全入力源で未配線）
 - **出典**: 2026-07-02 セッション「gaze 目ボーン適用の FacialController 集約」の調査で判明。同セッションのスコープ決定で「bone 先行、BlendShape gaze は含めない」と先送り。
@@ -296,3 +293,4 @@
 - 2026-06-09: 入力源 slug 直書き運用を廃する「入力源ルーティング・グラフエディタ」を M-27 として追加。spec 一式（requirements approved / design-generated）は 2026-06-07 セッションで `.kiro/specs/input-source-routing-graph-editor/` に生成済みだが、その後の緊急改修でコードベースが変化したため将来着手扱いとし、着手時に design 前提の再照合を必須とする注記を付した。
 - 2026-06-21: `/kiro:spec-run input-source-routing-graph-editor` で全 21 タスクを codex exec 実行（フォールバック 0）。完了後フル EditMode 検証で `SampleAssetsAreInSyncTests` 4 件赤を検出。git log でサンプル資産が本 spec の 21 コミットで未変更であることを確認し、preview.2 移行由来の pre-existing failure として M-28 を追加。本 spec 実装自体は自テスト緑。
 - 2026-08-25: 「瞳の微細動機能は入っているか」の確認セッションで、当該機能が実装・spec・backlog のいずれにも存在しない（未計画）ことを確認し、M-31（瞳の微細動のプロシージャル生成）を追加。M-4（BonePose 多重 provider ブレンド合成）が前提条件である点を明記。
+- 2026-08-25: preview.1 残件の棚卸しで `Assets/Samples/` の dev ミラー（`FacialControl InputSystem/0.1.0-preview.2/Multi Source Blend Demo/`）を削除し、`.gitignore` / steering `structure.md` / `work-procedure.md` を「`Samples~/` 単一正本」へ更新。M-28 は 4 件赤 → 1 件赤（dev ⇄ `Samples~` の profile.json byte 不一致）へ縮小。あわせて `com.hidano.facialcontrol.ifacialmocap` の package name 誤り（`jp.co.com.hidano.…`）を修正し、`technical-spec.md` のスコープ節を実装実態（Timeline / REC / lipsync / iFacialMocap / ボーン視線 / OSC 自動マッピングを preview.1 に含む）へ追従させた。

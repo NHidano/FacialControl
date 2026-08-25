@@ -1,7 +1,7 @@
 # FacialControl 技術仕様書
 
-> **バージョン**: 3.0.0
-> **最終更新**: 2026-02-02
+> **バージョン**: 3.1.0
+> **最終更新**: 2026-08-25
 > **ステータス**: レビュー待ち
 > **対象リリース**: preview.1
 
@@ -9,28 +9,39 @@
 
 ## 1. preview.1 スコープ
 
+> **注記**: 本節は実装実態に追従して更新する。以降の「決定事項」テーブル（v1.0 / v2.0.0 dig セッション）は策定当時の記録であり、スコープの最新状態は本節を正とする。
+
 ### 含まれる機能
 
 | 機能 | 説明 |
 |------|------|
 | コア（プロファイル + レイヤー + 遷移） | 表情プロファイル管理、マルチレイヤー制御、表情遷移・補間 |
 | OSC 送受信 | uOsc ベースの UDP 通信。VRChat + ARKit アドレスプリセット |
+| OSC 自動マッピング | heartbeat 広告による送受信 mapping の自動構築（BlendShape / gaze）。手動 mapping との共存 |
 | ARKit 52 / PerfectSync | 手動トリガーによる BlendShape スキャン + Expression 自動生成 |
-| Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援、JSON インポート / エクスポート |
+| 視線制御（ボーン経路） | Vector2 入力（OSC / InputSystem / Timeline / iFacialMocap）→ 目ボーン yaw/pitch。可動角はチャネル単位で設定 |
+| AdapterBinding アーキテクチャ | 入力源・出力先を `IAdapterBinding` として `FacialCharacterProfileSO` に結線。ランタイム設定は `AdapterRuntimeSettingsCollectionSO` |
+| 入力源ルーティング・グラフエディタ | ノードグラフ UI で入力源とレイヤーを配線（slug 直書きの廃止） |
+| Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援（プレビューカメラ / PNG 書き出し）、JSON インポート / エクスポート |
 | 複数 Renderer 対応 | 1 つの FacialController が複数の SkinnedMeshRenderer を制御 |
+| Timeline 統合（`com.hidano.facialcontrol.timeline`） | Timeline トラックからの表情 / gaze 駆動と、AnimationClip へのベイク |
+| 記録・再生（`com.hidano.facialcontrol.rec`） | 入力イベントの記録・再生、Timeline への書き出し、再生中の入力排他 |
+| uLipSync アダプタ（`com.hidano.facialcontrol.lipsync`） | 外部リップシンクプラグインからの音素入力を overlay slot へ接続 |
+| iFacialMocap 受信（`com.hidano.facialcontrol.ifacialmocap`） | iOS の UDP テキストプロトコルを受信し、ARKit 互換 BlendShape / 視線 / 頭部ポーズへ変換 |
 | ドキュメント | パッケージ README、クイックスタートガイド、JSON スキーマドキュメント（`Documentation~/` 配下の Markdown） |
 
 ### preview.2 以降に延期
 
-| 機能 | 理由 |
+| 機能 | 理由 / 現状 |
 |------|------|
-| 自動まばたき | IBlinkTrigger インターフェースは定義するが、実装は延期 |
-| 視線制御（視線追従 / カメラ目線） | Vector3 ターゲット + BlendShape / ボーン両対応の設計は行うが、実装は延期 |
+| 自動まばたき | `IBlinkTrigger` インターフェースは定義済み。実装は延期（§11） |
+| 視線追従の Vector3 ターゲット指定 / カメラ目線 | ボーン経路の視線制御は preview.1 に含む。Vector3 ターゲット解決とカメラ目線トグルは延期（backlog M-5） |
+| BlendShape ベース視線の runtime 配線 | `lookXxxSamples` を消費する経路が未配線。目ボーン非搭載モデルは視線を反映できない（backlog M-29） |
+| 瞳の微細動（マイクロサッカード） | 入力が静止すると瞳も完全静止する。プロシージャル生成は未計画（backlog M-31） |
 | VRM 対応 | リリース後の早期マイルストーン |
-| Timeline 統合 | Animator ベースのリアルタイム制御を優先 |
 | テクスチャ切替 / UV アニメーションの JSON 対応 | preview.1 では BlendShape のみ JSON 対応 |
-| ホットリロード自動検知 | preview.1 では明示的 API のみ |
-| OSC マッピング Editor UI | preview.1 では JSON 直接編集のみ |
+| ホットリロード自動検知 | preview.1 では明示的 API（`ProfileUseCase.ReloadProfile`）のみ |
+| Addressables 対応 | プロファイル JSON は `StreamingAssets/FacialControl/` から直接読み込む（`IProfileJsonLoader` 抽象化は preview.2、backlog M-2） |
 
 ### 実装順序
 

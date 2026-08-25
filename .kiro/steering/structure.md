@@ -66,14 +66,14 @@ Hidano.FacialControl.Editor      ← Editor 専用 asmdef
 
 Domain は Engine 参照を持たない（`noEngineReferences` ではないが Unity 型を使わない契約）。Adapters のみ Engine 機能と統合する。
 
-## Samples の二重管理ルール
+## Samples の配置ルール
 
-`Samples~/` と `Assets/Samples/` は**意図的に二重管理する**:
+`Samples~/` を唯一の正本とする（二重管理は廃止）:
 
-- **`Packages/{package}/Samples~/`** — UPM 配布の canonical。`package.json` の `samples` 配列に登録されたものだけが Package Manager から Import 可能。`~` suffix で Unity のコンパイル対象外。
-- **`FacialControl/Assets/Samples/`** — dev プロジェクト専用のミラー。HatsuneMiku 等のモデル依存物を Scene にベイクした状態で保持し、Scene 結線して動作確認する。
+- **`Packages/{package}/Samples~/`** — UPM 配布の canonical かつ唯一の編集対象。`package.json` の `samples` 配列に登録されたものだけが Package Manager から Import 可能。`~` suffix で Unity のコンパイル対象外。
+- **`FacialControl/Assets/Samples/`** — **リポジトリ管理下に置かない**。dev での動作確認は Package Manager の Import Sample で `Assets/Samples/{displayName}/{version}/{sampleName}/` へ展開して行い、展開結果はコミットしない。
 
-**同名ファイル（例: `MultiSourceBlendDemoHUD.cs`, `multi_source_blend_demo.json`）はどちらかを編集したら必ずもう一方をコピーして同期する。** drift すると UPM 経由のユーザーと dev で挙動が乖離する。preview.2 以降で `Import Sample` 経由のフローへリファクタする可能性あり。
+かつては dev ミラーを二重管理していたが、3 コピー（dev `StreamingAssets` / `Samples~` / import 結果）間の drift が慢性化したため 2026-08-25 に mirror を削除した。サンプルの修正は `Samples~/` 側だけを編集し、必要なら Import し直して確認する。`package.json` の `samples[].path` に dev 側の path を登録してはいけない。
 
 ## Naming Conventions
 

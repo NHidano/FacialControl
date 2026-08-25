@@ -17,6 +17,7 @@
 
 ### Changed
 
+- `package.json` の `name` を `jp.co.com.hidano.facialcontrol.ifacialmocap` から `com.hidano.facialcontrol.ifacialmocap` に修正しました（他パッケージと同じ `com.hidano.facialcontrol.*` 体系に揃えるため。未公開のため利用者への影響はありません）。`packages-lock.json` のキーも併せて更新しています。
 - 自前の gaze 目ボーン適用を撤去し、core `FacialController` の集約適用へ移行しました。`IFacialMocapReceiverAdapterBinding` は `GazeBonePoseProvider` を構築・駆動せず、視線入力源（`<slug>:gaze.left` / `<slug>:gaze.right`）の registry 登録までを担います。あわせて FacialController からの gaze 結線フック `Configure(IReadOnlyList<GazeBindingConfig>)` を削除しました（目ボーン適用が binding 外へ移ったため不要）。`GazeBindingConfig` での結線手順（README 記載）は変わりません。
 
 ### Documentation

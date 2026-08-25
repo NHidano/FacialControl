@@ -1442,7 +1442,7 @@ InputAction と Expression の紐付けを ScriptableObject で永続化し、�
     - `MultiSourceBlendDemoHUD.cs`（HUD + TextAsset ブートストラップ）
     - `multi_source_blend_demo.json`（プロファイル JSON）
     - `README.md`
-  - `FacialControl/Assets/Samples/FacialControl InputSystem/0.1.0-preview.1/Multi Source Blend Demo/` 一式（dev ミラー）
+  - ~~`FacialControl/Assets/Samples/FacialControl InputSystem/<version>/Multi Source Blend Demo/` 一式（dev ミラー）~~ **2026-08-25 に廃止**。dev 確認は Package Manager の Import Sample 経由で行い、展開結果はコミットしない（本手順書「Samples 編集手順」を参照）
 - **内容**:
   - Scene は `Character` / `Facial Input Binder` / `Multi Source Blend Demo HUD` の 3 GameObject に役割分割
     - `Character`: Animator + FacialController + InputFacialControllerExtension（Extension は同 GO 必須）
@@ -1530,24 +1530,19 @@ spec `osc-output-binding` に基づき、OSC 送信 binding、受信 binding の
 - `com.hidano.facialcontrol.osc/package.json` の `samples` 配列に `OscOutputDemo` / `OscReceiverDemo` を登録する。
 - `CHANGELOG.md` と `README.md` は OSC 送信、受信拡張、Gaze Vector2 受信、`OscReceiverAdapterBinding` の破壊的変更を必ず記載する。
 
-### Samples~ / Assets/Samples 同期手順
+### Samples 編集手順
 
-`Samples~/` を canonical、`FacialControl/Assets/Samples/` を dev project 用ミラーとして扱う。
+`Samples~/` を唯一の正本として扱う（`Assets/Samples/` への dev ミラーは 2026-08-25 に廃止・削除済み）。
 
-| canonical | dev mirror |
-|---|---|
-| `FacialControl/Packages/com.hidano.facialcontrol.osc/Samples~/OscOutputDemo` | `FacialControl/Assets/Samples/OscOutputDemo` |
-| `FacialControl/Packages/com.hidano.facialcontrol.osc/Samples~/OscReceiverDemo` | `FacialControl/Assets/Samples/OscReceiverDemo` |
-
-1. サンプルを編集するときは原則 `Samples~/` 側を先に更新する。
-2. 変更後、同じファイル構成を `Assets/Samples/` 側へコピーする。`.meta` は対応する asset と常に一緒にコピーする。
-3. `Assets/Samples/` 側で Unity Editor による Scene / Asset の自動更新が入った場合は、差分を確認して必要な変更だけ `Samples~/` 側へ戻す。
+1. サンプルの編集は必ず `FacialControl/Packages/{package}/Samples~/` 側で行う。
+2. dev プロジェクトで動作確認する場合は Package Manager の Import Sample で `Assets/Samples/` へ展開する。展開結果はコミットしない（`Assets/Samples/` はリポジトリ管理下に置かない）。
+3. Import した Scene / Asset を Unity Editor 側で編集した場合は、差分を確認して必要な変更だけ手で `Samples~/` へ戻す。
 4. `OscSenderOptions.json` / `OscReceiverOptions.json` は `ConvertFrom-Json` 等で JSON として parse できることを確認する。
-5. package.json の `samples[].path` は `Samples~/OscOutputDemo` / `Samples~/OscReceiverDemo` のまま維持する。dev mirror path を package.json に登録してはいけない。
+5. package.json の `samples[].path` は `Samples~/OscOutputDemo` / `Samples~/OscReceiverDemo` のまま維持する。dev 側 path を package.json に登録してはいけない。
 
 ### 完了基準
 - Package Manager の Import Sample に `OscOutputDemo` と `OscReceiverDemo` が表示される。
-- `Samples~/` と `Assets/Samples/` の README / JSON / Scene / Profile / Bootstrap が同期している。
+- `Samples~/` の README / JSON / Scene / Profile / Bootstrap が最新の実装と整合している。
 - `CHANGELOG.md` / `README.md` / `docs/backlog.md` が preview.2 の OSC 送受信スコープを反映している。
 - `tasks.txt` には作業説明を追記しない。spec の詳細は `.kiro/specs/osc-output-binding/` と本手順書に集約する。
 
