@@ -239,6 +239,15 @@
 - **影響範囲**: `FacialController`（構築経路）、`AnalogBlendShapeInputSource`（再利用）、`GazeBindingConfig.lookXxxSamples`（既存データ）、PlayMode テスト
 - **関連**: M-13（multi-source gaze blending）、M-5（Vector3 ターゲット視線）— いずれも bone 経路前提の拡張であり本件（BlendShape 経路の復活）とは独立
 
+### M-31: 瞳の微細動（マイクロサッカード / アイドル時のゆらぎ）のプロシージャル生成
+- **出典**: 2026-08-25 セッション「瞳の微細動機能は入っているか」の確認で、実装・spec・backlog のいずれにも存在しない（未実装ではなく**未計画**）ことが判明。
+- **背景**: 現状の gaze 経路（`GazeInputReader` → `GazeBoneBinding` → `GazeBonePoseProvider.Apply()`）は外部入力の Vector2 を目ボーンの yaw/pitch へ写すだけで、値を**生成**する仕組みを一切持たない（`saccade` / `jitter` / `noise` 系の識別子は Runtime に 0 ヒット、スムージングも無し）。そのため入力が静止すると瞳も完全静止し、実在の眼球が持つマイクロサッカード・ドリフト・トレモアが再現されず、生気のない見た目になる。VTuber 配信用途では「入力が来ていない時ほど自然に見せたい」場面（雑談中の視線固定、カメラ目線維持）で効く。
+- **方針（未確定・着手時に spec 化）**: 入力視線に微細動を**加算**する形が前提。振幅・周波数・シード（キャラごとに位相をずらす）・on/off をキャラクタープロファイル側の設定として持たせ、入力源非依存の一般機能として実装する。毎フレームのヒープ確保ゼロ（決定論的ノイズ関数、乱数オブジェクトの使い回し）を満たすこと。
+- **前提**: 「入力視線 + 微細動」の重ね合わせは現行の `IBonePoseProvider.SetActiveBonePose(in BonePose)` が per-frame 単一 active BonePose 前提のため素直に載らない。**M-4（BonePose 多重 provider のブレンド合成）の再設計が事実上の前提条件**（M-4 の内容中「物理ジッタ」がまさに本件に相当）。
+- **トリガ**: M-4 着手時に同時検討 / preview.2 の「人間的しぐさ」系（自動まばたき `IBlinkTrigger` 実装、`docs/technical-spec.md` §11）をまとめて拾うタイミング
+- **影響範囲**: `Runtime/Adapters/Bone/GazeBonePoseProvider.cs`, `Runtime/Adapters/Bone/GazeBoneBinding.cs`, `GazeChannel`（`gaze-channel-redesign` 後のデータモデル）, Inspector 目線タブ, JSON schema, PlayMode テスト
+- **関連**: M-4（多重 provider 合成 — 前提）、M-5（Vector3 ターゲット視線 / カメラ目線 — カメラ目線時こそ微細動が効く）、M-1 の自動まばたき（同じ「人間的しぐさ」カテゴリ）
+
 ---
 
 ## 横断フォローアップ（実装着手時に再確認するメモ）
@@ -286,3 +295,4 @@
 - 2026-05-25: `OscOutputDemoSignalBinding` と `OscSenderAdapterBinding` の役割確認セッションで S-20（OscOutputDemo の動作確認完了後の `OscOutputDemoSignalBinding` 撤去）を追加。
 - 2026-06-09: 入力源 slug 直書き運用を廃する「入力源ルーティング・グラフエディタ」を M-27 として追加。spec 一式（requirements approved / design-generated）は 2026-06-07 セッションで `.kiro/specs/input-source-routing-graph-editor/` に生成済みだが、その後の緊急改修でコードベースが変化したため将来着手扱いとし、着手時に design 前提の再照合を必須とする注記を付した。
 - 2026-06-21: `/kiro:spec-run input-source-routing-graph-editor` で全 21 タスクを codex exec 実行（フォールバック 0）。完了後フル EditMode 検証で `SampleAssetsAreInSyncTests` 4 件赤を検出。git log でサンプル資産が本 spec の 21 コミットで未変更であることを確認し、preview.2 移行由来の pre-existing failure として M-28 を追加。本 spec 実装自体は自テスト緑。
+- 2026-08-25: 「瞳の微細動機能は入っているか」の確認セッションで、当該機能が実装・spec・backlog のいずれにも存在しない（未計画）ことを確認し、M-31（瞳の微細動のプロシージャル生成）を追加。M-4（BonePose 多重 provider ブレンド合成）が前提条件である点を明記。
