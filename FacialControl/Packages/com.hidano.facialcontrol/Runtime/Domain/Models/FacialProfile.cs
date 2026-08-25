@@ -53,6 +53,14 @@ namespace Hidano.FacialControl.Domain.Models
         public ReadOnlyMemory<OverlaySlotBinding> DefaultOverlays { get; }
 
         /// <summary>
+        /// ベース表情の BlendShape スナップショット配列（正規化値 0..1）。
+        /// どのレイヤーも contribute しない BlendShape index に残す初期値を表す。
+        /// 常時固定表情キャラや衣装固定 BlendShape のための土台であり、
+        /// 未設定（空）の場合は出力バッファが全 0 で初期化される。
+        /// </summary>
+        public ReadOnlyMemory<BlendShapeSnapshot> BaseExpression { get; }
+
+        /// <summary>
         /// 表情設定プロファイルを生成する。配列パラメータは防御的コピーされる。
         /// </summary>
         /// <param name="schemaVersion">JSON スキーマバージョン（空文字不可）</param>
@@ -65,6 +73,9 @@ namespace Hidano.FacialControl.Domain.Models
         /// </param>
         /// <param name="defaultOverlays">default overlay の配列。null の場合は空配列。</param>
         /// <param name="slots">overlay slot 識別子の宣言配列。null の場合は空配列。</param>
+        /// <param name="baseExpression">
+        /// ベース表情の BlendShape スナップショット配列（正規化値 0..1）。null / 空の場合は空配列。
+        /// </param>
         public FacialProfile(
             string schemaVersion,
             LayerDefinition[] layers = null,
@@ -72,7 +83,8 @@ namespace Hidano.FacialControl.Domain.Models
             string[] rendererPaths = null,
             InputSourceDeclaration[][] layerInputSources = null,
             OverlaySlotBinding[] defaultOverlays = null,
-            string[] slots = null)
+            string[] slots = null,
+            BlendShapeSnapshot[] baseExpression = null)
         {
             if (schemaVersion == null)
                 throw new ArgumentNullException(nameof(schemaVersion));
@@ -159,6 +171,17 @@ namespace Hidano.FacialControl.Domain.Models
             else
             {
                 DefaultOverlays = Array.Empty<OverlaySlotBinding>();
+            }
+
+            if (baseExpression != null && baseExpression.Length > 0)
+            {
+                var baseCopy = new BlendShapeSnapshot[baseExpression.Length];
+                Array.Copy(baseExpression, baseCopy, baseExpression.Length);
+                BaseExpression = baseCopy;
+            }
+            else
+            {
+                BaseExpression = Array.Empty<BlendShapeSnapshot>();
             }
         }
 

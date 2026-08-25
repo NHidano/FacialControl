@@ -80,6 +80,71 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
             StringAssert.DoesNotContain("Assets/BaseExpression_RoundTripClip.anim", json);
         }
 
+        [Test]
+        public void ParseProfile_BaseExpressionField_PopulatesProfileBaseExpression()
+        {
+            var profile = _parser.ParseProfile(BuildProfileJsonWithNormalizedBaseExpression());
+
+            Assert.That(profile.BaseExpression.Length, Is.EqualTo(2),
+                "profile.json の baseExpression は FacialProfile まで運ばれる必要がある。");
+            Assert.That(profile.BaseExpression.Span[0].RendererPath, Is.EqualTo("Body"));
+            Assert.That(profile.BaseExpression.Span[0].Name, Is.EqualTo("Brow_Angry"));
+            Assert.That(profile.BaseExpression.Span[0].Value, Is.EqualTo(0.645f).Within(1e-6f));
+            Assert.That(profile.BaseExpression.Span[1].Name, Is.EqualTo("Eye_Narrow"));
+            Assert.That(profile.BaseExpression.Span[1].Value, Is.EqualTo(0.2825f).Within(1e-6f));
+        }
+
+        [Test]
+        public void ParseProfile_BaseExpressionMissing_ProfileBaseExpressionIsEmpty()
+        {
+            var profile = _parser.ParseProfile(@"{
+                ""schemaVersion"": ""1.0"",
+                ""layers"": [],
+                ""expressions"": [],
+                ""rendererPaths"": []
+            }");
+
+            Assert.That(profile.BaseExpression.Length, Is.EqualTo(0),
+                "baseExpression 欠如の既存 profile.json は空 base として読み込まれる（forward compat）。");
+        }
+
+        [Test]
+        public void SerializeProfile_ProfileWithBaseExpression_RoundTripsBlendShapes()
+        {
+            var source = _parser.ParseProfile(BuildProfileJsonWithNormalizedBaseExpression());
+
+            string json = _parser.SerializeProfile(source);
+
+            StringAssert.Contains(@"""baseExpression""", json);
+            StringAssert.Contains(@"""Brow_Angry""", json);
+
+            var roundTripped = _parser.ParseProfile(json);
+            Assert.That(roundTripped.BaseExpression.Length, Is.EqualTo(2));
+            Assert.That(roundTripped.BaseExpression.Span[0].Name, Is.EqualTo("Brow_Angry"));
+            Assert.That(roundTripped.BaseExpression.Span[0].Value, Is.EqualTo(0.645f).Within(1e-6f));
+            Assert.That(roundTripped.BaseExpression.Span[1].Name, Is.EqualTo("Eye_Narrow"));
+            Assert.That(roundTripped.BaseExpression.Span[1].Value, Is.EqualTo(0.2825f).Within(1e-6f));
+        }
+
+        /// <summary>
+        /// ドメイン / JSON の正規化スケール (0..1) でベース表情を含むプロファイル JSON。
+        /// </summary>
+        private static string BuildProfileJsonWithNormalizedBaseExpression()
+        {
+            return @"{
+                ""schemaVersion"": ""1.0"",
+                ""layers"": [],
+                ""expressions"": [],
+                ""rendererPaths"": [""Body"", ""Face""],
+                ""baseExpression"": {
+                    ""blendShapes"": [
+                        {""rendererPath"": ""Body"", ""name"": ""Brow_Angry"", ""value"": 0.645},
+                        {""rendererPath"": ""Face"", ""name"": ""Eye_Narrow"", ""value"": 0.2825}
+                    ]
+                }
+            }";
+        }
+
         private static string BuildProfileJsonWithBaseExpression()
         {
             return @"{

@@ -678,6 +678,8 @@ namespace Hidano.FacialControl.Adapters.Json
             var layerInputSources = ConvertLayerInputSources(inputSourceDtos);
             var defaultOverlays = ConvertOverlaySlotBindings(dto.defaultOverlays);
             var slots = ConvertStringList(dto.slots);
+            // ベース表情は bake 済み BlendShape 値のみを運ぶ（AnimationClip 参照は JSON に載らない）。
+            var baseExpression = ConvertBlendShapeSnapshots(dto.baseExpression?.blendShapes);
             return new FacialProfile(
                 dto.schemaVersion,
                 layers,
@@ -685,7 +687,8 @@ namespace Hidano.FacialControl.Adapters.Json
                 rendererPaths,
                 layerInputSources,
                 defaultOverlays,
-                slots: slots);
+                slots: slots,
+                baseExpression: baseExpression);
         }
 
         private static OverlaySlotBinding[] ConvertOverlaySlotBindings(List<OverlaySlotBindingDto> dtos)
@@ -1066,6 +1069,45 @@ namespace Hidano.FacialControl.Adapters.Json
             for (int i = 0; i < exprSpan.Length; i++)
             {
                 dto.expressions.Add(ConvertToExpressionDto(exprSpan[i]));
+            }
+
+            dto.baseExpression = BuildBaseExpressionSnapshotDto(profile.BaseExpression.Span);
+
+            return dto;
+        }
+
+        /// <summary>
+        /// ベース表情 (<see cref="FacialProfile.BaseExpression"/>) を JSON DTO へ変換する。
+        /// 通常 Expression と同じ <see cref="ExpressionSnapshotDto"/> を流用するが、
+        /// 遷移メタ / bones / overlays は持たず blendShapes と rendererPaths のみを出力する。
+        /// </summary>
+        private static ExpressionSnapshotDto BuildBaseExpressionSnapshotDto(
+            ReadOnlySpan<BlendShapeSnapshot> blendShapes)
+        {
+            var dto = new ExpressionSnapshotDto
+            {
+                transitionDuration = 0f,
+                transitionCurvePreset = SerializeTransitionCurvePreset(TransitionCurvePreset.Linear),
+                blendShapes = new List<BlendShapeSnapshotDto>(blendShapes.Length),
+                bones = new List<BoneSnapshotDto>(),
+                rendererPaths = new List<string>(),
+            };
+
+            for (int i = 0; i < blendShapes.Length; i++)
+            {
+                var snapshot = blendShapes[i];
+                dto.blendShapes.Add(new BlendShapeSnapshotDto
+                {
+                    rendererPath = snapshot.RendererPath,
+                    name = snapshot.Name,
+                    value = snapshot.Value,
+                });
+
+                if (!string.IsNullOrEmpty(snapshot.RendererPath)
+                    && !dto.rendererPaths.Contains(snapshot.RendererPath))
+                {
+                    dto.rendererPaths.Add(snapshot.RendererPath);
+                }
             }
 
             return dto;

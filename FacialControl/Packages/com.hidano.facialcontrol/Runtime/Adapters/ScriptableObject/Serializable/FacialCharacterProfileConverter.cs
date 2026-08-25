@@ -52,7 +52,8 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             IReadOnlyList<ExpressionSerializable> expressions,
             IReadOnlyList<string> rendererPaths,
             IReadOnlyList<OverlaySlotBindingSerializable> defaultOverlays,
-            IReadOnlyList<string> slots)
+            IReadOnlyList<string> slots,
+            IReadOnlyList<BlendShapeSnapshotDto> baseExpression = null)
         {
             string version = string.IsNullOrWhiteSpace(schemaVersion)
                 ? SystemTextJsonParser.SchemaVersionV2
@@ -63,6 +64,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             var rendererArr = ConvertStrings(rendererPaths);
             var defaultOverlayArr = ConvertOverlays(defaultOverlays);
             var slotArr = ConvertStrings(slots);
+            var baseExpressionArr = ConvertBlendShapeSnapshots(baseExpression);
             return new FacialProfile(
                 schemaVersion: version,
                 layers: layerArr,
@@ -70,7 +72,8 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
                 rendererPaths: rendererArr,
                 layerInputSources: inputSourceArr,
                 defaultOverlays: defaultOverlayArr,
-                slots: slotArr);
+                slots: slotArr,
+                baseExpression: baseExpressionArr);
         }
 
         public static ProfileSnapshotDto ToProfileSnapshotDto(FacialProfile profile)
@@ -117,6 +120,44 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             for (int i = 0; i < expressionSpan.Length; i++)
             {
                 dto.expressions.Add(BuildExpressionDto(expressionSpan[i]));
+            }
+
+            dto.baseExpression = BuildBaseExpressionSnapshotDto(profile.BaseExpression.Span);
+
+            return dto;
+        }
+
+        /// <summary>
+        /// ベース表情 (<see cref="FacialProfile.BaseExpression"/>) を JSON DTO へ変換する。
+        /// AnimationClip 参照は SO 内のみで保持し、DTO には bake 済み BlendShape 値のみを載せる。
+        /// </summary>
+        private static ExpressionSnapshotDto BuildBaseExpressionSnapshotDto(
+            ReadOnlySpan<BlendShapeSnapshot> blendShapes)
+        {
+            var dto = new ExpressionSnapshotDto
+            {
+                transitionDuration = 0f,
+                transitionCurvePreset = SerializeTransitionCurvePreset(TransitionCurvePreset.Linear),
+                blendShapes = new List<BlendShapeSnapshotDto>(blendShapes.Length),
+                bones = new List<BoneSnapshotDto>(),
+                rendererPaths = new List<string>(),
+            };
+
+            for (int i = 0; i < blendShapes.Length; i++)
+            {
+                var snapshot = blendShapes[i];
+                dto.blendShapes.Add(new BlendShapeSnapshotDto
+                {
+                    rendererPath = snapshot.RendererPath,
+                    name = snapshot.Name,
+                    value = snapshot.Value,
+                });
+
+                if (!string.IsNullOrEmpty(snapshot.RendererPath)
+                    && !dto.rendererPaths.Contains(snapshot.RendererPath))
+                {
+                    dto.rendererPaths.Add(snapshot.RendererPath);
+                }
             }
 
             return dto;

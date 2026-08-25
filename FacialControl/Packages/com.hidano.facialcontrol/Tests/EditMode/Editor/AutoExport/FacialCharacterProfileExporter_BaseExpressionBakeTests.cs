@@ -176,6 +176,91 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.AutoExport
             }
         }
 
+        [Test]
+        public void ExportProfileJson_BaseExpressionCachedSnapshot_EmitsBaseExpressionToJson()
+        {
+            var so = UnityEngine.ScriptableObject.CreateInstance<FacialCharacterProfileSO>();
+            string assetName = "ExporterBaseExpression_" + Guid.NewGuid().ToString("N");
+            string profilePath = FacialCharacterProfileSO.GetStreamingAssetsProfilePath(assetName);
+            string profileDirectory = Path.GetDirectoryName(profilePath);
+
+            try
+            {
+                so.name = assetName;
+                so.BaseExpression.cachedSnapshot = new ExpressionSnapshotDto
+                {
+                    blendShapes = new List<BlendShapeSnapshotDto>
+                    {
+                        new BlendShapeSnapshotDto
+                        {
+                            rendererPath = "Body/Face",
+                            name = "Brow_Angry",
+                            value = 0.645f,
+                        },
+                    },
+                    bones = new List<BoneSnapshotDto>(),
+                    rendererPaths = new List<string> { "Body/Face" },
+                };
+
+                bool exported = FacialCharacterProfileExporter.ExportProfileJson(so);
+
+                Assert.That(exported, Is.True);
+
+                string json = File.ReadAllText(profilePath);
+                var dto = new SystemTextJsonParser().ParseProfileSnapshotV2(json);
+
+                Assert.That(dto.baseExpression, Is.Not.Null,
+                    "SO でベイクしたベース表情は profile.json へ書き出される必要がある。");
+                Assert.That(dto.baseExpression.blendShapes, Has.Count.EqualTo(1));
+                Assert.That(dto.baseExpression.blendShapes[0].name, Is.EqualTo("Brow_Angry"));
+                Assert.That(dto.baseExpression.blendShapes[0].value, Is.EqualTo(0.645f).Within(1e-6f));
+                Assert.That(dto.rendererPaths, Contains.Item("Body/Face"),
+                    "ベース表情の rendererPath は top-level rendererPaths にマージされる。");
+            }
+            finally
+            {
+                if (Directory.Exists(profileDirectory))
+                {
+                    Directory.Delete(profileDirectory, true);
+                }
+
+                Object.DestroyImmediate(so);
+            }
+        }
+
+        [Test]
+        public void ExportProfileJson_BaseExpressionEmpty_EmitsEmptyBaseExpression()
+        {
+            var so = UnityEngine.ScriptableObject.CreateInstance<FacialCharacterProfileSO>();
+            string assetName = "ExporterBaseExpressionEmpty_" + Guid.NewGuid().ToString("N");
+            string profilePath = FacialCharacterProfileSO.GetStreamingAssetsProfilePath(assetName);
+            string profileDirectory = Path.GetDirectoryName(profilePath);
+
+            try
+            {
+                so.name = assetName;
+
+                bool exported = FacialCharacterProfileExporter.ExportProfileJson(so);
+
+                Assert.That(exported, Is.True);
+
+                string json = File.ReadAllText(profilePath);
+                var dto = new SystemTextJsonParser().ParseProfileSnapshotV2(json);
+
+                Assert.That(dto.baseExpression, Is.Not.Null);
+                Assert.That(dto.baseExpression.blendShapes, Is.Empty);
+            }
+            finally
+            {
+                if (Directory.Exists(profileDirectory))
+                {
+                    Directory.Delete(profileDirectory, true);
+                }
+
+                Object.DestroyImmediate(so);
+            }
+        }
+
         private static ExpressionSnapshot CreateSnapshot(string id, params BlendShapeSnapshot[] blendShapes)
         {
             return new ExpressionSnapshot(

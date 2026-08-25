@@ -46,6 +46,9 @@ namespace Hidano.FacialControl.Application.UseCases
         // UpdateWeights で per-frame 再計算する。
         private bool[] _layerSuppressed;
         private float[] _finalOutput;
+        // ベース表情を BlendShape index 順に解決した出力初期値。
+        // プロファイル構築時に 1 度だけ確保し、毎フレーム _finalOutput へコピーする（GC ゼロ維持）。
+        private float[] _baseValues;
         private bool _disposed;
 
         /// <summary>
@@ -213,7 +216,10 @@ namespace Hidano.FacialControl.Application.UseCases
                 }
             }
 
-            Array.Clear(_finalOutput, 0, _finalOutput.Length);
+            // 出力バッファをベース表情の値で初期化する。どのレイヤーも contribute しない index
+            // (= 全 layer の ContributeMask が false) にはこの値が最終出力として残る。
+            // ベース表情が未設定なら _baseValues は全 0 のため従来の Array.Clear と等価。
+            Array.Copy(_baseValues, _finalOutput, _finalOutput.Length);
             if (activeCount > 0)
             {
                 LayerBlender.Blend(
@@ -468,6 +474,7 @@ namespace Hidano.FacialControl.Application.UseCases
 
             int bsCount = _blendShapeNames.Length;
             _finalOutput = new float[bsCount];
+            _baseValues = BuildBaseExpressionValues(bsCount);
             InitializeGroupedByLayerBuffer();
 
             int layerCount = _profile.Layers.Length;
@@ -612,6 +619,46 @@ namespace Hidano.FacialControl.Application.UseCases
                 }
             }
             _activeGroupedLayerKeys.Clear();
+        }
+
+        /// <summary>
+        /// プロファイルのベース表情 (<see cref="FacialProfile.BaseExpression"/>) を
+        /// BlendShape index 順の初期値配列へ解決する。
+        /// <para>
+        /// 照合は BlendShape 名ベース（Ordinal 完全一致）で行い、モデルに存在しない名前は無視する。
+        /// 同名 BlendShape が複数 renderer に存在する場合は該当する全 index へ同じ値を適用する
+        /// （出力ライター側の名前ベース転写と整合させるため）。値は 0..1 にクランプする。
+        /// </para>
+        /// </summary>
+        private float[] BuildBaseExpressionValues(int bsCount)
+        {
+            var values = bsCount == 0 ? Array.Empty<float>() : new float[bsCount];
+
+            var baseSpan = _profile.BaseExpression.Span;
+            if (bsCount == 0 || baseSpan.Length == 0)
+            {
+                return values;
+            }
+
+            for (int i = 0; i < baseSpan.Length; i++)
+            {
+                string name = baseSpan[i].Name;
+                if (string.IsNullOrEmpty(name))
+                {
+                    continue;
+                }
+
+                float value = Clamp01(baseSpan[i].Value);
+                for (int k = 0; k < bsCount; k++)
+                {
+                    if (string.Equals(_blendShapeNames[k], name, StringComparison.Ordinal))
+                    {
+                        values[k] = value;
+                    }
+                }
+            }
+
+            return values;
         }
 
         private static float Clamp01(float value)

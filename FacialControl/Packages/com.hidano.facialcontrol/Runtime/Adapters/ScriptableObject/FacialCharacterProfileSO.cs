@@ -63,7 +63,9 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
                 expressions: _expressions,
                 rendererPaths: _rendererPaths,
                 defaultOverlays: DefaultOverlays,
-                slots: Slots);
+                slots: Slots,
+                // StreamingAssets の profile.json が未生成でも SO の bake 済みベース表情を適用する。
+                baseExpression: BaseExpression.EnsureCachedSnapshot().blendShapes);
         }
 
         public static string GetStreamingAssetsProfilePath(string assetName)

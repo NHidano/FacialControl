@@ -200,6 +200,9 @@ namespace Hidano.FacialControl.Editor.AutoExport
                 rendererPaths = new List<string>(),
                 gazeConfigs = ConvertGazeConfigsToDto(so.GazeConfigs),
                 defaultOverlays = BuildOverlaySlotBindingDtoList(so.DefaultOverlays),
+                // ベース表情は bake 済み snapshot をそのまま JSON へ載せる
+                // （AnimationClip 参照は SO 内のみで JSON には含めない）。
+                baseExpression = so.BaseExpression.EnsureCachedSnapshot(),
             };
 
             LogSlotDiagnostics(so);
@@ -272,6 +275,9 @@ namespace Hidano.FacialControl.Editor.AutoExport
                     dto.expressions.Add(exprDto);
                 }
             }
+
+            // ベース表情 snapshot の rendererPaths も top-level set にマージする。
+            MergeRendererPaths(dto.baseExpression, rendererPathSet, dto.rendererPaths);
 
             MergeOverlayRendererPaths(dto.defaultOverlays, rendererPathSet, dto.rendererPaths);
             return dto;
