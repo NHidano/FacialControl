@@ -1,0 +1,1209 @@
+﻿{
+    "schemaVersion": "1.0",
+    "layers": [
+        {
+            "name": "emotion",
+            "priority": 1,
+            "exclusionMode": "lastWins",
+            "inputSources": [
+                {
+                    "id": "input",
+                    "weight": 1.0,
+                    "options":{"maxStackDepth":4}
+                }
+            ]
+        },
+        {
+            "name": "overlay",
+            "priority": 2,
+            "exclusionMode": "lastWins",
+            "inputSources": [
+                {
+                    "id": "input:overlay:blink",
+                    "weight": 1.0
+                }
+            ]
+        },
+        {
+            "name": "ulipsync",
+            "priority": 0,
+            "exclusionMode": "blend",
+            "inputSources": [
+                {
+                    "id": "overlay:a",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:a",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:i",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:i",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:u",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:u",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:e",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:e",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:o",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:o",
+                    "weight": 1.0
+                }
+            ]
+        }
+    ],
+    "slots": [
+        "blink",
+        "a",
+        "i",
+        "u",
+        "e",
+        "o"
+    ],
+    "expressions": [
+        {
+            "id": "smile",
+            "name": "Smile",
+            "layer": "emotion",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_wink_geo_L",
+                        "value": 1.0
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_wink_geo_R",
+                        "value": 1.0
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_laugh_geo_L",
+                        "value": 0.25
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_laugh_geo_R",
+                        "value": 0.25
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": true,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "smile_closed_eye",
+            "name": "angry",
+            "layer": "emotion",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_angry_geo_L",
+                        "value": 0.42500001192092898
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_angry_geo_R",
+                        "value": 0.42500001192092898
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_downcast_geo_L",
+                        "value": 0.7699999809265137
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_downcast_geo_R",
+                        "value": 0.7699999809265137
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_angry_geo_L",
+                        "value": 0.20000000298023225
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_angry_geo_R",
+                        "value": 0.20000000298023225
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_troubled_geo_L",
+                        "value": 0.13750000298023225
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_troubled_geo_R",
+                        "value": 0.13750000298023225
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_up_geo_L",
+                        "value": 0.17499999701976777
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_up_geo_R",
+                        "value": 0.17499999701976777
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_discontent_geo_L",
+                        "value": 0.6499999761581421
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_discontent_geo_R",
+                        "value": 0.6499999761581421
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_small_geo_C",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.brow_angry_geo_L",
+                                    "value": 1.0
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.brow_angry_geo_R",
+                                    "value": 1.0
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.brow_troubled_geo_L",
+                                    "value": 0.13750000298023225
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.brow_troubled_geo_R",
+                                    "value": 0.13750000298023225
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.brow_up_geo_L",
+                                    "value": 0.17499999701976777
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.brow_up_geo_R",
+                                    "value": 0.17499999701976777
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.eye_close_geo_L",
+                                    "value": 1.0
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.eye_close_geo_R",
+                                    "value": 1.0
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.mouth_discontent_geo_L",
+                                    "value": 0.7699999809265137
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.mouth_discontent_geo_R",
+                                    "value": 0.7699999809265137
+                                },
+                                {
+                                    "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                                    "name": "facial_bs.mouth_small_geo_C",
+                                    "value": 1.0
+                                }
+                            ],
+                            "bones": [],
+                            "rendererPaths": [
+                                "notoMiku_v01/geo_grp/face_geo"
+                            ]
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "eye_look",
+            "name": "目線",
+            "layer": "emotion",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [],
+                "bones": [],
+                "rendererPaths": [],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "202b6ed750dd4c46828ef033a1f08ee0",
+            "name": "wink",
+            "layer": "emotion",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.brow_surprise_geo_L",
+                        "value": 0.30000001192092898
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_wink_geo_L",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": true,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "afdf75c13ea443bcab20ca6ce54a0cb7",
+            "name": "close",
+            "layer": "overlay",
+            "layerOverrideMask": [
+                "emotion"
+            ],
+            "snapshot": {
+                "transitionDuration": 0.0,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_close_geo_L",
+                        "value": 1.0
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_close_geo_R",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "8e9c96b8eb3047d7b5bb2842901c3112",
+            "name": "A",
+            "layer": "ulipsync",
+            "layerOverrideMask": [
+                "emotion",
+                "overlay"
+            ],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_a_geo_C",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "f8baca06aa6d4d57b4d4a93ffc9bde96",
+            "name": "I",
+            "layer": "ulipsync",
+            "layerOverrideMask": [
+                "emotion",
+                "overlay"
+            ],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_i_geo_C",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "063bb29b2be94ce0845df9e1bc71f4eb",
+            "name": "U",
+            "layer": "ulipsync",
+            "layerOverrideMask": [
+                "emotion",
+                "overlay"
+            ],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_u_geo_C",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "1b32028654c742c6bc15561c78b97968",
+            "name": "E",
+            "layer": "ulipsync",
+            "layerOverrideMask": [
+                "emotion",
+                "overlay"
+            ],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_e_geo_C",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "a6626fe5e17445598590a7961d83c990",
+            "name": "O",
+            "layer": "ulipsync",
+            "layerOverrideMask": [
+                "emotion",
+                "overlay"
+            ],
+            "snapshot": {
+                "transitionDuration": 0.10000000149011612,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.mouth_o_geo_C",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ],
+                "overlays": [
+                    {
+                        "slot": "blink",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "i",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "u",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "e",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    },
+                    {
+                        "slot": "o",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [],
+                            "bones": [],
+                            "rendererPaths": []
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "baseExpression": {
+        "transitionDuration": 0.06666667014360428,
+        "transitionCurvePreset": "Linear",
+        "blendShapes": [],
+        "bones": [],
+        "rendererPaths": [],
+        "overlays": []
+    },
+    "rendererPaths": [
+        "Body",
+        "notoMiku_v01/geo_grp/face_geo"
+    ],
+    "gaze_configs": [
+        {
+            "expressionId": "eye_look",
+            "useDistinctLeftRight": false,
+            "sourceIdLeft": "",
+            "sourceIdRight": "",
+            "leftEyeBonePath": "J_L_eye",
+            "leftEyeInitialRotation": {
+                "x": 359.3935546875,
+                "y": 261.5926818847656,
+                "z": 348.6888122558594
+            },
+            "leftEyeYawAxisLocal": {
+                "x": -1.0,
+                "y": -1.8577790683593776e-7,
+                "z": 4.474713222180071e-8
+            },
+            "leftEyePitchAxisLocal": {
+                "x": -9.004646983612474e-8,
+                "y": -1.0,
+                "z": -0.00012760204845108092
+            },
+            "rightEyeBonePath": "J_R_eye",
+            "rightEyeInitialRotation": {
+                "x": 359.39569091796877,
+                "y": 81.592529296875,
+                "z": 348.7032775878906
+            },
+            "rightEyeYawAxisLocal": {
+                "x": -1.0,
+                "y": -1.8577790683593776e-7,
+                "z": 4.474713222180071e-8
+            },
+            "rightEyePitchAxisLocal": {
+                "x": -9.004646983612474e-8,
+                "y": -1.0,
+                "z": -0.00012760204845108092
+            },
+            "lookUpAngle": 6.0,
+            "lookDownAngle": 4.0,
+            "outerYawAngle": 5.0,
+            "innerYawAngle": 6.0
+        }
+    ],
+    "defaultOverlays": [
+        {
+            "slot": "blink",
+            "suppress": false,
+            "snapshot": {
+                "transitionDuration": 0.06666667014360428,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_close_geo_L",
+                        "value": 1.0
+                    },
+                    {
+                        "rendererPath": "notoMiku_v01/geo_grp/face_geo",
+                        "name": "facial_bs.eye_close_geo_R",
+                        "value": 1.0
+                    }
+                ],
+                "bones": [],
+                "rendererPaths": [
+                    "notoMiku_v01/geo_grp/face_geo"
+                ]
+            }
+        }
+    ]
+}

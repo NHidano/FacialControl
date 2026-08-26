@@ -1,0 +1,46 @@
+{
+    "name": "Hidano.FacialControl.Tests.PlayMode",
+    "rootNamespace": "Hidano.FacialControl.Tests.PlayMode",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters",
+        "Hidano.FacialControl.Osc",
+        "Hidano.FacialControl.InputSystem",
+        "Hidano.FacialControl.Tests.Shared",
+        "Unity.Collections",
+        "Unity.InputSystem",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_UNITY_INPUTSYSTEM"
+        },
+        {
+            "name": "com.hidano.facialcontrol.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_INPUTSYSTEM_MODULE"
+        },
+        {
+            "name": "com.hidano.facialcontrol.osc",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_OSC_MODULE"
+        }
+    ],
+    "noEngineReferences": false
+}

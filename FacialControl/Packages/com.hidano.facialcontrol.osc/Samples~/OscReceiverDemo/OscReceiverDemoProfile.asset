@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d135770dce0e9d5479f0b6ee124b640a, type: 3}
+  m_Name: OscReceiverDemoProfile
+  m_EditorClassIdentifier:
+  _schemaVersion: "1.0"
+  _layers:
+  - name: osc_receiver
+    priority: 0
+    exclusionMode: 0
+    inputSources:
+    - id: osc
+      weight: 1.0
+      optionsJson: ''
+    layerOverrideMask: []
+  _expressions: []
+  _baseExpression:
+    animationClip: {fileID: 0}
+    cachedSnapshot:
+      transitionDuration: 0.06666667
+      transitionCurvePreset: Linear
+      blendShapes: []
+      bones: []
+      rendererPaths: []
+  _rendererPaths:
+  - ProceduralFace
+  _gazeConfigs:
+  - expressionId: eye_look
+    useDistinctLeftRight: 0
+    sourceIdLeft:
+    sourceIdRight:
+    leftEyeBonePath:
+    leftEyeInitialRotation: {x: 0, y: 0, z: 0}
+    leftEyeYawAxisLocal: {x: 0, y: 1, z: 0}
+    leftEyePitchAxisLocal: {x: 1, y: 0, z: 0}
+    rightEyeBonePath:
+    rightEyeInitialRotation: {x: 0, y: 0, z: 0}
+    rightEyeYawAxisLocal: {x: 0, y: 1, z: 0}
+    rightEyePitchAxisLocal: {x: 1, y: 0, z: 0}
+    lookUpAngle: 15
+    lookDownAngle: 9
+    outerYawAngle: 15
+    innerYawAngle: 18
+    lookLeftClip: {fileID: 0}
+    lookRightClip: {fileID: 0}
+    lookUpClip: {fileID: 0}
+    lookDownClip: {fileID: 0}
+    lookLeftSamples: []
+    lookRightSamples: []
+    lookUpSamples: []
+    lookDownSamples: []
+  _slots: []
+  _defaultOverlays: []
+  _adapterBindings:
+  - rid: 8100000000000000001
+  _referenceModel: {fileID: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: 8100000000000000001
+      type: {class: OscReceiverAdapterBinding, ns: Hidano.FacialControl.Adapters.AdapterBindings, asm: Hidano.FacialControl.Osc}
+      data:
+        Slug: osc
+        _settings: {fileID: 2279303358686531772, guid: ad0658dffa3b456490a48e50e22a0630, type: 2}
+        _mappings: []

@@ -1,0 +1,29 @@
+{
+    "name": "Hidano.FacialControl.LipSync.Tests.Shared",
+    "rootNamespace": "Hidano.FacialControl.LipSync.Tests.Shared",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters",
+        "Hidano.FacialControl.LipSync",
+        "uLipSync.Runtime",
+        "uLipSync.Runtime.Windows",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

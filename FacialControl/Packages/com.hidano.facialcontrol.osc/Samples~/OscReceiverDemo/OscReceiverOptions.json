@@ -1,0 +1,36 @@
+{
+  "listenEndpoint": "127.0.0.1",
+  "listenPort": 9000,
+  "mappings": [
+    {
+      "mode": "blendShape",
+      "expressionId": "Joy",
+      "addressPattern": "/avatar/parameters/Joy"
+    },
+    {
+      "mode": "blendShape",
+      "expressionId": "Blink",
+      "addressPattern": "/avatar/parameters/Blink"
+    },
+    {
+      "mode": "blendShape",
+      "expressionId": "MouthOpen",
+      "addressPattern": "/avatar/parameters/MouthOpen"
+    },
+    {
+      "mode": "blendShape",
+      "expressionId": "BrowUp",
+      "addressPattern": "/avatar/parameters/BrowUp"
+    },
+    {
+      "mode": "gazeVrchatXy",
+      "expressionId": "eye_look",
+      "addressPattern": "/avatar/parameters/eye_look"
+    }
+  ],
+  "stalenessSeconds": 1.0,
+  "failSafeMode": "revertToBase",
+  "consistencyCheckWarnLog": true,
+  "bundleMode": "atomicSwap",
+  "bundleAccumulationTimeoutMs": 5.0
+}

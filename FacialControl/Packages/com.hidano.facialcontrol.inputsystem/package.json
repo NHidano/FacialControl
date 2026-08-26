@@ -1,0 +1,30 @@
+{
+    "name": "com.hidano.facialcontrol.inputsystem",
+    "version": "0.1.0-preview.2",
+    "displayName": "FacialControl InputSystem",
+    "description": "FacialControl の Unity InputSystem 連携アダプタ。コントローラ／キーボードからの Expression トリガー入力と、`InputBindingProfileSO` によるキーバインド永続化を提供する。",
+    "unity": "6000.3",
+    "license": "MIT",
+    "author": {
+        "name": "Hidano"
+    },
+    "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2",
+        "com.unity.inputsystem": "1.17.0"
+    },
+    "samples": [
+        {
+            "displayName": "Multi Source Blend Demo",
+            "description": "InputSystem の Trigger Action 経由で controller / keyboard 双方を受ける単一 input-system ソースの加重和ブレンドに加え、左スティック → LeftEye/RightEye Euler、ARKit/OSC float → mouth-open BlendShape のアナログバインディングを 1 サンプルで網羅する統合デモ。Scene / FacialCharacterProfileSO (InputSystemAdapterBinding + OscReceiverAdapterBinding 同時保持) / InputActions / StreamingAssets JSON / HUD 一式を同梱し、ユーザーはモデルを Character の子に配置するだけで動作する (新 _adapterBindings + slug 駆動形式)。",
+            "path": "Samples~/MultiSourceBlendDemo"
+        }
+    ],
+    "keywords": [
+        "facial",
+        "blendshape",
+        "expression",
+        "vtuber",
+        "input",
+        "inputsystem"
+    ]
+}

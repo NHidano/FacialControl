@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "label": "receiver",
+  "receiverEnabled": true,
+  "listenPort": 49983,
+  "deviceAddress": "",
+  "sendHandshake": false,
+  "dataVersion": "standard",
+  "handshakeIntervalSeconds": 1.0,
+  "stalenessSeconds": 1.0,
+  "failSafeMode": "revertToBase",
+  "enableGaze": true,
+  "eyeMaxYawDegrees": 30.0,
+  "eyeMaxPitchDegrees": 25.0,
+  "enableHead": true,
+  "includeHeadPosition": false
+}

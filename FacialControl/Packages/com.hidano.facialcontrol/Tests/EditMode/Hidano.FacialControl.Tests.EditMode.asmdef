@@ -1,0 +1,51 @@
+{
+    "name": "Hidano.FacialControl.Tests.EditMode",
+    "rootNamespace": "Hidano.FacialControl.Tests.EditMode",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters",
+        "Hidano.FacialControl.Editor",
+        "Hidano.FacialControl.Osc",
+        "Hidano.FacialControl.InputSystem",
+        "Hidano.FacialControl.LipSync",
+        "Hidano.FacialControl.Tests.Shared",
+        "Unity.Collections",
+        "Unity.InputSystem",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "SceneViewStyleCameraController",
+        "VContainer"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.hidano.facialcontrol.osc",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_OSC_MODULE"
+        },
+        {
+            "name": "com.hidano.facialcontrol.lipsync",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_LIPSYNC_MODULE"
+        },
+        {
+            "name": "com.hidano.facialcontrol.inputsystem",
+            "expression": "",
+            "define": "FACIALCONTROL_HAS_INPUTSYSTEM_MODULE"
+        }
+    ],
+    "noEngineReferences": false
+}

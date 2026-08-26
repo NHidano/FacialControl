@@ -1,0 +1,24 @@
+{
+    "name": "com.hidano.facialcontrol.timeline",
+    "version": "0.1.0-preview.1",
+    "displayName": "FacialControl Timeline",
+    "description": "Timeline integration package for FacialControl. Provides the assembly and editor scaffolding for track-based playback and REC export workflows.",
+    "unity": "6000.3",
+    "license": "MIT",
+    "author": {
+        "name": "Hidano"
+    },
+    "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2",
+        "com.hidano.facialcontrol.rec": "0.1.0-preview.1",
+        "com.unity.timeline": "1.8.9"
+    },
+    "keywords": [
+        "facial",
+        "blendshape",
+        "expression",
+        "timeline",
+        "playable",
+        "rec"
+    ]
+}

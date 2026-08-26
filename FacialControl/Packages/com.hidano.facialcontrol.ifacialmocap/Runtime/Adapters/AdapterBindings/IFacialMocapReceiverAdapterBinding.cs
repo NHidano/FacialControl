@@ -1,0 +1,575 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Hidano.FacialControl.Adapters.Bone;
+using Hidano.FacialControl.Adapters.IFacialMocap;
+using Hidano.FacialControl.Adapters.InputSources;
+using Hidano.FacialControl.Adapters.OSC;
+using Hidano.FacialControl.Adapters.RuntimeSettings;
+using Hidano.FacialControl.Adapters.ScriptableObject;
+using Hidano.FacialControl.Domain.Adapters;
+using Hidano.FacialControl.Domain.Interfaces;
+using Hidano.FacialControl.Domain.Models;
+using UnityEngine;
+
+namespace Hidano.FacialControl.Adapters.AdapterBindings
+{
+    /// <summary>
+    /// iFacialMocap 名 → メッシュ BlendShape 名の上書きマッピング 1 件。
+    /// 空リストのときは <see cref="IFacialMocapBlendShapeCatalog"/> の既定変換を全 52 件に適用する。
+    /// </summary>
+    [Serializable]
+    public struct IFacialMocapBlendShapeMapping
+    {
+        [Tooltip("iFacialMocap の BlendShape 名（例: eyeBlink_L）。")]
+        public string ifacialMocapName;
+
+        [Tooltip("反映先メッシュ BlendShape 名。空ならスキップ。")]
+        public string blendShapeName;
+
+        public IFacialMocapBlendShapeMapping(string ifacialMocapName, string blendShapeName)
+        {
+            this.ifacialMocapName = ifacialMocapName;
+            this.blendShapeName = blendShapeName;
+        }
+    }
+
+    /// <summary>
+    /// iFacialMocap (iOS) の UDP テキストを受信し、BlendShape・視線・頭部を FacialController に流し込む
+    /// <see cref="AdapterBindingBase"/> 具象。
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="OnStart"/> で <c>ctx.HostGameObject.AddComponent&lt;IFacialMocapReceiverHost&gt;()</c> を実行し、
+    /// BlendShape は <c>.osc</c> の <see cref="OscDoubleBuffer"/> + <see cref="OscInputSource"/>、
+    /// 視線は左右 <see cref="GazeVector2InputSource"/>、頭部は <see cref="AnalogAxesInputSource"/> を
+    /// <see cref="IInputSourceRegistry"/> に登録する。
+    /// </para>
+    /// <para>
+    /// <see cref="OnFixedTick"/> で host の最新フレームを取得し、新規フレームのときだけ buffer へ書き込んで
+    /// <see cref="OscDoubleBuffer.Swap"/> し、視線/頭部を push する（新規でないフレームは前値を保持）。
+    /// </para>
+    /// <para>
+    /// 視線→目ボーン、頭部→頭ボーンの結線は Profile 側（<c>GazeBindingConfig</c> /
+    /// <c>AnalogBindingEntry</c> の BonePose）の責務。本 binding は入力源の登録までを担う。
+    /// </para>
+    /// </remarks>
+    [Serializable]
+    [FacialAdapterBinding(displayName: "iFacialMocap Receiver")]
+    public sealed class IFacialMocapReceiverAdapterBinding : AdapterBindingBase
+    {
+        public const string GazeLeftSub = "gaze.left";
+        public const string GazeRightSub = "gaze.right";
+        public const string HeadSub = "head";
+
+        private const int HeadAxisCountRotationOnly = 3;
+        private const int HeadAxisCountWithPosition = 6;
+
+        [SerializeField]
+        private IFacialMocapRuntimeSettingsSO _settings;
+
+        [Tooltip("iFacialMocap 名 → メッシュ BlendShape 名の上書き。空なら ARKit 既定変換を全 52 件に適用。")]
+        [SerializeField]
+        private List<IFacialMocapBlendShapeMapping> _mappings = new List<IFacialMocapBlendShapeMapping>();
+
+        [Tooltip("視線(左右ヨー)の符号を反転する。モデルの目ボーンの向きに合わせて調整（アバター固有）。")]
+        [SerializeField]
+        private bool _gazeInvertYaw;
+
+        [Tooltip("視線(上下ピッチ)の符号を反転する。モデルの目ボーンの向きに合わせて調整（アバター固有）。")]
+        [SerializeField]
+        private bool _gazeInvertPitch;
+
+        [NonSerialized]
+        private IFacialMocapRuntimeSettingsSO _runtimeSettings;
+
+        [NonSerialized]
+        private IInputSourceRegistry _registry;
+
+        [NonSerialized]
+        private AdapterSlug _slug;
+
+        [NonSerialized]
+        private IFacialMocapReceiverHost _helperHost;
+
+        [NonSerialized]
+        private OscDoubleBuffer _buffer;
+
+        [NonSerialized]
+        private OscInputSource _inputSource;
+
+        [NonSerialized]
+        private GazeVector2InputSource _gazeLeft;
+
+        [NonSerialized]
+        private GazeVector2InputSource _gazeRight;
+
+        [NonSerialized]
+        private AnalogAxesInputSource _headSource;
+
+        [NonSerialized]
+        private Dictionary<string, int> _ifmNameToSlot;
+
+        [NonSerialized]
+        private IFacialMocapFrame _frame;
+
+        [NonSerialized]
+        private ITimeProvider _timeProvider;
+
+        [NonSerialized]
+        private EyeGazeConverter _eyeGaze;
+
+        [NonSerialized]
+        private FailSafeMode _failSafeMode;
+
+        [NonSerialized]
+        private float _stalenessSeconds;
+
+        [NonSerialized]
+        private int _headAxisCount;
+
+        [NonSerialized]
+        private int _lastSequence;
+
+        [NonSerialized]
+        private double _lastDataTime;
+
+        [NonSerialized]
+        private bool _started;
+
+        /// <summary>Inspector の Add ドロップダウンが <c>Activator.CreateInstance</c> で使う既定 ctor。</summary>
+        public IFacialMocapReceiverAdapterBinding()
+        {
+        }
+
+        public IFacialMocapRuntimeSettingsSO Settings
+        {
+            get => _settings;
+            set => _settings = value;
+        }
+
+        /// <summary>有効な Settings 参照（未代入なら診断用 runtime SO にフォールバック）。</summary>
+        public IFacialMocapRuntimeSettingsSO EffectiveSettings =>
+            _settings != null ? _settings : _runtimeSettings;
+
+        public List<IFacialMocapBlendShapeMapping> Mappings
+        {
+            get => _mappings;
+            set => _mappings = value ?? new List<IFacialMocapBlendShapeMapping>();
+        }
+
+        /// <summary>視線(左右ヨー)の符号を反転する（アバター固有）。Profile に保存される。</summary>
+        public bool GazeInvertYaw
+        {
+            get => _gazeInvertYaw;
+            set => _gazeInvertYaw = value;
+        }
+
+        /// <summary>視線(上下ピッチ)の符号を反転する（アバター固有）。Profile に保存される。</summary>
+        public bool GazeInvertPitch
+        {
+            get => _gazeInvertPitch;
+            set => _gazeInvertPitch = value;
+        }
+
+        public IFacialMocapReceiverHost HelperHost => _helperHost;
+
+        public OscDoubleBuffer Buffer => _buffer;
+
+        public OscInputSource InputSource => _inputSource;
+
+        public GazeVector2InputSource GazeLeftSource => _gazeLeft;
+
+        public GazeVector2InputSource GazeRightSource => _gazeRight;
+
+        public AnalogAxesInputSource HeadSource => _headSource;
+
+        public bool IsStarted => _started;
+
+        /// <summary>テスト/診断用に設定とマッピングを流し込む。</summary>
+        public void Configure(IFacialMocapRuntimeSettingsSO settings, List<IFacialMocapBlendShapeMapping> mappings = null)
+        {
+            _settings = settings;
+            if (mappings != null)
+            {
+                _mappings = mappings;
+            }
+        }
+
+        private IFacialMocapRuntimeSettingsSO EnsureRuntimeSettings()
+        {
+            if (_runtimeSettings == null)
+            {
+                _runtimeSettings = UnityEngine.ScriptableObject.CreateInstance<IFacialMocapRuntimeSettingsSO>();
+                _runtimeSettings.hideFlags = HideFlags.HideAndDontSave;
+            }
+
+            return _runtimeSettings;
+        }
+
+        /// <inheritdoc />
+        public override void OnStart(in AdapterBuildContext ctx)
+        {
+            if (_started)
+            {
+                return;
+            }
+
+            if (ctx.HostGameObject == null)
+            {
+                Debug.LogError("[IFacialMocapReceiverAdapterBinding] HostGameObject が null のため起動できません。");
+                return;
+            }
+
+            IFacialMocapRuntimeSettingsSO settings = EffectiveSettings;
+            if (settings == null)
+            {
+                Debug.LogWarning(
+                    $"[IFacialMocapReceiverAdapterBinding] Settings が未代入のため起動しません。slug='{Slug}'");
+                return;
+            }
+
+            if (!settings.ReceiverEnabled)
+            {
+                Debug.LogWarning(
+                    $"[IFacialMocapReceiverAdapterBinding] Settings.ReceiverEnabled=false のため起動しません。slug='{Slug}'");
+                return;
+            }
+
+            if (!AdapterSlug.TryParse(Slug, out AdapterSlug slug))
+            {
+                Debug.LogError(
+                    $"[IFacialMocapReceiverAdapterBinding] Slug '{Slug}' が AdapterSlug 規約を満たしません。");
+                return;
+            }
+
+            _registry = ctx.InputSourceRegistry;
+            _slug = slug;
+            _timeProvider = ctx.TimeProvider;
+            _eyeGaze = settings.EyeGaze;
+            _failSafeMode = settings.FailSafeMode;
+            _stalenessSeconds = settings.StalenessSeconds;
+            _lastDataTime = ctx.TimeProvider.UnscaledTimeSeconds;
+            _lastSequence = 0;
+            _frame = new IFacialMocapFrame();
+
+            bool registeredAny = false;
+            registeredAny |= BuildBlendShapeSource(ctx, settings, slug);
+
+            if (settings.EnableGaze)
+            {
+                _gazeLeft = RegisterGazeSource(slug, GazeLeftSub);
+                _gazeRight = RegisterGazeSource(slug, GazeRightSub);
+                registeredAny |= _gazeLeft != null || _gazeRight != null;
+            }
+
+            if (settings.EnableHead)
+            {
+                _headAxisCount = settings.IncludeHeadPosition ? HeadAxisCountWithPosition : HeadAxisCountRotationOnly;
+                _headSource = RegisterHeadSource(slug, _headAxisCount);
+                registeredAny |= _headSource != null;
+            }
+
+            if (!registeredAny)
+            {
+                Debug.LogWarning(
+                    $"[IFacialMocapReceiverAdapterBinding] 登録できる入力源がありません（BlendShape/視線/頭部すべて無効または未解決）。slug='{Slug}'");
+                return;
+            }
+
+            _helperHost = ctx.HostGameObject.AddComponent<IFacialMocapReceiverHost>();
+            _helperHost.Configure(
+                settings.ListenPort,
+                settings.DeviceAddress,
+                settings.SendHandshake,
+                settings.DataVersion,
+                settings.HandshakeIntervalSeconds);
+
+            _started = true;
+        }
+
+        private bool BuildBlendShapeSource(in AdapterBuildContext ctx, IFacialMocapRuntimeSettingsSO settings, AdapterSlug slug)
+        {
+            IReadOnlyList<string> meshNames = ctx.BlendShapeNames;
+            var meshNameToIndex = new Dictionary<string, int>(meshNames?.Count ?? 0, StringComparer.Ordinal);
+            if (meshNames != null)
+            {
+                for (int i = 0; i < meshNames.Count; i++)
+                {
+                    string name = meshNames[i];
+                    if (!string.IsNullOrEmpty(name) && !meshNameToIndex.ContainsKey(name))
+                    {
+                        meshNameToIndex.Add(name, i);
+                    }
+                }
+            }
+
+            _ifmNameToSlot = new Dictionary<string, int>(StringComparer.Ordinal);
+            var mappingIndexToMeshIndex = new List<int>();
+
+            foreach (KeyValuePair<string, string> mapping in EnumerateMappings())
+            {
+                string ifmName = mapping.Key;
+                string targetName = mapping.Value;
+                if (string.IsNullOrEmpty(ifmName) || string.IsNullOrEmpty(targetName))
+                {
+                    continue;
+                }
+
+                if (_ifmNameToSlot.ContainsKey(ifmName))
+                {
+                    continue;
+                }
+
+                if (!meshNameToIndex.TryGetValue(targetName, out int meshIndex))
+                {
+                    continue;
+                }
+
+                _ifmNameToSlot.Add(ifmName, mappingIndexToMeshIndex.Count);
+                mappingIndexToMeshIndex.Add(meshIndex);
+            }
+
+            if (mappingIndexToMeshIndex.Count == 0)
+            {
+                Debug.LogWarning(
+                    $"[IFacialMocapReceiverAdapterBinding] メッシュに一致する BlendShape マッピングが 0 件のため BlendShape 入力源を登録しません。slug='{Slug}'");
+                _ifmNameToSlot = null;
+                return false;
+            }
+
+            // ContributeMask はメッシュの BlendShape 総数長で作る。null 渡しの自動生成に任せると
+            // 長さが「最大 mapped index + 1」に縮み、末尾に非マッピング BlendShape を持つモデルで
+            // LayerInputSourceAggregator の BitArray.Or (長さ完全一致要求) が ArgumentException を投げる。
+            int meshCount = meshNames?.Count ?? 0;
+            var contributeMask = new BitArray(meshCount);
+            for (int i = 0; i < mappingIndexToMeshIndex.Count; i++)
+            {
+                int meshIndex = mappingIndexToMeshIndex[i];
+                if (meshIndex >= 0 && meshIndex < meshCount)
+                {
+                    contributeMask[meshIndex] = true;
+                }
+            }
+
+            _buffer = new OscDoubleBuffer(mappingIndexToMeshIndex.Count);
+            _inputSource = new OscInputSource(
+                _buffer,
+                settings.StalenessSeconds,
+                ctx.TimeProvider,
+                settings.FailSafeMode,
+                contributeMask,
+                mappingIndexToMeshIndex.ToArray());
+            _registry.Register(slug, _inputSource);
+            return true;
+        }
+
+        private IEnumerable<KeyValuePair<string, string>> EnumerateMappings()
+        {
+            if (_mappings != null && _mappings.Count > 0)
+            {
+                for (int i = 0; i < _mappings.Count; i++)
+                {
+                    IFacialMocapBlendShapeMapping entry = _mappings[i];
+                    yield return new KeyValuePair<string, string>(entry.ifacialMocapName, entry.blendShapeName);
+                }
+
+                yield break;
+            }
+
+            // 既定: カタログ全 52 件を ARKit 正準名へ変換して反映
+            string[] catalog = IFacialMocapBlendShapeCatalog.Names;
+            for (int i = 0; i < catalog.Length; i++)
+            {
+                yield return new KeyValuePair<string, string>(
+                    catalog[i],
+                    IFacialMocapBlendShapeCatalog.ToArKitName(catalog[i]));
+            }
+        }
+
+        private GazeVector2InputSource RegisterGazeSource(AdapterSlug slug, string sub)
+        {
+            string id = slug.Value + ":" + sub;
+            if (!InputSourceId.TryParse(id, out InputSourceId sourceId))
+            {
+                Debug.LogWarning(
+                    $"[IFacialMocapReceiverAdapterBinding] Gaze source id '{id}' が不正のためスキップします。");
+                return null;
+            }
+
+            var source = new GazeVector2InputSource(sourceId);
+            _registry.Register(slug, sub, source);
+            return source;
+        }
+
+        private AnalogAxesInputSource RegisterHeadSource(AdapterSlug slug, int axisCount)
+        {
+            string id = slug.Value + ":" + HeadSub;
+            if (!InputSourceId.TryParse(id, out InputSourceId sourceId))
+            {
+                Debug.LogWarning(
+                    $"[IFacialMocapReceiverAdapterBinding] Head source id '{id}' が不正のためスキップします。");
+                return null;
+            }
+
+            var source = new AnalogAxesInputSource(sourceId, axisCount);
+            _registry.Register(slug, HeadSub, source);
+            return source;
+        }
+
+        /// <inheritdoc />
+        public override void OnFixedTick(float fixedDeltaTime)
+        {
+            if (!_started || _helperHost == null)
+            {
+                return;
+            }
+
+            int sequence = _helperHost.TryReadLatest(_frame);
+            bool isNew = sequence != 0 && sequence != _lastSequence;
+            if (isNew)
+            {
+                _lastSequence = sequence;
+                _lastDataTime = _timeProvider != null ? _timeProvider.UnscaledTimeSeconds : 0d;
+                ApplyFrame();
+            }
+            else
+            {
+                ApplyStalenessFailSafe();
+            }
+        }
+
+        /// <inheritdoc />
+        public override void OnLateTick(float deltaTime)
+        {
+            // 目線の目ボーン適用は core の FacialController に集約したため、本 binding は
+            // gaze 入力源(<slug>:gaze.left/right)を registry 登録するのみで LateTick では何もしない。
+        }
+
+        private void ApplyFrame()
+        {
+            if (_buffer != null && _inputSource != null && _ifmNameToSlot != null)
+            {
+                List<IFacialMocapBlendShapeSample> samples = _frame.BlendShapes;
+                for (int i = 0; i < samples.Count; i++)
+                {
+                    IFacialMocapBlendShapeSample sample = samples[i];
+                    if (_ifmNameToSlot.TryGetValue(sample.Name, out int slot))
+                    {
+                        float normalized = Mathf.Clamp01(sample.Value / IFacialMocapProtocol.BlendShapeMaxValue);
+                        _buffer.Write(slot, normalized);
+                    }
+                }
+
+                // 新規フレームを書き込んだときだけ swap し read バッファへ反映する
+                // （非新規フレームでは swap せず前値を保持 → OscInputSource の staleness が機能する）。
+                _buffer.Swap();
+            }
+
+            if (_gazeLeft != null && _frame.LeftEye.HasValue)
+            {
+                _gazeLeft.Publish(ApplyGazeInvert(_eyeGaze.Convert(_frame.LeftEye)));
+            }
+
+            if (_gazeRight != null && _frame.RightEye.HasValue)
+            {
+                _gazeRight.Publish(ApplyGazeInvert(_eyeGaze.Convert(_frame.RightEye)));
+            }
+
+            if (_headSource != null && _frame.Head.HasValue)
+            {
+                Span<float> axes = stackalloc float[HeadAxisCountWithPosition];
+                IFacialMocapTransformSample head = _frame.Head;
+                axes[0] = head.EulerX;
+                axes[1] = head.EulerY;
+                axes[2] = head.EulerZ;
+                axes[3] = head.PositionX;
+                axes[4] = head.PositionY;
+                axes[5] = head.PositionZ;
+                _headSource.Publish(axes.Slice(0, _headAxisCount));
+            }
+        }
+
+        /// <summary>
+        /// 視線 Vector2 にアバター固有の符号反転（<see cref="_gazeInvertYaw"/> / <see cref="_gazeInvertPitch"/>）を適用する。
+        /// 反転設定は Profile（本 binding）側に保持され、入力源(アダプタ SO)には依存しない。
+        /// </summary>
+        private Vector2 ApplyGazeInvert(Vector2 gaze)
+        {
+            if (_gazeInvertYaw)
+            {
+                gaze.x = -gaze.x;
+            }
+
+            if (_gazeInvertPitch)
+            {
+                gaze.y = -gaze.y;
+            }
+
+            return gaze;
+        }
+
+        private void ApplyStalenessFailSafe()
+        {
+            if (_stalenessSeconds <= 0f || _failSafeMode != FailSafeMode.RevertToBase || _timeProvider == null)
+            {
+                return;
+            }
+
+            if (_timeProvider.UnscaledTimeSeconds - _lastDataTime <= _stalenessSeconds)
+            {
+                return;
+            }
+
+            // BlendShape の staleness は OscInputSource 内部で処理されるため、ここでは視線/頭部のみ 0 復帰。
+            _gazeLeft?.PublishZero();
+            _gazeRight?.PublishZero();
+            _headSource?.PublishZero();
+        }
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            if (_registry != null && _slug.Value != null)
+            {
+                _registry.Unregister(_slug);
+                _registry.Unregister(_slug, GazeLeftSub);
+                _registry.Unregister(_slug, GazeRightSub);
+                _registry.Unregister(_slug, HeadSub);
+            }
+
+            if (_helperHost != null)
+            {
+                if (UnityEngine.Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(_helperHost);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(_helperHost);
+                }
+
+                _helperHost = null;
+            }
+
+            if (_buffer != null)
+            {
+                _buffer.Dispose();
+                _buffer = null;
+            }
+
+            _inputSource = null;
+            _gazeLeft = null;
+            _gazeRight = null;
+            _headSource = null;
+            _ifmNameToSlot = null;
+            _frame = null;
+            _registry = null;
+            _timeProvider = null;
+            _slug = default;
+            _lastSequence = 0;
+            _lastDataTime = 0d;
+            _started = false;
+        }
+    }
+}

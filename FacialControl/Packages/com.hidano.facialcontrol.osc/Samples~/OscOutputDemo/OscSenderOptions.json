@@ -1,0 +1,27 @@
+{
+  "endpoints": [
+    {
+      "ip": "127.0.0.1",
+      "port": 9000,
+      "preset": "vrchat",
+      "enabled": true
+    },
+    {
+      "ip": "127.0.0.1",
+      "port": 9001,
+      "preset": "arkit",
+      "enabled": true
+    }
+  ],
+  "blendShapeMapping": [
+    "Joy",
+    "Blink",
+    "MouthOpen",
+    "BrowUp"
+  ],
+  "gazeExpressionIds": [
+    "eye_look"
+  ],
+  "suppressLoopback": true,
+  "heartbeatIntervalSeconds": 5.0
+}

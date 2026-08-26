@@ -1,0 +1,154 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d135770dce0e9d5479f0b6ee124b640a, type: 3}
+  m_Name: MicLipSyncDemoProfile
+  m_EditorClassIdentifier: Hidano.FacialControl.Adapters::Hidano.FacialControl.Adapters.ScriptableObject.Serializable.FacialCharacterProfileSO
+  _schemaVersion: "1.0"
+  _layers:
+  - name: overlay
+    priority: 10
+    exclusionMode: 1
+    inputSources:
+    - id: overlay:a
+      weight: 1
+      optionsJson: 
+    - id: lipsync-overlay:a
+      weight: 1
+      optionsJson: 
+    - id: overlay:i
+      weight: 1
+      optionsJson: 
+    - id: lipsync-overlay:i
+      weight: 1
+      optionsJson: 
+    - id: overlay:u
+      weight: 1
+      optionsJson: 
+    - id: lipsync-overlay:u
+      weight: 1
+      optionsJson: 
+    - id: overlay:e
+      weight: 1
+      optionsJson: 
+    - id: lipsync-overlay:e
+      weight: 1
+      optionsJson: 
+    - id: overlay:o
+      weight: 1
+      optionsJson: 
+    - id: lipsync-overlay:o
+      weight: 1
+      optionsJson: 
+    layerOverrideMask:
+    - overlay
+  _expressions:
+  - id: smile
+    name: Smile
+    layer: overlay
+    isGaze: 0
+    animationClip: {fileID: 0}
+    transitionDuration: 0.06666667
+    transitionCurve:
+      type: 0
+      keys: []
+    blendShapeValues: []
+    layerOverrideMask: []
+    cachedSnapshot:
+      transitionDuration: 0.06666667
+      transitionCurvePreset: Linear
+      blendShapes: []
+      bones: []
+      rendererPaths: []
+      overlays: []
+    overlays:
+    - slot: a
+      suppress: 0
+      animationClip: {fileID: 0}
+      cachedSnapshot:
+        transitionDuration: 0.06666667
+        transitionCurvePreset: Linear
+        blendShapes:
+        - rendererPath: Face
+          name: 縺・smile
+          value: 1
+        bones: []
+        rendererPaths:
+        - Face
+        overlays: []
+  _baseExpression:
+    animationClip: {fileID: 0}
+    cachedSnapshot:
+      transitionDuration: 0.06666667
+      transitionCurvePreset: Linear
+      blendShapes: []
+      bones: []
+      rendererPaths: []
+      overlays: []
+  _rendererPaths:
+  - Face
+  _gazeConfigs: []
+  _slots:
+  - a
+  - i
+  - u
+  - e
+  - o
+  _defaultOverlays: []
+  _adapterBindings:
+  - rid: 4448593420807569408
+  _referenceModel: {fileID: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: 4448593420807569408
+      type: {class: ULipSyncAdapterBinding, ns: Hidano.FacialControl.LipSync.Adapters, asm: Hidano.FacialControl.LipSync}
+      data:
+        Slug: ulipsync
+        _analyzerProfile: {fileID: 0}
+        _phonemeEntries:
+        - rid: 4448593420807569409
+        - rid: 4448593420807569410
+        - rid: 4448593420807569411
+        - rid: 4448593420807569412
+        - rid: 4448593420807569413
+        _targetMeshHint: 
+        _maxWeightScale: 1
+    - rid: 4448593420807569409
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: A
+        MaxWeight: 100
+        BlendShapeName: A
+    - rid: 4448593420807569410
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: I
+        MaxWeight: 100
+        BlendShapeName: I
+    - rid: 4448593420807569411
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: U
+        MaxWeight: 100
+        BlendShapeName: U
+    - rid: 4448593420807569412
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: E
+        MaxWeight: 100
+        BlendShapeName: E
+    - rid: 4448593420807569413
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: O
+        MaxWeight: 100
+        BlendShapeName: O

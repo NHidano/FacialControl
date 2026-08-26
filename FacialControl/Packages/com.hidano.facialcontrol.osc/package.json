@@ -1,0 +1,36 @@
+{
+    "name": "com.hidano.facialcontrol.osc",
+    "version": "0.1.0-preview.2",
+    "displayName": "FacialControl OSC",
+    "description": "FacialControl の OSC 送受信アダプタ。VRChat / ARKit 互換 OSC で BlendShape と Gaze Vector2 を送受信し、`OscReceiverAdapterBinding` / `OscSenderAdapterBinding` 経由で FacialCharacterProfileSO の AdapterBindings に組み込む。",
+    "unity": "6000.3",
+    "license": "MIT",
+    "author": {
+        "name": "Hidano"
+    },
+    "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2",
+        "com.hidano.uosc": "1.0.0"
+    },
+    "samples": [
+        {
+            "displayName": "OscOutputDemo",
+            "description": "OscSenderAdapterBinding で BlendShape と Gaze Vector2 を VRChat / ARKit 互換 OSC bundle として送信するサンプル。Scene / FacialCharacterProfileSO / OscSenderOptions JSON / bootstrap 一式を同梱する。",
+            "path": "Samples~/OscOutputDemo"
+        },
+        {
+            "displayName": "OscReceiverDemo",
+            "description": "OscReceiverAdapterBinding で BlendShape と VRChat 形式 Gaze Vector2 を受信し、最小構成の FacialCharacterProfileSO へ反映する受信専用サンプル。Scene / FacialCharacterProfileSO / OscReceiverOptions JSON / bootstrap 一式を同梱する。",
+            "path": "Samples~/OscReceiverDemo"
+        }
+    ],
+    "keywords": [
+        "facial",
+        "blendshape",
+        "expression",
+        "vtuber",
+        "osc",
+        "vrchat",
+        "arkit"
+    ]
+}

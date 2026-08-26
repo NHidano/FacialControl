@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d135770dce0e9d5479f0b6ee124b640a, type: 3}
+  m_Name: AnimationClipLipSyncDemoProfile
+  m_EditorClassIdentifier: Hidano.FacialControl.Adapters::Hidano.FacialControl.Adapters.ScriptableObject.Serializable.FacialCharacterProfileSO
+  _schemaVersion: "1.0"
+  _layers:
+  - name: lipsync
+    priority: 0
+    exclusionMode: 1
+    inputSources:
+    - id: ulipsync
+      weight: 1
+      optionsJson: 
+    layerOverrideMask:
+    - lipsync
+  _expressions: []
+  _rendererPaths: []
+  _gazeConfigs: []
+  _adapterBindings:
+  - rid: 4448593420807569408
+  _referenceModel: {fileID: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: 4448593420807569408
+      type: {class: ULipSyncAdapterBinding, ns: Hidano.FacialControl.LipSync.Adapters, asm: Hidano.FacialControl.LipSync}
+      data:
+        Slug: ulipsync
+        _analyzerProfile: {fileID: 0}
+        _phonemeEntries:
+        - rid: 4448593420807569409
+        - rid: 4448593420807569410
+        - rid: 4448593420807569411
+        - rid: 4448593420807569412
+        - rid: 4448593420807569413
+        _targetMeshHint: Body
+        _maxWeightScale: 1
+    - rid: 4448593420807569409
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: A
+        MaxWeight: 100
+        BlendShapeName: A
+    - rid: 4448593420807569410
+      type: {class: AnimationClipPhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: I
+        MaxWeight: 100
+        Clip: {fileID: 7400000, guid: 85eeb520a0ea4b52832d0eb97d6bb1d0, type: 2}
+    - rid: 4448593420807569411
+      type: {class: AnimationClipPhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: U
+        MaxWeight: 100
+        Clip: {fileID: 7400000, guid: 2121a0478cbf4437a91bb32193c45229, type: 2}
+    - rid: 4448593420807569412
+      type: {class: BlendShapePhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: E
+        MaxWeight: 100
+        BlendShapeName: E
+    - rid: 4448593420807569413
+      type: {class: AnimationClipPhonemeEntry, ns: Hidano.FacialControl.LipSync.Adapters.PhonemeEntries, asm: Hidano.FacialControl.LipSync}
+      data:
+        PhonemeId: O
+        MaxWeight: 100
+        Clip: {fileID: 7400000, guid: dc4ee9b950544d5a8da09244defea652, type: 2}

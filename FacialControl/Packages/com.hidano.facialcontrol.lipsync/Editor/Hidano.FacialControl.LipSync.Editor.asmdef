@@ -1,0 +1,23 @@
+{
+    "name": "Hidano.FacialControl.LipSync.Editor",
+    "rootNamespace": "Hidano.FacialControl.LipSync.Editor",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters",
+        "Hidano.FacialControl.Editor",
+        "Hidano.FacialControl.LipSync",
+        "uLipSync.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
