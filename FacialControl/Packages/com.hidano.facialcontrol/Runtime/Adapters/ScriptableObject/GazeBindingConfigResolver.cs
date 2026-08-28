@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;

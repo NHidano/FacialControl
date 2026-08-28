@@ -118,7 +118,7 @@
   - EditMode 繝・せ繝医〒縲瑚・蜍募ｮ溯｡後・逋ｺ轣ｫ譚｡莉ｶ縲阪碁撼遨ｺ path 縺ｮ髱樔ｸ頑嶌縺阪阪窟nimator 襍ｷ轤ｹ縺ｮ path 逕滓・縲阪瑚ｧ｣豎ｺ荳崎・譎ゅ・譯亥・陦ｨ遉ｺ譚｡莉ｶ縲阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 6.4 譌ｧ蟆守ｷ壹・蟄､蜈仙炎髯､繝ｻisGaze validation 繧呈彫蜴ｻ縺玲立蝙九ｒ荳謗・☆繧・  - 蟄､蜈・GazeConfig 蜑企勁縺ｮ 3 繝医Μ繧ｬ荳蠑・/ 髫縺・dropdown 繝・ャ繝峨ヱ繧ｹ / isGaze Toggle 陦・UI 縺ｨ騾｣蜍・validation / GazeConfig 逕滓・ 3 蟆守ｷ・/ gaze 蛟呵｣懷・謖・/ look* 縺ｮ UI繝ｻvalidation 繧呈彫蜴ｻ縺励∬｡ｨ諠・Λ繧､繝悶Λ繝ｪ繧ｿ繝悶°繧・gaze 髢｢騾｣ UI 繧貞ｮ悟・縺ｫ髯､蜴ｻ縺吶ｋ
+- [x] 6.4 譌ｧ蟆守ｷ壹・蟄､蜈仙炎髯､繝ｻisGaze validation 繧呈彫蜴ｻ縺玲立蝙九ｒ荳謗・☆繧・  - 蟄､蜈・GazeConfig 蜑企勁縺ｮ 3 繝医Μ繧ｬ荳蠑・/ 髫縺・dropdown 繝・ャ繝峨ヱ繧ｹ / isGaze Toggle 陦・UI 縺ｨ騾｣蜍・validation / GazeConfig 逕滓・ 3 蟆守ｷ・/ gaze 蛟呵｣懷・謖・/ look* 縺ｮ UI繝ｻvalidation 繧呈彫蜴ｻ縺励∬｡ｨ諠・Λ繧､繝悶Λ繝ｪ繧ｿ繝悶°繧・gaze 髢｢騾｣ UI 繧貞ｮ悟・縺ｫ髯､蜴ｻ縺吶ｋ
   - 萓晏ｭ伜・縺ｮ鄂ｮ謠帛ｮ御ｺ・ｒ蜿励￠縺ｦ縲∵立蝙具ｼ・azeBindingConfig / 譌ｧ resolver / 譌ｧ gaze config DTO・峨→ Spec 1 縺ｮ Adapters 蛛ｴ蜷域・ helper繝ｻside enum 繧貞炎髯､縺吶ｋ・郁ｧ｣豎ｺ邨先棡蝙九・蠕檎ｶ・resolver 縺ｸ遘ｻ險ｭ貂医∩縺ｧ縺ゅｋ縺薙→・・  - 譌ｧ讒矩・・sGaze / SO 繝ｫ繝ｼ繝・gaze config 繝ｪ繧ｹ繝・/ 逕滓・ 3 蟆守ｷ夲ｼ峨ｒ蜿ら・縺吶ｋ繧ｳ繝ｼ繝峨′繝励Ο繧ｸ繧ｧ繧ｯ繝亥・菴薙〒繧ｼ繝ｭ縺ｫ縺ｪ繧翫・ditor asmdef 蜷ｫ繧蜈ｨ asmdef 縺後さ繝ｳ繝代う繝ｫ蜿ｯ閭ｽ縺ｧ Editor 繝・せ繝医′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 9.2_
   - _Depends: 4.2, 5.1, 5.2, 5.3, 5.5_

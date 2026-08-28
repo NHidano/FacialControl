@@ -315,11 +315,6 @@ namespace Hidano.FacialControl.Adapters.Playable
 
             ConfigureAdapterBindingsWithGazeChannels(bindings);
 
-            if (_characterSO != null && _characterSO.HasLegacyGazeConfigs)
-            {
-                Debug.LogWarning("[FacialControl] FacialController: legacy _gazeConfigs was detected; please reconfigure gaze in the Gaze section. See the migration guide.");
-            }
-
             var appScope = FacialControlAppLifetimeScope.GetOrCreate();
             if (appScope == null)
             {
