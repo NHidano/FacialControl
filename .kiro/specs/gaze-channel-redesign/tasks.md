@@ -31,7 +31,7 @@
   - _Requirements: 3.1, 3.2, 3.4, 3.5, 3.6, 3.7, 1.3_
   - _Boundary: GazeSourceIdConvention, GazeSide_
 
-- [ ] 1.3 (P) gaze source 宣言契約とチャネル注入契約を Domain に新設する
+- [x] 1.3 (P) gaze source 宣言契約とチャネル注入契約を Domain に新設する
   - binding が提供可能な gaze source の静的宣言（対象チャネル id + 左右ペア有無。id null/空 = 広告駆動等のワイルドカード）と宣言 interface、チャネル id 列の型付き注入 interface を、既存の宣言 interface 前例と同格の Domain 配置・純 C# で定義する
   - 注入契約（rebuild ごと・OnStart 前・先頭が既定チャネルの不変条件済みリスト・null なし）と、provider 追加のみで将来の procedural gaze ソースが選択肢に載る拡張点であることを XML doc に明記する
   - Domain asmdef 単体でコンパイル可能で、宣言 struct の値保持が EditMode テストで緑になる (観測可能な完了条件)
