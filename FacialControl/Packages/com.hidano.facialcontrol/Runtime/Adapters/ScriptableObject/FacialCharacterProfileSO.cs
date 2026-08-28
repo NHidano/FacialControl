@@ -6,6 +6,7 @@ using Hidano.FacialControl.Adapters.Json;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Models;
 using UnityEngine;
+using UnityEngine.Serialization;
 using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
 using GazeChannel = Hidano.FacialControl.Adapters.ScriptableObject.GazeChannel;
 
@@ -27,6 +28,11 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             new GazeChannel { id = "gaze" }
         };
         // 依存側置換までのソース互換用。旧 root リストは保存しない。
+        // 旧 SO スキーマを検出するためだけに旧キーを受け取る。通常の Gaze API には公開しない。
+        [SerializeField, FormerlySerializedAs("_gazeConfigs")]
+        private List<GazeBindingConfig> _legacyGazeConfigs;
+
+        // 既存の拡張コードとのコンパイル互換用。Unity のシリアライズ対象にはしない。
         [NonSerialized] protected List<GazeBindingConfig> _gazeConfigs = new List<GazeBindingConfig>();
         [SerializeField] private List<string> _slots = new();
         [SerializeField] protected List<OverlaySlotBindingSerializable> _defaultOverlays = new List<OverlaySlotBindingSerializable>();
@@ -70,6 +76,12 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
                 return _gazeChannels;
             }
         }
+
+        /// <summary>
+        /// 旧 SO スキーマの gaze_configs 相当データが復元されたかを示す。
+        /// 旧データは自動変換せず、呼び出し側が警告して読み捨てるために使用する。
+        /// </summary>
+        public bool HasLegacyGazeConfigs => _legacyGazeConfigs != null && _legacyGazeConfigs.Count > 0;
 
         [Obsolete("GazeChannels を使用してください。後続タスクで削除されます。")]
         public IReadOnlyList<GazeBindingConfig> GazeConfigs => _gazeConfigs ?? (_gazeConfigs = new List<GazeBindingConfig>());
