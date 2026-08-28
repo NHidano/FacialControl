@@ -42,6 +42,28 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
         }
 
         [Test]
+        public void GetGazeSourceDeclarations_ValidGazeChannelsDeclareChannelIdsOnly()
+        {
+            var binding = new TimelineAdapterBinding();
+            MutableChannelDefinitions(binding).Add(new TimelineValueChannelConfig
+            {
+                Sub = "gaze",
+                IsGaze = true,
+            });
+            MutableChannelDefinitions(binding).Add(new TimelineValueChannelConfig
+            {
+                Sub = "invalid:gaze",
+                IsGaze = true,
+            });
+
+            var declarations = new List<GazeSourceDeclaration>(binding.GetGazeSourceDeclarations());
+
+            Assert.That(declarations, Has.Count.EqualTo(1));
+            Assert.That(declarations[0].ChannelId, Is.EqualTo("gaze"));
+            Assert.That(declarations[0].ProvidesLeftRightPair, Is.False);
+        }
+
+        [Test]
         public void OnStart_RegistersStateAnalogAndGazeSinks_AndConfiguresReceiver()
         {
             var registry = new FakeInputSourceRegistry();

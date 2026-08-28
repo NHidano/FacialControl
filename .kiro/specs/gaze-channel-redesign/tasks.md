@@ -153,7 +153,7 @@
   - _Boundary: IFacialMocapReceiverAdapterBinding_
   - _Depends: 1.2, 1.3_
 
-- [ ] 5.5 (P) Timeline / rec の gaze 判定を新規約へ追従させる
+- [x] 5.5 (P) Timeline / rec の gaze 判定を新規約へ追従させる
   - takeover 対象 source id の合成・検証を規約 helper 経由にする（Drawer / validation で非準拠 id を警告。Timeline 独自の isGaze フラグは存続）
   - isGaze チャネル config について宣言契約を実装する（sub をチャネル id として宣言、チャネル id validation 非準拠は宣言から除外 + Editor validation 警告 — 診断連番 id の規約整合）
   - rec 書き出しの gaze 分類を「profile のチャネル id 集合 + distinct 明示値 × 規約パース」ベースへ置換する（規約合成 id を分類できない現行の穴を解消）

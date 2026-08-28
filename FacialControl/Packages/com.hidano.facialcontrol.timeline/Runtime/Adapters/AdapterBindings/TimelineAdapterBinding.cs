@@ -12,7 +12,7 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
 {
     [Serializable]
     [FacialAdapterBinding(displayName: "Timeline")]
-    public sealed class TimelineAdapterBinding : AdapterBindingBase
+    public sealed class TimelineAdapterBinding : AdapterBindingBase, IGazeSourceProvider
     {
         private const string DefaultSlug = "timeline";
         private const int DefaultMaxStackDepth = 16;
@@ -107,6 +107,19 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
 
                     if (channel.IsGaze)
                     {
+                        if (!GazeSourceIdConvention.IsValidChannelId(channel.Sub))
+                        {
+                            Debug.LogWarning(
+                                $"[TimelineAdapterBinding] Gaze channel '{channel.Sub}' is not a valid channel id. The gaze source declaration is skipped.");
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(channel.TakeoverSourceId)
+                            && !GazeSourceIdConvention.TryParse(channel.TakeoverSourceId, out _, out _, out _))
+                        {
+                            Debug.LogWarning(
+                                $"[TimelineAdapterBinding] Gaze takeover source id '{channel.TakeoverSourceId}' does not follow the gaze source id convention.");
+                        }
+
                         string diagnosticSub = "gaze-" + gazeDiagnosticIndex++;
                         var gazeSink = new TimelineGazeInputSource(
                             InputSourceId.Parse(slug.Value + ":" + diagnosticSub));
@@ -137,6 +150,26 @@ namespace Hidano.FacialControl.Timeline.Adapters.AdapterBindings
                 valueSinks,
                 analogSinks,
                 gazeSinks);
+        }
+
+        public IEnumerable<GazeSourceDeclaration> GetGazeSourceDeclarations()
+        {
+            if (channelDefinitions == null)
+            {
+                yield break;
+            }
+
+            for (int i = 0; i < channelDefinitions.Count; i++)
+            {
+                TimelineValueChannelConfig channel = channelDefinitions[i];
+                if (channel == null || !channel.IsGaze
+                    || !GazeSourceIdConvention.IsValidChannelId(channel.Sub))
+                {
+                    continue;
+                }
+
+                yield return new GazeSourceDeclaration(channel.Sub, providesLeftRightPair: false);
+            }
         }
 
         public override void Dispose()

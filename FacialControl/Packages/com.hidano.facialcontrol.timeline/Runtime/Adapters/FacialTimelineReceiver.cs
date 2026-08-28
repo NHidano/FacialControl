@@ -276,7 +276,12 @@ namespace Hidano.FacialControl.Timeline.Adapters
                     continue;
                 }
 
-                if (!AdapterSlug.TryParseComposite(takeover.TakeoverSourceId, out AdapterSlug slug, out string sub))
+                if (!GazeSourceIdConvention.TryParse(
+                        takeover.TakeoverSourceId,
+                        out string slugText,
+                        out string sub,
+                        out _)
+                    || !AdapterSlug.TryParse(slugText, out AdapterSlug slug))
                 {
                     Debug.LogWarning(
                         $"[FacialTimelineReceiver] Could not parse gaze takeover id '{takeover.TakeoverSourceId}'. The channel is disabled.");
@@ -320,7 +325,12 @@ namespace Hidano.FacialControl.Timeline.Adapters
                 return;
             }
 
-            if (!AdapterSlug.TryParseComposite(takeover.TakeoverSourceId, out AdapterSlug slug, out string sub))
+            if (!GazeSourceIdConvention.TryParse(
+                    takeover.TakeoverSourceId,
+                    out string slugText,
+                    out string sub,
+                    out _)
+                || !AdapterSlug.TryParse(slugText, out AdapterSlug slug))
             {
                 Debug.LogWarning(
                     $"[FacialTimelineReceiver] Could not parse gaze takeover id '{takeover.TakeoverSourceId}' during restoration. Cleanup is skipped.");
