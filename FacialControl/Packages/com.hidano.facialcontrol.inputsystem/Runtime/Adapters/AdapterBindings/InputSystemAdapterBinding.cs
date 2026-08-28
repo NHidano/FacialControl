@@ -414,16 +414,16 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
                     if (entry.useDistinctLeftRight)
                     {
                         InputActionAnalogSource leftSource =
-                            TryRegisterAnalogSource(ctx, slug, entry.actionNameLeft, registered);
+                            TryRegisterAnalogSource(ctx, slug, entry.actionNameLeft, registered, registerPublicSource: false);
                         InputActionAnalogSource rightSource =
-                            TryRegisterAnalogSource(ctx, slug, entry.actionNameRight, registered);
+                            TryRegisterAnalogSource(ctx, slug, entry.actionNameRight, registered, registerPublicSource: false);
                         RegisterGazeSource(ctx.InputSourceRegistry, slug, entry.expressionId, GazeSide.Left, leftSource);
                         RegisterGazeSource(ctx.InputSourceRegistry, slug, entry.expressionId, GazeSide.Right, rightSource);
                     }
                     else
                     {
                         InputActionAnalogSource sharedSource =
-                            TryRegisterAnalogSource(ctx, slug, entry.actionName, registered);
+                            TryRegisterAnalogSource(ctx, slug, entry.actionName, registered, registerPublicSource: false);
                         RegisterGazeSource(ctx.InputSourceRegistry, slug, entry.expressionId, GazeSide.Shared, sharedSource);
                     }
                     continue;
@@ -432,7 +432,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
                 if (entry.bindingMode == BindingMode.Analog
                     || entry.bindingMode == BindingMode.Overlay)
                 {
-                    TryRegisterAnalogSource(ctx, slug, entry.actionName, registered);
+                    TryRegisterAnalogSource(ctx, slug, entry.actionName, registered, registerPublicSource: true);
                 }
             }
         }
@@ -456,7 +456,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
             in AdapterBuildContext ctx,
             AdapterSlug slug,
             string actionName,
-            HashSet<string> registered)
+            HashSet<string> registered,
+            bool registerPublicSource)
         {
             if (string.IsNullOrWhiteSpace(actionName)) return null;
             if (registered.Contains(actionName)) return FindAnalogSourceById(actionName);
@@ -480,7 +481,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
 
             var src = new InputActionAnalogSource(srcId, action, shape);
             _analogSources.Add(src);
-            ctx.InputSourceRegistry.Register(slug, actionName, new AnalogInputSourceWrapper(src));
+            if (registerPublicSource)
+            {
+                ctx.InputSourceRegistry.Register(slug, actionName, new AnalogInputSourceWrapper(src));
+            }
             registered.Add(actionName);
             return src;
         }
