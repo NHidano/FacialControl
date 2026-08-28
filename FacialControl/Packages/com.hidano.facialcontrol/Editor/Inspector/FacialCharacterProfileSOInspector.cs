@@ -134,6 +134,8 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string GazeChannelSourceIdRightName = "facial-character-gaze-channel-source-right";
         public const string GazeChannelLeftBonePathName = "facial-character-gaze-channel-left-bone";
         public const string GazeChannelRightBonePathName = "facial-character-gaze-channel-right-bone";
+        public const string GazeChannelAutoAssignButtonName = "facial-character-gaze-channel-auto-assign";
+        public const string GazeChannelBoneResolutionHelpName = "facial-character-gaze-channel-bone-resolution";
 
         // ====================================================================
         // 共通スタイル定数
@@ -206,6 +208,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             new List<(Foldout foldout, string key)>();
 #if UNITY_EDITOR
         private GameObject _lastReferenceModel;
+        private bool _isAutoAssigningGazeBones;
 #endif
 
         // ====================================================================
@@ -1334,6 +1337,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
             row.Add(header);
             AddGazeProviderDropdown(row, index, channel);
+            AddGazeChannelBoneResolutionControls(row, index, channel);
             AddGazeChannelProperty(row, channel, "leftEyeBonePath", "左目ボーン", GazeChannelLeftBonePathName);
             AddGazeChannelProperty(row, channel, "rightEyeBonePath", "右目ボーン", GazeChannelRightBonePathName);
             AddGazeChannelProperty(row, channel, "lookUpAngle", "上方向角度", GazeConfigLookUpAngleFieldName);
@@ -1353,6 +1357,73 @@ namespace Hidano.FacialControl.Editor.Inspector
             row.Add(advanced);
             UpdateGazeChannelIdValidation(row);
             return row;
+        }
+
+        private void AddGazeChannelBoneResolutionControls(VisualElement row, int index, SerializedProperty channel)
+        {
+            var button = new Button(() => ResolveGazeChannelFromReferenceModel(index))
+            {
+                name = GazeChannelAutoAssignButtonName + "-" + index,
+                text = "参照モデルから目ボーンを自動解決",
+                tooltip = "空欄の目ボーンだけを参照モデルから解決します。"
+            };
+            button.SetEnabled(HasReferenceModel());
+            row.Add(button);
+            var help = MakeHelpBox(string.Empty, HelpBoxMessageType.Warning);
+            help.name = GazeChannelBoneResolutionHelpName + "-" + index;
+            UpdateGazeChannelBoneResolutionHelp(help, channel);
+            row.Add(help);
+        }
+
+        private void ResolveGazeChannelFromReferenceModel(int channelIndex)
+        {
+            if (_gazeChannelsProperty == null || channelIndex < 0 || channelIndex >= _gazeChannelsProperty.arraySize)
+                return;
+            serializedObject.Update();
+            if (!EditorUtility.DisplayDialog("目ボーンを再解決", "既存の目ボーン設定を参照モデルで上書きしますか？", "再解決", "キャンセル"))
+                return;
+            Undo.RecordObject(target, "目ボーンを参照モデルから再解決");
+            AutoAssignGazeBonesForChannel(_gazeChannelsProperty.GetArrayElementAtIndex(channelIndex), overwrite: true);
+            serializedObject.ApplyModifiedProperties();
+            RebuildGazeChannelsUI(_rootElement?.Q<VisualElement>(GazeChannelsListName));
+            UpdateValidation();
+        }
+
+        private void AutoAssignGazeBonesForChannels()
+        {
+            if (_isAutoAssigningGazeBones || _gazeChannelsProperty == null || !HasReferenceModel()) return;
+            _isAutoAssigningGazeBones = true;
+            try
+            {
+                serializedObject.Update();
+                Undo.RecordObject(target, "参照モデル変更時の目ボーン自動解決");
+                for (int i = 0; i < _gazeChannelsProperty.arraySize; i++)
+                    AutoAssignGazeBonesForChannel(_gazeChannelsProperty.GetArrayElementAtIndex(i));
+                serializedObject.ApplyModifiedProperties();
+                RebuildGazeChannelsUI(_rootElement?.Q<VisualElement>(GazeChannelsListName));
+                UpdateValidation();
+            }
+            finally { _isAutoAssigningGazeBones = false; }
+        }
+
+        private void AutoAssignGazeBonesForChannel(SerializedProperty channel, bool overwrite = false)
+        {
+            if (channel == null) return;
+            AutoAssignGazeBonesFromReferenceModel(
+                channel.FindPropertyRelative("leftEyeBonePath"), channel.FindPropertyRelative("leftEyeInitialRotation"),
+                channel.FindPropertyRelative("rightEyeBonePath"), channel.FindPropertyRelative("rightEyeInitialRotation"),
+                channel.FindPropertyRelative("leftEyeYawAxisLocal"), channel.FindPropertyRelative("leftEyePitchAxisLocal"),
+                channel.FindPropertyRelative("rightEyeYawAxisLocal"), channel.FindPropertyRelative("rightEyePitchAxisLocal"), overwrite);
+        }
+
+        private static void UpdateGazeChannelBoneResolutionHelp(HelpBox help, SerializedProperty channel)
+        {
+            if (help == null || channel == null) return;
+            bool leftMissing = string.IsNullOrWhiteSpace(channel.FindPropertyRelative("leftEyeBonePath")?.stringValue);
+            bool rightMissing = string.IsNullOrWhiteSpace(channel.FindPropertyRelative("rightEyeBonePath")?.stringValue);
+            bool missing = leftMissing || rightMissing;
+            help.text = missing ? "目ボーンを解決できない側があります。Humanoid マッピングを確認するか、ボーン path を手動入力してください。" : string.Empty;
+            help.style.display = missing ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void AddGazeProviderDropdown(VisualElement row, int index, SerializedProperty channel)
@@ -1830,7 +1901,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             // ユーザーが明示的に GazeConfig 行の「参照モデルから自動設定」ボタンで埋める想定）。
             if (currentReferenceModel != null && currentReferenceModel != previousReferenceModel)
             {
-                MarkGazeTabNeedsAttention();
+                AutoAssignGazeBonesForChannels();
             }
         }
 #endif
@@ -3156,7 +3227,8 @@ namespace Hidano.FacialControl.Editor.Inspector
             SerializedProperty leftYawAxisProp,
             SerializedProperty leftPitchAxisProp,
             SerializedProperty rightYawAxisProp,
-            SerializedProperty rightPitchAxisProp)
+            SerializedProperty rightPitchAxisProp,
+            bool overwrite = false)
         {
             if (_referenceModelProperty == null)
             {
@@ -3174,6 +3246,8 @@ namespace Hidano.FacialControl.Editor.Inspector
             }
 
             var animator = referenceModel.GetComponentInChildren<Animator>(includeInactive: true);
+            if (animator == null)
+                Debug.LogWarning("[FacialControl] 参照モデルに Animator がないため、参照モデル root 起点で目ボーン path を保存します。");
 
             Transform leftEye = null;
             Transform rightEye = null;
@@ -3192,10 +3266,14 @@ namespace Hidano.FacialControl.Editor.Inspector
             int assigned = 0;
             if (leftEye != null)
             {
-                if (leftBonePathProp != null) leftBonePathProp.stringValue = leftEye.name;
-                if (leftInitRotProp != null) leftInitRotProp.vector3Value = leftEye.localEulerAngles;
-                AssignParentLocalAxes(leftEye, leftYawAxisProp, leftPitchAxisProp);
-                assigned++;
+                string path = GetBonePath(animator, referenceModel.transform, leftEye);
+                if ((overwrite || string.IsNullOrWhiteSpace(leftBonePathProp?.stringValue)) && !string.IsNullOrEmpty(path))
+                {
+                    leftBonePathProp.stringValue = path;
+                    if (leftInitRotProp != null) leftInitRotProp.vector3Value = leftEye.localEulerAngles;
+                    AssignParentLocalAxes(leftEye, leftYawAxisProp, leftPitchAxisProp);
+                    assigned++;
+                }
             }
             else
             {
@@ -3204,10 +3282,14 @@ namespace Hidano.FacialControl.Editor.Inspector
 
             if (rightEye != null)
             {
-                if (rightBonePathProp != null) rightBonePathProp.stringValue = rightEye.name;
-                if (rightInitRotProp != null) rightInitRotProp.vector3Value = rightEye.localEulerAngles;
-                AssignParentLocalAxes(rightEye, rightYawAxisProp, rightPitchAxisProp);
-                assigned++;
+                string path = GetBonePath(animator, referenceModel.transform, rightEye);
+                if ((overwrite || string.IsNullOrWhiteSpace(rightBonePathProp?.stringValue)) && !string.IsNullOrEmpty(path))
+                {
+                    rightBonePathProp.stringValue = path;
+                    if (rightInitRotProp != null) rightInitRotProp.vector3Value = rightEye.localEulerAngles;
+                    AssignParentLocalAxes(rightEye, rightYawAxisProp, rightPitchAxisProp);
+                    assigned++;
+                }
             }
             else
             {
@@ -3221,6 +3303,22 @@ namespace Hidano.FacialControl.Editor.Inspector
                     $"[FacialCharacterProfileSOInspector] 参照モデル '{referenceModel.name}' から目ボーンを自動設定しました"
                     + $" (Left: {(leftEye != null ? leftEye.name : "(skip)")}, Right: {(rightEye != null ? rightEye.name : "(skip)")}).");
             }
+        }
+
+        private static string GetBonePath(Animator animator, Transform referenceRoot, Transform bone)
+        {
+            if (bone == null) return null;
+            var names = new List<string>();
+            var current = bone;
+            var origin = animator != null ? animator.transform : referenceRoot;
+            while (current != null && current != origin)
+            {
+                names.Add(current.name);
+                current = current.parent;
+            }
+            if (current != origin) return null;
+            names.Reverse();
+            return string.Join("/", names);
         }
 
         private static void AssignParentLocalAxes(
