@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Hidano.FacialControl.Adapters.FileSystem;
@@ -6,6 +7,7 @@ using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Models;
 using UnityEngine;
 using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
+using GazeChannel = Hidano.FacialControl.Adapters.ScriptableObject.GazeChannel;
 
 namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
 {
@@ -20,7 +22,12 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         [SerializeField] protected List<ExpressionSerializable> _expressions = new List<ExpressionSerializable>();
         [SerializeField] protected BaseExpressionSerializable _baseExpression = new BaseExpressionSerializable();
         [SerializeField] protected List<string> _rendererPaths = new List<string>();
-        [SerializeField] protected List<GazeBindingConfig> _gazeConfigs = new List<GazeBindingConfig>();
+        [SerializeField] protected List<GazeChannel> _gazeChannels = new List<GazeChannel>
+        {
+            new GazeChannel { id = "gaze" }
+        };
+        // 依存側置換までのソース互換用。旧 root リストは保存しない。
+        [NonSerialized] protected List<GazeBindingConfig> _gazeConfigs = new List<GazeBindingConfig>();
         [SerializeField] private List<string> _slots = new();
         [SerializeField] protected List<OverlaySlotBindingSerializable> _defaultOverlays = new List<OverlaySlotBindingSerializable>();
         [SerializeReference] protected List<AdapterBindingBase> _adapterBindings = new List<AdapterBindingBase>();
@@ -49,11 +56,32 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         }
 
         public List<string> RendererPaths => _rendererPaths;
+        public IReadOnlyList<GazeChannel> GazeChannels
+        {
+            get
+            {
+                if (_gazeChannels == null || _gazeChannels.Count == 0)
+                    _gazeChannels = new List<GazeChannel> { CreateDefaultGazeChannel() };
+                else if (_gazeChannels[0] == null)
+                    _gazeChannels[0] = CreateDefaultGazeChannel();
+
+                if (!string.Equals(_gazeChannels[0].id, "gaze", System.StringComparison.Ordinal))
+                    _gazeChannels[0].id = "gaze";
+                return _gazeChannels;
+            }
+        }
+
+        [Obsolete("GazeChannels を使用してください。後続タスクで削除されます。")]
         public IReadOnlyList<GazeBindingConfig> GazeConfigs => _gazeConfigs ?? (_gazeConfigs = new List<GazeBindingConfig>());
         public IReadOnlyList<string> Slots => _slots ?? (_slots = new List<string>());
         public List<OverlaySlotBindingSerializable> DefaultOverlays
             => _defaultOverlays ?? (_defaultOverlays = new List<OverlaySlotBindingSerializable>());
         public IReadOnlyList<AdapterBindingBase> AdapterBindings => _adapterBindings;
+
+        private static GazeChannel CreateDefaultGazeChannel()
+        {
+            return new GazeChannel { id = "gaze" };
+        }
 
         public virtual FacialProfile BuildFallbackProfile()
         {

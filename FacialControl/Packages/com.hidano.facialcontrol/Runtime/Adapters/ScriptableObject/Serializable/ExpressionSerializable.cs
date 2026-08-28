@@ -32,8 +32,9 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         [Tooltip("所属レイヤー名 (Layers セクションの name と一致させる)。")]
         public string layer;
 
-        [Tooltip("目線操作の表情ならば true。AnimationClip による補間は適用されず GazeConfig で駆動する。通常表情は false にして AnimationClip / 遷移時間 を設定する。")]
-        public bool isGaze;
+        // 旧テスト/依存コードのコンパイル互換用。Unity に保存されるフィールドではなく、Gaze の判定には使用しない。
+        [Obsolete("Gaze は GazeChannel で定義してください。")]
+        public bool isGaze { get; set; }
 
         [Tooltip("表情の AnimationClip。時刻 0 の BlendShape / Bone 値および AnimationEvent メタデータから snapshot をベイクする。")]
         public AnimationClip animationClip;
