@@ -38,7 +38,6 @@ MonoBehaviour:
   - id: smile
     name: Smile
     layer: emotion
-    isGaze: 0
     animationClip: {fileID: 7400000, guid: 6a1b2c3d4e5f60718293a4b5c6d7e801, type: 2}
     transitionDuration: 0.1
     transitionCurve:
@@ -72,7 +71,6 @@ MonoBehaviour:
   - id: anger
     name: Anger
     layer: emotion
-    isGaze: 0
     animationClip: {fileID: 7400000, guid: 6a1b2c3d4e5f60718293a4b5c6d7e802, type: 2}
     transitionDuration: 0.1
     transitionCurve:
@@ -99,7 +97,6 @@ MonoBehaviour:
   - id: surprise
     name: Surprise
     layer: emotion
-    isGaze: 0
     animationClip: {fileID: 7400000, guid: 6a1b2c3d4e5f60718293a4b5c6d7e803, type: 2}
     transitionDuration: 0.1
     transitionCurve:
@@ -123,7 +120,6 @@ MonoBehaviour:
   - id: lipsync_a
     name: Lipsync_A
     layer: emotion
-    isGaze: 0
     animationClip: {fileID: 7400000, guid: 6a1b2c3d4e5f60718293a4b5c6d7e804, type: 2}
     transitionDuration: 0.1
     transitionCurve:
@@ -144,7 +140,6 @@ MonoBehaviour:
   - id: smile_closed_eye
     name: SmileClosedEye
     layer: emotion
-    isGaze: 0
     animationClip: {fileID: 0}
     transitionDuration: 0.1
     transitionCurve:

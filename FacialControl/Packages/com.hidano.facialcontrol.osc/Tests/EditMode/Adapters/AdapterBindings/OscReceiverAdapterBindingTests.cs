@@ -307,7 +307,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
                 new OscMappingEntry
                 {
                     mode = OscMappingMode.Gaze_VRChat_XY,
-                    expressionId = "eye",
+                    expressionId = "gaze",
                     addressPattern = "/avatar/parameters/eye",
                     leftRightIndependent = false,
                 }
@@ -322,7 +322,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
 
                 Assert.That(binding.IsStarted, Is.True);
                 Assert.That(binding.GazeSources.Count, Is.EqualTo(1));
-                Assert.That(registry.TryResolve("osc:eye", out IInputSource inputSource), Is.True);
+                Assert.That(registry.TryResolve("osc:gaze", out IInputSource inputSource), Is.True);
                 var gazeSource = inputSource as GazeVector2InputSource;
                 Assert.That(gazeSource, Is.Not.Null);
 

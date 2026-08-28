@@ -247,9 +247,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
             var json = @"{
                 ""schemaVersion"": ""1.0"",
                 ""layers"": [], ""expressions"": [], ""rendererPaths"": [],
-                ""legacyGazeKey"": []
+                ""gaze_configs"": []
             }";
 
+            LogAssert.Expect(LogType.Warning, new Regex("旧 profile.json の gaze データを検出しました"));
             _parser.ParseProfileSnapshotV2(json);
             _parser.ParseProfileSnapshotV2(json);
             LogAssert.NoUnexpectedReceived();

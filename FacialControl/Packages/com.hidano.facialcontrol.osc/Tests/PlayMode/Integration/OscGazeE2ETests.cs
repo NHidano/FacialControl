@@ -28,7 +28,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
     {
         private const string Endpoint = "127.0.0.1";
         private const int LoopbackPortBase = 19340;
-        private const string ExpressionId = "eye-look";
+        private const string ExpressionId = "gaze";
         private const float Tolerance = 0.06f;
 
         private static int s_portCounter;
@@ -490,10 +490,6 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
             rawSender.SendAll(new[] { oscValue.x, oscValue.y });
             yield return new WaitForSecondsRealtime(0.05f);
             receiver.OnFixedTick(0.02f);
-
-            LogAssert.Expect(
-                LogType.Warning,
-                new Regex("expressionId 'eye-look'.*multiple binding slugs.*selected 'a-input-system-gaze'"));
 
             bool resolved = GazeChannelResolver.TryResolve(
                 new GazeChannel { id = "gaze" },

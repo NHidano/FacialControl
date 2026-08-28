@@ -432,7 +432,7 @@ namespace Hidano.FacialControl.Adapters.Json
 
         private void WarnIfLegacyGazeConfigsKey(string json)
         {
-            if (_legacyGazeWarningIssued || !ContainsJsonKey(json, "legacyGazeKey"))
+            if (_legacyGazeWarningIssued || !ContainsJsonKey(json, "gaze_configs"))
                 return;
 
             _legacyGazeWarningIssued = true;
