@@ -7,7 +7,9 @@ using Hidano.FacialControl.Adapters.AdapterBindings;
 using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Adapters.OSC;
+using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Adapters.ScriptableObject;
+using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
@@ -126,6 +128,70 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                         new[] { new GazeSnapshot(ExpressionId, expected.x, expected.y) });
                     sender.OnLateTick(0.016f);
                 });
+        }
+
+        [UnityTest]
+        public IEnumerator FacialController_DefaultGazeChannel_UdpLoopback_DrivesReceiverEyeBonesWithoutMapping()
+        {
+            int port = AllocatePort();
+            const string receiverName = "OscGazeE2E_ControllerReceiver";
+
+            var senderBinding = new OscSenderAdapterBinding
+            {
+                Slug = "gaze-e2e-sender",
+                SuppressLoopback = false,
+                HeartbeatIntervalSeconds = 60f,
+            };
+            senderBinding.ConfigureEndpoints(
+                new[] { new OscSenderEndpointConfig(Endpoint, port, true, AddressPresetKind.VRChat) },
+                Array.Empty<string>());
+            senderBinding.ConfigureGazeChannels(new[] { GazeSourceIdConvention.DefaultChannelId });
+
+            var receiverBinding = CreateReceiver("gaze-e2e-receiver", port);
+            StartBinding(senderBinding, CreateContext(CreateGameObject("OscGazeE2E_GazeSender")));
+
+            var senderProfile = CreateGazeProfile(
+                new AdapterBindingBase[] { receiverBinding },
+                providerSlug: string.Empty,
+                name: receiverName);
+
+            FacialController receiverController = CreateGazeController(receiverName, senderProfile, out Transform receiverLeftEye);
+            yield return null;
+
+            Assert.That(receiverController.IsInitialized, Is.True);
+            Assert.That(receiverBinding.Mappings, Is.Empty,
+                "受信側は Gaze セクションの既定チャネルだけで構成し、手動 OSC mapping を持たないこと。");
+
+            Quaternion initialRotation = receiverLeftEye.localRotation;
+
+            yield return new WaitForSecondsRealtime(0.2f);
+
+            bool rotated = false;
+            bool receiverValueRead = false;
+            for (int attempt = 0; attempt < 20 && !rotated; attempt++)
+            {
+                _outputBus.Publish(
+                    Array.Empty<float>(),
+                    new[] { new GazeSnapshot(GazeSourceIdConvention.DefaultChannelId, 0.65f, 0.45f) });
+                senderBinding.OnLateTick(0.016f);
+                yield return new WaitForSecondsRealtime(0.05f);
+                receiverBinding.OnFixedTick(0.02f);
+                yield return null;
+                if (receiverController.InputSourceRegistry.TryResolve(
+                        "gaze-e2e-receiver:gaze", out IInputSource receiverSource)
+                    && receiverSource is IAnalogInputSource receiverAnalog)
+                {
+                    receiverValueRead = receiverAnalog.TryReadVector2(out _, out _) || receiverValueRead;
+                }
+                rotated = Quaternion.Angle(initialRotation, receiverLeftEye.localRotation) > 0.1f;
+            }
+
+            Assert.That(receiverValueRead, Is.True,
+                "受信側の自動登録済み gaze source が UDP 値を読み出せること。");
+            Assert.That(rotated, Is.True,
+                "送信側 Gaze セクション → 規約 id gaze → UDP loopback → 受信側自動登録 → 目ボーンの経路が成立すること。");
+
+            receiverController.enabled = false;
         }
 
         [UnityTest]
@@ -571,6 +637,71 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 });
             binding.ConfigureGazeChannels(new[] { ExpressionId });
             return binding;
+        }
+
+        private TestGazeProfileSO CreateGazeProfile(
+            IReadOnlyList<AdapterBindingBase> bindings,
+            string providerSlug,
+            string name)
+        {
+            var profile = ScriptableObject.CreateInstance<TestGazeProfileSO>();
+            profile.name = name + "Profile";
+            profile.AddGazeChannel(new GazeChannel
+            {
+                id = GazeSourceIdConvention.DefaultChannelId,
+                providerSlug = providerSlug,
+                leftEyeBonePath = "Eyes/LeftEye",
+                rightEyeBonePath = "Eyes/RightEye",
+                lookUpAngle = 30f,
+                lookDownAngle = 30f,
+                outerYawAngle = 30f,
+                innerYawAngle = 30f,
+            });
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                profile.WritableAdapterBindings.Add(bindings[i]);
+            }
+            _objects.Add(profile);
+            return profile;
+        }
+
+        private FacialController CreateGazeController(
+            string name,
+            TestGazeProfileSO profile,
+            out Transform leftEye)
+        {
+            GameObject root = CreateGameObject(name);
+            root.AddComponent<Animator>();
+            GameObject eyes = new GameObject("Eyes");
+            eyes.transform.SetParent(root.transform);
+            leftEye = new GameObject("LeftEye").transform;
+            leftEye.SetParent(eyes.transform);
+            Transform rightEye = new GameObject("RightEye").transform;
+            rightEye.SetParent(eyes.transform);
+            Mesh mesh = new Mesh { name = name + "Mesh" };
+            mesh.vertices = new[] { Vector3.zero, Vector3.right, Vector3.up };
+            mesh.triangles = new[] { 0, 1, 2 };
+            _objects.Add(mesh);
+            var renderer = new GameObject("Mesh").AddComponent<SkinnedMeshRenderer>();
+            renderer.transform.SetParent(root.transform);
+            renderer.sharedMesh = mesh;
+            var controller = root.AddComponent<FacialController>();
+            controller.CharacterSO = profile;
+            controller.SkinnedMeshRenderers = new[] { renderer };
+            controller.Initialize();
+            return controller;
+        }
+
+        private sealed class TestGazeProfileSO : FacialCharacterProfileSO
+        {
+            public List<AdapterBindingBase> WritableAdapterBindings => _adapterBindings;
+
+            public void AddGazeChannel(GazeChannel channel)
+            {
+                var channels = (List<GazeChannel>)GazeChannels;
+                channels.Clear();
+                channels.Add(channel);
+            }
         }
 
         private OscSender CreateRawSender(
