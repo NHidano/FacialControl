@@ -19,7 +19,7 @@
 | OSC 送受信 | uOsc ベースの UDP 通信。VRChat + ARKit アドレスプリセット |
 | OSC 自動マッピング | heartbeat 広告による送受信 mapping の自動構築（BlendShape / gaze）。手動 mapping との共存 |
 | ARKit 52 / PerfectSync | 手動トリガーによる BlendShape スキャン + Expression 自動生成 |
-| 視線制御（ボーン経路） | Vector2 入力（OSC / InputSystem / Timeline / iFacialMocap）→ 目ボーン yaw/pitch。可動角はチャネル単位で設定 |
+| 視線制御（Gaze セクション） | 独立チャネルの Vector2 入力（OSC / InputSystem / Timeline / iFacialMocap）→ 目ボーン yaw/pitch。入力源はドロップダウンで選択し、可動角はチャネル単位で設定 |
 | AdapterBinding アーキテクチャ | 入力源・出力先を `IAdapterBinding` として `FacialCharacterProfileSO` に結線。ランタイム設定は `AdapterRuntimeSettingsCollectionSO` |
 | 入力源ルーティング・グラフエディタ | ノードグラフ UI で入力源とレイヤーを配線（slug 直書きの廃止） |
 | Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援（プレビューカメラ / PNG 書き出し）、JSON インポート / エクスポート |
@@ -35,8 +35,8 @@
 | 機能 | 理由 / 現状 |
 |------|------|
 | 自動まばたき | `IBlinkTrigger` インターフェースは定義済み。実装は延期（§11） |
-| 視線追従の Vector3 ターゲット指定 / カメラ目線 | ボーン経路の視線制御は preview.1 に含む。Vector3 ターゲット解決とカメラ目線トグルは延期（backlog M-5） |
-| BlendShape ベース視線の runtime 配線 | `lookXxxSamples` を消費する経路が未配線。目ボーン非搭載モデルは視線を反映できない（backlog M-29） |
+| 視線追従の Vector3 ターゲット指定 / カメラ目線 | Gaze は preview.1 のボーン経路を提供する。Vector3 ターゲット解決とカメラ目線 procedural ソースは延期（backlog M-5）。入力ソースの宣言・選択による拡張点は用意する |
+| BlendShape ベース視線の runtime 配線 | 本 spec では扱わない。look* 系スキーマと runtime 配線は削除し、将来 spec で新データモデルごと再設計する（backlog M-29） |
 | 瞳の微細動（マイクロサッカード） | 入力が静止すると瞳も完全静止する。プロシージャル生成は未計画（backlog M-31） |
 | VRM 対応 | リリース後の早期マイルストーン |
 | テクスチャ切替 / UV アニメーションの JSON 対応 | preview.1 では BlendShape のみ JSON 対応 |
@@ -472,13 +472,20 @@ public interface IBlinkTrigger
 
 ---
 
-## 12. 視線制御（preview.2 延期）
+## 12. 視線制御（Gaze セクション、preview.1）
 
-### 12.1 設計方針（preview.1 でインターフェース定義）
+### 12.1 設計方針
 
-- **BlendShape + ボーン両方対応**: モデルの仕様に応じて選択
-- **ターゲット指定**: Vector3 座標指定（Transform 参照は将来拡張）
-- 「視線追従」と「カメラ目線」のデフォルト Expression テンプレートとして同梱
+- Gaze は `FacialCharacterProfileSO` 直下の `gaze.channels[]` で構成し、先頭チャネルの id は `gaze` に固定する。チャネルは Expression やレイヤー合成に参加しない。
+- 各チャネルは入力 source の選択、左右の目ボーン path、初期回転、ローカル yaw/pitch 軸、上下左右の可動角を保持する。参照モデル割当時に Animator 起点のフル path を自動解決する。
+- 入力 source は `IGazeSourceProvider` の宣言を Inspector が列挙し、ユーザーは Gaze セクションのドロップダウンで切り替える。`providerSlug` が空の場合は binding の宣言と `{slug}:{channelId}[.left|.right]` の規約から自動解決する。
+- `GazeBonePoseProvider` は source の Vector2 を読み、Quaternion 合成で左右の目の `Transform.localRotation` を毎フレーム更新する。未入力時は設定した初期回転へ戻し、破棄時は書込み開始前の回転へ復元する。
+- 「視線追従」「カメラ目線」は Expression テンプレートではなく、将来追加できる procedural gaze 入力 source の候補である。Vector3 ターゲットとカメラ目線 source 自体は本リリースに含めない。
+
+### 12.2 JSON と source id
+
+- JSON はルート `gaze` オブジェクト内の `channels[]` にチャネルを保存する。旧 `gaze_configs` は検出して警告し、gaze 部分を読み捨てる。
+- source id は `GazeSourceIdConvention` が `{slug}:{channelId}`（共有）、`{slug}:{channelId}.left`、`{slug}:{channelId}.right`（左右独立）へ統一する。`GazeSnapshot` は `ChannelId` と正規化された `X` / `Y` を保持する。
 
 ---
 
@@ -726,8 +733,8 @@ Editor/
 |--------------------------|---------|------|
 | default | emotion | デフォルト表情（ニュートラル） |
 | blink | eye | まばたき |
-| gaze_follow | eye | 視線追従（preview.2 で実装） |
-| gaze_camera | eye | カメラ目線（preview.2 で実装） |
+| gaze channel | Gaze セクション | Vector2 入力で目ボーンを駆動する独立チャネル（既定 id は `gaze`） |
+| procedural gaze source | Gaze セクション | 視線追従・カメラ目線などを将来追加するための入力 source 拡張点 |
 
 - モデル固有の BlendShape 名はユーザーがカスタマイズ
 - ARKit 検出時にモデル固有の Expression もレイヤー単位で自動生成
@@ -880,13 +887,13 @@ com.hidano.facialcontrol/
 | 26 | 排他動作（後勝ち） | A → B クロスフェード | 遷移中の新トリガーは現在値から即新遷移 |
 | 27 | ブレンド動作 | 加算ブレンド（クランプ） | 0〜1 にクランプ |
 | 28 | まばたき | IBlinkTrigger IF 定義（実装は preview.2） | 人間的しぐさアルゴリズム |
-| 29 | 視線制御 | BlendShape + ボーン両対応（preview.2） | Vector3 ターゲット指定 |
+| 29 | 視線制御 | Gaze セクションの独立チャネルから目ボーンを駆動 | BlendShape gaze / Vector3 ターゲットは別 spec |
 | 30 | GC 許容範囲 | 初期化 + プロファイル切り替え | 毎フレームはゼロ |
 | 31 | Graph 再構築 | 動的再構築（GC 許容） | メモリ効率優先 |
 | 32 | テスト戦略 | ドメイン EditMode / 統合 PlayMode | CLAUDE.md 基準と整合 |
 | 33 | Editor 構造 | 機能別 + 共通層 | Inspector, Windows, Tools, Common |
 | 34 | SO 構造 | 別構造（Unity 最適化）+ マッパー | Adapters 層にマッパー配置 |
-| 35 | preview.1 スコープ | コア + OSC + ARKit + Editor | まばたき・視線は preview.2 |
+| 35 | preview.1 スコープ | コア + OSC + ARKit + Editor + Gaze ボーン経路 | 自動まばたき・procedural gaze source は preview.2 以降 |
 | 36 | ドキュメント | API + クイックスタート + JSON スキーマ | チュートリアルは将来 |
 
 ### v2.0.0 追加決定事項（2026-02-02 dig セッション）

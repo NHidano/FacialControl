@@ -39,11 +39,21 @@ FacialControl で 3D キャラクターの表情をリアルタイム制御す�
 
 > **JSON について**: SO 編集時に Editor が裏で `StreamingAssets/FacialControl/{SO 名}/profile.json` を自動エクスポートします。**ユーザーが JSON のパスを書いたり中身を編集したりする必要はありません**。ビルド後にコンテンツ差し替えが必要な場合のみ、StreamingAssets 配下の JSON を直接置き換えれば反映されます。
 
-## 3. 動作確認
+## 3. Gaze（目線）の設定
+
+目線は Expression や `eye` レイヤーではなく、Profile 直下の **Gaze** セクションで設定する独立チャネルです。`eye` レイヤーはまばたき等の BlendShape 表情を担当します。
+
+1. Character Profile の Inspector で **Gaze** セクションを開き、先頭の既定チャネル `gaze` を使用します。
+2. **入力ソース**で InputSystem、OSC 受信、iFacialMocap、Timeline などの入力を選択します。空欄のときは利用可能な binding から自動解決されます。
+3. 参照モデルを割り当てると、Animator を起点に左右の目ボーンを自動検出し、フルパスを保存します。必要に応じて目ボーン path、初期回転、yaw/pitch 軸、上下左右の可動角を上級設定で調整します。
+
+通常の構成では既定チャネル `gaze` と入力ソースの選択だけで動作します。複数チャネルや左右独立の source id（`{slug}:{channelId}.left` / `.right`）は上級者向け設定です。Gaze はボーンを直接駆動するため、BlendShape の gaze Expression や旧 `GazeConfig` / `isGaze` の設定は不要です。
+
+## 4. 動作確認
 
 Unity Editor で Play モードに入り、SO の **キーバインディング** で割り当てた Action のキーを押すと Expression が発火します。Inspector の **デバッグ情報** Foldout で `schemaVersion` / レイヤー数 / Expression 数 / 自動エクスポート先パスを確認できます。
 
-## 4. スクリプトから表情を切り替える
+## 5. スクリプトから表情を切り替える
 
 ```csharp
 using Hidano.FacialControl.Adapters.Playable;
@@ -86,7 +96,7 @@ public class MyExpressionController : MonoBehaviour
 | `CurrentProfile` | `FacialProfile?` | 現在のプロファイル |
 | `CharacterSO` | `FacialCharacterProfileSO` | 結線中の統合 SO |
 
-## 5. ARKit / PerfectSync の自動検出 (オプション)
+## 6. ARKit / PerfectSync の自動検出 (オプション)
 
 メニュー **FacialControl** → **ARKit 検出ツール** からモデルの BlendShape 命名を自動検出して Expression を生成できます。出力先に `FacialCharacterSO` の StreamingAssets 規約パスを指定すれば、対応する JSON が直接更新されます。
 

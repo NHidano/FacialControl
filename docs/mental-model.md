@@ -9,14 +9,21 @@ FacialCharacterProfileSO (1 個)
  ├─ 入力（InputActionAsset + キーバインディング + アナログバインディング）
  ├─ レイヤー（emotion / lipsync / eye …、優先度と排他モード）
  ├─ Expression 集（BlendShape 値 + 所属レイヤー + 遷移時間/カーブ）
- ├─ BonePose（目線等）
- ├─ Gaze Configs（expressionId 単位の Vector2 視線データ）
+ ├─ Gaze セクション（既定チャネル gaze + 追加チャネル、入力源、目ボーン設定）
  └─ アダプターバインディング群（OSC Sender / OSC Receiver / LipSync など）
 ```
 
 - シーンには **Animator を持つキャラ + `FacialController` + 上記 SO** を結線するだけ。BlendShape を持つ `SkinnedMeshRenderer` は子から自動探索される。
 - JSON はランタイムの正規データだが、Editor が `StreamingAssets/FacialControl/{SO 名}/profile.json` に自動エクスポートする。**ユーザーは SO Inspector を触るのが基本動線**で、JSON は触らない。
 - ビルド後にコンテンツ差し替えが必要な場合のみ、StreamingAssets 配下の JSON を置き換える。
+- Gaze は Expression や `eye` レイヤーではなく、プロファイル直下の独立したチャネルである。`eye` レイヤーはまばたき等の BlendShape 表情を合成し、Gaze は Vector2 入力から目ボーンの回転を直接更新する。
+
+### Gaze の設定
+
+1. Profile Inspector の **Gaze** セクションで、先頭の既定チャネル `gaze` を使用する（必要な場合だけ追加チャネルを作る）。
+2. 各チャネルの **入力ソース** ドロップダウンで、InputSystem、OSC 受信、iFacialMocap、Timeline など、利用する binding が宣言した入力源を選ぶ。空欄は自動解決である。
+3. 参照モデルを割り当てると、Animator を起点に左右の目ボーンのフルパスが自動保存される。目ボーン path、初期回転、yaw/pitch 軸、上下左右の可動角は上級設定で確認・調整できる。
+4. 起動時は `FacialController` がチャネル id を各 binding に注入し、入力源を解決して目ボーンへ適用する。複数チャネルや左右独立 source id は上級設定でのみ構成する。
 
 ## 2. 表情合成パイプライン
 
@@ -45,7 +52,7 @@ FacialCharacterProfileSO (1 個)
 
 - `listenEndpoint` を設定して起動すると、送信側 FacialControl が heartbeat に同梱する `/_facialcontrol/gaze` 広告を受け取り、gaze の形式（`VRChat_XY` / `ARKit_8BS`）に応じた route と input source を自動生成する。受信側で gaze の mapping エントリをあらかじめ手入力したり、OnStart 時に固定したりする必要はない。
 - **手動 mapping は上書き用のオプション**として残る。同じ gaze を手動で定義した場合は手動 route が優先され、広告から自動生成された route と併存できる。FacialControl 以外の外部 OSC 送信元を受ける場合は、従来どおり手動 mapping を設定する。
-- 自動 route を `GazeConfig` に結び付けるには、広告の expressionId と受信側 `GazeConfig` の expressionId が一致している必要がある。広告だけで目ボーン設定まで完全自動化するものではない。
+- 自動 route は広告のチャネル id と受信側 Profile の Gaze チャネル id を照合して生成される。広告だけで目ボーン設定まで完全自動化するものではない。
 - `listenEndpoint` + **mapping エントリ（`mode` + `expressionId` + `addressPattern`）** を SO に並べる方式。BlendShape mapping と手動 gaze mapping はこの設定で定義する。
 - `mode` は 3 種類:
 
@@ -72,9 +79,9 @@ FacialCharacterProfileSO (1 個)
 
 ## 6. メンタルモデル要約
 
-> **「キャラ SO に表情データ・入力・OSC アダプターを全部生やす → `FacialController` が PlayableGraph として再生する」**。
+> **「キャラ SO に表情データ・入力・OSC アダプターを全部生やす → `FacialController` が表情を PlayableGraph で再生し、Gaze は独立して目ボーンへ適用する」**。
 >
-> OSC は表情の I/O アダプターのひとつで、送信は BlendShape + Gaze の自動全送出、受信は gaze 広告を起点に route を自動生成し（必要なら手動 mapping で上書き）、BlendShape はアドレス→`expressionId` の mapping を適用する。staleness は binding 単位で共有されるため、gaze だけが途絶したときは最後の値を保持する。JSON は永続化フォーマットだがユーザーは原則触らない。
+> OSC は表情の I/O アダプターのひとつで、送信は BlendShape と Gaze の snapshot を送出し、受信は gaze 広告を起点にチャネル route を自動生成する（必要なら手動 mapping で上書きする）。Gaze source id は `{slug}:{channelId}[.left|.right]` で統一される。JSON は永続化フォーマットだが、通常は SO の Gaze セクションを操作する。
 
 ## 参考資料
 

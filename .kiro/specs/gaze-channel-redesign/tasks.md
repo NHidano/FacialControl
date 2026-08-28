@@ -142,7 +142,7 @@
   - _Requirements: 13.1, 13.2, 13.3_
   - _Boundary: migration-guide, CHANGELOG_
 
-- [ ] 7.4 (P) mental-model / technical-spec / requirements 縺ｮ gaze 險倩ｿｰ繧呈峩譁ｰ縺吶ｋ
+- [x] 7.4 (P) mental-model / technical-spec / requirements 縺ｮ gaze 險倩ｿｰ繧呈峩譁ｰ縺吶ｋ
   - mental-model 縺ｨ quickstart 邉ｻ繝峨く繝･繝｡繝ｳ繝医∈譁ｰ縺励＞ gaze 險ｭ螳壽焔鬆・ｼ・aze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ繝ｻ蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭・逶ｮ繝懊・繝ｳ閾ｪ蜍戊ｧ｣豎ｺ・峨ｒ蜿肴丐縺吶ｋ
   - 縲檎岼繝ｬ繧､繝､繝ｼ = 縺ｾ縺ｰ縺溘″遲峨・ BlendShape 陦ｨ諠・ｼ医Ξ繧､繝､繝ｼ蜷域・蜿ょ刈・峨阪隈aze = 繝懊・繝ｳ鬧・虚縺ｮ迢ｬ遶九メ繝｣繝阪Ν・医Ξ繧､繝､繝ｼ蜷域・荳榊盾蜉・峨阪・逕ｨ隱槫・髮｢繧呈・譁・喧縺励‥ocs/requirements.md 縺ｮ縲檎岼繝ｬ繧､繝､繝ｼ = 縺ｾ縺ｰ縺溘″繝ｻ逶ｮ邱壹崎ｨ倩ｿｰ縺ｨ謨ｴ蜷医＆縺帙ｋ・・esign Decision 2・・  - docs/technical-spec.md ﾂｧ12/ﾂｧ17 縺ｮ gaze_follow / gaze_camera縲窪xpression 繝・Φ繝励Ξ繝ｼ繝医肴ｧ区Φ繧偵｝rocedural gaze 蜈･蜉帙た繝ｼ繧ｹ蛻・崛・・2-3 蜀崎ｧ｣驥茨ｼ峨↓蝓ｺ縺･縺剰ｨ倩ｿｰ縺ｸ譖ｴ譁ｰ縺吶ｋ
   - Timeline 縺ｮ gaze 繝√Ε繝阪Ν sub 縺ｯ譌｢螳壹メ繝｣繝阪Ν id 繧呈耳螂ｨ縺ｨ縺吶ｋ譌ｨ繧偵し繝ｳ繝励Ν / 繝峨く繝･繝｡繝ｳ繝医↓譏手ｨ倥☆繧・  - 蜷・ラ繧ｭ繝･繝｡繝ｳ繝医°繧画眠 identity 繝｢繝・Ν・郁ｦ冗ｴ・id繝ｻ蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭・繝ｬ繧､繝､繝ｼ螟悶メ繝｣繝阪Ν・峨′荳雋ｫ縺励※隱ｭ縺ｿ蜿悶ｌ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
