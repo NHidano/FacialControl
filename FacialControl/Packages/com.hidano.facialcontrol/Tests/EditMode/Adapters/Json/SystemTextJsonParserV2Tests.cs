@@ -155,9 +155,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                 ""layers"": [],
                 ""expressions"": [],
                 ""rendererPaths"": [],
-                ""gaze_configs"": [
+                ""gaze"": { ""channels"": [
                     {
-                        ""expressionId"": ""eye_look"",
+                        ""id"": ""eye_look"",
                         ""useDistinctLeftRight"": true,
                         ""sourceIdLeft"": ""input:eye_look.left"",
                         ""sourceIdRight"": ""osc:eye_look.right"",
@@ -174,14 +174,14 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                         ""outerYawAngle"": 17,
                         ""innerYawAngle"": 7
                     }
-                ]
+                ] }
             }";
 
             var dto = _parser.ParseProfileSnapshotV2(json);
 
-            Assert.AreEqual(1, dto.gazeConfigs.Count);
-            var cfg = dto.gazeConfigs[0];
-            Assert.AreEqual("eye_look", cfg.expressionId);
+            Assert.AreEqual(1, dto.gaze.channels.Count);
+            var cfg = dto.gaze.channels[0];
+            Assert.AreEqual("eye_look", cfg.id);
             Assert.AreEqual(true, cfg.useDistinctLeftRight);
             Assert.AreEqual("input:eye_look.left", cfg.sourceIdLeft);
             Assert.AreEqual("osc:eye_look.right", cfg.sourceIdRight);

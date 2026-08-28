@@ -107,7 +107,7 @@
   - _Requirements: 7.3_
   - _Boundary: BoneTransformResolver_
 
-- [ ] 4.4 旧 GazeConfigs 前提の core テスト群を新データモデルへ書き換える
+- [x] 4.4 旧 GazeConfigs 前提の core テスト群を新データモデルへ書き換える
   - FacialController / 解決 / 目ボーン provider / parser・converter 系の旧 `_gazeConfigs` / GazeBindingConfig 前提テスト（15+ ファイル規模）をチャネル前提へ書き換える（design Risks の独立タスク化指示）
   - 挙動互換部分（3 段解決・bone 適用・GC ゼロ・Subscribe ハンドラの provider 再構築のみ）のテスト意図を変えず、入力データ構築のみ差し替える
   - core パッケージの gaze 関連 EditMode / PlayMode テストが新モデルで全緑になる (観測可能な完了条件)

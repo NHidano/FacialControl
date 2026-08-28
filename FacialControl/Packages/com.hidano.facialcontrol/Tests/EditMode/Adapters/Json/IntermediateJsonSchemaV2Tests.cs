@@ -114,19 +114,13 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                 Assert.AreEqual(src.rendererPaths[i], dst.rendererPaths[i]);
             }
 
-            Assert.AreEqual(src.gazeConfigs.Count, dst.gazeConfigs.Count, "gazeConfigs count mismatch");
-            Assert.AreEqual(src.gazeConfigs[0].expressionId, dst.gazeConfigs[0].expressionId);
-            Assert.AreEqual(src.gazeConfigs[0].useDistinctLeftRight, dst.gazeConfigs[0].useDistinctLeftRight);
-            Assert.AreEqual(src.gazeConfigs[0].sourceIdLeft, dst.gazeConfigs[0].sourceIdLeft);
-            Assert.AreEqual(src.gazeConfigs[0].sourceIdRight, dst.gazeConfigs[0].sourceIdRight);
-            Assert.AreEqual(src.gazeConfigs[0].leftEyeBonePath, dst.gazeConfigs[0].leftEyeBonePath);
-            Assert.AreEqual(src.gazeConfigs[0].rightEyeBonePath, dst.gazeConfigs[0].rightEyeBonePath);
-            Assert.AreEqual(src.gazeConfigs[0].leftEyeYawAxisLocal, dst.gazeConfigs[0].leftEyeYawAxisLocal);
-            Assert.AreEqual(src.gazeConfigs[0].rightEyePitchAxisLocal, dst.gazeConfigs[0].rightEyePitchAxisLocal);
-            Assert.AreEqual(src.gazeConfigs[0].lookUpAngle, dst.gazeConfigs[0].lookUpAngle);
-            Assert.AreEqual(src.gazeConfigs[0].lookDownAngle, dst.gazeConfigs[0].lookDownAngle);
-            Assert.AreEqual(src.gazeConfigs[0].outerYawAngle, dst.gazeConfigs[0].outerYawAngle);
-            Assert.AreEqual(src.gazeConfigs[0].innerYawAngle, dst.gazeConfigs[0].innerYawAngle);
+            Assert.AreEqual(src.gaze.channels.Count, dst.gaze.channels.Count, "gaze channel count mismatch");
+            Assert.AreEqual(src.gaze.channels[0].id, dst.gaze.channels[0].id);
+            Assert.AreEqual(src.gaze.channels[0].useDistinctLeftRight, dst.gaze.channels[0].useDistinctLeftRight);
+            Assert.AreEqual(src.gaze.channels[0].sourceIdLeft, dst.gaze.channels[0].sourceIdLeft);
+            Assert.AreEqual(src.gaze.channels[0].sourceIdRight, dst.gaze.channels[0].sourceIdRight);
+            Assert.AreEqual(src.gaze.channels[0].leftEyeBonePath, dst.gaze.channels[0].leftEyeBonePath);
+            Assert.AreEqual(src.gaze.channels[0].rightEyeBonePath, dst.gaze.channels[0].rightEyeBonePath);
 
             // パーサ経由でも同じ DTO が得られることを確認（normalize は既定値のものなので no-op）
             var parser = new SystemTextJsonParser();
@@ -348,11 +342,11 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                     },
                 },
                 rendererPaths = new List<string> { "Body", "Face" },
-                gazeConfigs = new List<GazeBindingConfigDto>
+                gaze = new GazeSectionDto { channels = new List<GazeChannelDto>
                 {
-                    new GazeBindingConfigDto
+                    new GazeChannelDto
                     {
-                        expressionId = "550e8400-e29b-41d4-a716-446655440000",
+                        id = "gaze",
                         useDistinctLeftRight = true,
                         sourceIdLeft = "input:550e8400-e29b-41d4-a716-446655440000.left",
                         sourceIdRight = "osc:550e8400-e29b-41d4-a716-446655440000.right",
@@ -369,7 +363,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                         outerYawAngle = 15f,
                         innerYawAngle = 18f,
                     },
-                },
+                } },
             };
         }
     }

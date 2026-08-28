@@ -31,9 +31,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
         {
             var dto = _parser.ParseProfileSnapshotV2(GazeConfigsExpressionIdJson);
 
-            Assert.AreEqual(1, dto.gazeConfigs.Count);
-            Assert.AreEqual("look_left", dto.gazeConfigs[0].expressionId);
-            Assert.AreEqual(false, dto.gazeConfigs[0].useDistinctLeftRight);
+            Assert.AreEqual(1, dto.gaze.channels.Count);
+            Assert.AreEqual("look_left", dto.gaze.channels[0].id);
+            Assert.AreEqual(false, dto.gaze.channels[0].useDistinctLeftRight);
         }
 
         [Test]
@@ -263,9 +263,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
     ""layers"": [],
     ""expressions"": [],
     ""rendererPaths"": [],
-    ""gaze_configs"": [
+    ""gaze"": { ""channels"": [
         {
-            ""expressionId"": ""look_left"",
+            ""id"": ""look_left"",
             ""leftEyeBonePath"": ""Head/LeftEye"",
             ""leftEyeInitialRotation"": {""x"":0,""y"":0,""z"":0},
             ""leftEyeYawAxisLocal"": {""x"":0,""y"":1,""z"":0},
@@ -279,7 +279,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
             ""outerYawAngle"": 15,
             ""innerYawAngle"": 18
         }
-    ]
+    ] }
 }";
 
         private const string SuppressWithSnapshotOverlayJson = @"{
