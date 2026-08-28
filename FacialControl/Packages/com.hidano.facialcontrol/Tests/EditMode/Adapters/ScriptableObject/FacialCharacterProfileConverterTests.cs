@@ -344,14 +344,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.ScriptableObjectTests
             Assert.That(config.lookDownAngle, Is.EqualTo(8f));
             Assert.That(config.outerYawAngle, Is.EqualTo(17f));
             Assert.That(config.innerYawAngle, Is.EqualTo(12f));
-            Assert.That(config.lookLeftClip, Is.Null);
-            Assert.That(config.lookRightClip, Is.Null);
-            Assert.That(config.lookUpClip, Is.Null);
-            Assert.That(config.lookDownClip, Is.Null);
-            Assert.That(config.lookLeftSamples, Is.Empty);
-            Assert.That(config.lookRightSamples, Is.Empty);
-            Assert.That(config.lookUpSamples, Is.Empty);
-            Assert.That(config.lookDownSamples, Is.Empty);
         }
 
         [Test]

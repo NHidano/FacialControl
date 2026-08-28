@@ -50,14 +50,6 @@ MonoBehaviour:
     lookDownAngle: 9
     outerYawAngle: 15
     innerYawAngle: 18
-    lookLeftClip: {fileID: 0}
-    lookRightClip: {fileID: 0}
-    lookUpClip: {fileID: 0}
-    lookDownClip: {fileID: 0}
-    lookLeftSamples: []
-    lookRightSamples: []
-    lookUpSamples: []
-    lookDownSamples: []
   _slots: []
   _defaultOverlays: []
   _adapterBindings:

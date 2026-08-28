@@ -116,10 +116,6 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string GazeConfigLookDownAngleFieldName = "gaze-config-look-down-angle";
         public const string GazeConfigOuterYawAngleFieldName = "gaze-config-outer-yaw-angle";
         public const string GazeConfigInnerYawAngleFieldName = "gaze-config-inner-yaw-angle";
-        public const string GazeConfigLookLeftClipFieldName = "gaze-config-look-left-clip";
-        public const string GazeConfigLookRightClipFieldName = "gaze-config-look-right-clip";
-        public const string GazeConfigLookUpClipFieldName = "gaze-config-look-up-clip";
-        public const string GazeConfigLookDownClipFieldName = "gaze-config-look-down-clip";
         public const string GazeConfigAutoAssignButtonName = "gaze-config-auto-assign-button";
         public const string GazeConfigRemoveButtonName = "gaze-config-remove-button";
 
@@ -1327,11 +1323,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             AddBoundFloatField(row, cfgProp, "outerYawAngle", "外側角度", GazeConfigOuterYawAngleFieldName);
             AddBoundFloatField(row, cfgProp, "innerYawAngle", "内側角度", GazeConfigInnerYawAngleFieldName);
 
-            AddBoundClipField(row, cfgProp, "lookLeftClip", "左 Clip", GazeConfigLookLeftClipFieldName);
-            AddBoundClipField(row, cfgProp, "lookRightClip", "右 Clip", GazeConfigLookRightClipFieldName);
-            AddBoundClipField(row, cfgProp, "lookUpClip", "上 Clip", GazeConfigLookUpClipFieldName);
-            AddBoundClipField(row, cfgProp, "lookDownClip", "下 Clip", GazeConfigLookDownClipFieldName);
-
             return row;
         }
 
@@ -1366,26 +1357,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             var field = new FloatField(label)
             {
                 name = elementName,
-            };
-            field.BindProperty(prop);
-            row.Add(field);
-        }
-
-        private void AddBoundClipField(
-            VisualElement row,
-            SerializedProperty cfgProp,
-            string propertyName,
-            string label,
-            string elementName)
-        {
-            var prop = cfgProp.FindPropertyRelative(propertyName);
-            if (prop == null) return;
-
-            var field = new ObjectField(label)
-            {
-                name = elementName,
-                objectType = typeof(AnimationClip),
-                allowSceneObjects = false,
             };
             field.BindProperty(prop);
             row.Add(field);
@@ -1538,14 +1509,6 @@ namespace Hidano.FacialControl.Editor.Inspector
             SetFloat(cfg, "lookDownAngle", 9f);
             SetFloat(cfg, "outerYawAngle", 15f);
             SetFloat(cfg, "innerYawAngle", 18f);
-            SetObject(cfg, "lookLeftClip", null);
-            SetObject(cfg, "lookRightClip", null);
-            SetObject(cfg, "lookUpClip", null);
-            SetObject(cfg, "lookDownClip", null);
-            ClearArray(cfg, "lookLeftSamples");
-            ClearArray(cfg, "lookRightSamples");
-            ClearArray(cfg, "lookUpSamples");
-            ClearArray(cfg, "lookDownSamples");
         }
 
         private string FindExpressionNameById(string expressionId)
@@ -1593,18 +1556,6 @@ namespace Hidano.FacialControl.Editor.Inspector
         {
             var prop = owner.FindPropertyRelative(propertyName);
             if (prop != null) prop.floatValue = value;
-        }
-
-        private static void SetObject(SerializedProperty owner, string propertyName, UnityEngine.Object value)
-        {
-            var prop = owner.FindPropertyRelative(propertyName);
-            if (prop != null) prop.objectReferenceValue = value;
-        }
-
-        private static void ClearArray(SerializedProperty owner, string propertyName)
-        {
-            var prop = owner.FindPropertyRelative(propertyName);
-            if (prop != null && prop.isArray) prop.ClearArray();
         }
 
         private void ResolveGazeConfigFromReferenceModel(int configIndex)
@@ -3392,13 +3343,7 @@ namespace Hidano.FacialControl.Editor.Inspector
                             var p = cfgProp.FindPropertyRelative(fname);
                             if (p != null && !string.IsNullOrWhiteSpace(p.stringValue)) { anyBone = true; break; }
                         }
-                        bool anyBs = false;
-                        foreach (var fname in new[] { "lookLeftClip", "lookRightClip", "lookUpClip", "lookDownClip" })
-                        {
-                            var p = cfgProp.FindPropertyRelative(fname);
-                            if (p != null && p.objectReferenceValue != null) { anyBs = true; break; }
-                        }
-                        if (!anyBone && !anyBs)
+                        if (!anyBone)
                         {
                             messages.Add("目線ボーンまたは BlendShape のいずれかを 1 つ以上設定してください。");
                         }

@@ -48,14 +48,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.AutoExport
                     lookDownAngle = 8f,
                     outerYawAngle = 17f,
                     innerYawAngle = 12f,
-                    lookLeftClip = new AnimationClip { name = "LookLeftShouldRemainInSO" },
-                    lookRightClip = new AnimationClip { name = "LookRightShouldRemainInSO" },
-                    lookUpClip = new AnimationClip { name = "LookUpShouldRemainInSO" },
-                    lookDownClip = new AnimationClip { name = "LookDownShouldRemainInSO" },
-                    lookLeftSamples = new List<GazeBlendShapeSampleEntry>
-                    {
-                        new GazeBlendShapeSampleEntry { blendShapeName = "LookLeft", weight = 100f },
-                    },
                 });
 
                 bool exported = FacialCharacterProfileExporter.ExportProfileJson(so);
@@ -69,13 +61,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.AutoExport
                 StringAssert.Contains("\"sourceIdLeft\"", json);
                 StringAssert.Contains("\"sourceIdRight\"", json);
                 StringAssert.DoesNotContain("\"_gazeConfigs\"", json);
-                StringAssert.DoesNotContain("\"lookLeftClip\"", json);
-                StringAssert.DoesNotContain("\"lookRightClip\"", json);
-                StringAssert.DoesNotContain("\"lookUpClip\"", json);
-                StringAssert.DoesNotContain("\"lookDownClip\"", json);
-                StringAssert.DoesNotContain("\"lookLeftSamples\"", json);
-                StringAssert.DoesNotContain("LookLeftShouldRemainInSO", json);
-                StringAssert.DoesNotContain("LookLeft", json);
 
                 var dto = new SystemTextJsonParser().ParseProfileSnapshotV2(json);
 

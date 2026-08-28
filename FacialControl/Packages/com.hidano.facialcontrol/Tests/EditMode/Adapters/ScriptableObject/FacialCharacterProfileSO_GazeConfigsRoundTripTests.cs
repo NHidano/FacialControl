@@ -213,18 +213,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.ScriptableObjectTests
 
             // look-clip / lookXxxSamples は JSON 出力対象外。SO YAML 側の source-of-truth として
             // ラウンドトリップ後は default (null / empty) になる。
-            Assert.That(actual.lookLeftClip, Is.Null, "[" + label + "] lookLeftClip should be null after JSON roundtrip");
-            Assert.That(actual.lookRightClip, Is.Null, "[" + label + "] lookRightClip should be null after JSON roundtrip");
-            Assert.That(actual.lookUpClip, Is.Null, "[" + label + "] lookUpClip should be null after JSON roundtrip");
-            Assert.That(actual.lookDownClip, Is.Null, "[" + label + "] lookDownClip should be null after JSON roundtrip");
-            Assert.That(actual.lookLeftSamples, Is.Not.Null);
-            Assert.That(actual.lookLeftSamples, Is.Empty, "[" + label + "] lookLeftSamples should be empty after JSON roundtrip");
-            Assert.That(actual.lookRightSamples, Is.Not.Null);
-            Assert.That(actual.lookRightSamples, Is.Empty, "[" + label + "] lookRightSamples should be empty after JSON roundtrip");
-            Assert.That(actual.lookUpSamples, Is.Not.Null);
-            Assert.That(actual.lookUpSamples, Is.Empty, "[" + label + "] lookUpSamples should be empty after JSON roundtrip");
-            Assert.That(actual.lookDownSamples, Is.Not.Null);
-            Assert.That(actual.lookDownSamples, Is.Empty, "[" + label + "] lookDownSamples should be empty after JSON roundtrip");
         }
     }
 }

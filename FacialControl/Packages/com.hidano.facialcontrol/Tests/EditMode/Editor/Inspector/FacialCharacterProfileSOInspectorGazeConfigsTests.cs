@@ -117,10 +117,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             Assert.That(row.Q<FloatField>(FacialCharacterProfileSOInspector.GazeConfigLookDownAngleFieldName), Is.Not.Null);
             Assert.That(row.Q<FloatField>(FacialCharacterProfileSOInspector.GazeConfigOuterYawAngleFieldName), Is.Not.Null);
             Assert.That(row.Q<FloatField>(FacialCharacterProfileSOInspector.GazeConfigInnerYawAngleFieldName), Is.Not.Null);
-            Assert.That(row.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookLeftClipFieldName), Is.Not.Null);
-            Assert.That(row.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookRightClipFieldName), Is.Not.Null);
-            Assert.That(row.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookUpClipFieldName), Is.Not.Null);
-            Assert.That(row.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookDownClipFieldName), Is.Not.Null);
             Assert.That(row.Q<Button>(FacialCharacterProfileSOInspector.GazeConfigAutoAssignButtonName), Is.Not.Null);
             Assert.That(row.Q<Button>(FacialCharacterProfileSOInspector.GazeConfigRemoveButtonName), Is.Not.Null);
         }
@@ -433,10 +429,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             Assert.That(layersSection.Q<TextField>(FacialCharacterProfileSOInspector.GazeConfigLeftBonePathFieldName), Is.Null);
             Assert.That(layersSection.Q<TextField>(FacialCharacterProfileSOInspector.GazeConfigRightBonePathFieldName), Is.Null);
             Assert.That(layersSection.Q<Button>(FacialCharacterProfileSOInspector.GazeConfigAutoAssignButtonName), Is.Null);
-            Assert.That(layersSection.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookLeftClipFieldName), Is.Null);
-            Assert.That(layersSection.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookRightClipFieldName), Is.Null);
-            Assert.That(layersSection.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookUpClipFieldName), Is.Null);
-            Assert.That(layersSection.Q<ObjectField>(FacialCharacterProfileSOInspector.GazeConfigLookDownClipFieldName), Is.Null);
         }
 
         [Test]
