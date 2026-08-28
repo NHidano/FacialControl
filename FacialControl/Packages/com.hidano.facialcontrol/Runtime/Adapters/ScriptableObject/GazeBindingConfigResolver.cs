@@ -1,17 +1,11 @@
 using System;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Domain.Interfaces;
+using Hidano.FacialControl.Domain.Models;
 using UnityEngine;
 
 namespace Hidano.FacialControl.Adapters.ScriptableObject
 {
-    public enum GazeSide
-    {
-        Shared,
-        Left,
-        Right
-    }
-
     public readonly struct ResolvedGazeInputSources
     {
         public ResolvedGazeInputSources(
