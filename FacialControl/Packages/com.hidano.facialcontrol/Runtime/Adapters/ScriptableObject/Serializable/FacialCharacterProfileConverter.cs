@@ -128,6 +128,122 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         }
 
         /// <summary>
+        /// profile.json の gaze セクションを SO の GazeChannels に復元する。
+        /// gaze が欠落している場合は新規 JSON の最小形として既定チャネルを補完する。
+        /// </summary>
+        public static List<GazeChannel> ToGazeChannels(ProfileSnapshotDto dto)
+        {
+            return ToGazeChannels(dto != null ? dto.gaze : null);
+        }
+
+        public static List<GazeChannel> ToGazeChannels(GazeSectionDto section)
+        {
+            var result = new List<GazeChannel>();
+            var channels = section != null ? section.channels : null;
+            if (channels != null)
+            {
+                var ids = new HashSet<string>(StringComparer.Ordinal);
+                for (int i = 0; i < channels.Count; i++)
+                {
+                    var source = channels[i];
+                    if (source == null || !IsValidGazeChannel(source.id))
+                    {
+                        Debug.LogWarning("[FacialControl] gaze.channels の不正なチャネルを読み捨てました。id は規約に従う必要があります。");
+                        continue;
+                    }
+
+                    if (!ids.Add(source.id))
+                    {
+                        Debug.LogWarning($"[FacialControl] gaze.channels のチャネル id '{source.id}' が重複しているため、後続エントリを読み捨てました。");
+                        continue;
+                    }
+
+                    result.Add(ToGazeChannel(source));
+                }
+            }
+
+            int defaultIndex = result.FindIndex(c => string.Equals(c.id, GazeSourceIdConvention.DefaultChannelId, StringComparison.Ordinal));
+            if (defaultIndex < 0)
+            {
+                Debug.LogWarning("[FacialControl] gaze.channels に既定チャネルがないため、id 'gaze' を補完しました。");
+                result.Insert(0, new GazeChannel { id = GazeSourceIdConvention.DefaultChannelId });
+            }
+            else if (defaultIndex > 0)
+            {
+                var defaultChannel = result[defaultIndex];
+                result.RemoveAt(defaultIndex);
+                result.Insert(0, defaultChannel);
+            }
+
+            return result;
+        }
+
+        public static List<GazeChannelDto> ToGazeChannelDtos(IReadOnlyList<GazeChannel> channels)
+        {
+            var result = new List<GazeChannelDto>();
+            if (channels == null) return result;
+            for (int i = 0; i < channels.Count; i++)
+            {
+                if (channels[i] != null) result.Add(ToGazeChannelDto(channels[i]));
+            }
+            return result;
+        }
+
+        public static GazeChannelDto ToGazeChannelDto(GazeChannel source)
+        {
+            if (source == null) return null;
+            return new GazeChannelDto
+            {
+                id = source.id,
+                providerSlug = source.providerSlug ?? string.Empty,
+                useDistinctLeftRight = source.useDistinctLeftRight,
+                sourceIdLeft = source.sourceIdLeft ?? string.Empty,
+                sourceIdRight = source.sourceIdRight ?? string.Empty,
+                leftEyeBonePath = source.leftEyeBonePath ?? string.Empty,
+                leftEyeInitialRotation = source.leftEyeInitialRotation,
+                leftEyeYawAxisLocal = source.leftEyeYawAxisLocal,
+                leftEyePitchAxisLocal = source.leftEyePitchAxisLocal,
+                rightEyeBonePath = source.rightEyeBonePath ?? string.Empty,
+                rightEyeInitialRotation = source.rightEyeInitialRotation,
+                rightEyeYawAxisLocal = source.rightEyeYawAxisLocal,
+                rightEyePitchAxisLocal = source.rightEyePitchAxisLocal,
+                lookUpAngle = source.lookUpAngle,
+                lookDownAngle = source.lookDownAngle,
+                outerYawAngle = source.outerYawAngle,
+                innerYawAngle = source.innerYawAngle,
+            };
+        }
+
+        private static GazeChannel ToGazeChannel(GazeChannelDto source)
+        {
+            return new GazeChannel
+            {
+                id = source.id,
+                providerSlug = source.providerSlug ?? string.Empty,
+                useDistinctLeftRight = source.useDistinctLeftRight,
+                sourceIdLeft = source.sourceIdLeft ?? string.Empty,
+                sourceIdRight = source.sourceIdRight ?? string.Empty,
+                leftEyeBonePath = source.leftEyeBonePath ?? string.Empty,
+                leftEyeInitialRotation = source.leftEyeInitialRotation,
+                leftEyeYawAxisLocal = source.leftEyeYawAxisLocal,
+                leftEyePitchAxisLocal = source.leftEyePitchAxisLocal,
+                rightEyeBonePath = source.rightEyeBonePath ?? string.Empty,
+                rightEyeInitialRotation = source.rightEyeInitialRotation,
+                rightEyeYawAxisLocal = source.rightEyeYawAxisLocal,
+                rightEyePitchAxisLocal = source.rightEyePitchAxisLocal,
+                lookUpAngle = source.lookUpAngle,
+                lookDownAngle = source.lookDownAngle,
+                outerYawAngle = source.outerYawAngle,
+                innerYawAngle = source.innerYawAngle,
+            };
+        }
+
+        private static bool IsValidGazeChannel(string id)
+        {
+            return !string.IsNullOrEmpty(id) && GazeSourceIdConvention.IsValidChannelId(id);
+        }
+
+        /// <summary>
         /// ベース表情 (<see cref="FacialProfile.BaseExpression"/>) を JSON DTO へ変換する。
         /// AnimationClip 参照は SO 内のみで保持し、DTO には bake 済み BlendShape 値のみを載せる。
         /// </summary>
