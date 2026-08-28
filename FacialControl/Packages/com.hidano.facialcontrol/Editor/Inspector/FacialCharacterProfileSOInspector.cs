@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
+using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Editor.AutoExport;
 using Hidano.FacialControl.Editor.Common;
@@ -118,6 +119,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string GazeConfigInnerYawAngleFieldName = "gaze-config-inner-yaw-angle";
         public const string GazeConfigAutoAssignButtonName = "gaze-config-auto-assign-button";
         public const string GazeConfigRemoveButtonName = "gaze-config-remove-button";
+        public const string GazeInputSourceDropdownName = "gaze-input-source-dropdown";
 
         // ====================================================================
         // 共通スタイル定数
@@ -137,6 +139,7 @@ namespace Hidano.FacialControl.Editor.Inspector
         protected SerializedProperty _adapterBindingsProperty;
         protected SerializedProperty _slotsProperty;
         protected SerializedProperty _defaultOverlaysProperty;
+        protected SerializedProperty _gazeChannelsProperty;
 
 #if UNITY_EDITOR
         protected SerializedProperty _referenceModelProperty;
@@ -265,6 +268,7 @@ namespace Hidano.FacialControl.Editor.Inspector
             ResolveSerializedProperties();
             OnResolveDerivedSerializedProperties();
             _rootGazeConfigsProperty = serializedObject.FindProperty("_gazeConfigs");
+            _gazeChannelsProperty = serializedObject.FindProperty("_gazeChannels");
             _sampler = new AnimationClipExpressionSampler();
 
             var root = new VisualElement();
@@ -1177,8 +1181,65 @@ namespace Hidano.FacialControl.Editor.Inspector
             foldout.Add(_gazeConfigsContainer);
 
             RebuildGazeConfigsUI();
+            BuildGazeProviderDropdowns(_gazeConfigsContainer);
 
             root.Add(foldout);
+        }
+
+        private void BuildGazeProviderDropdowns(VisualElement root)
+        {
+            if (_gazeChannelsProperty == null || !_gazeChannelsProperty.isArray) return;
+
+            var bindings = new List<AdapterBindingBase>();
+            SerializedProperty bindingsProperty = serializedObject.FindProperty("_adapterBindings");
+            if (bindingsProperty != null && bindingsProperty.isArray)
+            {
+                for (int i = 0; i < bindingsProperty.arraySize; i++)
+                {
+                    AdapterBindingBase binding = bindingsProperty.GetArrayElementAtIndex(i).managedReferenceValue as AdapterBindingBase;
+                    if (binding != null) bindings.Add(binding);
+                }
+            }
+
+            var enumerator = new GazeProviderEnumerator();
+            for (int i = 0; i < _gazeChannelsProperty.arraySize; i++)
+            {
+                int channelIndex = i;
+                SerializedProperty channelProperty = _gazeChannelsProperty.GetArrayElementAtIndex(i);
+                SerializedProperty idProperty = channelProperty.FindPropertyRelative("id");
+                SerializedProperty providerProperty = channelProperty.FindPropertyRelative("providerSlug");
+                if (idProperty == null || providerProperty == null) continue;
+
+                IReadOnlyList<GazeProviderOption> options = enumerator.Enumerate(bindings, idProperty.stringValue);
+                var choices = new List<string>(options.Count);
+                int selectedIndex = 0;
+                for (int optionIndex = 0; optionIndex < options.Count; optionIndex++)
+                {
+                    choices.Add(options[optionIndex].DisplayName);
+                    if (string.Equals(options[optionIndex].Slug, providerProperty.stringValue, StringComparison.Ordinal))
+                        selectedIndex = optionIndex;
+                }
+
+                var dropdown = new DropdownField("入力ソース", choices, selectedIndex)
+                {
+                    name = channelIndex == 0
+                        ? GazeInputSourceDropdownName
+                        : GazeInputSourceDropdownName + "-" + channelIndex,
+                };
+                dropdown.RegisterValueChangedCallback(evt =>
+                {
+                    int index = choices.IndexOf(evt.newValue);
+                    if (index < 0 || index >= options.Count || serializedObject == null) return;
+                    serializedObject.Update();
+                    SerializedProperty current = serializedObject.FindProperty("_gazeChannels")
+                        ?.GetArrayElementAtIndex(channelIndex)?.FindPropertyRelative("providerSlug");
+                    if (current == null) return;
+                    Undo.RecordObject(target, "Gaze 入力ソース変更");
+                    current.stringValue = options[index].Slug;
+                    serializedObject.ApplyModifiedProperties();
+                });
+                root.Add(dropdown);
+            }
         }
 
         private void RebuildGazeConfigsUI()

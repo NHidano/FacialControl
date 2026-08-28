@@ -166,7 +166,7 @@
 
 - [ ] 6. Inspector: 目線タブ 1 か所完結・自動解決・旧構造一掃（本 spec 最大の変更面積。段階削除で進める）
 
-- [ ] 6.1 provider 列挙 helper と入力ソースドロップダウンを実装する
+- [x] 6.1 provider 列挙 helper と入力ソースドロップダウンを実装する
   - 割当済み binding（SerializeReference 走査）から宣言 provider を列挙する Editor helper を、既存のソースポート列挙前例と同型で EditMode テスト可能な形に切り出す
   - チャネルごとの入力ソースドロップダウン: 「自動」既定 + 宣言 provider の列挙（表示は binding displayName + slug、選択値は providerSlug へ保存、ワイルドカード宣言 provider は全チャネルの選択肢に表示）
   - EditMode テストで「provider 列挙（宣言あり / なし / ワイルドカード）」「選択値の providerSlug 保存」が緑になる (観測可能な完了条件)
