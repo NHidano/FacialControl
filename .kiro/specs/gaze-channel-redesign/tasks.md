@@ -83,7 +83,7 @@
 
 - [ ] 4. Core ランタイム: 解決後継・FacialController 置換・ボーン fallback・テスト追従
 
-- [ ] 4.1 チャネル起点の入力源解決（旧 resolver 後継）を新設する
+- [x] 4.1 チャネル起点の入力源解決（旧 resolver 後継）を新設する
   - 実績ある解決アルゴリズム（distinct → side-pair → shared の 3 段フォールバック、複数 slug 競合は Ordinal 辞書順最小採用 + 警告 1 回）をチャネル入力へ引き継ぎ、id 合成を規約 helper のみに置換する（D-4 / D-9: preferredSlug は導入しない）
   - providerSlug 明示時は当該 slug の合成 id（side-pair → shared）のみ探索し、未解決は false を返す（呼び出し側の不足警告用）
   - 旧 resolver のテスト群をチャネル入力へ移植して緑維持し、providerSlug 制限（該当 slug のみ / 未解決 false）の新テストが緑になる (観測可能な完了条件)
