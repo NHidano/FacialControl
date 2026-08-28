@@ -169,7 +169,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                     new OscSenderEndpointConfig(Endpoint, AllocatePort(), preset: preset),
                 },
                 blendShapeNames);
-            _binding.ConfigureGazeExpressionIds(gazeExpressionIds);
+            _binding.ConfigureGazeChannels(gazeExpressionIds);
             _binding.OnStart(CreateContext(bus, blendShapeNames));
 
             Assert.That(_binding.IsStarted, Is.True);

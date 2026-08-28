@@ -14,7 +14,6 @@ namespace Hidano.FacialControl.Adapters.Json.Dto
         };
 
         public string[] blendShapeMapping = new string[0];
-        public string[] gazeExpressionIds = new string[0];
         public bool sendPreset = true;
         public bool suppressLoopback = true;
         public float heartbeatIntervalSeconds = DefaultHeartbeatIntervalSeconds;
@@ -79,11 +78,6 @@ namespace Hidano.FacialControl.Adapters.Json.Dto
             if (blendShapeMapping == null)
             {
                 blendShapeMapping = new string[0];
-            }
-
-            if (gazeExpressionIds == null)
-            {
-                gazeExpressionIds = new string[0];
             }
 
             if (heartbeatIntervalSeconds <= 0f || float.IsNaN(heartbeatIntervalSeconds))

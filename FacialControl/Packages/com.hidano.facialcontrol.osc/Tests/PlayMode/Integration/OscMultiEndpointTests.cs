@@ -160,7 +160,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                     new OscSenderEndpointConfig(Endpoint, secondPort, true, AddressPresetKind.VRChat)
                 },
                 new[] { Smile, Blink });
-            binding.ConfigureGazeExpressionIds(new[] { GazeExpressionId });
+            binding.ConfigureGazeChannels(new[] { GazeExpressionId });
             return binding;
         }
 

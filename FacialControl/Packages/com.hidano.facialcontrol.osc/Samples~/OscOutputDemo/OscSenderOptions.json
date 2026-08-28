@@ -19,9 +19,6 @@
     "MouthOpen",
     "BrowUp"
   ],
-  "gazeExpressionIds": [
-    "eye_look"
-  ],
   "suppressLoopback": true,
   "heartbeatIntervalSeconds": 5.0
 }

@@ -540,7 +540,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                     new OscSenderEndpointConfig(Endpoint, port, true, preset)
                 },
                 Array.Empty<string>());
-            binding.ConfigureGazeExpressionIds(gazeExpressionIds);
+            binding.ConfigureGazeChannels(gazeExpressionIds);
             return binding;
         }
 

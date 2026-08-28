@@ -117,7 +117,7 @@
 
 - [ ] 5. 拡張 binding: 宣言・注入契約の実装と id 合成の規約集約
 
-- [ ] 5.1 (P) OSC 送信 binding をチャネル注入へ一本化し旧 id 供給 API を廃止する
+- [x] 5.1 (P) OSC 送信 binding をチャネル注入へ一本化し旧 id 供給 API を廃止する
   - チャネル注入契約を実装し、広告ペア構築（Spec 1 の広告機構は無変更）と GazeSnapshot 送出フィルタの id 源を注入チャネル id 列に一本化する
   - serialized の明示 gaze id リスト・その公開 API・options JSON の gaze id キー・SO 直読みフォールバックを削除する（Breaking。CHANGELOG / 移行ガイドはタスク 7.3）
   - 未注入の単体使用時はチャネル集合を空として gaze 送出・広告なし + 警告 1 回とする（無警告沈黙の禁止）

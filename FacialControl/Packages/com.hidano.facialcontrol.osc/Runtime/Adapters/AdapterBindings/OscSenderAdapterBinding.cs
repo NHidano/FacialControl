@@ -4,8 +4,6 @@ using System.Globalization;
 using Hidano.FacialControl.Adapters.OSC;
 using Hidano.FacialControl.Adapters.Playable;
 using Hidano.FacialControl.Adapters.RuntimeSettings;
-using Hidano.FacialControl.Adapters.ScriptableObject;
-using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Models;
 using UnityEngine;
@@ -17,7 +15,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
     /// </summary>
     [Serializable]
     [FacialAdapterBinding(displayName: "OSC Sender")]
-    public sealed class OscSenderAdapterBinding : AdapterBindingBase, IFacialOutputObserver
+    public sealed class OscSenderAdapterBinding : AdapterBindingBase, IFacialOutputObserver, IGazeChannelConsumer
     {
         public const float DefaultHeartbeatIntervalSeconds = 5f;
         public const float MinHeartbeatIntervalSeconds = 0.5f;
@@ -36,7 +34,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private List<string> _blendShapeNames = new List<string>();
 
         [SerializeField]
-        private List<string> _gazeExpressionIds = new List<string>();
+        [NonSerialized]
+        private List<string> _gazeChannelIds = new List<string>();
 
         [SerializeField]
         private bool _sendPreset = true;
@@ -159,12 +158,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             set => _blendShapeNames = value ?? new List<string>();
         }
 
-        public List<string> GazeExpressionIds
-        {
-            get => EnsureGazeExpressionIdList();
-            set => _gazeExpressionIds = value ?? new List<string>();
-        }
-
         public float HeartbeatIntervalSeconds
         {
             get
@@ -237,9 +230,27 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             SetBlendShapeNames(blendShapeNames);
         }
 
-        public void ConfigureGazeExpressionIds(IReadOnlyList<string> gazeExpressionIds)
+        public void ConfigureGazeChannels(IReadOnlyList<string> channelIds)
         {
-            SetGazeExpressionIds(gazeExpressionIds);
+            if (_gazeChannelIds == null)
+            {
+                _gazeChannelIds = new List<string>();
+            }
+
+            _gazeChannelIds.Clear();
+            if (channelIds == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < channelIds.Count; i++)
+            {
+                string channelId = channelIds[i];
+                if (!string.IsNullOrEmpty(channelId) && !_gazeChannelIds.Contains(channelId))
+                {
+                    _gazeChannelIds.Add(channelId);
+                }
+            }
         }
 
         private OscRuntimeSettingsSO EnsureRuntimeSettings()
@@ -304,7 +315,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 return;
             }
 
-            IReadOnlyList<string> resolvedGazeExpressionIds = ResolveGazeExpressionIds(ctx);
+            IReadOnlyList<string> resolvedGazeExpressionIds = _gazeChannelIds;
 
             _addressBytesPool = new Dictionary<(string name, AddressPresetKind preset), byte[]>();
             var sendSlots = new List<SendSlot>(endpoints.Count);
@@ -527,16 +538,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _hasPublishedFrame = true;
         }
 
-        private List<string> EnsureGazeExpressionIdList()
-        {
-            if (_gazeExpressionIds == null)
-            {
-                _gazeExpressionIds = new List<string>();
-            }
-
-            return _gazeExpressionIds;
-        }
-
         private void CompleteStart(in AdapterBuildContext ctx, List<SendSlot> sendSlots)
         {
             _sendSlots = sendSlots;
@@ -656,78 +657,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             for (int i = 0; i < blendShapeNames.Count; i++)
             {
                 _blendShapeNames.Add(blendShapeNames[i]);
-            }
-        }
-
-        // _gazeExpressionIds が明示指定されていればそれを優先、空ならホスト GameObject 上の
-        // FacialController.CharacterSO.GazeConfigs から expressionId を抽出してフォールバック使用する。
-        // これにより demo / 本番運用で「Gaze は Profile で 1 度設定すれば OSC 送信側に再設定不要」を実現。
-        private IReadOnlyList<string> ResolveGazeExpressionIds(in AdapterBuildContext ctx)
-        {
-            if (_gazeExpressionIds != null && _gazeExpressionIds.Count > 0)
-            {
-                return _gazeExpressionIds;
-            }
-
-            GameObject host = ctx.HostGameObject;
-            if (host == null)
-            {
-                return Array.Empty<string>();
-            }
-
-            FacialController controller = host.GetComponent<FacialController>();
-            FacialCharacterProfileSO so = controller != null ? controller.CharacterSO : null;
-            if (so == null)
-            {
-                return Array.Empty<string>();
-            }
-
-            IReadOnlyList<GazeBindingConfig> gazeConfigs = so.GazeConfigs;
-            if (gazeConfigs == null || gazeConfigs.Count == 0)
-            {
-                return Array.Empty<string>();
-            }
-
-            var result = new List<string>(gazeConfigs.Count);
-            for (int i = 0; i < gazeConfigs.Count; i++)
-            {
-                GazeBindingConfig cfg = gazeConfigs[i];
-                if (cfg == null || string.IsNullOrEmpty(cfg.expressionId))
-                {
-                    continue;
-                }
-
-                bool duplicate = false;
-                for (int j = 0; j < result.Count; j++)
-                {
-                    if (string.Equals(result[j], cfg.expressionId, StringComparison.Ordinal))
-                    {
-                        duplicate = true;
-                        break;
-                    }
-                }
-
-                if (!duplicate)
-                {
-                    result.Add(cfg.expressionId);
-                }
-            }
-
-            return result;
-        }
-
-        private void SetGazeExpressionIds(IReadOnlyList<string> gazeExpressionIds)
-        {
-            List<string> target = EnsureGazeExpressionIdList();
-            target.Clear();
-            if (gazeExpressionIds == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < gazeExpressionIds.Count; i++)
-            {
-                target.Add(gazeExpressionIds[i]);
             }
         }
 
@@ -988,7 +917,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             for (int i = 0; i < _scratchGazeCount; i++)
             {
                 GazeSnapshot candidate = _scratchGazeSnapshots[i];
-                if (string.Equals(candidate.ExpressionId, expressionId, StringComparison.Ordinal))
+                if (string.Equals(candidate.ChannelId, expressionId, StringComparison.Ordinal))
                 {
                     snapshot = candidate;
                     return true;

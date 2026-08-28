@@ -72,15 +72,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
         }
 
         [Test]
-        public void Type_GazeExpressionIds_IsSerializableListField()
+        public void Type_ImplementsGazeChannelConsumer()
         {
-            FieldInfo field = typeof(OscSenderAdapterBinding).GetField(
-                "_gazeExpressionIds",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-
-            Assert.That(field, Is.Not.Null);
-            Assert.That(field.FieldType, Is.EqualTo(typeof(List<string>)));
-            Assert.That(field.GetCustomAttribute<SerializeField>(), Is.Not.Null);
+            Assert.That(typeof(IGazeChannelConsumer).IsAssignableFrom(typeof(OscSenderAdapterBinding)), Is.True);
         }
 
         [Test]
@@ -358,7 +352,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
             {
                 new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.VRChat)
             });
-            binding.GazeExpressionIds.Add("eyeLook");
+            binding.ConfigureGazeChannels(new[] { "eyeLook" });
             var host = new GameObject("OscSenderAdapterBindingVrchatGazeAddressTests");
 
             try
@@ -396,8 +390,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
                 new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.VRChat),
                 new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.ARKit)
             });
-            binding.GazeExpressionIds.Add("eyeLook");
-            binding.GazeExpressionIds.Add("brow");
+            binding.ConfigureGazeChannels(new[] { "eyeLook", "brow" });
             var host = new GameObject("OscSenderAdapterBindingGazeAdvertisementPairTests");
 
             try
@@ -439,7 +432,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
                     preset: AddressPresetKind.VRChat)
             });
             binding.BlendShapeNames.Add("smile");
-            binding.GazeExpressionIds.Add("eyeLook");
+            binding.ConfigureGazeChannels(new[] { "eyeLook" });
             var host = new GameObject("OscSenderAdapterBindingCustomGazeTests");
 
             LogAssert.Expect(LogType.Warning, new Regex("Custom address preset"));
@@ -478,7 +471,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
             {
                 new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.ARKit)
             });
-            binding.GazeExpressionIds.Add("eyeLook");
+            binding.ConfigureGazeChannels(new[] { "eyeLook" });
             var host = new GameObject("OscSenderAdapterBindingArKitGazeAddressTests");
 
             try
@@ -515,7 +508,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
             {
                 new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.VRChat)
             });
-            binding.GazeExpressionIds.Add("eyeLook");
+            binding.ConfigureGazeChannels(new[] { "eyeLook" });
             var host = new GameObject("OscSenderAdapterBindingVrchatGazeScratchTests");
 
             try
@@ -560,7 +553,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
             {
                 new OscSenderEndpointConfig("127.0.0.1", AllocatePort(), preset: AddressPresetKind.ARKit)
             });
-            binding.GazeExpressionIds.Add("eyeLook");
+            binding.ConfigureGazeChannels(new[] { "eyeLook" });
             var host = new GameObject("OscSenderAdapterBindingArKitGazeScratchTests");
 
             try
