@@ -38,8 +38,10 @@ ARKit 互換 BlendShape をモデルの BlendShape に反映します。視線�
 4. **listen port を必要に応じて変更**: `IFacialMocapReceiverDemoSettings.asset` の sub-asset
    `IFacialMocapReceiverSettings` の `Listen Port` を変更します。端末から直接受ける場合は `Send Handshake` を
    有効化し、`Device Address` に iOS 端末の IP を入力してください。
-5. **視線・頭部（任意）**: Profile の `GazeBindingConfig` / `AnalogBindingEntry`（`TargetKind=BonePose`）で
-   `ifm:gaze.left` / `ifm:gaze.right` / `ifm:head` をモデルの目・頭ボーンへ結線します。詳細は
+5. **視線（任意）**: Profile の **Gaze** セクションにある既定チャネル `gaze` を使用します。
+   参照モデルを設定すると目ボーンが自動解決され、入力ソースの選択だけで iFacialMocap の視線に接続できます。
+   `ifm:gaze.left` / `ifm:gaze.right` の id を手入力する必要はありません。頭部は従来どおり
+   **Analog Bindings** の `TargetKind=BonePose` で `ifm:head` を頭ボーンへ結線します。詳細は
    パッケージ同梱の `Documentation~/usage.md` を参照してください。
 6. **Play**: iFacialMocap (iOS) から `49983` に向けてストリームを送ると、モデルの BlendShape が更新されます。
 

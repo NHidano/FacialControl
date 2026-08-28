@@ -132,7 +132,7 @@
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.6, 11.6_
   - _Boundary: MultiSourceBlendDemo, OscOutputDemo, OscReceiverDemo_
 
-- [ ] 7.2 (P) iFacialMocap demo 縺ｨ lipsync 2 繧ｵ繝ｳ繝励Ν縺ｮ stale 繧｢繧ｻ繝・ヨ繧呈峩譁ｰ縺吶ｋ
+- [x] 7.2 (P) iFacialMocap demo 縺ｨ lipsync 2 繧ｵ繝ｳ繝励Ν縺ｮ stale 繧｢繧ｻ繝・ヨ繧呈峩譁ｰ縺吶ｋ
   - iFM demo README 縺ｮ譌ｧ謇矩・ｼ・azeBindingConfig 縺ｧ縺ｮ逶ｮ繝懊・繝ｳ邨千ｷ夲ｼ峨ｒ譁ｰ謇矩・ｼ郁ｿｽ蜉險ｭ螳壹↑縺励〒譌｢螳壹メ繝｣繝阪Ν縺ｫ謗･邯・+ 逶ｮ繝懊・繝ｳ險ｭ螳壹・縺ｿ・峨∈鄂ｮ謠帙☆繧・  - iFM demo / MicLipSyncDemo / AnimationClipLipSyncDemo 縺ｮ Profile 繧｢繧ｻ繝・ヨ繧貞・菫晏ｭ倥＠ stale 縺ｪ譌ｧ繧ｭ繝ｼ陦後ｒ髯､蜴ｻ縺吶ｋ・域眠繧ｭ繝ｼ縺ｮ遨ｺ繝ｪ繧ｹ繝郁｡後′谿九ｋ縺ｮ縺ｯ莉墓ｧ假ｼ・  - 繧｢繧ｻ繝・ヨ diff 縺ｧ譌ｧ繧ｭ繝ｼ `_gazeConfigs` 陦後′ 3 繧｢繧ｻ繝・ヨ縺九ｉ豸医∴縺ｦ縺・ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 12.5_
   - _Boundary: IFacialMocapReceiverDemo, MicLipSyncDemo, AnimationClipLipSyncDemo_

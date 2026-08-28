@@ -32,7 +32,7 @@ MonoBehaviour:
       bones: []
       rendererPaths: []
   _rendererPaths: []
-  _gazeConfigs: []
+  _legacyGazeConfigs: []
   _slots: []
   _defaultOverlays: []
   _adapterBindings:

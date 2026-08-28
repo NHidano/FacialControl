@@ -95,7 +95,7 @@ MonoBehaviour:
       overlays: []
   _rendererPaths:
   - Face
-  _gazeConfigs: []
+  _legacyGazeConfigs: []
   _slots:
   - a
   - i

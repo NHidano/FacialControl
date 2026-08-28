@@ -25,7 +25,7 @@ MonoBehaviour:
     - lipsync
   _expressions: []
   _rendererPaths: []
-  _gazeConfigs: []
+  _legacyGazeConfigs: []
   _adapterBindings:
   - rid: 4448593420807569408
   _referenceModel: {fileID: 0}
