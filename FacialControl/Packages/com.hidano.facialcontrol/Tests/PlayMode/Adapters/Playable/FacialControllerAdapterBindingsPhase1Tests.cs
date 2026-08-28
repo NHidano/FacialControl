@@ -120,7 +120,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
         }
 
         [UnityTest]
-        public IEnumerator Initialize_InputSystemBinding_InjectsSORootGazeConfigsByReference()
+        public IEnumerator Initialize_InputSystemBinding_InjectsGazeChannelIds()
         {
             _controllerGameObject = CreateControllerHost();
             var controller = _controllerGameObject.AddComponent<FacialController>();
@@ -137,9 +137,10 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
                 controller.CharacterSO = so;
                 controller.Initialize();
 
-                object injected = ReadInjectedGazeConfigs(binding);
-                Assert.That(injected, Is.SameAs(so.GazeConfigs),
-                    "runtime build 経路で InputSystemAdapterBinding.Configure に SO ルート GazeConfigs が参照同値で注入されるべき。");
+                object injected = ReadInjectedGazeChannelIds(binding);
+                Assert.That(injected, Is.TypeOf<List<string>>());
+                CollectionAssert.Contains((List<string>)injected, "gaze",
+                    "runtime build 経路で InputSystemAdapterBinding に Gaze チャネル ID 列が注入されるべき。");
 
                 _controllerGameObject.SetActive(false);
                 yield return null;
@@ -520,13 +521,13 @@ namespace Hidano.FacialControl.Tests.PlayMode.Adapters.Playable
         /// 同 instance に対する <see cref="OnStart"/> / <see cref="OnLateTick"/> / <see cref="Dispose"/>
         /// の呼出回数を <c>NonSerialized</c> field で集計する。
         /// </summary>
-        private static object ReadInjectedGazeConfigs(InputSystemAdapterBinding binding)
+        private static object ReadInjectedGazeChannelIds(InputSystemAdapterBinding binding)
         {
             var field = typeof(InputSystemAdapterBinding).GetField(
-                "_injectedGazeConfigs",
+                "_injectedGazeChannelIds",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null,
-                "InputSystemAdapterBinding._injectedGazeConfigs は runtime 注入ハンドルとして存在するべき。");
+                "InputSystemAdapterBinding._injectedGazeChannelIds は runtime 注入ハンドルとして存在するべき。");
             return field.GetValue(binding);
         }
 

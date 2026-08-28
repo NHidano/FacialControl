@@ -568,11 +568,8 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                         expressionId = ExpressionId,
                         actionName = "GazeLook",
                     }
-                },
-                new[]
-                {
-                    new GazeBindingConfig { expressionId = ExpressionId }
                 });
+            binding.ConfigureGazeChannels(new[] { ExpressionId });
             return binding;
         }
 

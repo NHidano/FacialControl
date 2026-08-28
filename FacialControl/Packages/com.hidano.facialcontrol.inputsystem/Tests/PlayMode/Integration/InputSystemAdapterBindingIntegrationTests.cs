@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Adapters.ScriptableObject;
@@ -219,8 +220,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
         [Test]
         public void OnStart_AnalogPath_RegistersAnalogSourceUnderCompositeSlug()
         {
-            // D-8 集約: Analog 経路は ExpressionBindingEntry(bindingMode=Gaze).actionName を sub-id とした composite slug 登録となる
-            // （InputActionAnalogSource 構築相当）。
+            // Gaze の source はチャネル id を sub-id とした規約キーで登録される。
             const string slug = "input-system-analog-path";
             _sourceAsset = CreateGazeActionAsset(
                 actionMapName: "Expression",
@@ -244,16 +244,13 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
             _binding.OnStart(in ctx);
             _bindingStarted = true;
 
-            // Composite slug `<slug>:<actionName>` で analog source が解決できるべき。
-            bool resolved = _registry.TryResolve(slug + ":GazeLook", out IInputSource source);
+            bool resolved = _registry.TryResolve(slug + ":expr-gaze", out IInputSource source);
             Assert.IsTrue(resolved,
-                $"Analog 経路の InputSource は \"{slug}:GazeLook\" で解決できるべき。");
+                $"Gaze 経路の InputSource は \"{slug}:expr-gaze\" で解決できるべき。");
             Assert.IsNotNull(source);
 
-            bool expressionAliasResolved = _registry.TryResolve(slug + ":expr-gaze", out IInputSource expressionAlias);
-            Assert.IsTrue(expressionAliasResolved,
-                "Gaze binding は Cross-binding Slug Convention 用に expressionId でも登録されるべき。");
-            Assert.IsInstanceOf<IAnalogInputSource>(expressionAlias);
+            Assert.IsFalse(_registry.TryResolve(slug + ":GazeLook", out _),
+                "Gaze 経路で Action 名由来の旧エイリアスを登録してはならない。");
         }
 
         [Test]
@@ -281,6 +278,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
                 asset: _sourceAsset,
                 actionMapName: "Expression",
                 expressionBindings: new List<ExpressionBindingEntry> { gazeBinding });
+            ((IGazeChannelConsumer)_binding).ConfigureGazeChannels(new[] { "expr-gaze" });
 
             AdapterBuildContext ctx = CreateContext();
 
@@ -381,7 +379,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
 
             LogAssert.Expect(
                 LogType.Warning,
-                "[InputSystemAdapterBinding] Gaze binding expressionId 'missing-gaze' に対応する GazeBindingConfig が SO ルートに存在しません。skip します。");
+                "[InputSystemAdapterBinding] Gaze binding channel id 'missing-gaze' が注入チャネルに存在しません。skip します。");
 
             AdapterBuildContext ctx = CreateContext();
 
@@ -576,7 +574,14 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
         {
             var binding = new InputSystemAdapterBinding();
             binding.Slug = slug;
-            binding.Configure(asset, actionMapName, expressionBindings, injectedGazeConfigs);
+            binding.Configure(asset, actionMapName, expressionBindings);
+            if (injectedGazeConfigs != null)
+            {
+                binding.ConfigureGazeChannels(injectedGazeConfigs
+                    .Where(config => config != null)
+                    .Select(config => config.expressionId)
+                    .ToArray());
+            }
             return binding;
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Models;
@@ -109,6 +110,34 @@ namespace Hidano.FacialControl.InputSystem.Tests.EditMode.Adapters.AdapterBindin
             string[] ids = ((IAdapterBindingDeclaredInputs)binding).GetDeclaredInputSourceIds().ToArray();
 
             Assert.That(ids, Is.Empty);
+        }
+
+        [Test]
+        public void GetDeclaredInputSourceIds_Gaze_UsesConventionChannelIdsWithoutActionAlias()
+        {
+            var binding = new InputSystemAdapterBinding { Slug = "input-system" };
+            binding.Configure(null, "Expression", new[]
+            {
+                new ExpressionBindingEntry
+                {
+                    bindingMode = BindingMode.Gaze,
+                    expressionId = "eye-look",
+                    useDistinctLeftRight = true,
+                    actionNameLeft = "LeftLook",
+                    actionNameRight = "RightLook",
+                },
+            });
+
+            string[] ids = binding.GetDeclaredInputSourceIds().ToArray();
+            CollectionAssert.Contains(ids, "input-system:eye-look.left");
+            CollectionAssert.Contains(ids, "input-system:eye-look.right");
+            CollectionAssert.DoesNotContain(ids, "input-system:LeftLook");
+            CollectionAssert.DoesNotContain(ids, "input-system:RightLook");
+
+            var declarations = ((IGazeSourceProvider)binding).GetGazeSourceDeclarations().ToArray();
+            Assert.That(declarations, Has.Length.EqualTo(1));
+            Assert.That(declarations[0].ChannelId, Is.EqualTo("eye-look"));
+            Assert.That(declarations[0].ProvidesLeftRightPair, Is.True);
         }
 
         [Test]

@@ -35,8 +35,8 @@ namespace Hidano.FacialControl.InputSystem.Adapters.ScriptableObject
         [Tooltip("Gaze モードかつ useDistinctLeftRight=true の時に使う右目用 InputAction 名。")]
         public string actionNameRight = string.Empty;
 
-        [Tooltip("発火対象の Expression の ID (FacialCharacterProfileSO.Expressions[].id と一致させる)。"
-            + " Gaze モードでは GazeConfig.expressionId と一致させる。")]
+        [Tooltip("通常は発火対象の Expression ID (FacialCharacterProfileSO.Expressions[].id)。"
+            + " Gaze モードでは Gaze チャネル ID (FacialCharacterProfileSO.GazeChannels[].id) を指定する。")]
         public string expressionId;
 
         [Tooltip(

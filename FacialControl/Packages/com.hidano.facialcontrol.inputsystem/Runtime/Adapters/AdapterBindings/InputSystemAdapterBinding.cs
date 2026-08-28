@@ -32,7 +32,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
     /// </remarks>
     [Serializable]
     [FacialAdapterBinding(displayName: "Input System")]
-    public sealed class InputSystemAdapterBinding : AdapterBindingBase, IAdapterBindingDeclaredInputs
+    public sealed class InputSystemAdapterBinding : AdapterBindingBase, IAdapterBindingDeclaredInputs, IGazeChannelConsumer, IGazeSourceProvider
     {
         [Tooltip("キーアサインを定義する InputActionAsset。Project ウィンドウで作成した .inputactions をここに割り当てる。")]
         [SerializeField]
@@ -52,7 +52,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
         [NonSerialized] private ExpressionInputSourceAdapter _adapter;
         [NonSerialized] private List<InputActionAnalogSource> _analogSources;
         [NonSerialized] private AnalogExpressionInputSource _analogExpressionSink;
-        [NonSerialized] private IReadOnlyList<GazeBindingConfig> _injectedGazeConfigs;
+        [NonSerialized] private IReadOnlyList<string> _injectedGazeChannelIds;
+        [NonSerialized] private HashSet<string> _warnedMissingGazeChannelIds;
         [NonSerialized] private bool _isStarted;
 
         // Overlay 経路: slot ごとの OverlayInputSource と、対応する InputAction / 対象レイヤー名のキャッシュ。
@@ -85,25 +86,38 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
         /// <summary>
         /// テスト / プログラムからの構成注入。Inspector 経由で設定される値と同等の効果を持つ。
         /// </summary>
-        /// <remarks>
-        /// FacialController 側の reflection-based gaze 注入器
-        /// (FacialController.FindGazeConfigureMethod) は「末尾パラメータが
-        /// IReadOnlyList&lt;GazeBindingConfig&gt; である Configure」を検索するため、
-        /// 必ず <paramref name="injectedGazeConfigs"/> を最後の位置に維持すること。
-        /// 順序変更は core 側との ABI 契約破壊につながる。
-        /// </remarks>
         public void Configure(
             InputActionAsset asset,
             string actionMapName,
-            IReadOnlyList<ExpressionBindingEntry> expressionBindings,
-            IReadOnlyList<GazeBindingConfig> injectedGazeConfigs = null)
+            IReadOnlyList<ExpressionBindingEntry> expressionBindings)
         {
             _inputActionAsset = asset;
             _actionMapName = actionMapName;
             _expressionBindings = expressionBindings == null
                 ? new List<ExpressionBindingEntry>()
                 : new List<ExpressionBindingEntry>(expressionBindings);
-            _injectedGazeConfigs = injectedGazeConfigs;
+        }
+
+        /// <inheritdoc />
+        public void ConfigureGazeChannels(IReadOnlyList<string> channelIds)
+        {
+            _injectedGazeChannelIds = channelIds;
+            _warnedMissingGazeChannelIds = null;
+        }
+
+        /// <inheritdoc />
+        public IEnumerable<GazeSourceDeclaration> GetGazeSourceDeclarations()
+        {
+            if (_expressionBindings == null) yield break;
+            for (int i = 0; i < _expressionBindings.Count; i++)
+            {
+                var entry = _expressionBindings[i];
+                if (entry != null && entry.bindingMode == BindingMode.Gaze
+                    && GazeSourceIdConvention.IsValidChannelId(entry.expressionId))
+                {
+                    yield return new GazeSourceDeclaration(entry.expressionId, entry.useDistinctLeftRight);
+                }
+            }
         }
 
         /// <summary>
@@ -146,6 +160,19 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
                 if (entry.bindingMode == BindingMode.Analog)
                 {
                     hasAnalog = true;
+                }
+                else if (entry.bindingMode == BindingMode.Gaze
+                    && GazeSourceIdConvention.IsValidChannelId(entry.expressionId))
+                {
+                    if (entry.useDistinctLeftRight)
+                    {
+                        ids.Add(slug + ":" + GazeSourceIdConvention.ComposeSub(entry.expressionId, GazeSide.Left));
+                        ids.Add(slug + ":" + GazeSourceIdConvention.ComposeSub(entry.expressionId, GazeSide.Right));
+                    }
+                    else
+                    {
+                        ids.Add(slug + ":" + GazeSourceIdConvention.ComposeSub(entry.expressionId, GazeSide.Shared));
+                    }
                 }
                 else if (entry.bindingMode == BindingMode.Overlay
                     && !string.IsNullOrWhiteSpace(entry.overlaySlot)
@@ -226,9 +253,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
 
             BuildOverlaySources(ctx, slug, blendShapeCount, blendShapeNames);
 
-            // 目ボーン適用は core の FacialController に集約したため、ここでは gaze 入力源の registry 登録
-            // (BuildAnalogSources) のみ行い provider は構築しない。config 欠落の gaze binding は警告する。
-            WarnForGazeBindingsWithoutConfig();
+            // 目ボーン適用は core に集約し、ここでは規約 ID の入力源登録だけを行う。
+            WarnForGazeBindingsWithoutChannel();
 
             // Overlay 経路の OnLateTick で SetLayerWeight するために FacialController をキャッシュ。
             // ctx.HostGameObject は per-FC LifetimeScope build 時の宿主。
@@ -381,32 +407,24 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
 
                 if (entry.bindingMode == BindingMode.Gaze)
                 {
+                    if (!GazeSourceIdConvention.IsValidChannelId(entry.expressionId))
+                    {
+                        continue;
+                    }
                     if (entry.useDistinctLeftRight)
                     {
                         InputActionAnalogSource leftSource =
                             TryRegisterAnalogSource(ctx, slug, entry.actionNameLeft, registered);
                         InputActionAnalogSource rightSource =
                             TryRegisterAnalogSource(ctx, slug, entry.actionNameRight, registered);
-                        TryRegisterAnalogSourceAlias(
-                            ctx.InputSourceRegistry,
-                            slug,
-                            $"{entry.expressionId}.left",
-                            leftSource);
-                        TryRegisterAnalogSourceAlias(
-                            ctx.InputSourceRegistry,
-                            slug,
-                            $"{entry.expressionId}.right",
-                            rightSource);
+                        RegisterGazeSource(ctx.InputSourceRegistry, slug, entry.expressionId, GazeSide.Left, leftSource);
+                        RegisterGazeSource(ctx.InputSourceRegistry, slug, entry.expressionId, GazeSide.Right, rightSource);
                     }
                     else
                     {
                         InputActionAnalogSource sharedSource =
                             TryRegisterAnalogSource(ctx, slug, entry.actionName, registered);
-                        TryRegisterAnalogSourceAlias(
-                            ctx.InputSourceRegistry,
-                            slug,
-                            entry.expressionId,
-                            sharedSource);
+                        RegisterGazeSource(ctx.InputSourceRegistry, slug, entry.expressionId, GazeSide.Shared, sharedSource);
                     }
                     continue;
                 }
@@ -416,6 +434,21 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
                 {
                     TryRegisterAnalogSource(ctx, slug, entry.actionName, registered);
                 }
+            }
+        }
+
+        private static void RegisterGazeSource(
+            IInputSourceRegistry registry,
+            AdapterSlug slug,
+            string channelId,
+            GazeSide side,
+            InputActionAnalogSource source)
+        {
+            if (registry == null || source == null || !GazeSourceIdConvention.IsValidChannelId(channelId)) return;
+            string sub = GazeSourceIdConvention.ComposeSub(channelId, side);
+            if (!registry.TryResolve(slug.Value + ":" + sub, out _))
+            {
+                registry.Register(slug, sub, new AnalogInputSourceWrapper(source));
             }
         }
 
@@ -642,7 +675,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
             }
         }
 
-        private void WarnForGazeBindingsWithoutConfig()
+        private void WarnForGazeBindingsWithoutChannel()
         {
             if (_expressionBindings == null || _expressionBindings.Count == 0)
             {
@@ -657,34 +690,31 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings.InputSystem
                     continue;
                 }
 
-                if (HasInjectedGazeConfig(entry.expressionId))
+                if (_injectedGazeChannelIds == null || ContainsChannelId(entry.expressionId))
                 {
                     continue;
                 }
 
+                if (_warnedMissingGazeChannelIds == null)
+                {
+                    _warnedMissingGazeChannelIds = new HashSet<string>(StringComparer.Ordinal);
+                }
+                if (!_warnedMissingGazeChannelIds.Add(entry.expressionId ?? string.Empty)) continue;
                 Debug.LogWarning(
-                    $"[InputSystemAdapterBinding] Gaze binding expressionId '{FormatExpressionId(entry.expressionId)}' に対応する GazeBindingConfig が SO ルートに存在しません。skip します。");
+                    $"[InputSystemAdapterBinding] Gaze binding channel id '{FormatExpressionId(entry.expressionId)}' が注入チャネルに存在しません。skip します。");
             }
         }
 
-        private bool HasInjectedGazeConfig(string expressionId)
+        private bool ContainsChannelId(string channelId)
         {
-            if (_injectedGazeConfigs == null
-                || _injectedGazeConfigs.Count == 0
-                || string.IsNullOrWhiteSpace(expressionId))
+            if (string.IsNullOrWhiteSpace(channelId))
             {
                 return false;
             }
 
-            for (int i = 0; i < _injectedGazeConfigs.Count; i++)
+            for (int i = 0; i < _injectedGazeChannelIds.Count; i++)
             {
-                GazeBindingConfig config = _injectedGazeConfigs[i];
-                if (config == null)
-                {
-                    continue;
-                }
-
-                if (string.Equals(config.expressionId, expressionId, StringComparison.Ordinal))
+                if (string.Equals(_injectedGazeChannelIds[i], channelId, StringComparison.Ordinal))
                 {
                     return true;
                 }

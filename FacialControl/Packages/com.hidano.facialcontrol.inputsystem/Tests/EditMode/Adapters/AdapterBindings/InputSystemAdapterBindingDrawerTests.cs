@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Hidano.FacialControl.Adapters.AdapterBindings.InputSystem;
 using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
+using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Editor.Common;
 using Hidano.FacialControl.InputSystem.Adapters.ScriptableObject;
@@ -245,6 +246,23 @@ namespace Hidano.FacialControl.InputSystem.Tests.EditMode.Adapters.AdapterBindin
             Assert.That(actionField.style.display.value, Is.EqualTo(DisplayStyle.Flex));
         }
 
+        [Test]
+        public void BindExpressionBindingRow_Gaze_EnumeratesProfileGazeChannelIdsDirectly()
+        {
+            _profileSo = ScriptableObject.CreateInstance<TestProfileSO>();
+            SetGazeChannels(_profileSo, "gaze", "camera-look");
+            _profileSo.WritableAdapterBindings.Add(CreateBinding(InputBindingMode.Gaze, false));
+            SerializedProperty bindingProperty = CreateProfileBindingProperty(_profileSo);
+
+            var row = new VisualElement();
+            InvokeBindExpressionBindingRow(row, 0, bindingProperty);
+
+            var dropdown = row.Q<DropdownField>(InputSystemAdapterBindingDrawer.ExpressionDropdownName);
+            Assert.That(dropdown, Is.Not.Null);
+            CollectionAssert.AreEqual(new[] { string.Empty, "gaze", "camera-look", "look" }, dropdown.choices);
+            Assert.That(dropdown.formatSelectedValueCallback("camera-look"), Is.EqualTo("camera-look"));
+        }
+
         private SerializedProperty CreateProfileBindingProperty(TestProfileSO so)
         {
             _serializedObject?.Dispose();
@@ -386,6 +404,14 @@ namespace Hidano.FacialControl.InputSystem.Tests.EditMode.Adapters.AdapterBindin
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null);
             field.SetValue(so, new List<string>(slots));
+        }
+
+        private static void SetGazeChannels(FacialCharacterProfileSO so, params string[] ids)
+        {
+            var channels = so.GazeChannels as List<GazeChannel>;
+            Assert.That(channels, Is.Not.Null);
+            channels.Clear();
+            channels.AddRange(ids.Select(id => new GazeChannel { id = id }));
         }
 
         private sealed class TestProfileSO : FacialCharacterProfileSO

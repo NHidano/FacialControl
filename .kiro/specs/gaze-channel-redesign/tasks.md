@@ -135,7 +135,7 @@
   - _Boundary: OscReceiverAdapterBinding, GazeAdvertisementResolver_
   - _Depends: 1.2, 1.3, 4.2_
 
-- [ ] 5.3 (P) InputSystem binding の一貫登録と Drawer のチャネル id 列挙化を実装する
+- [x] 5.3 (P) InputSystem binding の一貫登録と Drawer のチャネル id 列挙化を実装する
   - Configure の末尾 gaze 引数と注入済み config 保持を削除し、チャネル注入契約へ置換する（gaze entry のチャネル id が注入集合に無い場合は警告 1 回）
   - Gaze 分岐の「実体 actionName 登録 + 規約 id エイリアス後付け」の二重登録を、規約 helper 合成 id での直接登録に一貫化する（side suffix の文字列補間を削除）
   - Gaze entry の expressionId をチャネル id 参照として再解釈し（フィールド名維持・Tooltip 更新。serialized 資産の意味変更 = Breaking として 7.3 で移行ガイド記載）、宣言契約を実装、declared inputs へ gaze 規約 id を追加する

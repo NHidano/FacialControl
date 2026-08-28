@@ -348,19 +348,29 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
             actionRightDropdown.SetValueWithoutNotify(actionNameRightValue);
 
             // 2) Expression dropdown
-            var expressionDropdown = new DropdownField("表情 ID")
+            bool isGazeBinding = IsGazeBinding(entryProp, bindingModeProp);
+            var expressionDropdown = new DropdownField(isGazeBinding ? "Gaze チャネル ID" : "表情 ID")
             {
                 name = ExpressionDropdownName,
             };
             string expressionIdValue = expressionIdProp != null ? expressionIdProp.stringValue ?? string.Empty : string.Empty;
-            var expressionChoices = CollectExpressionIds(bindingProperty);
+            var expressionChoices = isGazeBinding
+                ? CollectGazeChannelIds(bindingProperty)
+                : CollectExpressionIds(bindingProperty);
             expressionDropdown.choices = BuildSafeChoices(expressionChoices, expressionIdValue);
             expressionDropdown.SetValueWithoutNotify(expressionIdValue);
-            // 内部値は expressionId（hash 文字列）のままで保存し、表示だけ Expression.name に変換する。
-            expressionDropdown.formatListItemCallback =
-                id => FormatExpressionDropdownLabel(bindingProperty, id);
-            expressionDropdown.formatSelectedValueCallback =
-                id => FormatExpressionDropdownLabel(bindingProperty, id);
+            if (!isGazeBinding)
+            {
+                expressionDropdown.formatListItemCallback =
+                    id => FormatExpressionDropdownLabel(bindingProperty, id);
+                expressionDropdown.formatSelectedValueCallback =
+                    id => FormatExpressionDropdownLabel(bindingProperty, id);
+            }
+            else
+            {
+                expressionDropdown.formatListItemCallback = id => id;
+                expressionDropdown.formatSelectedValueCallback = id => id;
+            }
             expressionDropdown.RegisterValueChangedCallback(evt =>
             {
                 var so = bindingProperty.serializedObject;
@@ -925,6 +935,19 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
             {
                 return result;
             }
+            var mode = bindingProperty.FindPropertyRelative("bindingMode");
+            if (mode != null && mode.enumValueIndex == (int)BindingMode.Gaze)
+            {
+                var channels = profileSo.GazeChannels;
+                if (channels == null) return result;
+                for (int i = 0; i < channels.Count; i++)
+                {
+                    var id = channels[i] != null ? channels[i].id : null;
+                    if (!string.IsNullOrEmpty(id)) result.Add(id);
+                }
+                return result;
+            }
+
             var expressions = profileSo.Expressions;
             if (expressions == null) return result;
             for (int i = 0; i < expressions.Count; i++)
@@ -953,6 +976,12 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
                 return expressionId;
             }
 
+            var mode = bindingProperty.FindPropertyRelative("bindingMode");
+            if (mode != null && mode.enumValueIndex == (int)BindingMode.Gaze)
+            {
+                return expressionId;
+            }
+
             var expressions = profileSo.Expressions;
             if (expressions == null)
             {
@@ -974,6 +1003,36 @@ namespace Hidano.FacialControl.InputSystem.Editor.AdapterBindings
 
             // 名前が空 / 候補から外れた id は判別性のため短縮表示。
             return expressionId.Length <= 8 ? expressionId : expressionId.Substring(0, 8) + "…";
+        }
+
+        private static List<string> CollectGazeChannelIds(SerializedProperty bindingProperty)
+        {
+            var result = new List<string>();
+            var so = bindingProperty.serializedObject;
+            if (!(so.targetObject is FacialCharacterProfileSO profileSo)) return result;
+            var channels = profileSo.GazeChannels;
+            if (channels == null) return result;
+            for (int i = 0; i < channels.Count; i++)
+            {
+                var id = channels[i] != null ? channels[i].id : null;
+                if (!string.IsNullOrEmpty(id)) result.Add(id);
+            }
+            return result;
+        }
+
+        private static bool IsGazeBinding(
+            SerializedProperty entryProperty, SerializedProperty bindingModeProperty)
+        {
+            if (bindingModeProperty != null && bindingModeProperty.enumValueIndex == (int)BindingMode.Gaze)
+            {
+                return true;
+            }
+
+            var entry = entryProperty != null
+                && entryProperty.propertyType == SerializedPropertyType.ManagedReference
+                ? entryProperty.managedReferenceValue as ExpressionBindingEntry
+                : null;
+            return entry != null && entry.bindingMode == BindingMode.Gaze;
         }
 
         private static List<string> BuildSafeChoices(IReadOnlyList<string> baseChoices, string currentValue)
