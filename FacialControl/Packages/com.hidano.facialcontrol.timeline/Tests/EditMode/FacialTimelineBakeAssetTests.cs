@@ -145,7 +145,6 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 StringAssert.Contains("\"layerName\":\"Emotion\"", json);
                 StringAssert.Contains("\"blendShapeName\":\"Blink\"", json);
                 StringAssert.Contains("\"sub\":\"analog-1\"", json);
-                StringAssert.Contains("\"isGaze\":false", json);
                 StringAssert.Contains("\"expressionId\":\"blink\"", json);
                 StringAssert.Contains("\"layerName\":\"Emotion\"", json);
             }

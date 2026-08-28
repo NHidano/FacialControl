@@ -11,7 +11,7 @@
 - `ExpressionSerializable.isGaze` と旧 `GazeConfigs` を廃止し、Profile 直下の `gaze.channels[]` / `GazeChannels`（既定 id は `gaze`）へ統合しました。既存 SO / JSON の gaze 設定は自動変換されないため、移行ガイドに従って手動で再設定してください。
 - gaze source id は `{slug}:{channelId}`（左右別は `.left` / `.right`）に統一しました。`GazeSnapshot`、binding 宣言、Timeline / rec の判定もこの規約に従います。
 - `GazeSourceIdConvention`、`IGazeSourceProvider`、`IGazeChannelConsumer` を追加し、旧 gaze resolver / binding 注入経路を置き換えました。旧 API に依存する拡張は更新が必要です。
-- 旧 `gaze_configs[]` を含む JSON は警告後に gaze 部分を読み捨てます。詳細は [`Documentation~/migration-guide.md`](Documentation~/migration-guide.md) を参照してください。
+- 旧 gaze データを含む JSON は新しいチャネル構成へ移行してください。詳細は [`Documentation~/migration-guide.md`](Documentation~/migration-guide.md) を参照してください。
 
 ### Changed
 
@@ -57,7 +57,7 @@
 - Expression 作成ツールで既存 Clip を読み込んだ際、設定中モデルの SkinnedMeshRenderer に存在しない BlendShape が Clip に含まれている場合、黄色の警告文で該当 BlendShape 一覧を表示するようにした。
 - Expression 作成ツールの「存在しない BlendShape」警告に「存在しない BlendShape を Clip から一括削除」ボタンを追加した。検出された BlendShape のカーブのみを AnimationClip から削除し（既存の有効なカーブは保持）、削除後はスライダーを再読み込みして警告とボタンを非表示に戻す。削除は Undo 可能。
 - Expression 作成ツールで編集後にベイクせずウィンドウを閉じようとした場合、Unity 標準の未保存確認ダイアログ（`EditorWindow.hasUnsavedChanges`）を表示するようにした。「保存」を選ぶと現在のスライダー値をベイクして閉じる（ベイク先 Clip 未設定時は作成ダイアログを表示し、キャンセルでクローズを中断）。
-- **目線の目ボーン適用を `FacialController` に集約**: `FacialController` が profile ルートの `GazeBindingConfig` 群を `GazeBindingConfigResolver` で `InputSourceRegistry` の gaze 入力源（`{slug}:{expressionId}` / `.left` / `.right`）に解決し、単一の `GazeBonePoseProvider` を構築して `LateUpdate` 末尾（BoneWriter 適用後）で目ボーンへ localRotation を書き込むようにした。各入力 binding（OSC / InputSystem / iFacialMocap）は gaze 入力源の registry 登録のみを担い、目ボーンは回さない。この経路は入力方式非依存のため、**OSC 受信した gaze も設定のみで目ボーンに反映される**（従来は目ボーン適用 provider を持つ binding が InputSystem / iFacialMocap に限られ、OSC 受信 gaze はローカルモデルに反映されなかった）。bone path を持たない `GazeBindingConfig`（BlendShape 経路のみ）は構築対象外。`Cleanup` 時は provider の `Dispose` が目ボーンを初期回転へ復元する。
+- **目線の目ボーン適用を `FacialController` に集約**: `FacialController` が profile の `GazeChannel` を `GazeChannelResolver` で入力源に解決し、単一の `GazeBonePoseProvider` で目ボーンへ適用する。
 - Play モード突入時（`EditorApplication.playModeStateChanged` の `ExitingEditMode`）およびビルド開始時（`IPreprocessBuildWithReport.OnPreprocessBuild`）に、プロジェクト内の全 `FacialCharacterProfileSO`（派生型含む）を再サンプリングして `StreamingAssets/FacialControl/{SO 名}/profile.json` を自動エクスポートする `FacialCharacterProfileAutoExporter` を追加。これまで profile.json の更新は Inspector 編集の `TrackSerializedObjectValue` 起点のみだったため、クリップだけ差し替えてエクスポートを忘れた場合や、`AnimationClipExpressionSampler` の ÷100 スケール修正前に生成された旧 profile.json（0..100 スケール）が残っている場合に、古い JSON のまま Play / ビルドに進み全 BlendShape が 100% に飽和し得た。本フックにより、ランタイムが読む JSON が常に最新の正規化 0..1 値になる。エクスポートは冪等（内容が最新なら同一バイトを書くだけ）で、SO の `cachedSnapshot` はインメモリ再サンプリングのみ行いアセットを dirty にしない。
 
 ### Breaking changes
@@ -130,10 +130,10 @@
 - Overlay slot 宣言 (`FacialProfile.Slots` / `ProfileSnapshotDto.slots` / `FacialCharacterProfileSO._slots`) を追加。slot 重複と未宣言 slot 参照を検出する `ValidateSlotReferences()` と `InvalidSlotReference` も追加した。
 - `OverlaySlotBinding` / `OverlaySlotBindingDto` / `OverlaySlotBindingSerializable` を 3 状態 overlay モデルへ更新し、default fallback / suppress / snapshot override を Domain / JSON / SO の全経路で同じ意味として扱うようにした。
 - `FacialCharacterProfileSOInspector` を「表情ライブラリ / レイヤー / ベース表情 / 目線 / Adapter Bindings / Debug」の 6 タブ構成へ再編し、表情ライブラリタブに Slots 宣言、Default Overlays、Expression 行ごとの Overlays UI を追加。Adapter Bindings の `overlaySlot` は Slots 宣言から dropdown 生成される。
-- `Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig` — Vector2 アナログ入力で両目を同時駆動するアナログ表情の汎用 `[Serializable]` 基底クラス。両目ボーン path / 初期回転 / yaw・pitch local 軸 / 可動範囲 (上下＋左右内外) / Look 4 系統 AnimationClip / 焼き付け sample 配列を保持。InputSystem 連携の `GazeExpressionConfig` はこのクラスを継承し `InputActionReference` だけ追加する形に再構成された (inputsystem 側参照)。
+- `Hidano.FacialControl.Adapters.ScriptableObject.GazeChannel` — Vector2 アナログ入力で両目を駆動する gaze チャネル設定。
 - `Hidano.FacialControl.Adapters.ScriptableObject.GazeBlendShapeSampleEntry` (旧 inputsystem 側から移管) — Look clip の time=0 サンプル結果 1 件 (`blendShapeName` / `weight`)。
-- `Hidano.FacialControl.Adapters.Bone.GazeBonePoseProvider` (旧 inputsystem 側から移管) — `GazeBindingConfig` を毎フレーム評価して左右目ボーンに `localRotation` を直接書込む目線ボーン専用 provider。入力方式に依存しない。
-- `Hidano.FacialControl.Adapters.Bone.GazeBoneBinding` (新設) — `GazeBindingConfig` と `IAnalogInputSource` のペアを保持する readonly struct。`GazeBonePoseProvider` のコンストラクタが受け取る形にし、入力源解決の責務を呼出側に閉じ込めた。
+- `Hidano.FacialControl.Adapters.Bone.GazeBonePoseProvider` — `GazeChannel` を毎フレーム評価して左右目ボーンへ適用する provider。
+- `Hidano.FacialControl.Adapters.Bone.GazeBoneBinding` — `GazeChannel` と `IAnalogInputSource` のペアを保持する readonly struct。
 - `Hidano.FacialControl.Editor.Sampling.GazeClipBlendShapeSampler` (旧 inputsystem 側から移管) — 4 系統 Look clip の time=0 における BlendShape weight を抽出する `AnimationUtility` ベースの Editor ヘルパ。
 - `Hidano.FacialControl.Editor.AutoExport.FacialCharacterProfileExporter` — profile.json 出力 + AnimationClip の time=0 サンプリング → `cachedSnapshot` 反映を担う汎用 Editor exporter。InputSystem 連携の `FacialCharacterSOAutoExporter` は本クラスへ delegate する形に再構成された (inputsystem 側参照)。
 - `Hidano.FacialControl.Editor.Inspector.FacialCharacterProfileSOInspector` — `[CustomEditor(typeof(FacialCharacterProfileSO), editorForChildClasses: true)]` の汎用 UI Toolkit 基底 inspector。Layers / Expressions / Gaze (bone+clip) / Reference Model / Debug / Validation / 自動保存 (profile.json) を提供。派生クラス用 virtual hook (`OnResolveDerivedSerializedProperties` / `OnBuildPreLayersSections` / `OnBuildAnalogExpressionInputSourceFields` / `FindGazeConfigsProperty` / `ResolveAnalogSourceIdChoices` / `FlushAutoExport` / `ValidateAnalogExpression`) を提供し、入力方式固有 UI（InputActionAsset 選択、ExpressionBindings、`InputActionReference` フィールド、analog_bindings.json 出力）の重ね合わせを許容する。

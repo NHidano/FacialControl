@@ -792,7 +792,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 id = id,
                 name = name,
                 layer = layer,
-                isGaze = false,
                 overlays = new List<OverlaySlotBindingSerializable> { binding },
             };
         }

@@ -26,14 +26,14 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             new GazeChannel { id = "gaze" }
         };
         [SerializeField, HideInInspector] protected List<LegacyGazeConfigEntry> _legacyGazeConfigs;
+        [NonSerialized] private List<string> _migratedLegacyGazeConfigIds;
+        [NonSerialized] private bool _legacyMigrationDetected;
+        [NonSerialized] private bool _legacyMigrationWarningIssued;
         [NonSerialized] private List<string> _unusedLegacyIds;
         [NonSerialized] private bool _unusedLegacyDetected;
         [NonSerialized] private bool _unusedLegacyWarning;
         // 依存側置換までのソース互換用。旧 root リストは保存しない。
         // 旧 SO スキーマを検出するためだけに旧キーを受け取る。通常の Gaze API には公開しない。
-        [NonSerialized] private List<string> _migratedLegacyGazeConfigIds;
-        [NonSerialized] private bool _legacyMigrationDetected;
-        [NonSerialized] private bool _legacyMigrationWarningIssued;
 
         // 既存の拡張コードとのコンパイル互換用。Unity のシリアライズ対象にはしない。
         [SerializeField] private List<string> _slots = new();
@@ -79,11 +79,9 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             }
         }
         public bool HasLegacyGazeConfigs => _legacyMigrationDetected;
-        [Obsolete("Use GazeChannels.")]
-        public IReadOnlyList<GazeBindingConfig> GazeConfigs => new List<GazeBindingConfig>();
 
         /// <summary>
-        /// 旧 SO スキーマの gaze_configs 相当データが復元されたかを示す。
+        /// 旧 SO スキーマの移行データが復元されたかを示す。
         /// 旧データは自動変換せず、呼び出し側が警告して読み捨てるために使用する。
         /// </summary>
 

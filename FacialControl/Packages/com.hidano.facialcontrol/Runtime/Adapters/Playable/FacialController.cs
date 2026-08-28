@@ -84,7 +84,7 @@ namespace Hidano.FacialControl.Adapters.Playable
         private readonly HashSet<string> _activeBindingSlugs =
             new HashSet<string>(StringComparer.Ordinal);
         // 目線(gaze)の目ボーン適用を集約する provider。各入力 binding(OSC/InputSystem/iFacialMocap)が
-        // registry に登録した gaze 入力源を GazeBindingConfigResolver 経由で解決し、単一 provider で適用する。
+        // registry に登録した gaze 入力源を GazeChannelResolver 経由で解決し、単一 provider で適用する。
         private GazeBonePoseProvider _gazeBoneProvider;
 
         /// <summary>

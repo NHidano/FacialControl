@@ -194,7 +194,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
                 id = "smile",
                 name = "Smile",
                 layer = EmotionLayerName,
-                isGaze = false,
                 overlays = overlays != null
                     ? new List<OverlaySlotBindingSerializable>(overlays)
                     : new List<OverlaySlotBindingSerializable>(),

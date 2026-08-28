@@ -280,28 +280,28 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         }
 
         /// <summary>
-        /// JSON root の gaze configs DTO を SO ルート用の <see cref="GazeBindingConfig"/> リストへ変換する。
+        /// JSON root の gaze channels DTO を channel リストへ変換する。
         /// Domain <see cref="FacialProfile"/> には gaze を載せず、SO ルートの sidecar data として扱う。
         /// </summary>
-        public static List<GazeBindingConfig> ToSORootGazeConfigs(ProfileSnapshotDto dto)
+        public static List<GazeChannel> ToLegacyGazeChannels(ProfileSnapshotDto dto)
         {
             // Keep this overload as a compatibility bridge for callers that have
             // not migrated from the old root-list API yet.  The source of truth
             // is the new gaze.channels section; never read the obsolete
             // ProfileSnapshotDto.gazeConfigs property here.
             if (dto == null || dto.gaze == null || dto.gaze.channels == null || dto.gaze.channels.Count == 0)
-                return new List<GazeBindingConfig>();
+                return new List<GazeChannel>();
 
             var channels = ToGazeChannels(dto.gaze);
-            var result = new List<GazeBindingConfig>(channels.Count);
+            var result = new List<GazeChannel>(channels.Count);
             for (int i = 0; i < channels.Count; i++)
             {
                 var channel = channels[i];
                 if (channel == null) continue;
 
-                result.Add(new GazeBindingConfig
+                result.Add(new GazeChannel
                 {
-                    expressionId = channel.id,
+                    id = channel.id,
                     useDistinctLeftRight = channel.useDistinctLeftRight,
                     sourceIdLeft = channel.sourceIdLeft ?? string.Empty,
                     sourceIdRight = channel.sourceIdRight ?? string.Empty,
@@ -324,22 +324,22 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         }
 
         /// <summary>
-        /// JSON root の gaze configs DTO を SO ルート用の <see cref="GazeBindingConfig"/> リストへ変換する。
+        /// JSON root の gaze channels DTO を channel リストへ変換する。
         /// </summary>
-        public static List<GazeBindingConfig> ToSORootGazeConfigs(IReadOnlyList<GazeBindingConfigDto> dtoList)
+        public static List<GazeChannel> ToLegacyGazeChannels(IReadOnlyList<GazeChannelDto> dtoList)
         {
             if (dtoList == null || dtoList.Count == 0)
-                return new List<GazeBindingConfig>();
+                return new List<GazeChannel>();
 
-            var result = new List<GazeBindingConfig>(dtoList.Count);
+            var result = new List<GazeChannel>(dtoList.Count);
             for (int i = 0; i < dtoList.Count; i++)
             {
                 var src = dtoList[i];
                 if (src == null) continue;
 
-                result.Add(new GazeBindingConfig
+                result.Add(new GazeChannel
                 {
-                    expressionId = src.expressionId,
+                    id = src.id,
                     useDistinctLeftRight = src.useDistinctLeftRight,
                     sourceIdLeft = src.sourceIdLeft ?? string.Empty,
                     sourceIdRight = src.sourceIdRight ?? string.Empty,
@@ -360,30 +360,30 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
             return result;
         }
 
-        public static List<GazeBindingConfigDto> ToGazeConfigDtos(IReadOnlyList<GazeBindingConfig> configs)
+        public static List<GazeChannelDto> ToLegacyGazeChannelDtos(IReadOnlyList<GazeChannel> configs)
         {
             if (configs == null || configs.Count == 0)
-                return new List<GazeBindingConfigDto>();
+                return new List<GazeChannelDto>();
 
-            var result = new List<GazeBindingConfigDto>(configs.Count);
+            var result = new List<GazeChannelDto>(configs.Count);
             for (int i = 0; i < configs.Count; i++)
             {
                 var src = configs[i];
                 if (src == null) continue;
 
-                result.Add(ToGazeConfigDto(src));
+                result.Add(ToLegacyGazeChannelDto(src));
             }
             return result;
         }
 
-        public static GazeBindingConfigDto ToGazeConfigDto(GazeBindingConfig src)
+        public static GazeChannelDto ToLegacyGazeChannelDto(GazeChannel src)
         {
             if (src == null)
                 return null;
 
-            return new GazeBindingConfigDto
+            return new GazeChannelDto
             {
-                expressionId = src.expressionId,
+                id = src.id,
                 useDistinctLeftRight = src.useDistinctLeftRight,
                 sourceIdLeft = src.sourceIdLeft ?? string.Empty,
                 sourceIdRight = src.sourceIdRight ?? string.Empty,

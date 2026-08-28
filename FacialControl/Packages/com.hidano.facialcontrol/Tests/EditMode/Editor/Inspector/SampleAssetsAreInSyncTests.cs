@@ -126,7 +126,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
         {
             // 第 3 コピーが旧 `"expressionId"` フィールドを保持していると Sample Import 経路で
             // SystemTextJsonParser.RejectLegacyExpressionIdInOverlays が FormatException を投げ、
-            // 起動できなくなる。gaze_configs[].expressionId は別スコープなので除外する。
+            // 起動できなくなる。legacy gaze の expressionId は別スコープなので除外する。
             // Assets/Samples が存在しない場合は検証対象が無いため skip-pass する。
             string importedPath = ResolveProjectPath(ImportedSampleStreamingProfilePath);
             if (!File.Exists(importedPath))
@@ -140,7 +140,7 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             StringAssert.DoesNotContain(
                 "\"expressionId\"",
                 stripped,
-                $"{ImportedSampleStreamingProfilePath} still contains a legacy \"expressionId\" field outside gaze_configs scope.");
+                $"{ImportedSampleStreamingProfilePath} still contains a legacy \"expressionId\" field outside gaze scope.");
         }
 
         [Test]
@@ -382,12 +382,12 @@ namespace Hidano.FacialControl.Tests.EditMode.Editor.Inspector
             return string.Empty;
         }
 
-        // gaze_configs セクション (`"gaze_configs": [ ... ]` または `"_gazeConfigs": [ ... ]`) を
+        // legacy gaze セクションを
         // 文字列レベルで除去する。JSON 階層解析ではないため、本サンプル profile.json の構造
-        // (gaze_configs はルート配列で他に紛れない) に限定して有効。
+        // ルート配列に限定して有効。
         private static string StripGazeConfigsSection(string json)
         {
-            int idx = json.IndexOf("\"gaze_configs\"", StringComparison.Ordinal);
+            int idx = json.IndexOf("\"legacyGazeKey\"", StringComparison.Ordinal);
             if (idx < 0)
             {
                 return json;

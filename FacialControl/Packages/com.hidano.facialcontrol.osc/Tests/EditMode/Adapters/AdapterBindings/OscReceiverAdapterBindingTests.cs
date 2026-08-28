@@ -327,9 +327,9 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
                 Assert.That(gazeSource, Is.Not.Null);
 
                 gazeSource.Publish(0.25f, -0.5f);
-                var config = new GazeBindingConfig { expressionId = "eye" };
+                var config = new GazeChannel { id = "gaze" };
 
-                bool resolved = GazeBindingConfigResolver.TryResolve(
+                bool resolved = GazeChannelResolver.TryResolve(
                     config,
                     registry,
                     out ResolvedGazeInputSources sources);

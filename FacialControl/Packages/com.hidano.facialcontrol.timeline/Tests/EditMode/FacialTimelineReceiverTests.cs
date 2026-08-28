@@ -182,9 +182,9 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             var registry = new InputSourceRegistry();
             var liveSource = new TimelineAnalogInputSource(InputSourceId.Parse("live:gaze"), axisCount: 2);
             var timelineGaze = new TimelineGazeInputSource(InputSourceId.Parse("timeline:gaze-0"));
-            var config = new GazeBindingConfig
+            var config = new GazeChannel
             {
-                expressionId = "look",
+                id = "gaze",
                 useDistinctLeftRight = true,
                 sourceIdLeft = "live:gaze",
                 sourceIdRight = "live:gaze",
@@ -202,14 +202,14 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
             try
             {
                 Assert.That(
-                    GazeBindingConfigResolver.TryResolve(config, registry, out ResolvedGazeInputSources beforeResolved),
+                    GazeChannelResolver.TryResolve(config, registry, out ResolvedGazeInputSources beforeResolved),
                     Is.True);
                 Assert.That(beforeResolved.LeftSource, Is.SameAs(liveSource));
 
                 receiver.BeginPlaybackSession(CreateProfile(), timeline: null);
 
                 Assert.That(
-                    GazeBindingConfigResolver.TryResolve(config, registry, out ResolvedGazeInputSources duringResolved),
+                    GazeChannelResolver.TryResolve(config, registry, out ResolvedGazeInputSources duringResolved),
                     Is.True);
                 Assert.That(duringResolved.LeftSource, Is.SameAs(timelineGaze));
                 Assert.That(duringResolved.RightSource, Is.SameAs(timelineGaze));
@@ -218,7 +218,7 @@ namespace Hidano.FacialControl.Timeline.Tests.EditMode
                 receiver.ReleaseAll();
 
                 Assert.That(
-                    GazeBindingConfigResolver.TryResolve(config, registry, out ResolvedGazeInputSources afterResolved),
+                    GazeChannelResolver.TryResolve(config, registry, out ResolvedGazeInputSources afterResolved),
                     Is.True);
                 Assert.That(afterResolved.LeftSource, Is.SameAs(liveSource));
                 Assert.That(afterResolved.RightSource, Is.SameAs(liveSource));

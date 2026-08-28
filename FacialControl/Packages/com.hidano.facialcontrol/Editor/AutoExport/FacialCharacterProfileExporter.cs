@@ -8,7 +8,6 @@ using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Editor.Sampling;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
-using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
 
 namespace Hidano.FacialControl.Editor.AutoExport
 {
@@ -399,11 +398,6 @@ namespace Hidano.FacialControl.Editor.AutoExport
             }
 
             return false;
-        }
-
-        private static List<GazeBindingConfigDto> ConvertGazeConfigsToDto(IReadOnlyList<GazeBindingConfig> configs)
-        {
-            return FacialCharacterProfileConverter.ToGazeConfigDtos(configs);
         }
 
         private static ExpressionSnapshotDto ConvertSnapshotToDto(ExpressionSnapshot snapshot)

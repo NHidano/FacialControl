@@ -6,6 +6,25 @@ using UnityEngine;
 
 namespace Hidano.FacialControl.Adapters.ScriptableObject
 {
+    public readonly struct ResolvedGazeInputSources
+    {
+        public IAnalogInputSource LeftSource { get; }
+        public IAnalogInputSource RightSource { get; }
+        public string ProviderSlug { get; }
+        public string SelectedSlug => ProviderSlug;
+        public string LeftSourceId { get; }
+        public string RightSourceId { get; }
+
+        public ResolvedGazeInputSources(IAnalogInputSource leftSource, IAnalogInputSource rightSource, string providerSlug, string leftSourceId, string rightSourceId)
+        {
+            LeftSource = leftSource;
+            RightSource = rightSource;
+            ProviderSlug = providerSlug;
+            LeftSourceId = leftSourceId;
+            RightSourceId = rightSourceId;
+        }
+    }
+
     /// <summary>GazeChannel を起点に入力源を解決する旧 resolver 後継。</summary>
     public static class GazeChannelResolver
     {

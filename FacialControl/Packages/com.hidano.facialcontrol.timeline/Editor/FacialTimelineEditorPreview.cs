@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
+using GazeChannel = Hidano.FacialControl.Adapters.ScriptableObject.GazeChannel;
 
 namespace Hidano.FacialControl.Timeline.Editor
 {
@@ -129,9 +129,9 @@ namespace Hidano.FacialControl.Timeline.Editor
 
         private static void ApplyGaze(FacialController controller, FacialTimelineBakeAsset bakeAsset, double timeSeconds)
         {
-            IReadOnlyList<GazeBindingConfig> gazeConfigs = controller.CharacterSO != null
-                ? controller.CharacterSO.GazeConfigs
-                : Array.Empty<GazeBindingConfig>();
+            IReadOnlyList<GazeChannel> gazeConfigs = controller.CharacterSO != null
+                ? controller.CharacterSO.GazeChannels
+                : Array.Empty<GazeChannel>();
             if (gazeConfigs == null || gazeConfigs.Count == 0)
             {
                 return;
@@ -145,7 +145,7 @@ namespace Hidano.FacialControl.Timeline.Editor
 
             for (int i = 0; i < gazeConfigs.Count && i < gazeChannels.Length; i++)
             {
-                GazeBindingConfig config = gazeConfigs[i];
+                GazeChannel config = gazeConfigs[i];
                 if (config == null)
                 {
                     continue;
@@ -192,7 +192,7 @@ namespace Hidano.FacialControl.Timeline.Editor
             Transform root,
             string bonePath,
             bool isLeftEye,
-            GazeBindingConfig config,
+            GazeChannel config,
             float x,
             float y)
         {
@@ -225,7 +225,7 @@ namespace Hidano.FacialControl.Timeline.Editor
                 restRotation;
         }
 
-        private static float ComputeYawDegrees(bool isLeftEye, GazeBindingConfig config, float x)
+        private static float ComputeYawDegrees(bool isLeftEye, GazeChannel config, float x)
         {
             float outerYaw = Mathf.Max(0f, config.outerYawAngle);
             float innerYaw = Mathf.Max(0f, config.innerYawAngle);
@@ -268,12 +268,12 @@ namespace Hidano.FacialControl.Timeline.Editor
 
         private static void RegisterGazeProperties(FacialController controller, IPropertyCollector collector)
         {
-            IReadOnlyList<GazeBindingConfig> gazeConfigs = controller.CharacterSO != null
-                ? controller.CharacterSO.GazeConfigs
-                : Array.Empty<GazeBindingConfig>();
+            IReadOnlyList<GazeChannel> gazeConfigs = controller.CharacterSO != null
+                ? controller.CharacterSO.GazeChannels
+                : Array.Empty<GazeChannel>();
             for (int i = 0; i < gazeConfigs.Count; i++)
             {
-                GazeBindingConfig config = gazeConfigs[i];
+                GazeChannel config = gazeConfigs[i];
                 if (config == null)
                 {
                     continue;

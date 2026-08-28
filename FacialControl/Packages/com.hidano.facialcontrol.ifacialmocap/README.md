@@ -15,7 +15,7 @@
 - iFacialMocap UDP テキストプロトコル受信（標準 `-` 区切り / v2 `&` 区切り 両対応）
 - ハンドシェイク送信（端末 `IP:49983` へトリガー文字列を送り、60fps ストリームを起動）
 - ARKit 互換 52 BlendShape（iFM の `_L`/`_R` サフィックス名 → 任意のメッシュ BlendShape 名へ変換表でマッピング）
-- 視線: `rightEye` / `leftEye` のオイラー角 → 正規化 Vector2（左右独立。Profile の `GazeBindingConfig` で目ボーンへ）
+- 視線: `rightEye` / `leftEye` のオイラー角 → 正規化 Vector2（左右独立。Profile の `GazeChannel` で目ボーンへ）
 - 頭部: `head` の回転（任意で移動）→ N 軸 analog 入力源（Profile の `AnalogBindingEntry` の BonePose で頭ボーンへ）
 - staleness fail-safe（受信停止時に base へ復帰）
 
@@ -33,7 +33,7 @@
 1. `com.hidano.facialcontrol`、`com.hidano.facialcontrol.osc`、本パッケージを `Packages/manifest.json` に追加
 2. キャラクターの GameObject に `FacialController` を追加し、`FacialCharacterProfileSO` を結線
 3. **Adapter Bindings** セクションで `iFacialMocap Receiver` を追加し、listen port（既定 49983）、端末 IP / ハンドシェイク、BlendShape マッピング、視線 / 頭部の出力を設定
-4. 視線を目ボーンに反映する場合は Profile の `GazeBindingConfig` で本 binding の Gaze source id（`<slug>:gaze.left` / `<slug>:gaze.right`）を結線
+4. 視線を目ボーンに反映する場合は Profile の `GazeChannel` で本 binding の Gaze source id（`<slug>:gaze.left` / `<slug>:gaze.right`）を結線
 5. 頭部を頭ボーンに反映する場合は Profile の `AnalogBindingEntry`（TargetKind=BonePose）で本 binding の Head source id（`<slug>:head`）を頭ボーンへ結線
 6. Package Manager の **Import Sample** から `IFacialMocapReceiverDemo` を import すると最小の受信構成を確認できます
 

@@ -191,13 +191,13 @@ internal sealed class MyCustomAdapterBindingDrawer : PropertyDrawer
 
 ### 2.6 gaze-channel-redesign に伴う Gaze セクションへの移行
 
-この spec では `ExpressionSerializable.isGaze` と旧 `_gazeConfigs` / `gaze_configs[]` を廃止し、`FacialCharacterProfileSO` の `GazeChannels`（既定 id は常に `gaze`）へ統合した。preview 段階の破壊的変更であり、自動変換は行わない。対象は Fork 実機 `D:\Unvgi\Repositries\UnvgiFacialVerification` を含む、旧 Profile を使用するすべてのプロジェクトである。
+この spec では旧 Expression gaze フラグと旧 root list を廃止し、`FacialCharacterProfileSO` の `GazeChannels`（既定 id は常に `gaze`）へ統合した。preview 段階の破壊的変更であり、自動変換は行わない。
 
 #### 2.6.1 Profile / JSON
 
 1. Profile をバックアップし、旧 `isGaze` Expression と旧 gaze 設定を記録する。
 2. Inspector の Gaze セクションで既定チャネル `gaze` を確認し、旧設定の左右目ボーン path、初期回転、軸、可動角を手動で再入力する。追加系統はチャネルを追加し、id の重複がないことを確認する。
-3. `profile.json` は root の `gaze.channels[]` にチャネルを記述する。旧 `gaze_configs[]` は削除し、Expression から `isGaze` を削除する。`gaze` が無い新規 JSON は既定チャネルが補完される。
+3. `profile.json` は root の `gaze.channels[]` にチャネルを記述する。`gaze` が無い新規 JSON は既定チャネルが補完される。
 4. 旧 JSON が検出された場合は警告後に gaze 部分だけ読み捨てられるため、警告を無視して使い続けない。
 
 ```json
@@ -252,7 +252,7 @@ internal sealed class MyCustomAdapterBindingDrawer : PropertyDrawer
 - [ ] scene 上の `FacialController` GameObject から `*FacialControllerExtension` MonoBehaviour 群が全て削除されている
 - [ ] `FacialCharacterProfileSO` の Inspector で **Adapter Bindings** セクションに必要な binding が列挙され、slug が重複していない（summary banner なし）
 - [ ] `StreamingAssets/FacialControl/**/*.json` の `inputSources[].id` がすべて新 slug 形式に書き換わっている
-- [ ] Profile の Gaze セクションに既定チャネル `gaze` と必要な追加チャネルがあり、旧 `gaze_configs[]` / `isGaze` が残っていない
+- [ ] Profile の Gaze セクションに既定チャネル `gaze` と必要な追加チャネルがある
 - [ ] InputSystem / OSC / iFacialMocap / Timeline の binding がチャネル id と宣言 source id を使用している
 - [ ] Play Mode で表情遷移 / OSC 受信 / InputSystem トリガー / リップシンクが期待どおり動作する
 - [ ] `Tests/PlayMode` 配下の 0-alloc perf test と統合テストが green（独自テストを保持している場合）

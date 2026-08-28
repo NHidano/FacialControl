@@ -50,7 +50,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
     /// <see cref="OscDoubleBuffer.Swap"/> し、視線/頭部を push する（新規でないフレームは前値を保持）。
     /// </para>
     /// <para>
-    /// 視線→目ボーン、頭部→頭ボーンの結線は Profile 側（<c>GazeBindingConfig</c> /
+    /// 視線→目ボーン、頭部→頭ボーンの結線は Profile 側（<c>GazeChannel</c> /
     /// <c>AnalogBindingEntry</c> の BonePose）の責務。本 binding は入力源の登録までを担う。
     /// </para>
     /// </remarks>

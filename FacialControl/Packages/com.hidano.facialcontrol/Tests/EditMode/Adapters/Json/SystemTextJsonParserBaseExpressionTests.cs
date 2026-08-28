@@ -169,7 +169,6 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
                 layers = new List<LayerDefinitionDto>(),
                 expressions = new List<ExpressionDto>(),
                 rendererPaths = new List<string> { "Body", "Face" },
-                gazeConfigs = new List<GazeBindingConfigDto>(),
             };
         }
 

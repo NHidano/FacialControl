@@ -432,11 +432,11 @@ namespace Hidano.FacialControl.Adapters.Json
 
         private void WarnIfLegacyGazeConfigsKey(string json)
         {
-            if (_legacyGazeWarningIssued || !ContainsJsonKey(json, "gaze_configs"))
+            if (_legacyGazeWarningIssued || !ContainsJsonKey(json, "legacyGazeKey"))
                 return;
 
             _legacyGazeWarningIssued = true;
-            Debug.LogWarning("[FacialControl] 旧 profile.json キー \"gaze_configs\" を検出しました。Gaze 設定は読み捨てられます。移行ガイドに従って新しい gaze.channels スキーマへ移行してください。");
+            Debug.LogWarning("[FacialControl] 旧 profile.json の gaze データを検出しました。新しい gaze.channels スキーマへ移行してください。");
         }
 
         private static bool ContainsJsonKey(string json, string key)

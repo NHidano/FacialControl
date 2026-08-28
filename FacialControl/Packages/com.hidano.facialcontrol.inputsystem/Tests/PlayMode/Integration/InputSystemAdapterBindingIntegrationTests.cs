@@ -375,7 +375,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
                 asset: _sourceAsset,
                 actionMapName: "Expression",
                 expressionBindings: new List<ExpressionBindingEntry> { gazeBinding },
-                injectedGazeConfigs: new List<GazeBindingConfig> { CreateGazeConfig("expr-gaze") });
+                injectedGazeConfigs: new List<GazeChannel> { CreateGazeConfig("expr-gaze") });
 
             LogAssert.Expect(
                 LogType.Warning,
@@ -399,7 +399,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
                 asset: _sourceAsset,
                 actionMapName: "Expression",
                 expressionBindings: new List<ExpressionBindingEntry>(),
-                injectedGazeConfigs: new List<GazeBindingConfig> { CreateGazeConfig("expr-gaze") });
+                injectedGazeConfigs: new List<GazeChannel> { CreateGazeConfig("expr-gaze") });
 
             AdapterBuildContext ctx = CreateContext();
 
@@ -570,7 +570,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
             InputActionAsset asset,
             string actionMapName,
             IReadOnlyList<ExpressionBindingEntry> expressionBindings,
-            IReadOnlyList<GazeBindingConfig> injectedGazeConfigs = null)
+            IReadOnlyList<GazeChannel> injectedGazeConfigs = null)
         {
             var binding = new InputSystemAdapterBinding();
             binding.Slug = slug;
@@ -579,7 +579,7 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
             {
                 binding.ConfigureGazeChannels(injectedGazeConfigs
                     .Where(config => config != null)
-                    .Select(config => config.expressionId)
+                    .Select(config => config.id)
                     .ToArray());
             }
             return binding;
@@ -644,11 +644,11 @@ namespace Hidano.FacialControl.InputSystem.Tests.PlayMode.Integration
             };
         }
 
-        private static GazeBindingConfig CreateGazeConfig(string expressionId)
+        private static GazeChannel CreateGazeConfig(string expressionId)
         {
-            return new GazeBindingConfig
+            return new GazeChannel
             {
-                expressionId = expressionId,
+                id = expressionId,
                 leftEyeBonePath = "LeftEye",
                 rightEyeBonePath = "RightEye",
             };

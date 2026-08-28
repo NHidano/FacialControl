@@ -34,7 +34,6 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
 
         // 旧テスト/依存コードのコンパイル互換用。Unity に保存されるフィールドではなく、Gaze の判定には使用しない。
         [Obsolete("Gaze は GazeChannel で定義してください。")]
-        public bool isGaze { get; set; }
 
         [Tooltip("表情の AnimationClip。時刻 0 の BlendShape / Bone 値および AnimationEvent メタデータから snapshot をベイクする。")]
         public AnimationClip animationClip;

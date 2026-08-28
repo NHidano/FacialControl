@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Hidano.FacialControl.Adapters.Bone
 {
     /// <summary>
-    /// <see cref="GazeBindingConfig"/> を毎フレーム評価し、左右目ボーンに直接 localRotation を書込む
+    /// <see cref="GazeChannel"/> を毎フレーム評価し、左右目ボーンに直接 localRotation を書込む
     /// 目線ボーン専用 provider。アナログ入力 (Vector2) を yaw / pitch 角度に変換し、
     /// 設定された外側/内側/上下の角度制限と各ボーンの参照モデル時取得 local 軸を用いて
     /// <c>Quaternion.AngleAxis</c> 合成で姿勢を計算する。
@@ -32,7 +32,7 @@ namespace Hidano.FacialControl.Adapters.Bone
     /// <see cref="Dispose"/> 時には書込み開始前のオリジナル localRotation に各ボーンを復元する。
     /// </para>
     /// <para>
-    /// 入力源 (<see cref="IAnalogInputSource"/>) と <see cref="GazeBindingConfig"/> のペアは
+    /// 入力源 (<see cref="IAnalogInputSource"/>) と <see cref="GazeChannel"/> のペアは
     /// <see cref="GazeBoneBinding"/> として呼出側で解決済みの状態で渡す。これにより本クラスは
     /// Unity InputSystem・OSC・ARKit などの具体的な入力方式に依存しない。
     /// </para>
@@ -47,7 +47,7 @@ namespace Hidano.FacialControl.Adapters.Bone
         /// <see cref="GazeBonePoseProvider"/> を構築する。
         /// </summary>
         /// <param name="resolver">ボーン名から Transform を解決するリゾルバー (FacialController と同じものを共有)。</param>
-        /// <param name="bindings"><see cref="GazeBindingConfig"/> と入力源のペア配列。</param>
+        /// <param name="bindings"><see cref="GazeChannel"/> と入力源のペア配列。</param>
         public GazeBonePoseProvider(
             BoneTransformResolver resolver,
             IReadOnlyList<GazeBoneBinding> bindings)
@@ -97,7 +97,7 @@ namespace Hidano.FacialControl.Adapters.Bone
         }
 
         /// <summary>
-        /// per-frame に呼出され、各 GazeBindingConfig の入力を読んで両目の <see cref="Transform.localRotation"/> を計算/書込みする。
+        /// per-frame に呼出され、各 GazeChannel の入力を読んで両目の <see cref="Transform.localRotation"/> を計算/書込みする。
         /// </summary>
         public void Apply()
         {

@@ -495,8 +495,8 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 LogType.Warning,
                 new Regex("expressionId 'eye-look'.*multiple binding slugs.*selected 'a-input-system-gaze'"));
 
-            bool resolved = GazeBindingConfigResolver.TryResolve(
-                new GazeBindingConfig { expressionId = ExpressionId },
+            bool resolved = GazeChannelResolver.TryResolve(
+                new GazeChannel { id = "gaze" },
                 _registry,
                 out ResolvedGazeInputSources sources);
 
@@ -541,8 +541,8 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 yield return new WaitForSecondsRealtime(0.05f);
                 receiver.OnFixedTick(0.02f);
 
-                if (!GazeBindingConfigResolver.TryResolve(
-                        new GazeBindingConfig { expressionId = ExpressionId },
+                if (!GazeChannelResolver.TryResolve(
+                        new GazeChannel { id = "gaze" },
                         _registry,
                         out ResolvedGazeInputSources sources))
                 {
@@ -562,7 +562,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 yield break;
             }
 
-            Assert.Fail("GazeBindingConfig 既定解決経路で左右 Gaze source を読み取れませんでした。");
+            Assert.Fail("GazeChannel 既定解決経路で左右 Gaze source を読み取れませんでした。");
         }
 
         private OscReceiverAdapterBinding CreateReceiver(

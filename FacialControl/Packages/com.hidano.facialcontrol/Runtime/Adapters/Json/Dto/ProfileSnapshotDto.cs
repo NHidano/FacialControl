@@ -41,7 +41,6 @@ namespace Hidano.FacialControl.Adapters.Json.Dto
         // 既存の converter/test API を段階移行中もコンパイル可能にするための非シリアライズ互換 shim。
         // JSON の旧キーを復活させないよう、フィールドではなくプロパティとして保持する。
         [System.Obsolete("gaze.channels を使用してください。")]
-        public List<GazeBindingConfigDto> gazeConfigs { get; set; }
 
         /// <summary>
         /// active 表情に slot 宣言が無い場合の fallback 用 default overlay 一覧。

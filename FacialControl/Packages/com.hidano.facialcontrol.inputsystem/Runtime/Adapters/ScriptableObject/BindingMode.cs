@@ -13,7 +13,7 @@ namespace Hidano.FacialControl.InputSystem.Adapters.ScriptableObject
         /// <summary>通常のキー押下による Expression トリガ（Hold/Toggle 駆動）。</summary>
         Normal = 0,
 
-        /// <summary>Vector2 入力で目線操作を駆動。GazeBindingConfig と連動する。</summary>
+        /// <summary>Vector2 入力で目線操作を駆動。GazeChannel と連動する。</summary>
         Gaze = 1,
 
         /// <summary>Scalar 連続値で Expression weight を 0..1 駆動する Analog モード。</summary>
