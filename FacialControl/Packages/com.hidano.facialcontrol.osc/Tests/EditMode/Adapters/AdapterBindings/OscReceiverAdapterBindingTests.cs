@@ -235,6 +235,34 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
         }
 
         [Test]
+        public void Type_ImplementsGazeProviderAndConsumerContracts()
+        {
+            Assert.That(typeof(IGazeChannelConsumer).IsAssignableFrom(typeof(OscReceiverAdapterBinding)), Is.True);
+            Assert.That(typeof(IGazeSourceProvider).IsAssignableFrom(typeof(OscReceiverAdapterBinding)), Is.True);
+        }
+
+        [Test]
+        public void GazeSourceDeclarations_IncludeManualEntryAndAdvertisementWildcard()
+        {
+            var binding = new OscReceiverAdapterBinding
+            {
+                Mappings = new List<OscMappingEntry>
+                {
+                    new OscMappingEntry
+                    {
+                        mode = OscMappingMode.Gaze_ARKit_8BS,
+                        expressionId = "eye"
+                    }
+                }
+            };
+
+            List<GazeSourceDeclaration> declarations = binding.GetGazeSourceDeclarations().ToList();
+
+            Assert.That(declarations.Count(d => d.ChannelId == null && d.ProvidesLeftRightPair), Is.EqualTo(1));
+            Assert.That(declarations.Count(d => d.ChannelId == "eye" && d.ProvidesLeftRightPair), Is.EqualTo(1));
+        }
+
+        [Test]
         public void OnStart_EmptyMappings_StartsSocketWithoutRegisteringPrimaryInputSource()
         {
             var registry = new InputSourceRegistry();

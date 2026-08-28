@@ -126,7 +126,7 @@
   - _Boundary: OscSenderAdapterBinding_
   - _Depends: 1.3, 4.2_
 
-- [ ] 5.2 (P) OSC 受信 binding の注入置換と id 合成の規約集約を実装する
+- [x] 5.2 (P) OSC 受信 binding の注入置換と id 合成の規約集約を実装する
   - Spec 1 の GazeConfig リスト Configure をチャネル注入契約へ置換する。突合警告は「広告 id が注入チャネル id 集合に無い」場合の 1 回警告へ読み替え（既定構成では恒常一致で非発火）、未注入時はスキップする（全広告 id への誤警告防止。送信側の未注入警告とは役割が異なる非対称として実装コメントに明記）
   - gaze source 登録（手動 entry / 広告駆動とも）と広告解決内の id 合成を規約 helper へ置換する（`.left`/`.right` 連結の根絶。広告 accumulate / dirty / rebuild / immutable-swap / staleness の機構は無改修）
   - 宣言契約を実装する（手動 gaze entry ごとの宣言 + 広告駆動のワイルドカード宣言 1 件）

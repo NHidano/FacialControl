@@ -324,7 +324,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
         {
             int port = AllocatePort();
             OscReceiverAdapterBinding receiver = CreateReceiver("gaze-config-receiver", port);
-            receiver.Configure(new[] { new GazeBindingConfig { expressionId = ExpressionId } });
+            receiver.ConfigureGazeChannels(new[] { ExpressionId });
             OscSenderAdapterBinding sender = CreateSender("gaze-config-sender", port, AddressPresetKind.VRChat);
             StartBinding(receiver, CreateContext(CreateGameObject("OscGazeE2E_ConfigReceiver")));
             StartBinding(sender, CreateContext(CreateGameObject("OscGazeE2E_ConfigSender")));

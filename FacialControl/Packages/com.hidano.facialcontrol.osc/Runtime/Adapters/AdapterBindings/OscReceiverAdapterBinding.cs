@@ -8,7 +8,6 @@ using Hidano.FacialControl.Adapters.RuntimeSettings;
 using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
-using Hidano.FacialControl.Adapters.ScriptableObject;
 using UnityEngine;
 
 namespace Hidano.FacialControl.Adapters.AdapterBindings
@@ -33,7 +32,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
     /// </remarks>
     [Serializable]
     [FacialAdapterBinding(displayName: "OSC Receiver")]
-    public sealed class OscReceiverAdapterBinding : AdapterBindingBase
+    public sealed class OscReceiverAdapterBinding : AdapterBindingBase, IGazeChannelConsumer, IGazeSourceProvider
     {
         public enum MappingOrigin
         {
@@ -129,7 +128,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         /// expressionId。広告由来 source の突合診断だけに使用し、設定自体は変更しない。
         /// </summary>
         [NonSerialized]
-        private List<string> _receiverGazeConfigExpressionIds;
+        private HashSet<string> _injectedGazeChannelIds;
+
+        [NonSerialized]
+        private bool _hasInjectedGazeChannels;
 
         [NonSerialized]
         private HashSet<string> _warnedUnmatchedGazeConfigIds;
@@ -428,22 +430,23 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         /// FacialController の GazeConfigs を受け取るリフレクション注入契約。
         /// GazeConfig の自動補完は行わず、expressionId の突合診断にのみ利用する。
         /// </summary>
-        public void Configure(IReadOnlyList<GazeBindingConfig> gazeConfigs)
+        public void ConfigureGazeChannels(IReadOnlyList<string> channelIds)
         {
-            if (_receiverGazeConfigExpressionIds == null)
+            if (_injectedGazeChannelIds == null)
             {
-                _receiverGazeConfigExpressionIds = new List<string>();
+                _injectedGazeChannelIds = new HashSet<string>(StringComparer.Ordinal);
             }
 
-            _receiverGazeConfigExpressionIds.Clear();
-            if (gazeConfigs != null)
+            _injectedGazeChannelIds.Clear();
+            _hasInjectedGazeChannels = true;
+            if (channelIds != null)
             {
-                for (int i = 0; i < gazeConfigs.Count; i++)
+                for (int i = 0; i < channelIds.Count; i++)
                 {
-                    GazeBindingConfig config = gazeConfigs[i];
-                    if (config != null && !string.IsNullOrEmpty(config.expressionId))
+                    string channelId = channelIds[i];
+                    if (!string.IsNullOrEmpty(channelId))
                     {
-                        _receiverGazeConfigExpressionIds.Add(config.expressionId);
+                        _injectedGazeChannelIds.Add(channelId);
                     }
                 }
             }
@@ -456,6 +459,30 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             if (_hasProcessedGazeAdvertisement && _autoGazeRuntimeEntriesById != null)
             {
                 WarnForUnmatchedGazeConfigs(_autoGazeRuntimeEntriesById);
+            }
+        }
+
+        /// <summary>手動 gaze mapping と広告駆動のワイルドカードを宣言する。</summary>
+        public IEnumerable<GazeSourceDeclaration> GetGazeSourceDeclarations()
+        {
+            yield return new GazeSourceDeclaration(null, true);
+            if (_mappings == null)
+            {
+                yield break;
+            }
+
+            for (int i = 0; i < _mappings.Count; i++)
+            {
+                OscMappingEntry entry = _mappings[i];
+                if (entry == null || !IsGazeMode(entry.mode) ||
+                    !GazeSourceIdConvention.IsValidChannelId(entry.expressionId))
+                {
+                    continue;
+                }
+
+                yield return new GazeSourceDeclaration(
+                    entry.expressionId,
+                    entry.mode == OscMappingMode.Gaze_ARKit_8BS || entry.leftRightIndependent);
             }
         }
 
@@ -654,7 +681,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeAdNormalizedScratch = null;
             _autoGazeSourcesById = null;
             _autoGazeRuntimeEntriesById = null;
-            _receiverGazeConfigExpressionIds = null;
+            _injectedGazeChannelIds = null;
+            _hasInjectedGazeChannels = false;
             _warnedUnmatchedGazeConfigIds = null;
             _lastGazeAdvertisementHash = 0u;
             _hasProcessedGazeAdvertisement = false;
@@ -790,7 +818,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _gazeAdNormalizedScratch = new List<GazeAdvertisementResolver.GazeAdvertisement>();
             _autoGazeSourcesById = new Dictionary<string, GazeVector2InputSource>(StringComparer.Ordinal);
             _autoGazeRuntimeEntriesById = new Dictionary<string, GazeRuntimeEntry>(StringComparer.Ordinal);
-            _receiverGazeConfigExpressionIds ??= new List<string>();
+            // ConfigureGazeChannels is normally called by FacialController before OnStart.
+            // Keep the unset state distinct so advertisement matching can be skipped for
+            // standalone receiver use (see WarnForUnmatchedGazeConfigs).
             _warnedUnmatchedGazeConfigIds ??= new HashSet<string>(StringComparer.Ordinal);
             _gazeAdDirty = 0;
             _gazeAdAccumulationTimestamp = 0u;
@@ -899,7 +929,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             for (int i = 0; i < mappings.Count; i++)
             {
                 OscMappingEntry entry = mappings[i];
-                if (entry == null || !IsGazeMode(entry.mode) || string.IsNullOrEmpty(entry.expressionId))
+                if (entry == null || !IsGazeMode(entry.mode) ||
+                    !GazeSourceIdConvention.IsValidChannelId(entry.expressionId))
                 {
                     continue;
                 }
@@ -935,12 +966,15 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 runtime.AddressPattern = entry.addressPattern;
                 if (entry.mode == OscMappingMode.Gaze_ARKit_8BS || entry.leftRightIndependent)
                 {
-                    runtime.LeftSource = RegisterGazeSource(registry, slug, entry.expressionId + ".left");
-                    runtime.RightSource = RegisterGazeSource(registry, slug, entry.expressionId + ".right");
+                    runtime.LeftSource = RegisterGazeSource(
+                        registry, slug, GazeSourceIdConvention.ComposeSub(entry.expressionId, GazeSide.Left));
+                    runtime.RightSource = RegisterGazeSource(
+                        registry, slug, GazeSourceIdConvention.ComposeSub(entry.expressionId, GazeSide.Right));
                 }
                 else
                 {
-                    runtime.CommonSource = RegisterGazeSource(registry, slug, entry.expressionId);
+                    runtime.CommonSource = RegisterGazeSource(
+                        registry, slug, GazeSourceIdConvention.ComposeSub(entry.expressionId, GazeSide.Shared));
                 }
 
                 if (!runtime.HasAnySource)
@@ -1383,8 +1417,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private void WarnForUnmatchedGazeConfigs(
             IReadOnlyDictionary<string, GazeRuntimeEntry> autoEntries)
         {
-            if (autoEntries == null || autoEntries.Count == 0 ||
-                _receiverGazeConfigExpressionIds == null ||
+            // 注入なしの単体使用では突合をスキップし、広告ごとの誤警告を防ぐ。
+            // これは未注入時に一度警告する送信側とは異なる非対称な責務である。
+            if (!_hasInjectedGazeChannels || autoEntries == null || autoEntries.Count == 0 ||
+                _injectedGazeChannelIds == null ||
                 _warnedUnmatchedGazeConfigIds == null)
             {
                 return;
@@ -1394,7 +1430,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             {
                 string expressionId = entry == null ? null : entry.ExpressionId;
                 if (string.IsNullOrEmpty(expressionId) ||
-                    _receiverGazeConfigExpressionIds.Contains(expressionId) ||
+                    _injectedGazeChannelIds.Contains(expressionId) ||
                     !_warnedUnmatchedGazeConfigIds.Add(expressionId))
                 {
                     continue;
@@ -1477,14 +1513,19 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             string expressionId,
             ISet<string> desiredSourceIds)
         {
-            string sourceId = GazeBindingConfigResolver.ComposeSourceId(_runtimeSlug.Value, expressionId, side);
+            if (!GazeSourceIdConvention.IsValidChannelId(expressionId))
+            {
+                return null;
+            }
+
+            string sourceId = GazeSourceIdConvention.Compose(_runtimeSlug.Value, expressionId, side);
             desiredSourceIds.Add(sourceId);
             if (_autoGazeSourcesById.TryGetValue(sourceId, out GazeVector2InputSource existing))
             {
                 return existing;
             }
 
-            string sub = GazeBindingConfigResolver.ComposeSourceSub(expressionId, side);
+            string sub = GazeSourceIdConvention.ComposeSub(expressionId, side);
             if (!InputSourceId.TryParse(sourceId, out InputSourceId parsed))
             {
                 return null;
