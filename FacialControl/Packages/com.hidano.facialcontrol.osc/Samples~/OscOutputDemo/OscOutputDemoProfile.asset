@@ -23,24 +23,6 @@ MonoBehaviour:
       optionsJson: ''
     layerOverrideMask: []
   _expressions:
-  - id: eye_look
-    name: Eye Look
-    layer: osc_output
-    isGaze: 1
-    animationClip: {fileID: 0}
-    transitionDuration: 0.1
-    transitionCurve:
-      type: 0
-      keys: []
-    blendShapeValues: []
-    layerOverrideMask: []
-    cachedSnapshot:
-      transitionDuration: 0.1
-      transitionCurvePreset: Linear
-      blendShapes: []
-      bones: []
-      rendererPaths: []
-    overlays: []
   _baseExpression:
     animationClip: {fileID: 0}
     cachedSnapshot:
@@ -51,8 +33,12 @@ MonoBehaviour:
       rendererPaths: []
   _rendererPaths:
   - ProceduralFace
-  _gazeConfigs:
-  - expressionId: eye_look
+  _gazeChannels:
+  - id: gaze
+    providerSlug: ''
+    useDistinctLeftRight: 0
+    sourceIdLeft:
+    sourceIdRight:
     useDistinctLeftRight: 0
     sourceIdLeft:
     sourceIdRight:
@@ -88,4 +74,3 @@ MonoBehaviour:
         Slug: osc-output
         _settings: {fileID: 20005892592084400, guid: 4e1c25e3a051468393db2bb4034be605, type: 2}
         _blendShapeNames: []
-        _gazeExpressionIds: []

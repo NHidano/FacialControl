@@ -1,4 +1,4 @@
-﻿# Implementation Plan
+# Implementation Plan
 
 > **螳溯｡悟燕謠先擅莉ｶ・医ご繝ｼ繝茨ｼ・*: 譛ｬ spec 縺ｮ螳溯｣・・ **Spec 1・・sc-gaze-auto-mapping・峨・螳溯｣・ｮ御ｺ・ｾ後↓縺ｮ縺ｿ逹謇九☆繧・*縲４pec 1 謌先棡縺ｮ繧ｷ繝ｳ繝懊Ν・・GazeAdvertisementResolver` / `GazeBindingConfigResolver.ComposeSourceId` / `OscReceiverAdapterBinding.Configure` / `GazeInputReader`・峨′繧ｳ繝ｼ繝峨・繝ｼ繧ｹ縺ｫ蟄伜惠縺励↑縺・ｴ蜷医・逹謇九○縺壼●豁｢縺吶ｋ・医ち繧ｹ繧ｯ 1.1 縺ｧ遒ｺ隱搾ｼ峨４pec 1 螳溯｣・′ design 險倩ｼ峨→逡ｰ縺ｪ繧九す繝ｳ繝懊Ν蜷阪〒螳御ｺ・＠縺ｦ縺・◆蝣ｴ蜷医・ design 縺ｮ Revalidation Triggers 縺ｫ蠕薙＞霑ｽ蠕薙Ξ繝薙Η繝ｼ縺励※縺九ｉ逹謇九☆繧九・>
 > TDD 蜴ｳ螳・(Red-Green-Refactor)縲ょ推螳溯｣・し繝悶ち繧ｹ繧ｯ縺ｯ縲悟､ｱ謨励☆繧九ユ繧ｹ繝医ｒ蜈医↓譖ｸ縺・竊・譛蟆丞ｮ溯｣・〒邱・竊・繝ｪ繝輔ぃ繧ｯ繧ｿ縲阪・鬆・〒騾ｲ繧√ｋ縲・> 繝・せ繝磯・鄂ｮ蝓ｺ貅・ mock/Fake 縺ｮ縺ｿ繝ｻ蜷梧悄螳溯｡後・ EditMode縲｀onoBehaviour 繝ｩ繧､繝輔し繧､繧ｯ繝ｫ繝ｻ螳・UDP繝ｻ繝輔Ξ繝ｼ繝蜷梧悄縺悟ｿ・ｦ√↑繧ゅ・縺ｯ PlayMode (CLAUDE.md縲後ユ繧ｹ繝磯・鄂ｮ蝓ｺ貅悶肴ｺ匁侠)縲・> 繝・せ繝亥ｮ溯｡・ `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe` 縺ｮ batchmode・・-runTests -testPlatform EditMode|PlayMode`縲～timeout: 600000` 縺ｮ蜷梧悄螳溯｡後∽ｻ悶ヰ繝ｼ繧ｸ繝ｧ繝ｳ縺ｧ縺ｮ螳溯｡檎ｦ∵ｭ｢・峨ょｮ溯｡悟燕縺ｫ蜷御ｸ繝励Ο繧ｸ繧ｧ繧ｯ繝医ｒ髢九＞縺・Editor 縺檎┌縺・％縺ｨ繧堤｢ｺ隱阪☆繧九・>
@@ -125,7 +125,7 @@
 
 ## 繧ｵ繝ｳ繝励Ν繝ｻ繝峨く繝･繝｡繝ｳ繝・ 譁ｰ繧ｹ繧ｭ繝ｼ繝櫁ｿｽ蠕薙→遘ｻ陦後ぎ繧､繝・
 - [ ] 7. 繧ｵ繝ｳ繝励Ν繝ｻ繝峨く繝･繝｡繝ｳ繝・ 4+ 邉ｻ邨ｱ縺ｮ繧｢繧ｻ繝・ヨ譖ｴ譁ｰ縺ｨ遐ｴ螢顔噪螟画峩縺ｮ譁・嶌蛹・
-- [ ] 7.1 (P) OSC 2 繧ｵ繝ｳ繝励Ν縺ｨ MultiSourceBlendDemo 繧呈眠繧ｹ繧ｭ繝ｼ繝槭∈譖ｴ譁ｰ縺吶ｋ
+- [x] 7.1 (P) OSC 2 繧ｵ繝ｳ繝励Ν縺ｨ MultiSourceBlendDemo 繧呈眠繧ｹ繧ｭ繝ｼ繝槭∈譖ｴ譁ｰ縺吶ｋ
   - MultiSourceBlendDemo / OscOutputDemo / OscReceiverDemo 縺ｮ Profile 繧｢繧ｻ繝・ヨ縺ｨ蟇ｾ蠢・profile.json 繧呈眠繧ｹ繧ｭ繝ｼ繝橸ｼ・aze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ縲（sGaze / gaze_configs 縺ｪ縺暦ｼ峨∈譖ｴ譁ｰ縺吶ｋ縲Ｈaze 讒区・縺ｯ譌｢螳壹メ繝｣繝阪Ν `"gaze"` + 蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭・縺ｿ縺ｨ縺嶺ｸ顔ｴ夊ｨｭ螳壹ｒ菴ｿ逕ｨ縺励↑縺・  - OscOutputDemo 縺ｮ options JSON 縺九ｉ蟒・ｭ｢貂医∩ gaze id 繧ｭ繝ｼ繧帝勁蜴ｻ縺吶ｋ
   - 蜷・し繝ｳ繝励Ν README 繧呈眠縺励＞ gaze 險ｭ螳壽焔鬆・ｼ・aze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ + 蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚橸ｼ峨∈譖ｴ譁ｰ縺吶ｋ
   - **M-28 莠､蟾ｮ縺ｮ豕ｨ險・*: MultiSourceBlendDemo 譖ｴ譁ｰ縺ｯ pre-existing 襍､ `SampleAssetsAreInSyncTests` 4 莉ｶ縺ｨ莠､蟾ｮ縺吶ｋ縺・M-28 縺ｯ蜿悶ｊ霎ｼ縺ｾ縺壹∝ｽ楢ｩｲ 4 莉ｶ縺ｯ FAIL 蛻､螳壹°繧蛾勁螟悶☆繧具ｼ・eq 12.6・・  - 3 繧ｵ繝ｳ繝励Ν縺ｮ Profile / JSON 縺梧眠繧ｹ繧ｭ繝ｼ繝槭〒隱ｭ縺ｿ霎ｼ縺ｾ繧後∵立繧ｹ繧ｭ繝ｼ繝櫁ｭｦ蜻翫′蜃ｺ縺ｪ縺・ｧ区・縺ｫ縺ｪ縺｣縺ｦ縺・ｋ・郁ｵｷ蜍募虚菴懃｢ｺ隱阪・繧ｿ繧ｹ繧ｯ 8.4・・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)

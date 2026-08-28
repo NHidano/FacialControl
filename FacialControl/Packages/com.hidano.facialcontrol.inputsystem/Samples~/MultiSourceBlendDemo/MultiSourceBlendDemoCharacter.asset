@@ -178,27 +178,14 @@ MonoBehaviour:
         blendShapes: []
         bones: []
         rendererPaths: []
-  - id: eye_look
-    name: 目線
-    layer: emotion
-    isGaze: 1
-    animationClip: {fileID: 0}
-    transitionDuration: 0.1
-    transitionCurve:
-      type: 0
-      keys: []
-    blendShapeValues: []
-    layerOverrideMask: []
-    cachedSnapshot:
-      transitionDuration: 0.1
-      transitionCurvePreset: Linear
-      blendShapes: []
-      bones: []
-      rendererPaths: []
   _rendererPaths:
   - Body
-  _gazeConfigs:
-  - expressionId: eye_look
+  _gazeChannels:
+  - id: gaze
+    providerSlug: ''
+    useDistinctLeftRight: 0
+    sourceIdLeft:
+    sourceIdRight:
     leftEyeBonePath:
     leftEyeInitialRotation: {x: 0, y: 0, z: 0}
     leftEyeYawAxisLocal: {x: 0, y: 1, z: 0}

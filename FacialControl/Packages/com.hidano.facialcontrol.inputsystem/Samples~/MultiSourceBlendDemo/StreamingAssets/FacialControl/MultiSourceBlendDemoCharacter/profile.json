@@ -350,9 +350,13 @@
             }
         }
     ],
-    "gaze_configs": [
-        {
-            "expressionId": "eye_look",
+    "gaze": {
+      "channels": [{
+        "id": "gaze",
+        "providerSlug": "",
+        "useDistinctLeftRight": false,
+        "sourceIdLeft": "",
+        "sourceIdRight": "",
             "leftEyeBonePath": "Left Eye",
             "leftEyeInitialRotation": {
                 "x": 0.05733204260468483,
@@ -390,5 +394,6 @@
             "outerYawAngle": 15.0,
             "innerYawAngle": 18.0
         }
-    ]
+      ]
+    }
 }

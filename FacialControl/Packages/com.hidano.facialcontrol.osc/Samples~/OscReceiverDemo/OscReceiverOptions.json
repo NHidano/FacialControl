@@ -22,11 +22,6 @@
       "expressionId": "BrowUp",
       "addressPattern": "/avatar/parameters/BrowUp"
     },
-    {
-      "mode": "gazeVrchatXy",
-      "expressionId": "eye_look",
-      "addressPattern": "/avatar/parameters/eye_look"
-    }
   ],
   "stalenessSeconds": 1.0,
   "failSafeMode": "revertToBase",
