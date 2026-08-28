@@ -6,6 +6,13 @@
 
 本パッケージはこれが初回リリースです。
 
+### ⚠ BREAKING CHANGES — gaze-channel-redesign
+
+- InputSystem の Gaze entry は `expressionId` ではなく Profile の `GazeChannels` のチャネル id を選択します。既定チャネルは `gaze` です。既存 binding は Inspector で手動設定し直してください。
+- Gaze source の registry 登録と目ボーン適用は core の `FacialController` に集約しました。旧 provider 注入・旧 gaze 設定への直接参照は利用できません。
+- `DeclaredInputs` にチャネル source id を登録する方式へ変更しました。既存の actionName 由来 id や `isGaze` Expression を使う設定は更新が必要です。
+- 詳細は core の [`migration-guide.md`](../com.hidano.facialcontrol/Documentation~/migration-guide.md) を参照してください。
+
 ### Changed
 
 - `InputSystemAdapterBindingDrawer` のキーバインディング一覧に交互背景（`AlternatingRowBackground.ContentOnly`）を付け、複数フィールドで構成される各行の境界を視認しやすくした。あわせて一覧ヘッダー Foldout の開閉状態を `SessionState` に保存し、Inspector 再構築（domain reload / asset 再読み込み）後も直前の展開状態を復元するようにした（Editor 再起動時はリセット）。

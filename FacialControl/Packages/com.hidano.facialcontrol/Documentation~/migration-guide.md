@@ -189,21 +189,21 @@ internal sealed class MyCustomAdapterBindingDrawer : PropertyDrawer
 5. 重複 slug がある場合は Inspector 上端に summary banner が出るため、binding 側 slug を重複しない値に書き換える
 6. SO を保存（重複 slug が残っている場合 `AssetModificationProcessor` が save をブロックする）
 
-### 2.6 GazeConfig の SO ルート昇格に伴う手動移植
+### 2.6 gaze-channel-redesign に伴う Gaze セクションへの移行
 
-`gaze-config-promotion` の破壊的変更により、GazeConfig は入力源固有の binding 内部データから `FacialCharacterProfileSO` ルートのキャラ固有データへ昇格した。同時に、preview.1 リリース前段階のため `profile.json` の `schemaVersion` は `"1.0"` に統一されている（バージョンを別管理しないポリシー）。preview 段階のため **旧構造の JSON / SO YAML を自動変換する migration コードは存在しない**。既存 asset を残す場合は、以下を手動で編集する。
+この spec では `ExpressionSerializable.isGaze` と旧 `_gazeConfigs` / `gaze_configs[]` を廃止し、`FacialCharacterProfileSO` の `GazeChannels`（既定 id は常に `gaze`）へ統合した。preview 段階の破壊的変更であり、自動変換は行わない。対象は Fork 実機 `D:\Unvgi\Repositries\UnvgiFacialVerification` を含む、旧 Profile を使用するすべてのプロジェクトである。
 
-#### 2.6.1 `profile.json` の書換
+#### 2.6.1 Profile / JSON
 
-1. root の `schemaVersion` を `"1.0"` に統一する（旧開発過程で `"2.0"` / `"2.1"` 等が混在していた場合はすべて `"1.0"` に揃える）
-2. `gaze_configs` 配列を JSON root 直下へ配置する
-3. `gaze_configs[]` には SO YAML の旧 binding 内部 `_gazeConfigs` から `expressionId` / bone path / 可動範囲 / Look 系設定などのキャラ固有値を移す
-4. InputSystem の `InputActionReference` は JSON の `gaze_configs[]` へ入れない。入力結線は SO YAML の `_gazeInputBindings` 側へ移す
+1. Profile をバックアップし、旧 `isGaze` Expression と旧 gaze 設定を記録する。
+2. Inspector の Gaze セクションで既定チャネル `gaze` を確認し、旧設定の左右目ボーン path、初期回転、軸、可動角を手動で再入力する。追加系統はチャネルを追加し、id の重複がないことを確認する。
+3. `profile.json` は root の `gaze.channels[]` にチャネルを記述する。旧 `gaze_configs[]` は削除し、Expression から `isGaze` を削除する。`gaze` が無い新規 JSON は既定チャネルが補完される。
+4. 旧 JSON が検出された場合は警告後に gaze 部分だけ読み捨てられるため、警告を無視して使い続けない。
 
 ```json
-// Before (旧開発過程の例)
+// 新スキーマの最小例
 {
-    "schemaVersion": "2.0",
+    "schemaVersion": "1.0",
     "layers": [],
     "expressions": [],
     "rendererPaths": []
@@ -211,66 +211,30 @@ internal sealed class MyCustomAdapterBindingDrawer : PropertyDrawer
 ```
 
 ```json
-// After (preview.1 統一スキーマ "1.0")
+// 新スキーマでの移行後
 {
     "schemaVersion": "1.0",
     "layers": [],
     "expressions": [],
     "rendererPaths": [],
-    "gaze_configs": [
-        {
-            "expressionId": "eye_look",
-            "leftEyeBonePath": "Armature/Head/LeftEye",
-            "rightEyeBonePath": "Armature/Head/RightEye",
-            "yawRange": 30.0,
-            "pitchRange": 20.0
-        }
-    ]
+    "gaze": { "channels": [{
+        "id": "gaze",
+        "providerSlug": "",
+        "useDistinctLeftRight": false,
+        "sourceIdLeft": "",
+        "sourceIdRight": "",
+        "leftEyeBonePath": "Armature/Hips/Spine/Head/LeftEye",
+        "rightEyeBonePath": "Armature/Hips/Spine/Head/RightEye"
+    }]}
 }
 ```
 
-#### 2.6.2 SO YAML の書換
+#### 2.6.2 Binding / source id
 
-旧構造では `InputSystemAdapterBinding` の内部に `_gazeConfigs` があり、各 entry に gaze のキャラ固有値と `InputActionReference` が混在していた。新構造では以下の 2 つに分離する。
-
-- SO root 直下の `_gazeConfigs`: `GazeBindingConfig` の本体。`expressionId` / bone path / 可動範囲 / Look clip などを保持する
-- binding 内部の `_gazeInputBindings`: InputSystem 用の入力結線。各 entry は `expressionId` と `inputActionRef`（`InputActionReference`）のみを保持する
-
-```yaml
-# Before: InputSystemAdapterBinding 内部に GazeConfig と InputActionReference が混在
-_adapterBindings:
-- rid: 123456789
-  data:
-    _slug: input-system
-    _gazeConfigs:
-    - expressionId: eye_look
-      leftEyeBonePath: Armature/Head/LeftEye
-      rightEyeBonePath: Armature/Head/RightEye
-      yawRange: 30
-      pitchRange: 20
-      inputAction: {fileID: 11400000, guid: 00000000000000000000000000000000, type: 2}
-```
-
-```yaml
-# After: キャラ固有 GazeConfig は SO root、InputActionReference は binding 内部
-_schemaVersion: "1.0"
-_gazeConfigs:
-- expressionId: eye_look
-  leftEyeBonePath: Armature/Head/LeftEye
-  rightEyeBonePath: Armature/Head/RightEye
-  yawRange: 30
-  pitchRange: 20
-
-_adapterBindings:
-- rid: 123456789
-  data:
-    _slug: input-system
-    _gazeInputBindings:
-    - expressionId: eye_look
-      inputActionRef: {fileID: 11400000, guid: 00000000000000000000000000000000, type: 2}
-```
-
-YAML 編集時は、旧 `_gazeConfigs` の各 entry から `inputAction` / `inputActionRef` 相当だけを取り出して `_gazeInputBindings[].inputActionRef` へ移し、それ以外の gaze 設定値は SO root `_gazeConfigs[]` へ移す。`expressionId` は両方に同じ値を残し、runtime が SO root `_gazeConfigs` と binding `_gazeInputBindings` を対応付けられるようにする。SO root の `_schemaVersion` も同様に `"1.0"` で統一する。
+ - InputSystem の Gaze entry は `expressionId` ではなく、Gaze セクションのチャネル `id`（既定は `gaze`）を選択する。`DeclaredInputs` と registry の source id もチャネル起点になる。
+ - OSC sender の options JSON から `gazeExpressionIds` を削除する。送信するチャネルは Profile の Gaze セクションから注入される。
+ - iFacialMocap / OSC / InputSystem / Timeline の binding は `IGazeSourceProvider` / `IGazeChannelConsumer` 契約に従う。既定チャネルの左右 source id は `{slug}:gaze.left` / `{slug}:gaze.right` である。
+ - `useDistinctLeftRight` を有効にする場合は `sourceIdLeft` / `sourceIdRight` を現在の binding が宣言する id に更新する。旧 actionName 由来 id は解決できない。
 
 ### 2.7 サンプル / Demo の確認
 
@@ -288,7 +252,8 @@ YAML 編集時は、旧 `_gazeConfigs` の各 entry から `inputAction` / `inpu
 - [ ] scene 上の `FacialController` GameObject から `*FacialControllerExtension` MonoBehaviour 群が全て削除されている
 - [ ] `FacialCharacterProfileSO` の Inspector で **Adapter Bindings** セクションに必要な binding が列挙され、slug が重複していない（summary banner なし）
 - [ ] `StreamingAssets/FacialControl/**/*.json` の `inputSources[].id` がすべて新 slug 形式に書き換わっている
-- [ ] 旧構造 由来の gaze 設定がある場合、`profile.json` は `schemaVersion: "1.0"` かつ root `gaze_configs[]` 配置になっており、SO YAML は root `_gazeConfigs` と binding `_gazeInputBindings` に分離されている
+- [ ] Profile の Gaze セクションに既定チャネル `gaze` と必要な追加チャネルがあり、旧 `gaze_configs[]` / `isGaze` が残っていない
+- [ ] InputSystem / OSC / iFacialMocap / Timeline の binding がチャネル id と宣言 source id を使用している
 - [ ] Play Mode で表情遷移 / OSC 受信 / InputSystem トリガー / リップシンクが期待どおり動作する
 - [ ] `Tests/PlayMode` 配下の 0-alloc perf test と統合テストが green（独自テストを保持している場合）
 

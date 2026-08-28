@@ -137,7 +137,7 @@
   - _Requirements: 12.5_
   - _Boundary: IFacialMocapReceiverDemo, MicLipSyncDemo, AnimationClipLipSyncDemo_
 
-- [ ] 7.3 (P) 遘ｻ陦後ぎ繧､繝峨→ CHANGELOG 繧堤ｴ螢顔噪螟画峩縺ｸ霑ｽ蠕薙＆縺帙ｋ
+- [x] 7.3 (P) 遘ｻ陦後ぎ繧､繝峨→ CHANGELOG 繧堤ｴ螢顔噪螟画峩縺ｸ霑ｽ蠕薙＆縺帙ｋ
   - migration-guide 縺ｮ髯ｳ閻仙喧遽・亥ｭ伜惠縺励↑縺・梛 `InputSystemGazeBinding` / `_gazeInputBindings` 繧貞盾辣ｧ縺吶ｋ L232-273 逶ｸ蠖難ｼ峨ｒ髯､蜴ｻ縺励∵眠繧ｹ繧ｭ繝ｼ繝槭∈縺ｮ遘ｻ陦梧焔鬆・↓鄂ｮ縺肴鋤縺医ｋ: SO / JSON 荳｡邨瑚ｷｯ縺ｮ蜀崎ｨｭ螳壽焔鬆・（sGaze 繝繝溘・ Expression 縺ｮ蜑企勁謇矩・！nputSystem gaze entry 縺ｮ expressionId 竊・繝√Ε繝阪Ν id 隱ｭ縺ｿ譖ｿ縺医｛ptions JSON 繧ｭ繝ｼ蜑企勁縲‥istinct 荳顔ｴ壽ｧ区・縺ｧ actionName 逕ｱ譚･ id 縺瑚ｧ｣豎ｺ荳崎・縺ｫ縺ｪ繧区ｳｨ諢上・fcrec 險倬鹸貂医∩繝・・繧ｿ縺ｮ譌ｧ id 谿句ｭ倥・譌｢遏･莠矩・∫ｬｬ荳芽・binding 縺ｮ interface 螳溯｣・焔鬆・  - Fork 螳滓ｩ滂ｼ・D:\Unvgi\Repositries\UnvgiFacialVerification`・峨・ Profile 縺悟酔謇矩・・蟇ｾ雎｡縺ｧ縺ゅｋ縺薙→繧呈・遉ｺ縺吶ｋ・域焔蜍募・險ｭ螳壽婿驥・= D-3縲り・蜍輔・繧､繧ｰ繝ｬ繝ｼ繧ｿ縺ｪ縺暦ｼ・  - core + 螟画峩諡｡蠑ｵ・・sc / inputsystem / ifacialmocap / timeline・峨・ CHANGELOG 縺ｫ Breaking changes 繧定ｨ倬鹸縺吶ｋ・・sGaze 蟒・ｭ｢ / Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ邨ｱ蜷・/ JSON 繧ｹ繧ｭ繝ｼ繝槫､画峩 / GazeSnapshot 縺ｮ id 繝ｪ繝阪・繝 / 騾∽ｿ｡蛛ｴ譌ｧ API繝ｻoptions 繧ｭ繝ｼ蟒・ｭ｢ / InputSystem 逋ｻ骭ｲ豬∝о螟画峩・・  - 遘ｻ陦後ぎ繧､繝峨°繧画立蝙句盾辣ｧ縺梧ｶ医∴縲∵立繝・・繧ｿ菫晄怏閠・′蜀崎ｨｭ螳壽焔鬆・ｒ霎ｿ繧後ｋ迥ｶ諷九↓縺ｪ縺｣縺ｦ縺・ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 13.1, 13.2, 13.3_
   - _Boundary: migration-guide, CHANGELOG_

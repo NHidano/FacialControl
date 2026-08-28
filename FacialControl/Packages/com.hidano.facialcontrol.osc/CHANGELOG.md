@@ -6,6 +6,13 @@
 
 本パッケージはこれが初回リリースです。
 
+### ⚠ BREAKING CHANGES — gaze-channel-redesign
+
+- OSC sender の options JSON から `gazeExpressionIds` を削除しました。送信対象は Profile の Gaze セクションから注入されます。
+- OSC receiver の gaze mapping は expressionId ではなくチャネル id（既定 `gaze`）で突合します。既存の `sourceIdLeft` / `sourceIdRight` は現在の binding が宣言する source id へ更新してください。
+- `IGazeSourceProvider` / `IGazeChannelConsumer` によるチャネル注入へ移行しました。旧 gaze 設定注入 API に依存するコードは更新が必要です。
+- 詳細は core の [`migration-guide.md`](../com.hidano.facialcontrol/Documentation~/migration-guide.md) を参照してください。
+
 ### Fixed
 
 - OSC 受信中に数分に 1 回程度の頻度で表情が一瞬素の状態に戻る（例: 笑顔の目閉じが 1 tick だけ開く）不具合を修正しました。`OscDoubleBuffer.Swap()` が write buffer をゼロクリアしていたため、bundle の UDP パケット分断（accumulation timeout 超過）・パケットロス・受信の無い tick を挟んだ瞬間に、その frame へ含まれなかった BlendShape が 0 として読者に観測されていました。`LayerInputSourceWeightBuffer.SwapIfDirty` と同じ copy-forward 方式（swap 後に新 read buffer の内容を新 write buffer へ複製）に変更し、未受信 index は前回値を保持するようにしました。受信停止時のゼロ化は従来どおり `OscInputSource` の staleness + `FailSafeMode` が担います。あわせて `Swap()` を `Write()`（受信側スレッド）と同一 lock で排他し、swap 中の書込ロストを防ぎました。

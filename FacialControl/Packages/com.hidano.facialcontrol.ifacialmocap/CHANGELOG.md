@@ -6,6 +6,12 @@
 
 初回プレリリース。`com.hidano.facialcontrol` に iFacialMocap (iOS) 受信アダプタを追加しました。
 
+### ⚠ BREAKING CHANGES — gaze-channel-redesign
+
+- 視線入力は Profile の既定チャネル `gaze`（左右別は `{slug}:gaze.left` / `{slug}:gaze.right`）として宣言・登録されます。旧 expressionId / actionName 前提の source id は更新してください。
+- 目ボーン適用は core の `FacialController` に集約されました。旧 gaze provider 注入や `Configure` に依存するコードは更新が必要です。
+- 詳細は core の [`migration-guide.md`](../com.hidano.facialcontrol/Documentation~/migration-guide.md) を参照してください。
+
 ### Added
 
 - `IFacialMocapReceiverAdapterBinding` を追加し、iFacialMocap の UDP テキストプロトコル（標準 `-` / v2 `&` 両対応）から BlendShape・視線・頭部ポーズを受信できるようにしました。

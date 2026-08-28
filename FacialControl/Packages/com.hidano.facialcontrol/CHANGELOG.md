@@ -6,6 +6,13 @@
 
 本パッケージはこれが初回リリースです。
 
+### ⚠ BREAKING CHANGES — gaze-channel-redesign
+
+- `ExpressionSerializable.isGaze` と旧 `GazeConfigs` を廃止し、Profile 直下の `gaze.channels[]` / `GazeChannels`（既定 id は `gaze`）へ統合しました。既存 SO / JSON の gaze 設定は自動変換されないため、移行ガイドに従って手動で再設定してください。
+- gaze source id は `{slug}:{channelId}`（左右別は `.left` / `.right`）に統一しました。`GazeSnapshot`、binding 宣言、Timeline / rec の判定もこの規約に従います。
+- `GazeSourceIdConvention`、`IGazeSourceProvider`、`IGazeChannelConsumer` を追加し、旧 gaze resolver / binding 注入経路を置き換えました。旧 API に依存する拡張は更新が必要です。
+- 旧 `gaze_configs[]` を含む JSON は警告後に gaze 部分を読み捨てます。詳細は [`Documentation~/migration-guide.md`](Documentation~/migration-guide.md) を参照してください。
+
 ### Changed
 
 - Expression 作成ツール（`ExpressionCreatorWindow`）の Clip 選択を「登録済み Expression から編集」「AnimationClip を作成・編集」の 2 タブ開始方式に変更した。AnimationClip スロットは選択操作まで非表示になり、既存 Clip 設定と新規作成のどちらから始めるべきか迷わない導線にした。「登録済み Expression から編集」タブはモデル配下の `FacialController` に設定された `FacialCharacterProfileSO` の Expression から AnimationClip をドロップダウン選択できる（登録が無い場合はドロップダウンの代わりに案内 HelpBox を表示）。「AnimationClip を作成・編集」タブは「既存 Clip を編集」「新規 Clip を作成」の 2 ボタンをタブ内に持つ。
