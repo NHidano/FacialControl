@@ -285,7 +285,42 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         /// </summary>
         public static List<GazeBindingConfig> ToSORootGazeConfigs(ProfileSnapshotDto dto)
         {
-            return new List<GazeBindingConfig>();
+            // Keep this overload as a compatibility bridge for callers that have
+            // not migrated from the old root-list API yet.  The source of truth
+            // is the new gaze.channels section; never read the obsolete
+            // ProfileSnapshotDto.gazeConfigs property here.
+            if (dto == null || dto.gaze == null || dto.gaze.channels == null || dto.gaze.channels.Count == 0)
+                return new List<GazeBindingConfig>();
+
+            var channels = ToGazeChannels(dto.gaze);
+            var result = new List<GazeBindingConfig>(channels.Count);
+            for (int i = 0; i < channels.Count; i++)
+            {
+                var channel = channels[i];
+                if (channel == null) continue;
+
+                result.Add(new GazeBindingConfig
+                {
+                    expressionId = channel.id,
+                    useDistinctLeftRight = channel.useDistinctLeftRight,
+                    sourceIdLeft = channel.sourceIdLeft ?? string.Empty,
+                    sourceIdRight = channel.sourceIdRight ?? string.Empty,
+                    leftEyeBonePath = channel.leftEyeBonePath,
+                    leftEyeInitialRotation = channel.leftEyeInitialRotation,
+                    leftEyeYawAxisLocal = channel.leftEyeYawAxisLocal,
+                    leftEyePitchAxisLocal = channel.leftEyePitchAxisLocal,
+                    rightEyeBonePath = channel.rightEyeBonePath,
+                    rightEyeInitialRotation = channel.rightEyeInitialRotation,
+                    rightEyeYawAxisLocal = channel.rightEyeYawAxisLocal,
+                    rightEyePitchAxisLocal = channel.rightEyePitchAxisLocal,
+                    lookUpAngle = channel.lookUpAngle,
+                    lookDownAngle = channel.lookDownAngle,
+                    outerYawAngle = channel.outerYawAngle,
+                    innerYawAngle = channel.innerYawAngle,
+                });
+            }
+
+            return result;
         }
 
         /// <summary>

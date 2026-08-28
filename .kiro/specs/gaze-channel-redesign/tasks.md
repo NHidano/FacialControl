@@ -72,7 +72,7 @@
   - EditMode テストで「新スキーマ parse」「旧キー警告 1 回 + gaze 以外の通常読込」「`gaze` キー欠落の無警告受理」「look* 系フィールドがスキーマに存在しない」が緑になる (観測可能な完了条件)
   - _Requirements: 2.3, 2.6, 2.7, 9.3_
 
-- [ ] 3.2 Converter / Exporter の Gaze セクション対応とラウンドトリップを実装する
+- [x] 3.2 Converter / Exporter の Gaze セクション対応とラウンドトリップを実装する
   - Converter: DTO → チャネルリスト変換時に不変条件を正規化する（既定チャネル欠落は補完 + 警告なしの最小形許容、id validation 違反・重複 id チャネルは警告 + 読み捨て）
   - Exporter: SO の Gaze セクションを新スキーマのみで出力する（旧キー postprocess の削除確認）
   - Exporter 出力 → Converter 読み戻しで Gaze セクションが値等価となるラウンドトリップを固定する

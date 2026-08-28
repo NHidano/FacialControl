@@ -399,6 +399,65 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.ScriptableObjectTests
             Assert.That(FacialCharacterProfileConverter.ToSORootGazeConfigs(new ProfileSnapshotDto()), Is.Empty);
         }
 
+        [Test]
+        public void GazeSection_JsonToSoToJson_PreservesAllChannelValues()
+        {
+            const string sourceJson = @"{
+                ""schemaVersion"": ""1.0"",
+                ""layers"": [], ""expressions"": [], ""rendererPaths"": [],
+                ""gaze"": { ""channels"": [{
+                    ""id"": ""gaze"", ""providerSlug"": ""osc"",
+                    ""useDistinctLeftRight"": true,
+                    ""sourceIdLeft"": ""osc:gaze.left"", ""sourceIdRight"": ""osc:gaze.right"",
+                    ""leftEyeBonePath"": ""Armature/Head/LeftEye"",
+                    ""leftEyeInitialRotation"": {""x"":1,""y"":2,""z"":3},
+                    ""leftEyeYawAxisLocal"": {""x"":0,""y"":1,""z"":0},
+                    ""leftEyePitchAxisLocal"": {""x"":1,""y"":0,""z"":0},
+                    ""rightEyeBonePath"": ""Armature/Head/RightEye"",
+                    ""rightEyeInitialRotation"": {""x"":4,""y"":5,""z"":6},
+                    ""rightEyeYawAxisLocal"": {""x"":0,""y"":0.75,""z"":0.25},
+                    ""rightEyePitchAxisLocal"": {""x"":0.5,""y"":0,""z"":0.5},
+                    ""lookUpAngle"": 21, ""lookDownAngle"": 11,
+                    ""outerYawAngle"": 17, ""innerYawAngle"": 13
+                }] }
+            }";
+
+            var parser = new SystemTextJsonParser();
+            var parsed = parser.ParseProfileSnapshotV2(sourceJson);
+            var soChannels = FacialCharacterProfileConverter.ToGazeChannels(parsed);
+            Assert.That(soChannels, Has.Count.EqualTo(1));
+
+            var roundTripDto = new ProfileSnapshotDto
+            {
+                schemaVersion = parsed.schemaVersion,
+                layers = new List<LayerDefinitionDto>(),
+                expressions = new List<ExpressionDto>(),
+                rendererPaths = new List<string>(),
+                gaze = new GazeSectionDto
+                {
+                    channels = FacialCharacterProfileConverter.ToGazeChannelDtos(soChannels),
+                },
+            };
+            var roundTrip = parser.ParseProfileSnapshotV2(parser.SerializeProfileSnapshot(roundTripDto));
+            var channel = roundTrip.gaze.channels[0];
+
+            Assert.That(channel.id, Is.EqualTo("gaze"));
+            Assert.That(channel.providerSlug, Is.EqualTo("osc"));
+            Assert.That(channel.useDistinctLeftRight, Is.True);
+            Assert.That(channel.sourceIdLeft, Is.EqualTo("osc:gaze.left"));
+            Assert.That(channel.sourceIdRight, Is.EqualTo("osc:gaze.right"));
+            Assert.That(channel.leftEyeBonePath, Is.EqualTo("Armature/Head/LeftEye"));
+            Assert.That(channel.rightEyeBonePath, Is.EqualTo("Armature/Head/RightEye"));
+            Assert.That(channel.leftEyeInitialRotation, Is.EqualTo(new Vector3(1, 2, 3)));
+            Assert.That(channel.rightEyeInitialRotation, Is.EqualTo(new Vector3(4, 5, 6)));
+            Assert.That(channel.rightEyeYawAxisLocal, Is.EqualTo(new Vector3(0, .75f, .25f)));
+            Assert.That(channel.rightEyePitchAxisLocal, Is.EqualTo(new Vector3(.5f, 0, .5f)));
+            Assert.That(channel.lookUpAngle, Is.EqualTo(21f));
+            Assert.That(channel.lookDownAngle, Is.EqualTo(11f));
+            Assert.That(channel.outerYawAngle, Is.EqualTo(17f));
+            Assert.That(channel.innerYawAngle, Is.EqualTo(13f));
+        }
+
         private static OverlaySnapshotDto CreateSnapshotDto(
             string rendererPath,
             string blendShapeName,
