@@ -65,7 +65,7 @@
 
 - [ ] 3. JSON: Gaze セクションの parse・変換・出力・旧スキーマ警告
 
-- [ ] 3.1 新スキーマ DTO と parse・旧キー検出警告を実装する
+- [x] 3.1 新スキーマ DTO と parse・旧キー検出警告を実装する
   - ルートキー `gaze`（オブジェクト + channels 配列、フィールドは camelCase、schemaVersion "1.0" 維持）の DTO を追加し、旧 gaze config DTO フィールドと snake/camel preprocessing（Pre/Postprocess）を削除する
   - parse 経路の入口で raw JSON の旧キー（`"gaze_configs"` + 後続 `:` のキー形）を検出した場合、移行ガイド誘導を含む警告を 1 回だけ出し、以降は通常 parse（DTO フィールド不在による自然読み捨て）で gaze 以外を通常どおり読み込む
   - `gaze` キー欠落は警告なしで受理する（既定チャネル補完は Converter 側）

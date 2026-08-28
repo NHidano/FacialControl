@@ -112,6 +112,13 @@ namespace Hidano.FacialControl.Adapters.Json
                 dto.slots = new List<string>();
             if (dto.rendererPaths == null)
                 dto.rendererPaths = new List<string>();
+            // gaze は新スキーマのセクションとして常に利用可能な形にする。
+            // JSON にセクションまたは channels がない場合も、後段の Converter が
+            // 既定チャネルを補完できるよう null をここで空コレクションへ正規化する。
+            if (dto.gaze == null)
+                dto.gaze = new GazeSectionDto();
+            if (dto.gaze.channels == null)
+                dto.gaze.channels = new List<GazeChannelDto>();
             if (dto.defaultOverlays == null)
                 dto.defaultOverlays = new List<OverlaySlotBindingDto>();
             NormalizeOverlaySlotBindingDtos(dto.defaultOverlays);

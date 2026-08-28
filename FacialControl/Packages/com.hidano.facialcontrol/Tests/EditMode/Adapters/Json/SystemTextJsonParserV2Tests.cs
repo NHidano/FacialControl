@@ -195,6 +195,67 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.Json
             Assert.AreEqual(7f, cfg.innerYawAngle);
         }
 
+        [Test]
+        public void ParseProfileSnapshotV2_GazeChannels_PreservesNewSchemaValues()
+        {
+            var json = @"{
+                ""schemaVersion"": ""1.0"",
+                ""layers"": [],
+                ""expressions"": [],
+                ""rendererPaths"": [],
+                ""gaze"": { ""channels"": [{
+                    ""id"": ""gaze"",
+                    ""providerSlug"": ""osc"",
+                    ""useDistinctLeftRight"": true,
+                    ""sourceIdLeft"": ""osc:gaze.left"",
+                    ""sourceIdRight"": ""osc:gaze.right"",
+                    ""leftEyeBonePath"": ""Head/LeftEye"",
+                    ""rightEyeBonePath"": ""Head/RightEye"",
+                    ""lookUpAngle"": 21,
+                    ""lookDownAngle"": 11
+                }] }
+            }";
+
+            var dto = _parser.ParseProfileSnapshotV2(json);
+
+            Assert.That(dto.gaze, Is.Not.Null);
+            Assert.That(dto.gaze.channels, Has.Count.EqualTo(1));
+            Assert.That(dto.gaze.channels[0].id, Is.EqualTo("gaze"));
+            Assert.That(dto.gaze.channels[0].providerSlug, Is.EqualTo("osc"));
+            Assert.That(dto.gaze.channels[0].sourceIdLeft, Is.EqualTo("osc:gaze.left"));
+            Assert.That(dto.gaze.channels[0].sourceIdRight, Is.EqualTo("osc:gaze.right"));
+            Assert.That(dto.gaze.channels[0].lookUpAngle, Is.EqualTo(21f));
+            Assert.That(dto.gaze.channels[0].lookDownAngle, Is.EqualTo(11f));
+        }
+
+        [Test]
+        public void ParseProfileSnapshotV2_MissingGaze_NormalizesSectionAndChannels()
+        {
+            var dto = _parser.ParseProfileSnapshotV2(@"{
+                ""schemaVersion"": ""1.0"",
+                ""layers"": [], ""expressions"": [], ""rendererPaths"": []
+            }");
+
+            Assert.That(dto.gaze, Is.Not.Null);
+            Assert.That(dto.gaze.channels, Is.Not.Null);
+            Assert.That(dto.gaze.channels, Is.Empty);
+        }
+
+        [Test]
+        public void ParseProfileSnapshotV2_LegacyGazeConfigsKey_WarnsOnlyOnce()
+        {
+            var json = @"{
+                ""schemaVersion"": ""1.0"",
+                ""layers"": [], ""expressions"": [], ""rendererPaths"": [],
+                ""gaze_configs"": []
+            }";
+
+            LogAssert.Expect(LogType.Warning, new Regex("gaze_configs"));
+            _parser.ParseProfileSnapshotV2(json);
+            _parser.ParseProfileSnapshotV2(json);
+            LogAssert.NoUnexpectedReceived();
+        }
+
         // ================================================================
         // Parse_MissingSchemaVersion_ThrowsAndLogsError
         // ================================================================
