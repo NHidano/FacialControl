@@ -59,7 +59,7 @@ namespace Hidano.FacialControl.Adapters.Json
             return ParseProfileSnapshotV2Internal(json, out _);
         }
 
-        private static ProfileSnapshotDto ParseProfileSnapshotV2Internal(string json, out string preprocessed)
+        private ProfileSnapshotDto ParseProfileSnapshotV2Internal(string json, out string preprocessed)
         {
             if (json == null)
                 throw new ArgumentNullException(nameof(json));
@@ -67,7 +67,8 @@ namespace Hidano.FacialControl.Adapters.Json
                 throw new ArgumentException("JSON 文字列を空にすることはできません。", nameof(json));
 
             LegacyOverlayFieldDetector.RejectLegacyExpressionIdInOverlays(json);
-            preprocessed = PreprocessInputSourceOptions(PreprocessGazeConfigsKey(json));
+            WarnIfLegacyGazeConfigsKey(json);
+            preprocessed = PreprocessInputSourceOptions(json);
 
             ProfileSnapshotDto dto;
             try
@@ -111,8 +112,6 @@ namespace Hidano.FacialControl.Adapters.Json
                 dto.slots = new List<string>();
             if (dto.rendererPaths == null)
                 dto.rendererPaths = new List<string>();
-            if (dto.gazeConfigs == null)
-                dto.gazeConfigs = new List<GazeBindingConfigDto>();
             if (dto.defaultOverlays == null)
                 dto.defaultOverlays = new List<OverlaySlotBindingDto>();
             NormalizeOverlaySlotBindingDtos(dto.defaultOverlays);
@@ -298,7 +297,7 @@ namespace Hidano.FacialControl.Adapters.Json
             var dto = ConvertToProfileSnapshotDto(profile);
             NormalizeProfileSnapshotDto(dto);
             var raw = JsonUtility.ToJson(dto, true);
-            return PostprocessInputSourceOptions(PostprocessGazeConfigsKey(raw));
+            return PostprocessInputSourceOptions(raw);
         }
 
         /// <summary>
@@ -315,7 +314,7 @@ namespace Hidano.FacialControl.Adapters.Json
                 dto.schemaVersion = SchemaVersionV2;
             NormalizeProfileSnapshotDto(dto);
             var raw = JsonUtility.ToJson(dto, true);
-            return PostprocessInputSourceOptions(PostprocessGazeConfigsKey(raw));
+            return PostprocessInputSourceOptions(raw);
         }
 
         /// <inheritdoc/>
@@ -422,18 +421,29 @@ namespace Hidano.FacialControl.Adapters.Json
             return sb.ToString();
         }
 
-        private static string PreprocessGazeConfigsKey(string json)
+        private bool _legacyGazeWarningIssued;
+
+        private void WarnIfLegacyGazeConfigsKey(string json)
         {
-            return string.IsNullOrEmpty(json)
-                ? json
-                : json.Replace("\"gaze_configs\"", "\"gazeConfigs\"");
+            if (_legacyGazeWarningIssued || !ContainsJsonKey(json, "gaze_configs"))
+                return;
+
+            _legacyGazeWarningIssued = true;
+            Debug.LogWarning("[FacialControl] 旧 profile.json キー \"gaze_configs\" を検出しました。Gaze 設定は読み捨てられます。移行ガイドに従って新しい gaze.channels スキーマへ移行してください。");
         }
 
-        private static string PostprocessGazeConfigsKey(string json)
+        private static bool ContainsJsonKey(string json, string key)
         {
-            return string.IsNullOrEmpty(json)
-                ? json
-                : json.Replace("\"gazeConfigs\"", "\"gaze_configs\"");
+            string quotedKey = "\"" + key + "\"";
+            int cursor = 0;
+            while ((cursor = json.IndexOf(quotedKey, cursor, StringComparison.Ordinal)) >= 0)
+            {
+                int after = cursor + quotedKey.Length;
+                while (after < json.Length && char.IsWhiteSpace(json[after])) after++;
+                if (after < json.Length && json[after] == ':') return true;
+                cursor = after;
+            }
+            return false;
         }
 
         private static int FindMatchingBrace(string json, int openIndex)
@@ -1035,7 +1045,7 @@ namespace Hidano.FacialControl.Adapters.Json
                 layers = new List<LayerDefinitionDto>(),
                 expressions = new List<ExpressionDto>(),
                 rendererPaths = new List<string>(),
-                gazeConfigs = new List<GazeBindingConfigDto>(),
+                gaze = new GazeSectionDto { channels = new List<GazeChannelDto>() },
                 defaultOverlays = BuildOverlaySlotBindingDtoList(profile.DefaultOverlays.Span),
                 slots = new List<string>(),
             };

@@ -87,7 +87,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
                 layers = new List<LayerDefinitionDto>(),
                 expressions = new List<ExpressionDto>(),
                 rendererPaths = new List<string>(),
-                gazeConfigs = new List<GazeBindingConfigDto>(),
+                gaze = new GazeSectionDto { channels = new List<GazeChannelDto>() },
                 defaultOverlays = BuildOverlaySlotBindingDtoList(profile.DefaultOverlays.Span),
             };
 
@@ -169,7 +169,7 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         /// </summary>
         public static List<GazeBindingConfig> ToSORootGazeConfigs(ProfileSnapshotDto dto)
         {
-            return ToSORootGazeConfigs(dto?.gazeConfigs);
+            return new List<GazeBindingConfig>();
         }
 
         /// <summary>

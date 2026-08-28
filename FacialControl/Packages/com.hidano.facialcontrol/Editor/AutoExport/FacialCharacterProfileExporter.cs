@@ -198,7 +198,7 @@ namespace Hidano.FacialControl.Editor.AutoExport
                 layers = new List<LayerDefinitionDto>(),
                 expressions = new List<ExpressionDto>(),
                 rendererPaths = new List<string>(),
-                gazeConfigs = ConvertGazeConfigsToDto(so.GazeConfigs),
+                gaze = new GazeSectionDto { channels = new List<GazeChannelDto>() },
                 defaultOverlays = BuildOverlaySlotBindingDtoList(so.DefaultOverlays),
                 // ベース表情は bake 済み snapshot をそのまま JSON へ載せる
                 // （AnimationClip 参照は SO 内のみで JSON には含めない）。
