@@ -15,14 +15,14 @@
 
 - [ ] 1. Foundation: 前提確認・id 規約・binding 契約の Domain 新設
 
-- [ ] 1.1 Spec 1 実装完了ゲートとテストベースラインを確認する
+- [x] 1.1 Spec 1 実装完了ゲートとテストベースラインを確認する
   - Spec 1 成果のシンボル（広告解決・id 合成 helper・受信側 GazeConfig 注入 Configure・gaze 読取共通実装）がコードベースに存在することを確認する。欠けている場合は実装着手せず停止する
   - 一切の変更を加える前のベースで EditMode / PlayMode を batchmode 実行し、S-21 系 4 件が Spec 1 完了により緑であることを確認する（赤の場合は Spec 1 の分岐手順で切り分けてから着手）
   - 冒頭一覧の pre-existing 赤（M-28 4 件 / フレーキー 1 件）の現況を記録し、以降のタスクの FAIL 判定除外基準とする
   - 前提シンボルの存在確認とベースライン結果が後続タスクから参照できる形で記録されている (観測可能な完了条件)
   - _Requirements: 12.6_
 
-- [ ] 1.2 gaze source id の合成・パース規約を Domain に新設する
+- [x] 1.2 gaze source id の合成・パース規約を Domain に新設する
   - 規約定数 `"gaze"`（既定チャネル id）の単一定義、合成 3 形（shared / left / right + sub 部のみ版）、形状分解（例外を送出せず false 返却。「gaze かどうか」の分類は呼び出し側のチャネル id 集合照合とする責務分離を doc 明記）、チャネル id validation（InputSourceId 文字集合 + `:` 禁止 + `.left`/`.right` 終端禁止）を単一の Unity 非依存 static 実装に集約する
   - `.left` / `.right` の文字列定数は本実装内にのみ存在させる（他ファイルへの直書きはレビュー違反とする）
   - Spec 1 が局所化した Adapters 側の合成 helper と side enum を本規約へ統合する方針とし、呼び出し点の置換は後続タスク（4.2 / 5.2）で実施、置換完了（6.4）まで旧 helper は温存する
@@ -42,12 +42,12 @@
 
 - [ ] 2. Core データモデル: チャネル定義・SO 置換・legacy 検出
 
-- [ ] 2.1 死んだ BlendShape gaze 資産を参照ゼロ検証のうえ削除する
+- [x] 2.1 死んだ BlendShape gaze 資産を参照ゼロ検証のうえ削除する
   - look*Clip ×4 / look*Samples ×4 の 8 フィールドと sample entry 型・Editor の clip sampler について、ランタイム消費者ゼロ（M-29 未配線）を grep で検証してから型・フィールド・関連テストごと削除する（D-2 / research Decision 8）
   - 削除後に Editor asmdef を含む全 asmdef がコンパイル可能で、既存テストが緑のまま維持される (観測可能な完了条件)
   - _Requirements: 9.1_
 
-- [ ] 2.2 チャネル定義型を新設し SO を Gaze セクションへ置換する
+- [x] 2.2 チャネル定義型を新設し SO を Gaze セクションへ置換する
   - チャネル定義（id / providerSlug 空 = 自動 / distinct 左右 id / 左右目ボーン path・初期回転・軸 / 可動角 4 値。look* 系は持たない）を Serializable として新設する
   - SO の旧 GazeConfig ルートリストをチャネルリスト 1 本へ置換し、公開アクセサで既定チャネル不変条件を自己修復する（リスト null/空 → 既定チャネル 1 件生成、先頭 id が `"gaze"` 以外 → 矯正。Ordinal 比較・確保最小）。profile interface の gaze アクセサもチャネルリストへ置換する
   - ExpressionSerializable の isGaze フィールドを削除する（Timeline パッケージの isGaze は別概念として無改修）
@@ -55,7 +55,7 @@
   - EditMode テストで「空リスト自己修復」「先頭 id 改変 YAML の矯正」「isGaze 不在のシリアライズ確認」が緑になる (観測可能な完了条件)
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2_
 
-- [ ] 2.3 SO 経路の旧スキーマ検出（legacy フィールド）を実装する
+- [x] 2.3 SO 経路の旧スキーマ検出（legacy フィールド）を実装する
   - 検出専用マーカー型の非公開リストを `FormerlySerializedAs` で旧キーに対応付け、旧 YAML の gaze config 群を初回ロードで件数・id のみ受け取り、検出有無・件数を Inspector / FacialController 向けに内部公開する
   - 再保存で旧キー行がアセットから消えること（新キーの空リスト行が残るのは仕様）を確認する
   - EditMode テストで「旧 `_gazeConfigs` 入り YAML 読込 → 検出 true + 件数/id 取得」「新規アセットで検出 false」が緑になる (観測可能な完了条件)

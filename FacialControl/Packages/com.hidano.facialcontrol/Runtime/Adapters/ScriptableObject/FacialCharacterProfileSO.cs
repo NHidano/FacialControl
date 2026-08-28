@@ -13,7 +13,7 @@ using GazeChannel = Hidano.FacialControl.Adapters.ScriptableObject.GazeChannel;
 namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
 {
     [CreateAssetMenu(fileName = "NewFacialCharacterProfile", menuName = "FacialControl/Facial Character Profile")]
-    public class FacialCharacterProfileSO : UnityEngine.ScriptableObject, IFacialCharacterProfile
+    public class FacialCharacterProfileSO : UnityEngine.ScriptableObject, IFacialCharacterProfile, ISerializationCallbackReceiver
     {
         public const string StreamingAssetsRootFolder = "FacialControl";
         public const string ProfileJsonFileName = "profile.json";
@@ -29,8 +29,11 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         };
         // 依存側置換までのソース互換用。旧 root リストは保存しない。
         // 旧 SO スキーマを検出するためだけに旧キーを受け取る。通常の Gaze API には公開しない。
-        [SerializeField, FormerlySerializedAs("_gazeConfigs")]
-        private List<GazeBindingConfig> _legacyGazeConfigs;
+        [SerializeField, HideInInspector, FormerlySerializedAs("_gazeConfigs")]
+        protected List<LegacyGazeConfigEntry> _legacyGazeConfigs;
+        [NonSerialized] private List<string> _migratedLegacyGazeConfigIds;
+        [NonSerialized] private bool _legacyMigrationDetected;
+        [NonSerialized] private bool _legacyMigrationWarningIssued;
 
         // 既存の拡張コードとのコンパイル互換用。Unity のシリアライズ対象にはしない。
         [NonSerialized] protected List<GazeBindingConfig> _gazeConfigs = new List<GazeBindingConfig>();
@@ -81,7 +84,58 @@ namespace Hidano.FacialControl.Adapters.ScriptableObject.Serializable
         /// 旧 SO スキーマの gaze_configs 相当データが復元されたかを示す。
         /// 旧データは自動変換せず、呼び出し側が警告して読み捨てるために使用する。
         /// </summary>
-        public bool HasLegacyGazeConfigs => _legacyGazeConfigs != null && _legacyGazeConfigs.Count > 0;
+        public bool HasLegacyGazeConfigs => _legacyMigrationDetected;
+        public int LegacyGazeConfigCount => _migratedLegacyGazeConfigIds?.Count ?? 0;
+        public IReadOnlyList<string> LegacyGazeConfigIds
+            => _migratedLegacyGazeConfigIds ?? (_migratedLegacyGazeConfigIds = new List<string>());
+
+        /// <summary>旧 _gazeConfigs YAML を新しい gaze channel へ一度だけ移行する。</summary>
+        public void OnAfterDeserialize()
+        {
+            if (_legacyGazeConfigs == null || _legacyGazeConfigs.Count == 0)
+                return;
+
+            _legacyMigrationDetected = true;
+            _migratedLegacyGazeConfigIds = new List<string>(_legacyGazeConfigs.Count);
+            for (int i = 0; i < _legacyGazeConfigs.Count; i++)
+            {
+                var legacy = _legacyGazeConfigs[i];
+                if (legacy == null) continue;
+                _migratedLegacyGazeConfigIds.Add(legacy.expressionId ?? string.Empty);
+            }
+
+            var legacyEntries = new List<LegacyGazeConfigEntry>(_legacyGazeConfigs);
+
+            if (_gazeChannels == null)
+                _gazeChannels = new List<GazeChannel>();
+
+            // The old root list was the source of truth. Replace the default
+            // channel list with its entries, preserving every legacy setting.
+            _gazeChannels.Clear();
+            _gazeChannels.Add(CreateDefaultGazeChannel());
+
+            foreach (var legacy in legacyEntries)
+            {
+                if (legacy == null) continue;
+                var migrated = legacy.ToChannel();
+                if (string.Equals(migrated.id, "gaze", StringComparison.Ordinal))
+                    _gazeChannels[0] = migrated;
+                else
+                    _gazeChannels.Add(migrated);
+            }
+
+            // Keep the new marker field as an empty serialized list. This makes the
+            // old key disappear on the next save while retaining the migration signal
+            // for this load, and prevents the old object graph from being serialized.
+            _legacyGazeConfigs.Clear();
+            if (!_legacyMigrationWarningIssued)
+            {
+                _legacyMigrationWarningIssued = true;
+                Debug.LogWarning($"{name}: 旧 _gazeConfigs を gaze.channels へ移行しました。移行ガイドを確認し、アセットを保存してください。");
+            }
+        }
+
+        public void OnBeforeSerialize() { }
 
         [Obsolete("GazeChannels を使用してください。後続タスクで削除されます。")]
         public IReadOnlyList<GazeBindingConfig> GazeConfigs => _gazeConfigs ?? (_gazeConfigs = new List<GazeBindingConfig>());
