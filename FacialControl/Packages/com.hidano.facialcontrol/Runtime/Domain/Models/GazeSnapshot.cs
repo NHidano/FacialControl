@@ -9,8 +9,12 @@ namespace Hidano.FacialControl.Domain.Models
     /// </summary>
     public readonly struct GazeSnapshot : IEquatable<GazeSnapshot>
     {
-        /// <summary>Expression id matching the source GazeBindingConfig expressionId.</summary>
-        public readonly string ExpressionId;
+        /// <summary>Gaze channel id matching the profile GazeChannel id.</summary>
+        public readonly string ChannelId;
+
+        /// <summary>互換用の旧名称。新規コードでは ChannelId を使用する。</summary>
+        [Obsolete("ChannelId を使用してください。")]
+        public string ExpressionId => ChannelId;
 
         /// <summary>Horizontal gaze value in Domain coordinates.</summary>
         public readonly float X;
@@ -21,16 +25,16 @@ namespace Hidano.FacialControl.Domain.Models
         /// <summary>
         /// Creates a Gaze snapshot. A null expression id is normalized to an empty string.
         /// </summary>
-        public GazeSnapshot(string expressionId, float x, float y)
+        public GazeSnapshot(string channelId, float x, float y)
         {
-            ExpressionId = expressionId ?? string.Empty;
+            ChannelId = channelId ?? string.Empty;
             X = x;
             Y = y;
         }
 
         public bool Equals(GazeSnapshot other)
         {
-            return string.Equals(ExpressionId, other.ExpressionId, StringComparison.Ordinal)
+            return string.Equals(ChannelId, other.ChannelId, StringComparison.Ordinal)
                 && X.Equals(other.X)
                 && Y.Equals(other.Y);
         }
@@ -42,7 +46,7 @@ namespace Hidano.FacialControl.Domain.Models
             unchecked
             {
                 int hash = 17;
-                hash = (hash * 31) + (ExpressionId != null ? StringComparer.Ordinal.GetHashCode(ExpressionId) : 0);
+                hash = (hash * 31) + (ChannelId != null ? StringComparer.Ordinal.GetHashCode(ChannelId) : 0);
                 hash = (hash * 31) + X.GetHashCode();
                 hash = (hash * 31) + Y.GetHashCode();
                 return hash;

@@ -132,7 +132,7 @@ namespace Hidano.FacialControl.Domain.Services
 
         private static bool IsConnected(GazeSnapshot snapshot)
         {
-            return !string.IsNullOrEmpty(snapshot.ExpressionId);
+            return !string.IsNullOrEmpty(snapshot.ChannelId);
         }
 
         private void QueueSubscribe(IFacialOutputObserver observer)

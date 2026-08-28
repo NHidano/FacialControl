@@ -90,7 +90,7 @@
   - _Requirements: 4.4, 4.5, 3.3_
   - _Boundary: GazeChannelResolver_
 
-- [ ] 4.2 FacialController を型付き注入とチャネル起点の gaze 配線へ置換する
+- [x] 4.2 FacialController を型付き注入とチャネル起点の gaze 配線へ置換する
   - リフレクション注入一式（Configure メソッド探索・引数読み戻し・PascalCase 変換・gaze config リスト型判定）を削除し、`is` キャストによる型付き注入（チャネル id 列。注入 → child scope build → OnStart の順序維持）へ置換する
   - GazeSnapshot の id フィールドを ExpressionId から ChannelId へリネームし（Breaking。関連 XML doc 追従）、チャネル単位の snapshot 生成へ置換する（バッファ運用維持 = 毎フレーム GC ゼロ）
   - 候補 Subscribe を「binding slug 一覧 × チャネル × 3 形」の規約 helper 全合成へ置換する（distinct チャネルは明示 id を直接 Subscribe、providerSlug 明示チャネルは当該 slug のみ合成）。Spec 1 の Adapters 側合成 helper 呼び出しを規約 helper へ置換する

@@ -1,3 +1,4 @@
+using System;
 using Hidano.FacialControl.Adapters.ScriptableObject;
 using Hidano.FacialControl.Domain.Interfaces;
 
@@ -16,25 +17,64 @@ namespace Hidano.FacialControl.Adapters.Bone
     /// </remarks>
     public readonly struct GazeBoneBinding
     {
-        public GazeBindingConfig Config { get; }
+        public GazeChannel Channel { get; }
         public IAnalogInputSource Source { get; }
         public IAnalogInputSource LeftSource { get; }
         public IAnalogInputSource RightSource { get; }
 
-        public GazeBoneBinding(GazeBindingConfig config, IAnalogInputSource source)
-            : this(config, source, source)
+        public GazeBoneBinding(GazeChannel channel, IAnalogInputSource source)
+            : this(channel, source, source)
         {
         }
 
         public GazeBoneBinding(
-            GazeBindingConfig config,
+            GazeChannel channel,
             IAnalogInputSource leftSource,
             IAnalogInputSource rightSource)
         {
-            Config = config;
+            Channel = channel;
             Source = leftSource ?? rightSource;
             LeftSource = leftSource;
             RightSource = rightSource;
+        }
+
+        [Obsolete("GazeChannel を使用してください。")]
+        public GazeBoneBinding(GazeBindingConfig config, IAnalogInputSource source)
+            : this(ToChannel(config), source, source)
+        {
+        }
+
+        [Obsolete("GazeChannel を使用してください。")]
+        public GazeBoneBinding(
+            GazeBindingConfig config,
+            IAnalogInputSource leftSource,
+            IAnalogInputSource rightSource)
+            : this(ToChannel(config), leftSource, rightSource)
+        {
+        }
+
+        private static GazeChannel ToChannel(GazeBindingConfig config)
+        {
+            if (config == null) return null;
+            return new GazeChannel
+            {
+                id = config.expressionId,
+                useDistinctLeftRight = config.useDistinctLeftRight,
+                sourceIdLeft = config.sourceIdLeft,
+                sourceIdRight = config.sourceIdRight,
+                leftEyeBonePath = config.leftEyeBonePath,
+                leftEyeInitialRotation = config.leftEyeInitialRotation,
+                leftEyeYawAxisLocal = config.leftEyeYawAxisLocal,
+                leftEyePitchAxisLocal = config.leftEyePitchAxisLocal,
+                rightEyeBonePath = config.rightEyeBonePath,
+                rightEyeInitialRotation = config.rightEyeInitialRotation,
+                rightEyeYawAxisLocal = config.rightEyeYawAxisLocal,
+                rightEyePitchAxisLocal = config.rightEyePitchAxisLocal,
+                lookUpAngle = config.lookUpAngle,
+                lookDownAngle = config.lookDownAngle,
+                outerYawAngle = config.outerYawAngle,
+                innerYawAngle = config.innerYawAngle
+            };
         }
     }
 }

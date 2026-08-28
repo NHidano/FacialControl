@@ -58,7 +58,7 @@ namespace Hidano.FacialControl.Adapters.Bone
             var list = new List<EyeBinding>(bindings.Count * 2);
             for (int i = 0; i < bindings.Count; i++)
             {
-                var cfg = bindings[i].Config;
+                var cfg = bindings[i].Channel;
                 var leftSource = bindings[i].LeftSource ?? bindings[i].Source;
                 var rightSource = bindings[i].RightSource ?? bindings[i].Source;
                 if (cfg == null || (leftSource == null && rightSource == null)) continue;

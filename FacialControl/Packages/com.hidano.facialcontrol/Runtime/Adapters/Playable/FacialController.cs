@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using VContainer;
 using Hidano.FacialControl.Adapters.Bone;
@@ -13,7 +12,6 @@ using Hidano.FacialControl.Domain.Adapters;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Domain.Services;
-using GazeBindingConfig = Hidano.FacialControl.Adapters.ScriptableObject.GazeBindingConfig;
 
 namespace Hidano.FacialControl.Adapters.Playable
 {
@@ -74,7 +72,8 @@ namespace Hidano.FacialControl.Adapters.Playable
         private IFacialInputObservationBus _inputObservationBus;
         private IInputSourceRegistry _inputSourceRegistry;
         private AnalogObservationSampler _analogObservationSampler;
-        private IReadOnlyList<GazeBindingConfig> _gazeConfigs = Array.Empty<GazeBindingConfig>();
+        private IReadOnlyList<GazeChannel> _gazeChannels = Array.Empty<GazeChannel>();
+        private readonly List<string> _gazeChannelIds = new List<string>();
         private GazeSnapshot[] _gazeSnapshotBuffer = Array.Empty<GazeSnapshot>();
         private readonly Dictionary<string, ExpressionTriggerInputSourceBase> _observedTriggerSources =
             new Dictionary<string, ExpressionTriggerInputSourceBase>(StringComparer.Ordinal);
@@ -294,10 +293,10 @@ namespace Hidano.FacialControl.Adapters.Playable
                     ? _characterSO.AdapterBindings
                     : Array.Empty<AdapterBindingBase>();
 
-            IReadOnlyList<GazeBindingConfig> gazeConfigs =
-                _characterSO != null && _characterSO.GazeConfigs != null
-                    ? _characterSO.GazeConfigs
-                    : Array.Empty<GazeBindingConfig>();
+            IReadOnlyList<GazeChannel> gazeChannels =
+                _characterSO != null && _characterSO.GazeChannels != null
+                    ? _characterSO.GazeChannels
+                    : Array.Empty<GazeChannel>();
 
             CacheActiveBindingSlugs(bindings);
 
@@ -305,10 +304,21 @@ namespace Hidano.FacialControl.Adapters.Playable
             _inputObservationBus = null;
             _inputSourceRegistry = null;
             _analogObservationSampler = null;
-            _gazeConfigs = gazeConfigs ?? Array.Empty<GazeBindingConfig>();
-            EnsureGazeSnapshotBufferCapacity(_gazeConfigs.Count);
+            _gazeChannels = gazeChannels ?? Array.Empty<GazeChannel>();
+            _gazeChannelIds.Clear();
+            for (int i = 0; i < _gazeChannels.Count; i++)
+            {
+                if (_gazeChannels[i] != null && !string.IsNullOrEmpty(_gazeChannels[i].id))
+                    _gazeChannelIds.Add(_gazeChannels[i].id);
+            }
+            EnsureGazeSnapshotBufferCapacity(_gazeChannels.Count);
 
-            ConfigureAdapterBindingsWithGazeConfigs(bindings, gazeConfigs);
+            ConfigureAdapterBindingsWithGazeChannels(bindings);
+
+            if (_characterSO != null && _characterSO.HasLegacyGazeConfigs)
+            {
+                Debug.LogWarning("[FacialControl] FacialController: legacy _gazeConfigs was detected; please reconfigure gaze in the Gaze section. See the migration guide.");
+            }
 
             var appScope = FacialControlAppLifetimeScope.GetOrCreate();
             if (appScope == null)
@@ -341,9 +351,7 @@ namespace Hidano.FacialControl.Adapters.Playable
             }
         }
 
-        private static void ConfigureAdapterBindingsWithGazeConfigs(
-            IReadOnlyList<AdapterBindingBase> bindings,
-            IReadOnlyList<GazeBindingConfig> gazeConfigs)
+        private void ConfigureAdapterBindingsWithGazeChannels(IReadOnlyList<AdapterBindingBase> bindings)
         {
             if (bindings == null || bindings.Count == 0)
             {
@@ -358,161 +366,11 @@ namespace Hidano.FacialControl.Adapters.Playable
                     continue;
                 }
 
-                ConfigureAdapterBindingWithGazeConfigs(binding, gazeConfigs);
-            }
-        }
-
-        private static void ConfigureAdapterBindingWithGazeConfigs(
-            AdapterBindingBase binding,
-            IReadOnlyList<GazeBindingConfig> gazeConfigs)
-        {
-            MethodInfo configure = FindGazeConfigureMethod(binding.GetType());
-            if (configure == null)
-            {
-                return;
-            }
-
-            ParameterInfo[] parameters = configure.GetParameters();
-            var args = new object[parameters.Length];
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                if (i == parameters.Length - 1)
+                if (binding is IGazeChannelConsumer consumer)
                 {
-                    args[i] = gazeConfigs;
-                    continue;
-                }
-
-                if (!TryReadConfigureArgument(binding, parameters[i], out args[i]))
-                {
-                    return;
+                    consumer.ConfigureGazeChannels(_gazeChannelIds);
                 }
             }
-
-            try
-            {
-                configure.Invoke(binding, args);
-            }
-            catch (TargetInvocationException ex)
-            {
-                Exception inner = ex.InnerException ?? ex;
-                Debug.LogWarning(
-                    "[FacialControl] FacialController: AdapterBinding Configure gaze injection failed: "
-                    + inner.Message);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning(
-                    "[FacialControl] FacialController: AdapterBinding Configure gaze injection failed: "
-                    + ex.Message);
-            }
-        }
-
-        private static MethodInfo FindGazeConfigureMethod(Type bindingType)
-        {
-            MethodInfo[] methods = bindingType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
-            for (int i = 0; i < methods.Length; i++)
-            {
-                MethodInfo method = methods[i];
-                if (!string.Equals(method.Name, "Configure", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                ParameterInfo[] parameters = method.GetParameters();
-                if (parameters.Length == 0)
-                {
-                    continue;
-                }
-
-                Type lastParameterType = parameters[parameters.Length - 1].ParameterType;
-                if (IsGazeConfigListType(lastParameterType))
-                {
-                    return method;
-                }
-            }
-
-            return null;
-        }
-
-        private static bool IsGazeConfigListType(Type type)
-        {
-            return type != null
-                && type.IsGenericType
-                && type.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)
-                && type.GetGenericArguments()[0] == typeof(GazeBindingConfig);
-        }
-
-        private static bool TryReadConfigureArgument(
-            AdapterBindingBase binding,
-            ParameterInfo parameter,
-            out object value)
-        {
-            string name = parameter.Name;
-            switch (name)
-            {
-                case "asset":
-                    return TryReadMemberValue(binding, "InputActionAsset", "_inputActionAsset", out value);
-                case "actionMapName":
-                    return TryReadMemberValue(binding, "ActionMapName", "_actionMapName", out value);
-                case "expressionBindings":
-                    return TryReadMemberValue(binding, null, "_expressionBindings", out value);
-                default:
-                    return TryReadMemberValue(
-                        binding,
-                        ToPascalCase(name),
-                        "_" + name,
-                        out value);
-            }
-        }
-
-        private static bool TryReadMemberValue(
-            AdapterBindingBase binding,
-            string propertyName,
-            string fieldName,
-            out object value)
-        {
-            Type type = binding.GetType();
-            if (!string.IsNullOrEmpty(propertyName))
-            {
-                PropertyInfo property = type.GetProperty(
-                    propertyName,
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (property != null && property.GetIndexParameters().Length == 0)
-                {
-                    value = property.GetValue(binding);
-                    return true;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(fieldName))
-            {
-                FieldInfo field = type.GetField(
-                    fieldName,
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (field != null)
-                {
-                    value = field.GetValue(binding);
-                    return true;
-                }
-            }
-
-            value = null;
-            return false;
-        }
-
-        private static string ToPascalCase(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return name;
-            }
-
-            if (name.Length == 1)
-            {
-                return char.ToUpperInvariant(name[0]).ToString();
-            }
-
-            return char.ToUpperInvariant(name[0]) + name.Substring(1);
         }
 
         private void CacheChildScopeServices()
@@ -540,17 +398,17 @@ namespace Hidano.FacialControl.Adapters.Playable
 
         private ReadOnlySpan<GazeSnapshot> BuildGazeSnapshotSpan()
         {
-            if (_gazeConfigs == null || _gazeConfigs.Count == 0 || _inputSourceRegistry == null)
+            if (_gazeChannels == null || _gazeChannels.Count == 0 || _inputSourceRegistry == null)
             {
                 return Array.Empty<GazeSnapshot>();
             }
 
-            EnsureGazeSnapshotBufferCapacity(_gazeConfigs.Count);
+            EnsureGazeSnapshotBufferCapacity(_gazeChannels.Count);
 
             int count = 0;
-            for (int i = 0; i < _gazeConfigs.Count; i++)
+            for (int i = 0; i < _gazeChannels.Count; i++)
             {
-                if (TryBuildGazeSnapshot(_gazeConfigs[i], out GazeSnapshot snapshot))
+                if (TryBuildGazeSnapshot(_gazeChannels[i], out GazeSnapshot snapshot))
                 {
                     _gazeSnapshotBuffer[count] = snapshot;
                     count++;
@@ -570,16 +428,16 @@ namespace Hidano.FacialControl.Adapters.Playable
             }
         }
 
-        private bool TryBuildGazeSnapshot(GazeBindingConfig config, out GazeSnapshot snapshot)
+        private bool TryBuildGazeSnapshot(GazeChannel channel, out GazeSnapshot snapshot)
         {
             snapshot = default;
-            if (config == null || string.IsNullOrEmpty(config.expressionId))
+            if (channel == null || string.IsNullOrEmpty(channel.id))
             {
                 return false;
             }
 
-            if (!GazeBindingConfigResolver.TryResolve(
-                    config,
+            if (!GazeChannelResolver.TryResolve(
+                    channel,
                     _inputSourceRegistry,
                     out ResolvedGazeInputSources sources))
             {
@@ -592,7 +450,7 @@ namespace Hidano.FacialControl.Adapters.Playable
                 return false;
             }
 
-            snapshot = new GazeSnapshot(config.expressionId, x, y);
+            snapshot = new GazeSnapshot(channel.id, x, y);
             return true;
         }
 
@@ -693,13 +551,13 @@ namespace Hidano.FacialControl.Adapters.Playable
         }
 
         /// <summary>
-        /// profile の <see cref="GazeBindingConfig"/> 群と registry 登録済みの gaze 入力源から、
+        /// profile の GazeChannel 群と registry 登録済みの gaze 入力源から、
         /// 目ボーンへ localRotation を直接書き込む単一の <see cref="GazeBonePoseProvider"/> を構築する。
         /// </summary>
         /// <remarks>
         /// 目ボーン適用の責務は本メソッド（core の FacialController）に集約する。各入力 binding
         /// (OSC / InputSystem / iFacialMocap) は gaze 入力源を registry に登録するのみで、
-        /// 目ボーンは回さない。入力源は <see cref="GazeBindingConfigResolver"/> が
+        /// 目ボーンは回さない。入力源は GazeChannelResolver が
         /// <c>{slug}:{expressionId}</c>（および <c>.left/.right</c>）で解決するため入力方式に依存しない。
         /// bone path を持たない config（BlendShape 経路のみ想定）はスキップする。
         /// </remarks>
@@ -712,29 +570,29 @@ namespace Hidano.FacialControl.Adapters.Playable
             }
 
             if (_animator == null || _inputSourceRegistry == null
-                || _gazeConfigs == null || _gazeConfigs.Count == 0)
+                || _gazeChannels == null || _gazeChannels.Count == 0)
             {
                 return;
             }
 
             var gazeBoneBindings = new List<GazeBoneBinding>();
-            for (int i = 0; i < _gazeConfigs.Count; i++)
+            for (int i = 0; i < _gazeChannels.Count; i++)
             {
-                GazeBindingConfig config = _gazeConfigs[i];
-                if (config == null || string.IsNullOrWhiteSpace(config.expressionId))
+                GazeChannel channel = _gazeChannels[i];
+                if (channel == null || string.IsNullOrWhiteSpace(channel.id))
                 {
                     continue;
                 }
 
                 // bone path が無い config は目ボーン適用対象外（BlendShape 経路のみのケース）。
-                if (string.IsNullOrWhiteSpace(config.leftEyeBonePath)
-                    && string.IsNullOrWhiteSpace(config.rightEyeBonePath))
+                if (string.IsNullOrWhiteSpace(channel.leftEyeBonePath)
+                    && string.IsNullOrWhiteSpace(channel.rightEyeBonePath))
                 {
                     continue;
                 }
 
-                if (!GazeBindingConfigResolver.TryResolve(
-                        config,
+                if (!GazeChannelResolver.TryResolve(
+                        channel,
                         _inputSourceRegistry,
                         out ResolvedGazeInputSources resolved))
                 {
@@ -742,7 +600,7 @@ namespace Hidano.FacialControl.Adapters.Playable
                 }
 
                 gazeBoneBindings.Add(
-                    new GazeBoneBinding(config, resolved.LeftSource, resolved.RightSource));
+                    new GazeBoneBinding(channel, resolved.LeftSource, resolved.RightSource));
             }
 
             if (gazeBoneBindings.Count == 0)
@@ -876,18 +734,18 @@ namespace Hidano.FacialControl.Adapters.Playable
         {
             _gazeSubscriptionIds.Clear();
 
-            for (int i = 0; i < _gazeConfigs.Count; i++)
+            for (int i = 0; i < _gazeChannels.Count; i++)
             {
-                GazeBindingConfig config = _gazeConfigs[i];
-                if (config == null || string.IsNullOrWhiteSpace(config.expressionId))
+                GazeChannel channel = _gazeChannels[i];
+                if (channel == null || string.IsNullOrWhiteSpace(channel.id))
                 {
                     continue;
                 }
 
-                if (config.useDistinctLeftRight)
+                if (channel.useDistinctLeftRight)
                 {
-                    AddGazeSubscriptionId(config.sourceIdLeft);
-                    AddGazeSubscriptionId(config.sourceIdRight);
+                    AddGazeSubscriptionId(channel.sourceIdLeft);
+                    AddGazeSubscriptionId(channel.sourceIdRight);
                     continue;
                 }
 
@@ -895,17 +753,17 @@ namespace Hidano.FacialControl.Adapters.Playable
                 // 初期化後に登録される構成（iFacialMocap 等）を取り逃がす。
                 // 現在登録されているかどうかに依存せず、全 binding slug について
                 // 規約上の3候補を先読み購読する。
-                foreach (string slug in _activeBindingSlugs)
+                IEnumerable<string> slugs = string.IsNullOrWhiteSpace(channel.providerSlug)
+                    ? _activeBindingSlugs
+                    : new[] { channel.providerSlug };
+                foreach (string slug in slugs)
                 {
                     AddGazeSubscriptionId(
-                        GazeBindingConfigResolver.ComposeSourceId(
-                            slug, config.expressionId, GazeSide.Shared));
+                        GazeSourceIdConvention.Compose(slug, channel.id, GazeSide.Shared));
                     AddGazeSubscriptionId(
-                        GazeBindingConfigResolver.ComposeSourceId(
-                            slug, config.expressionId, GazeSide.Left));
+                        GazeSourceIdConvention.Compose(slug, channel.id, GazeSide.Left));
                     AddGazeSubscriptionId(
-                        GazeBindingConfigResolver.ComposeSourceId(
-                            slug, config.expressionId, GazeSide.Right));
+                        GazeSourceIdConvention.Compose(slug, channel.id, GazeSide.Right));
                 }
             }
         }
@@ -1335,7 +1193,8 @@ namespace Hidano.FacialControl.Adapters.Playable
             _facialOutputBus = null;
             _inputObservationBus = null;
             _inputSourceRegistry = null;
-            _gazeConfigs = Array.Empty<GazeBindingConfig>();
+            _gazeChannels = Array.Empty<GazeChannel>();
+            _gazeChannelIds.Clear();
             _gazeSnapshotBuffer = Array.Empty<GazeSnapshot>();
 
             // プロファイル再ロード時は Registry / WeightBuffer を Dispose して再構築する。

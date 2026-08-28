@@ -17,7 +17,7 @@ namespace Hidano.FacialControl.Domain.Adapters
         /// Post-blend BlendShape values ordered exactly as the publishing FacialController exposes them.
         /// </param>
         /// <param name="gazeSnapshots">
-        /// Connected Gaze snapshots keyed by <see cref="GazeSnapshot.ExpressionId"/>.
+        /// Connected Gaze snapshots keyed by <see cref="GazeSnapshot.ChannelId"/>.
         /// </param>
         void OnFacialOutputPublished(
             ReadOnlySpan<float> postBlendValues,
