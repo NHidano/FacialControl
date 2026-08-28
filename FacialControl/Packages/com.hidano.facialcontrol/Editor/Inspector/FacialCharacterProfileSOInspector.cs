@@ -120,6 +120,20 @@ namespace Hidano.FacialControl.Editor.Inspector
         public const string GazeConfigAutoAssignButtonName = "gaze-config-auto-assign-button";
         public const string GazeConfigRemoveButtonName = "gaze-config-remove-button";
         public const string GazeInputSourceDropdownName = "gaze-input-source-dropdown";
+        public const string GazeLegacyHelpName = "facial-character-gaze-legacy-help";
+        public const string GazeLegacyClearButtonName = "facial-character-gaze-legacy-clear-button";
+        public const string GazeChannelsListName = "facial-character-gaze-channels-list";
+        public const string GazeChannelRowName = "facial-character-gaze-channel-row";
+        public const string GazeChannelIdFieldName = "facial-character-gaze-channel-id";
+        public const string GazeChannelProviderDropdownName = "facial-character-gaze-channel-provider";
+        public const string GazeChannelAdvancedFoldoutName = "facial-character-gaze-channel-advanced";
+        public const string GazeChannelAddButtonName = "facial-character-gaze-channel-add-button";
+        public const string GazeChannelIdValidationName = "facial-character-gaze-channel-id-validation";
+        public const string GazeChannelDistinctToggleName = "facial-character-gaze-channel-distinct";
+        public const string GazeChannelSourceIdLeftName = "facial-character-gaze-channel-source-left";
+        public const string GazeChannelSourceIdRightName = "facial-character-gaze-channel-source-right";
+        public const string GazeChannelLeftBonePathName = "facial-character-gaze-channel-left-bone";
+        public const string GazeChannelRightBonePathName = "facial-character-gaze-channel-right-bone";
 
         // ====================================================================
         // 共通スタイル定数
@@ -1174,16 +1188,27 @@ namespace Hidano.FacialControl.Editor.Inspector
 
         private void BuildGazeConfigsSection(VisualElement root)
         {
-            var foldout = MakeSectionFoldout(GazeConfigsFoldoutName, "GazeConfigs", open: true);
+            var section = MakeSectionFoldout(GazeConfigsFoldoutName, "Gaze", open: true);
+            var profile = target as FacialCharacterProfileSO;
+            bool legacy = profile != null && profile.HasLegacyGazeConfigs;
+            var help = MakeHelpBox("旧 gaze_configs を検出しました。目線チャネルを確認し、旧データをクリアしてください。", HelpBoxMessageType.Warning);
+            help.name = GazeLegacyHelpName;
+            help.style.display = legacy ? DisplayStyle.Flex : DisplayStyle.None;
+            section.Add(help);
+            var clear = new Button(() => ClearLegacyGazeConfigs(help)) { name = GazeLegacyClearButtonName, text = "旧データをクリア" };
+            clear.style.display = legacy ? DisplayStyle.Flex : DisplayStyle.None;
+            clear.style.alignSelf = Align.FlexStart;
+            section.Add(clear);
 
-            _gazeConfigsContainer = new VisualElement();
-            _gazeConfigsContainer.style.flexDirection = FlexDirection.Column;
-            foldout.Add(_gazeConfigsContainer);
-
-            RebuildGazeConfigsUI();
-            BuildGazeProviderDropdowns(_gazeConfigsContainer);
-
-            root.Add(foldout);
+            var channels = new VisualElement { name = GazeChannelsListName };
+            channels.style.flexDirection = FlexDirection.Column;
+            section.Add(channels);
+            RebuildGazeChannelsUI(channels);
+            var advanced = new Foldout { name = GazeChannelAdvancedFoldoutName, text = "上級設定", value = false };
+            var add = new Button(() => AddGazeChannel(channels)) { name = GazeChannelAddButtonName, text = "チャネルを追加" };
+            advanced.Add(add);
+            section.Add(advanced);
+            root.Add(section);
         }
 
         private void BuildGazeProviderDropdowns(VisualElement root)
@@ -1276,6 +1301,154 @@ namespace Hidano.FacialControl.Editor.Inspector
                 int configIndex = i;
                 _gazeConfigsContainer.Add(BuildGazeConfigRow(configIndex));
             }
+        }
+
+        private void RebuildGazeChannelsUI(VisualElement container)
+        {
+            if (container == null || _gazeChannelsProperty == null || !_gazeChannelsProperty.isArray) return;
+            container.Clear();
+            serializedObject.Update();
+            for (int i = 0; i < _gazeChannelsProperty.arraySize; i++)
+                container.Add(BuildGazeChannelRow(i, container));
+        }
+
+        private VisualElement BuildGazeChannelRow(int index, VisualElement container)
+        {
+            var row = new VisualElement { name = GazeChannelRowName + "-" + index };
+            row.style.flexDirection = FlexDirection.Column;
+            row.style.marginBottom = 8;
+            var channel = _gazeChannelsProperty.GetArrayElementAtIndex(index);
+            var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            var id = channel.FindPropertyRelative("id");
+            var idField = new TextField(index == 0 ? "既定チャネル (gaze)" : "チャネル ID") { name = GazeChannelIdFieldName + "-" + index };
+            idField.style.flexGrow = 1f;
+            idField.BindProperty(id);
+            if (index == 0) idField.SetEnabled(false);
+            else idField.RegisterValueChangedCallback(_ => UpdateGazeChannelIdValidation(row));
+            header.Add(idField);
+            if (index > 0)
+            {
+                var remove = new Button(() => RemoveGazeChannel(index, container)) { name = GazeConfigRemoveButtonName + "-" + index, text = "削除" };
+                header.Add(remove);
+            }
+            row.Add(header);
+            AddGazeProviderDropdown(row, index, channel);
+            AddGazeChannelProperty(row, channel, "leftEyeBonePath", "左目ボーン", GazeChannelLeftBonePathName);
+            AddGazeChannelProperty(row, channel, "rightEyeBonePath", "右目ボーン", GazeChannelRightBonePathName);
+            AddGazeChannelProperty(row, channel, "lookUpAngle", "上方向角度", GazeConfigLookUpAngleFieldName);
+            AddGazeChannelProperty(row, channel, "lookDownAngle", "下方向角度", GazeConfigLookDownAngleFieldName);
+            AddGazeChannelProperty(row, channel, "outerYawAngle", "外側角度", GazeConfigOuterYawAngleFieldName);
+            AddGazeChannelProperty(row, channel, "innerYawAngle", "内側角度", GazeConfigInnerYawAngleFieldName);
+            var advanced = new Foldout { name = GazeChannelAdvancedFoldoutName + "-" + index, text = "上級設定", value = false };
+            AddGazeChannelProperty(advanced, channel, "useDistinctLeftRight", "左右を個別指定", GazeChannelDistinctToggleName);
+            AddGazeChannelProperty(advanced, channel, "sourceIdLeft", "左入力 source ID", GazeChannelSourceIdLeftName);
+            AddGazeChannelProperty(advanced, channel, "sourceIdRight", "右入力 source ID", GazeChannelSourceIdRightName);
+            AddGazeChannelProperty(advanced, channel, "leftEyeInitialRotation", "左初期回転", null);
+            AddGazeChannelProperty(advanced, channel, "rightEyeInitialRotation", "右初期回転", null);
+            AddGazeChannelProperty(advanced, channel, "leftEyeYawAxisLocal", "左 yaw 軸", null);
+            AddGazeChannelProperty(advanced, channel, "leftEyePitchAxisLocal", "左 pitch 軸", null);
+            AddGazeChannelProperty(advanced, channel, "rightEyeYawAxisLocal", "右 yaw 軸", null);
+            AddGazeChannelProperty(advanced, channel, "rightEyePitchAxisLocal", "右 pitch 軸", null);
+            row.Add(advanced);
+            UpdateGazeChannelIdValidation(row);
+            return row;
+        }
+
+        private void AddGazeProviderDropdown(VisualElement row, int index, SerializedProperty channel)
+        {
+            var bindings = new List<AdapterBindingBase>();
+            var bp = serializedObject.FindProperty("_adapterBindings");
+            if (bp != null && bp.isArray)
+                for (int i = 0; i < bp.arraySize; i++)
+                    if (bp.GetArrayElementAtIndex(i).managedReferenceValue is AdapterBindingBase b) bindings.Add(b);
+            string channelId = channel.FindPropertyRelative("id")?.stringValue ?? string.Empty;
+            var options = new GazeProviderEnumerator().Enumerate(bindings, channelId);
+            var choices = new List<string>();
+            int selected = 0;
+            string current = channel.FindPropertyRelative("providerSlug")?.stringValue ?? string.Empty;
+            for (int i = 0; i < options.Count; i++) { choices.Add(options[i].DisplayName); if (options[i].Slug == current) selected = i; }
+            var dropdown = new DropdownField("入力ソース", choices, selected) { name = GazeChannelProviderDropdownName + "-" + index };
+            dropdown.RegisterValueChangedCallback(e =>
+            {
+                int selectedIndex = choices.IndexOf(e.newValue);
+                if (selectedIndex < 0) return;
+                serializedObject.Update();
+                var p = serializedObject.FindProperty("_gazeChannels").GetArrayElementAtIndex(index).FindPropertyRelative("providerSlug");
+                Undo.RecordObject(target, "Gaze 入力ソース変更");
+                p.stringValue = options[selectedIndex].Slug;
+                serializedObject.ApplyModifiedProperties();
+            });
+            row.Add(dropdown);
+        }
+
+        private static void AddGazeChannelProperty(VisualElement parent, SerializedProperty channel, string propertyName, string label, string elementName)
+        {
+            var property = channel.FindPropertyRelative(propertyName);
+            if (property == null) return;
+            IBindable bindable = property.propertyType == SerializedPropertyType.Boolean ? (IBindable)new Toggle(label) :
+                property.propertyType == SerializedPropertyType.Float ? new FloatField(label) :
+                property.propertyType == SerializedPropertyType.Vector3 ? new Vector3Field(label) : new TextField(label);
+            var field = bindable as VisualElement;
+            if (!string.IsNullOrEmpty(elementName)) field.name = elementName;
+            bindable.BindProperty(property);
+            parent.Add(field);
+        }
+
+        private void UpdateGazeChannelIdValidation(VisualElement row)
+        {
+            if (row == null || _gazeChannelsProperty == null) return;
+            var field = row.Q<TextField>(GazeChannelIdFieldName + "-" + row.name.Substring(row.name.LastIndexOf('-') + 1));
+            if (field == null) return;
+            string id = field.value ?? string.Empty;
+            bool valid = GazeSourceIdConvention.IsValidChannelId(id);
+            int current = _gazeChannelsProperty.arraySize;
+            for (int i = 1; valid && i < current; i++)
+            {
+                var p = _gazeChannelsProperty.GetArrayElementAtIndex(i).FindPropertyRelative("id");
+                if (p != null && p.stringValue == id && p.stringValue != string.Empty && !row.name.EndsWith("-" + i, StringComparison.Ordinal)) valid = false;
+            }
+            var help = row.Q<HelpBox>(GazeChannelIdValidationName);
+            if (help == null) { help = MakeHelpBox(string.Empty, HelpBoxMessageType.Error); help.name = GazeChannelIdValidationName; row.Add(help); }
+            help.text = valid ? string.Empty : "チャネル ID は有効な形式で、重複しない値を指定してください。";
+            help.style.display = valid ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        private void AddGazeChannel(VisualElement container)
+        {
+            serializedObject.Update();
+            int index = _gazeChannelsProperty.arraySize;
+            _gazeChannelsProperty.InsertArrayElementAtIndex(index);
+            var p = _gazeChannelsProperty.GetArrayElementAtIndex(index);
+            p.FindPropertyRelative("id").stringValue = "channel-" + index;
+            p.FindPropertyRelative("providerSlug").stringValue = string.Empty;
+            Undo.RecordObject(target, "Gaze チャネル追加");
+            serializedObject.ApplyModifiedProperties();
+            RebuildGazeChannelsUI(container);
+        }
+
+        private void RemoveGazeChannel(int index, VisualElement container)
+        {
+            if (index <= 0 || _gazeChannelsProperty == null || index >= _gazeChannelsProperty.arraySize) return;
+            serializedObject.Update();
+            Undo.RecordObject(target, "Gaze チャネル削除");
+            _gazeChannelsProperty.DeleteArrayElementAtIndex(index);
+            serializedObject.ApplyModifiedProperties();
+            RebuildGazeChannelsUI(container);
+        }
+
+        private void ClearLegacyGazeConfigs(HelpBox help)
+        {
+            serializedObject.Update();
+            var legacy = serializedObject.FindProperty("_legacyGazeConfigs");
+            if (legacy != null && legacy.isArray)
+            {
+                Undo.RecordObject(target, "旧 Gaze データをクリア");
+                legacy.ClearArray();
+                serializedObject.ApplyModifiedProperties();
+            }
+            if (help != null) help.style.display = DisplayStyle.None;
+            _rootElement?.Q<Button>(GazeLegacyClearButtonName)?.SetEnabled(false);
         }
 
         private VisualElement BuildGazeConfigAddDropdown()

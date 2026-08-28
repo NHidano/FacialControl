@@ -1,269 +1,179 @@
-# Implementation Plan
+﻿# Implementation Plan
 
-> **実行前提条件（ゲート）**: 本 spec の実装は **Spec 1（osc-gaze-auto-mapping）の実装完了後にのみ着手する**。Spec 1 成果のシンボル（`GazeAdvertisementResolver` / `GazeBindingConfigResolver.ComposeSourceId` / `OscReceiverAdapterBinding.Configure` / `GazeInputReader`）がコードベースに存在しない場合は着手せず停止する（タスク 1.1 で確認）。Spec 1 実装が design 記載と異なるシンボル名で完了していた場合は design の Revalidation Triggers に従い追従レビューしてから着手する。
->
-> TDD 厳守 (Red-Green-Refactor)。各実装サブタスクは「失敗するテストを先に書く → 最小実装で緑 → リファクタ」の順で進める。
-> テスト配置基準: mock/Fake のみ・同期実行は EditMode、MonoBehaviour ライフサイクル・実 UDP・フレーム同期が必要なものは PlayMode (CLAUDE.md「テスト配置基準」準拠)。
-> テスト実行: `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe` の batchmode（`-runTests -testPlatform EditMode|PlayMode`、`timeout: 600000` の同期実行、他バージョンでの実行禁止）。実行前に同一プロジェクトを開いた Editor が無いことを確認する。
->
-> **pre-existing 赤（本 spec の変更起因 FAIL として扱わない）**:
-> - `SampleAssetsAreInSyncTests` 4 件（M-28、MultiSourceBlendDemo サンプル同期ずれ + blink overlay snapshot 欠落）— タスク 7.1 のサンプル更新と交差するが **M-28 は取り込まない**（Req 12.6。3 コピー同期再生成で一部解消しうるが blink snapshot 分は gaze 無関係）
-> - `TenIndependentBindings_OneSwap` フレーキー 1 件（PlayMode seed 依存）
-> - S-21 系 4 件（OSC heartbeat/auto-mapping）— **Spec 1 完了により緑化済みの想定**。タスク 1.1 のベースラインで赤の場合は Spec 1 の分岐手順（ベースライン採取 → 原因系統分類）に従い切り分けてから着手する
+> **螳溯｡悟燕謠先擅莉ｶ・医ご繝ｼ繝茨ｼ・*: 譛ｬ spec 縺ｮ螳溯｣・・ **Spec 1・・sc-gaze-auto-mapping・峨・螳溯｣・ｮ御ｺ・ｾ後↓縺ｮ縺ｿ逹謇九☆繧・*縲４pec 1 謌先棡縺ｮ繧ｷ繝ｳ繝懊Ν・・GazeAdvertisementResolver` / `GazeBindingConfigResolver.ComposeSourceId` / `OscReceiverAdapterBinding.Configure` / `GazeInputReader`・峨′繧ｳ繝ｼ繝峨・繝ｼ繧ｹ縺ｫ蟄伜惠縺励↑縺・ｴ蜷医・逹謇九○縺壼●豁｢縺吶ｋ・医ち繧ｹ繧ｯ 1.1 縺ｧ遒ｺ隱搾ｼ峨４pec 1 螳溯｣・′ design 險倩ｼ峨→逡ｰ縺ｪ繧九す繝ｳ繝懊Ν蜷阪〒螳御ｺ・＠縺ｦ縺・◆蝣ｴ蜷医・ design 縺ｮ Revalidation Triggers 縺ｫ蠕薙＞霑ｽ蠕薙Ξ繝薙Η繝ｼ縺励※縺九ｉ逹謇九☆繧九・>
+> TDD 蜴ｳ螳・(Red-Green-Refactor)縲ょ推螳溯｣・し繝悶ち繧ｹ繧ｯ縺ｯ縲悟､ｱ謨励☆繧九ユ繧ｹ繝医ｒ蜈医↓譖ｸ縺・竊・譛蟆丞ｮ溯｣・〒邱・竊・繝ｪ繝輔ぃ繧ｯ繧ｿ縲阪・鬆・〒騾ｲ繧√ｋ縲・> 繝・せ繝磯・鄂ｮ蝓ｺ貅・ mock/Fake 縺ｮ縺ｿ繝ｻ蜷梧悄螳溯｡後・ EditMode縲｀onoBehaviour 繝ｩ繧､繝輔し繧､繧ｯ繝ｫ繝ｻ螳・UDP繝ｻ繝輔Ξ繝ｼ繝蜷梧悄縺悟ｿ・ｦ√↑繧ゅ・縺ｯ PlayMode (CLAUDE.md縲後ユ繧ｹ繝磯・鄂ｮ蝓ｺ貅悶肴ｺ匁侠)縲・> 繝・せ繝亥ｮ溯｡・ `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe` 縺ｮ batchmode・・-runTests -testPlatform EditMode|PlayMode`縲～timeout: 600000` 縺ｮ蜷梧悄螳溯｡後∽ｻ悶ヰ繝ｼ繧ｸ繝ｧ繝ｳ縺ｧ縺ｮ螳溯｡檎ｦ∵ｭ｢・峨ょｮ溯｡悟燕縺ｫ蜷御ｸ繝励Ο繧ｸ繧ｧ繧ｯ繝医ｒ髢九＞縺・Editor 縺檎┌縺・％縺ｨ繧堤｢ｺ隱阪☆繧九・>
+> **pre-existing 襍､・域悽 spec 縺ｮ螟画峩襍ｷ蝗 FAIL 縺ｨ縺励※謇ｱ繧上↑縺・ｼ・*:
+> - `SampleAssetsAreInSyncTests` 4 莉ｶ・・-28縲｀ultiSourceBlendDemo 繧ｵ繝ｳ繝励Ν蜷梧悄縺壹ｌ + blink overlay snapshot 谺關ｽ・俄・繧ｿ繧ｹ繧ｯ 7.1 縺ｮ繧ｵ繝ｳ繝励Ν譖ｴ譁ｰ縺ｨ莠､蟾ｮ縺吶ｋ縺・**M-28 縺ｯ蜿悶ｊ霎ｼ縺ｾ縺ｪ縺・*・・eq 12.6縲・ 繧ｳ繝斐・蜷梧悄蜀咲函謌舌〒荳驛ｨ隗｣豸医＠縺・ｋ縺・blink snapshot 蛻・・ gaze 辟｡髢｢菫ゑｼ・> - `TenIndependentBindings_OneSwap` 繝輔Ξ繝ｼ繧ｭ繝ｼ 1 莉ｶ・・layMode seed 萓晏ｭ假ｼ・> - S-21 邉ｻ 4 莉ｶ・・SC heartbeat/auto-mapping・俄・**Spec 1 螳御ｺ・↓繧医ｊ邱大喧貂医∩縺ｮ諠ｳ螳・*縲ゅち繧ｹ繧ｯ 1.1 縺ｮ繝吶・繧ｹ繝ｩ繧､繝ｳ縺ｧ襍､縺ｮ蝣ｴ蜷医・ Spec 1 縺ｮ蛻・ｲ先焔鬆・ｼ医・繝ｼ繧ｹ繝ｩ繧､繝ｳ謗｡蜿・竊・蜴溷屏邉ｻ邨ｱ蛻・｡橸ｼ峨↓蠕薙＞蛻・ｊ蛻・￠縺ｦ縺九ｉ逹謇九☆繧・
+## Foundation: Spec 1 蜑肴署繧ｲ繝ｼ繝医→ Domain 縺ｮ id 隕冗ｴ・・螳｣險螂醍ｴ・
+- [ ] 1. Foundation: 蜑肴署遒ｺ隱阪・id 隕冗ｴ・・binding 螂醍ｴ・・ Domain 譁ｰ險ｭ
 
-## Foundation: Spec 1 前提ゲートと Domain の id 規約・宣言契約
-
-- [ ] 1. Foundation: 前提確認・id 規約・binding 契約の Domain 新設
-
-- [x] 1.1 Spec 1 実装完了ゲートとテストベースラインを確認する
-  - Spec 1 成果のシンボル（広告解決・id 合成 helper・受信側 GazeConfig 注入 Configure・gaze 読取共通実装）がコードベースに存在することを確認する。欠けている場合は実装着手せず停止する
-  - 一切の変更を加える前のベースで EditMode / PlayMode を batchmode 実行し、S-21 系 4 件が Spec 1 完了により緑であることを確認する（赤の場合は Spec 1 の分岐手順で切り分けてから着手）
-  - 冒頭一覧の pre-existing 赤（M-28 4 件 / フレーキー 1 件）の現況を記録し、以降のタスクの FAIL 判定除外基準とする
-  - 前提シンボルの存在確認とベースライン結果が後続タスクから参照できる形で記録されている (観測可能な完了条件)
+- [x] 1.1 Spec 1 螳溯｣・ｮ御ｺ・ご繝ｼ繝医→繝・せ繝医・繝ｼ繧ｹ繝ｩ繧､繝ｳ繧堤｢ｺ隱阪☆繧・  - Spec 1 謌先棡縺ｮ繧ｷ繝ｳ繝懊Ν・亥ｺ・相隗｣豎ｺ繝ｻid 蜷域・ helper繝ｻ蜿嶺ｿ｡蛛ｴ GazeConfig 豕ｨ蜈･ Configure繝ｻgaze 隱ｭ蜿門・騾壼ｮ溯｣・ｼ峨′繧ｳ繝ｼ繝峨・繝ｼ繧ｹ縺ｫ蟄伜惠縺吶ｋ縺薙→繧堤｢ｺ隱阪☆繧九よｬ縺代※縺・ｋ蝣ｴ蜷医・螳溯｣・捩謇九○縺壼●豁｢縺吶ｋ
+  - 荳蛻・・螟画峩繧貞刈縺医ｋ蜑阪・繝吶・繧ｹ縺ｧ EditMode / PlayMode 繧・batchmode 螳溯｡後＠縲ヾ-21 邉ｻ 4 莉ｶ縺・Spec 1 螳御ｺ・↓繧医ｊ邱代〒縺ゅｋ縺薙→繧堤｢ｺ隱阪☆繧具ｼ郁ｵ､縺ｮ蝣ｴ蜷医・ Spec 1 縺ｮ蛻・ｲ先焔鬆・〒蛻・ｊ蛻・￠縺ｦ縺九ｉ逹謇具ｼ・  - 蜀帝ｭ荳隕ｧ縺ｮ pre-existing 襍､・・-28 4 莉ｶ / 繝輔Ξ繝ｼ繧ｭ繝ｼ 1 莉ｶ・峨・迴ｾ豕√ｒ險倬鹸縺励∽ｻ･髯阪・繧ｿ繧ｹ繧ｯ縺ｮ FAIL 蛻､螳夐勁螟門渕貅悶→縺吶ｋ
+  - 蜑肴署繧ｷ繝ｳ繝懊Ν縺ｮ蟄伜惠遒ｺ隱阪→繝吶・繧ｹ繝ｩ繧､繝ｳ邨先棡縺悟ｾ檎ｶ壹ち繧ｹ繧ｯ縺九ｉ蜿ら・縺ｧ縺阪ｋ蠖｢縺ｧ險倬鹸縺輔ｌ縺ｦ縺・ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 12.6_
 
-- [x] 1.2 gaze source id の合成・パース規約を Domain に新設する
-  - 規約定数 `"gaze"`（既定チャネル id）の単一定義、合成 3 形（shared / left / right + sub 部のみ版）、形状分解（例外を送出せず false 返却。「gaze かどうか」の分類は呼び出し側のチャネル id 集合照合とする責務分離を doc 明記）、チャネル id validation（InputSourceId 文字集合 + `:` 禁止 + `.left`/`.right` 終端禁止）を単一の Unity 非依存 static 実装に集約する
-  - `.left` / `.right` の文字列定数は本実装内にのみ存在させる（他ファイルへの直書きはレビュー違反とする）
-  - Spec 1 が局所化した Adapters 側の合成 helper と side enum を本規約へ統合する方針とし、呼び出し点の置換は後続タスク（4.2 / 5.2）で実施、置換完了（6.4）まで旧 helper は温存する
-  - パースはアロケーションなし、既定チャネル左 sub の合成結果が iFacialMocap 現行ハードコードと文字列一致（`"gaze.left"`）
-  - EditMode テストで「Compose→TryParse ラウンドトリップ（3 形 × 既定/追加チャネル）」「非準拠入力（空 / `:` 過多 / suffix のみ）の false」「チャネル id validation 境界（`.left` 終端 / `:` 混入 / 64 文字 / 空）」「`"gaze.left"` 互換固定」が緑になる (観測可能な完了条件)
+- [x] 1.2 gaze source id 縺ｮ蜷域・繝ｻ繝代・繧ｹ隕冗ｴ・ｒ Domain 縺ｫ譁ｰ險ｭ縺吶ｋ
+  - 隕冗ｴ・ｮ壽焚 `"gaze"`・域里螳壹メ繝｣繝阪Ν id・峨・蜊倅ｸ螳夂ｾｩ縲∝粋謌・3 蠖｢・・hared / left / right + sub 驛ｨ縺ｮ縺ｿ迚茨ｼ峨∝ｽ｢迥ｶ蛻・ｧ｣・井ｾ句､悶ｒ騾∝・縺帙★ false 霑泌唆縲ゅ携aze 縺九←縺・°縲阪・蛻・｡槭・蜻ｼ縺ｳ蜃ｺ縺怜・縺ｮ繝√Ε繝阪Ν id 髮・粋辣ｧ蜷医→縺吶ｋ雋ｬ蜍吝・髮｢繧・doc 譏手ｨ假ｼ峨√メ繝｣繝阪Ν id validation・・nputSourceId 譁・ｭ鈴寔蜷・+ `:` 遖∵ｭ｢ + `.left`/`.right` 邨らｫｯ遖∵ｭ｢・峨ｒ蜊倅ｸ縺ｮ Unity 髱樔ｾ晏ｭ・static 螳溯｣・↓髮・ｴ・☆繧・  - `.left` / `.right` 縺ｮ譁・ｭ怜・螳壽焚縺ｯ譛ｬ螳溯｣・・縺ｫ縺ｮ縺ｿ蟄伜惠縺輔○繧具ｼ井ｻ悶ヵ繧｡繧､繝ｫ縺ｸ縺ｮ逶ｴ譖ｸ縺阪・繝ｬ繝薙Η繝ｼ驕募渚縺ｨ縺吶ｋ・・  - Spec 1 縺悟ｱ謇蛹悶＠縺・Adapters 蛛ｴ縺ｮ蜷域・ helper 縺ｨ side enum 繧呈悽隕冗ｴ・∈邨ｱ蜷医☆繧区婿驥昴→縺励∝他縺ｳ蜃ｺ縺礼せ縺ｮ鄂ｮ謠帙・蠕檎ｶ壹ち繧ｹ繧ｯ・・.2 / 5.2・峨〒螳滓命縲∫ｽｮ謠帛ｮ御ｺ・ｼ・.4・峨∪縺ｧ譌ｧ helper 縺ｯ貂ｩ蟄倥☆繧・  - 繝代・繧ｹ縺ｯ繧｢繝ｭ繧ｱ繝ｼ繧ｷ繝ｧ繝ｳ縺ｪ縺励∵里螳壹メ繝｣繝阪Ν蟾ｦ sub 縺ｮ蜷域・邨先棡縺・iFacialMocap 迴ｾ陦後ワ繝ｼ繝峨さ繝ｼ繝峨→譁・ｭ怜・荳閾ｴ・・"gaze.left"`・・  - EditMode 繝・せ繝医〒縲靴ompose竊探ryParse 繝ｩ繧ｦ繝ｳ繝峨ヨ繝ｪ繝・・・・ 蠖｢ ﾃ・譌｢螳・霑ｽ蜉繝√Ε繝阪Ν・峨阪碁撼貅匁侠蜈･蜉幢ｼ育ｩｺ / `:` 驕主､・/ suffix 縺ｮ縺ｿ・峨・ false縲阪後メ繝｣繝阪Ν id validation 蠅・阜・・.left` 邨らｫｯ / `:` 豺ｷ蜈･ / 64 譁・ｭ・/ 遨ｺ・峨阪形"gaze.left"` 莠呈鋤蝗ｺ螳壹阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 3.1, 3.2, 3.4, 3.5, 3.6, 3.7, 1.3_
   - _Boundary: GazeSourceIdConvention, GazeSide_
 
-- [x] 1.3 (P) gaze source 宣言契約とチャネル注入契約を Domain に新設する
-  - binding が提供可能な gaze source の静的宣言（対象チャネル id + 左右ペア有無。id null/空 = 広告駆動等のワイルドカード）と宣言 interface、チャネル id 列の型付き注入 interface を、既存の宣言 interface 前例と同格の Domain 配置・純 C# で定義する
-  - 注入契約（rebuild ごと・OnStart 前・先頭が既定チャネルの不変条件済みリスト・null なし）と、provider 追加のみで将来の procedural gaze ソースが選択肢に載る拡張点であることを XML doc に明記する
-  - Domain asmdef 単体でコンパイル可能で、宣言 struct の値保持が EditMode テストで緑になる (観測可能な完了条件)
+- [x] 1.3 (P) gaze source 螳｣險螂醍ｴ・→繝√Ε繝阪Ν豕ｨ蜈･螂醍ｴ・ｒ Domain 縺ｫ譁ｰ險ｭ縺吶ｋ
+  - binding 縺梧署萓帛庄閭ｽ縺ｪ gaze source 縺ｮ髱咏噪螳｣險・亥ｯｾ雎｡繝√Ε繝阪Ν id + 蟾ｦ蜿ｳ繝壹い譛臥┌縲Ｊd null/遨ｺ = 蠎・相鬧・虚遲峨・繝ｯ繧､繝ｫ繝峨き繝ｼ繝会ｼ峨→螳｣險 interface縲√メ繝｣繝阪Ν id 蛻励・蝙倶ｻ倥″豕ｨ蜈･ interface 繧偵∵里蟄倥・螳｣險 interface 蜑堺ｾ九→蜷梧ｼ縺ｮ Domain 驟咲ｽｮ繝ｻ邏・C# 縺ｧ螳夂ｾｩ縺吶ｋ
+  - 豕ｨ蜈･螂醍ｴ・ｼ・ebuild 縺斐→繝ｻOnStart 蜑阪・蜈磯ｭ縺梧里螳壹メ繝｣繝阪Ν縺ｮ荳榊､画擅莉ｶ貂医∩繝ｪ繧ｹ繝医・null 縺ｪ縺暦ｼ峨→縲｝rovider 霑ｽ蜉縺ｮ縺ｿ縺ｧ蟆・擂縺ｮ procedural gaze 繧ｽ繝ｼ繧ｹ縺碁∈謚櫁い縺ｫ霈峨ｋ諡｡蠑ｵ轤ｹ縺ｧ縺ゅｋ縺薙→繧・XML doc 縺ｫ譏手ｨ倥☆繧・  - Domain asmdef 蜊倅ｽ薙〒繧ｳ繝ｳ繝代う繝ｫ蜿ｯ閭ｽ縺ｧ縲∝ｮ｣險 struct 縺ｮ蛟､菫晄戟縺・EditMode 繝・せ繝医〒邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 4.1, 4.8, 8.1_
   - _Boundary: IGazeSourceProvider, IGazeChannelConsumer, GazeSourceDeclaration_
 
-## Core データモデル: Gaze セクションと旧構造の廃止
+## Core 繝・・繧ｿ繝｢繝・Ν: Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ縺ｨ譌ｧ讒矩縺ｮ蟒・ｭ｢
 
-- [ ] 2. Core データモデル: チャネル定義・SO 置換・legacy 検出
+- [ ] 2. Core 繝・・繧ｿ繝｢繝・Ν: 繝√Ε繝阪Ν螳夂ｾｩ繝ｻSO 鄂ｮ謠帙・legacy 讀懷・
 
-- [x] 2.1 死んだ BlendShape gaze 資産を参照ゼロ検証のうえ削除する
-  - look*Clip ×4 / look*Samples ×4 の 8 フィールドと sample entry 型・Editor の clip sampler について、ランタイム消費者ゼロ（M-29 未配線）を grep で検証してから型・フィールド・関連テストごと削除する（D-2 / research Decision 8）
-  - 削除後に Editor asmdef を含む全 asmdef がコンパイル可能で、既存テストが緑のまま維持される (観測可能な完了条件)
+- [x] 2.1 豁ｻ繧薙□ BlendShape gaze 雉・肇繧貞盾辣ｧ繧ｼ繝ｭ讀懆ｨｼ縺ｮ縺・∴蜑企勁縺吶ｋ
+  - look*Clip ﾃ・ / look*Samples ﾃ・ 縺ｮ 8 繝輔ぅ繝ｼ繝ｫ繝峨→ sample entry 蝙九・Editor 縺ｮ clip sampler 縺ｫ縺､縺・※縲√Λ繝ｳ繧ｿ繧､繝豸郁ｲｻ閠・ぞ繝ｭ・・-29 譛ｪ驟咲ｷ夲ｼ峨ｒ grep 縺ｧ讀懆ｨｼ縺励※縺九ｉ蝙九・繝輔ぅ繝ｼ繝ｫ繝峨・髢｢騾｣繝・せ繝医＃縺ｨ蜑企勁縺吶ｋ・・-2 / research Decision 8・・  - 蜑企勁蠕後↓ Editor asmdef 繧貞性繧蜈ｨ asmdef 縺後さ繝ｳ繝代う繝ｫ蜿ｯ閭ｽ縺ｧ縲∵里蟄倥ユ繧ｹ繝医′邱代・縺ｾ縺ｾ邯ｭ謖√＆繧後ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 9.1_
 
-- [x] 2.2 チャネル定義型を新設し SO を Gaze セクションへ置換する
-  - チャネル定義（id / providerSlug 空 = 自動 / distinct 左右 id / 左右目ボーン path・初期回転・軸 / 可動角 4 値。look* 系は持たない）を Serializable として新設する
-  - SO の旧 GazeConfig ルートリストをチャネルリスト 1 本へ置換し、公開アクセサで既定チャネル不変条件を自己修復する（リスト null/空 → 既定チャネル 1 件生成、先頭 id が `"gaze"` 以外 → 矯正。Ordinal 比較・確保最小）。profile interface の gaze アクセサもチャネルリストへ置換する
-  - ExpressionSerializable の isGaze フィールドを削除する（Timeline パッケージの isGaze は別概念として無改修）
-  - 旧 GazeBindingConfig 型はこの段階では温存し（依存側の置換完了 6.4 まで）、core 内の旧参照は動作変更なしの最小暫定追従でコンパイル可能な状態を維持する
-  - EditMode テストで「空リスト自己修復」「先頭 id 改変 YAML の矯正」「isGaze 不在のシリアライズ確認」が緑になる (観測可能な完了条件)
+- [x] 2.2 繝√Ε繝阪Ν螳夂ｾｩ蝙九ｒ譁ｰ險ｭ縺・SO 繧・Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ縺ｸ鄂ｮ謠帙☆繧・  - 繝√Ε繝阪Ν螳夂ｾｩ・・d / providerSlug 遨ｺ = 閾ｪ蜍・/ distinct 蟾ｦ蜿ｳ id / 蟾ｦ蜿ｳ逶ｮ繝懊・繝ｳ path繝ｻ蛻晄悄蝗櫁ｻ｢繝ｻ霆ｸ / 蜿ｯ蜍戊ｧ・4 蛟､縲Ｍook* 邉ｻ縺ｯ謖√◆縺ｪ縺・ｼ峨ｒ Serializable 縺ｨ縺励※譁ｰ險ｭ縺吶ｋ
+  - SO 縺ｮ譌ｧ GazeConfig 繝ｫ繝ｼ繝医Μ繧ｹ繝医ｒ繝√Ε繝阪Ν繝ｪ繧ｹ繝・1 譛ｬ縺ｸ鄂ｮ謠帙＠縲∝・髢九い繧ｯ繧ｻ繧ｵ縺ｧ譌｢螳壹メ繝｣繝阪Ν荳榊､画擅莉ｶ繧定・蟾ｱ菫ｮ蠕ｩ縺吶ｋ・医Μ繧ｹ繝・null/遨ｺ 竊・譌｢螳壹メ繝｣繝阪Ν 1 莉ｶ逕滓・縲∝・鬆ｭ id 縺・`"gaze"` 莉･螟・竊・遏ｯ豁｣縲０rdinal 豈碑ｼ・・遒ｺ菫晄怙蟆擾ｼ峨Ｑrofile interface 縺ｮ gaze 繧｢繧ｯ繧ｻ繧ｵ繧ゅメ繝｣繝阪Ν繝ｪ繧ｹ繝医∈鄂ｮ謠帙☆繧・  - ExpressionSerializable 縺ｮ isGaze 繝輔ぅ繝ｼ繝ｫ繝峨ｒ蜑企勁縺吶ｋ・・imeline 繝代ャ繧ｱ繝ｼ繧ｸ縺ｮ isGaze 縺ｯ蛻･讎ょｿｵ縺ｨ縺励※辟｡謾ｹ菫ｮ・・  - 譌ｧ GazeBindingConfig 蝙九・縺薙・谿ｵ髫弱〒縺ｯ貂ｩ蟄倥＠・井ｾ晏ｭ伜・縺ｮ鄂ｮ謠帛ｮ御ｺ・6.4 縺ｾ縺ｧ・峨…ore 蜀・・譌ｧ蜿ら・縺ｯ蜍穂ｽ懷､画峩縺ｪ縺励・譛蟆乗圻螳夊ｿｽ蠕薙〒繧ｳ繝ｳ繝代う繝ｫ蜿ｯ閭ｽ縺ｪ迥ｶ諷九ｒ邯ｭ謖√☆繧・  - EditMode 繝・せ繝医〒縲檎ｩｺ繝ｪ繧ｹ繝郁・蟾ｱ菫ｮ蠕ｩ縲阪悟・鬆ｭ id 謾ｹ螟・YAML 縺ｮ遏ｯ豁｣縲阪景sGaze 荳榊惠縺ｮ繧ｷ繝ｪ繧｢繝ｩ繧､繧ｺ遒ｺ隱阪阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2_
 
-- [x] 2.3 SO 経路の旧スキーマ検出（legacy フィールド）を実装する
-  - 検出専用マーカー型の非公開リストを `FormerlySerializedAs` で旧キーに対応付け、旧 YAML の gaze config 群を初回ロードで件数・id のみ受け取り、検出有無・件数を Inspector / FacialController 向けに内部公開する
-  - 再保存で旧キー行がアセットから消えること（新キーの空リスト行が残るのは仕様）を確認する
-  - EditMode テストで「旧 `_gazeConfigs` 入り YAML 読込 → 検出 true + 件数/id 取得」「新規アセットで検出 false」が緑になる (観測可能な完了条件)
+- [x] 2.3 SO 邨瑚ｷｯ縺ｮ譌ｧ繧ｹ繧ｭ繝ｼ繝樊､懷・・・egacy 繝輔ぅ繝ｼ繝ｫ繝会ｼ峨ｒ螳溯｣・☆繧・  - 讀懷・蟆ら畑繝槭・繧ｫ繝ｼ蝙九・髱槫・髢九Μ繧ｹ繝医ｒ `FormerlySerializedAs` 縺ｧ譌ｧ繧ｭ繝ｼ縺ｫ蟇ｾ蠢應ｻ倥￠縲∵立 YAML 縺ｮ gaze config 鄒､繧貞・蝗槭Ο繝ｼ繝峨〒莉ｶ謨ｰ繝ｻid 縺ｮ縺ｿ蜿励￠蜿悶ｊ縲∵､懷・譛臥┌繝ｻ莉ｶ謨ｰ繧・Inspector / FacialController 蜷代￠縺ｫ蜀・Κ蜈ｬ髢九☆繧・  - 蜀堺ｿ晏ｭ倥〒譌ｧ繧ｭ繝ｼ陦後′繧｢繧ｻ繝・ヨ縺九ｉ豸医∴繧九％縺ｨ・域眠繧ｭ繝ｼ縺ｮ遨ｺ繝ｪ繧ｹ繝郁｡後′谿九ｋ縺ｮ縺ｯ莉墓ｧ假ｼ峨ｒ遒ｺ隱阪☆繧・  - EditMode 繝・せ繝医〒縲梧立 `_gazeConfigs` 蜈･繧・YAML 隱ｭ霎ｼ 竊・讀懷・ true + 莉ｶ謨ｰ/id 蜿門ｾ励阪梧眠隕上い繧ｻ繝・ヨ縺ｧ讀懷・ false縲阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 2.7_
 
-## シリアライズ: 新スキーマ JSON 入出力と旧キー警告
-
-- [ ] 3. JSON: Gaze セクションの parse・変換・出力・旧スキーマ警告
-
-- [x] 3.1 新スキーマ DTO と parse・旧キー検出警告を実装する
-  - ルートキー `gaze`（オブジェクト + channels 配列、フィールドは camelCase、schemaVersion "1.0" 維持）の DTO を追加し、旧 gaze config DTO フィールドと snake/camel preprocessing（Pre/Postprocess）を削除する
-  - parse 経路の入口で raw JSON の旧キー（`"gaze_configs"` + 後続 `:` のキー形）を検出した場合、移行ガイド誘導を含む警告を 1 回だけ出し、以降は通常 parse（DTO フィールド不在による自然読み捨て）で gaze 以外を通常どおり読み込む
-  - `gaze` キー欠落は警告なしで受理する（既定チャネル補完は Converter 側）
-  - EditMode テストで「新スキーマ parse」「旧キー警告 1 回 + gaze 以外の通常読込」「`gaze` キー欠落の無警告受理」「look* 系フィールドがスキーマに存在しない」が緑になる (観測可能な完了条件)
+## 繧ｷ繝ｪ繧｢繝ｩ繧､繧ｺ: 譁ｰ繧ｹ繧ｭ繝ｼ繝・JSON 蜈･蜃ｺ蜉帙→譌ｧ繧ｭ繝ｼ隴ｦ蜻・
+- [ ] 3. JSON: Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ縺ｮ parse繝ｻ螟画鋤繝ｻ蜃ｺ蜉帙・譌ｧ繧ｹ繧ｭ繝ｼ繝櫁ｭｦ蜻・
+- [x] 3.1 譁ｰ繧ｹ繧ｭ繝ｼ繝・DTO 縺ｨ parse繝ｻ譌ｧ繧ｭ繝ｼ讀懷・隴ｦ蜻翫ｒ螳溯｣・☆繧・  - 繝ｫ繝ｼ繝医く繝ｼ `gaze`・医が繝悶ず繧ｧ繧ｯ繝・+ channels 驟榊・縲√ヵ繧｣繝ｼ繝ｫ繝峨・ camelCase縲《chemaVersion "1.0" 邯ｭ謖・ｼ峨・ DTO 繧定ｿｽ蜉縺励∵立 gaze config DTO 繝輔ぅ繝ｼ繝ｫ繝峨→ snake/camel preprocessing・・re/Postprocess・峨ｒ蜑企勁縺吶ｋ
+  - parse 邨瑚ｷｯ縺ｮ蜈･蜿｣縺ｧ raw JSON 縺ｮ譌ｧ繧ｭ繝ｼ・・"gaze_configs"` + 蠕檎ｶ・`:` 縺ｮ繧ｭ繝ｼ蠖｢・峨ｒ讀懷・縺励◆蝣ｴ蜷医∫ｧｻ陦後ぎ繧､繝芽ｪ伜ｰ弱ｒ蜷ｫ繧隴ｦ蜻翫ｒ 1 蝗槭□縺大・縺励∽ｻ･髯阪・騾壼ｸｸ parse・・TO 繝輔ぅ繝ｼ繝ｫ繝我ｸ榊惠縺ｫ繧医ｋ閾ｪ辟ｶ隱ｭ縺ｿ謐ｨ縺ｦ・峨〒 gaze 莉･螟悶ｒ騾壼ｸｸ縺ｩ縺翫ｊ隱ｭ縺ｿ霎ｼ繧
+  - `gaze` 繧ｭ繝ｼ谺關ｽ縺ｯ隴ｦ蜻翫↑縺励〒蜿礼炊縺吶ｋ・域里螳壹メ繝｣繝阪Ν陬懷ｮ後・ Converter 蛛ｴ・・  - EditMode 繝・せ繝医〒縲梧眠繧ｹ繧ｭ繝ｼ繝・parse縲阪梧立繧ｭ繝ｼ隴ｦ蜻・1 蝗・+ gaze 莉･螟悶・騾壼ｸｸ隱ｭ霎ｼ縲阪形gaze` 繧ｭ繝ｼ谺關ｽ縺ｮ辟｡隴ｦ蜻雁女逅・阪畦ook* 邉ｻ繝輔ぅ繝ｼ繝ｫ繝峨′繧ｹ繧ｭ繝ｼ繝槭↓蟄伜惠縺励↑縺・阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 2.3, 2.6, 2.7, 9.3_
 
-- [x] 3.2 Converter / Exporter の Gaze セクション対応とラウンドトリップを実装する
-  - Converter: DTO → チャネルリスト変換時に不変条件を正規化する（既定チャネル欠落は補完 + 警告なしの最小形許容、id validation 違反・重複 id チャネルは警告 + 読み捨て）
-  - Exporter: SO の Gaze セクションを新スキーマのみで出力する（旧キー postprocess の削除確認）
-  - Exporter 出力 → Converter 読み戻しで Gaze セクションが値等価となるラウンドトリップを固定する
-  - EditMode テストで「ラウンドトリップ値等価（既定 + 追加チャネル + 上級設定）」「不正チャネル読み捨て警告」「既定チャネル補完」が緑になる (観測可能な完了条件)
+- [x] 3.2 Converter / Exporter 縺ｮ Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ蟇ｾ蠢懊→繝ｩ繧ｦ繝ｳ繝峨ヨ繝ｪ繝・・繧貞ｮ溯｣・☆繧・  - Converter: DTO 竊・繝√Ε繝阪Ν繝ｪ繧ｹ繝亥､画鋤譎ゅ↓荳榊､画擅莉ｶ繧呈ｭ｣隕丞喧縺吶ｋ・域里螳壹メ繝｣繝阪Ν谺關ｽ縺ｯ陬懷ｮ・+ 隴ｦ蜻翫↑縺励・譛蟆丞ｽ｢險ｱ螳ｹ縲（d validation 驕募渚繝ｻ驥崎､・id 繝√Ε繝阪Ν縺ｯ隴ｦ蜻・+ 隱ｭ縺ｿ謐ｨ縺ｦ・・  - Exporter: SO 縺ｮ Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ繧呈眠繧ｹ繧ｭ繝ｼ繝槭・縺ｿ縺ｧ蜃ｺ蜉帙☆繧具ｼ域立繧ｭ繝ｼ postprocess 縺ｮ蜑企勁遒ｺ隱搾ｼ・  - Exporter 蜃ｺ蜉・竊・Converter 隱ｭ縺ｿ謌ｻ縺励〒 Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ縺悟､遲我ｾ｡縺ｨ縺ｪ繧九Λ繧ｦ繝ｳ繝峨ヨ繝ｪ繝・・繧貞崋螳壹☆繧・  - EditMode 繝・せ繝医〒縲後Λ繧ｦ繝ｳ繝峨ヨ繝ｪ繝・・蛟､遲我ｾ｡・域里螳・+ 霑ｽ蜉繝√Ε繝阪Ν + 荳顔ｴ夊ｨｭ螳夲ｼ峨阪御ｸ肴ｭ｣繝√Ε繝阪Ν隱ｭ縺ｿ謐ｨ縺ｦ隴ｦ蜻翫阪梧里螳壹メ繝｣繝阪Ν陬懷ｮ後阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 2.4, 2.5, 1.3, 9.3_
 
-## Core ランタイム: チャネル解決・型付き注入・目ボーン接続
-
-- [ ] 4. Core ランタイム: 解決後継・FacialController 置換・ボーン fallback・テスト追従
-
-- [x] 4.1 チャネル起点の入力源解決（旧 resolver 後継）を新設する
-  - 実績ある解決アルゴリズム（distinct → side-pair → shared の 3 段フォールバック、複数 slug 競合は Ordinal 辞書順最小採用 + 警告 1 回）をチャネル入力へ引き継ぎ、id 合成を規約 helper のみに置換する（D-4 / D-9: preferredSlug は導入しない）
-  - providerSlug 明示時は当該 slug の合成 id（side-pair → shared）のみ探索し、未解決は false を返す（呼び出し側の不足警告用）
-  - 旧 resolver のテスト群をチャネル入力へ移植して緑維持し、providerSlug 制限（該当 slug のみ / 未解決 false）の新テストが緑になる (観測可能な完了条件)
+## Core 繝ｩ繝ｳ繧ｿ繧､繝: 繝√Ε繝阪Ν隗｣豎ｺ繝ｻ蝙倶ｻ倥″豕ｨ蜈･繝ｻ逶ｮ繝懊・繝ｳ謗･邯・
+- [ ] 4. Core 繝ｩ繝ｳ繧ｿ繧､繝: 隗｣豎ｺ蠕檎ｶ吶・FacialController 鄂ｮ謠帙・繝懊・繝ｳ fallback繝ｻ繝・せ繝郁ｿｽ蠕・
+- [x] 4.1 繝√Ε繝阪Ν襍ｷ轤ｹ縺ｮ蜈･蜉帶ｺ占ｧ｣豎ｺ・域立 resolver 蠕檎ｶ呻ｼ峨ｒ譁ｰ險ｭ縺吶ｋ
+  - 螳溽ｸｾ縺ゅｋ隗｣豎ｺ繧｢繝ｫ繧ｴ繝ｪ繧ｺ繝・・istinct 竊・side-pair 竊・shared 縺ｮ 3 谿ｵ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ縲∬､・焚 slug 遶ｶ蜷医・ Ordinal 霎樊嶌鬆・怙蟆乗治逕ｨ + 隴ｦ蜻・1 蝗橸ｼ峨ｒ繝√Ε繝阪Ν蜈･蜉帙∈蠑輔″邯吶℃縲（d 蜷域・繧定ｦ冗ｴ・helper 縺ｮ縺ｿ縺ｫ鄂ｮ謠帙☆繧具ｼ・-4 / D-9: preferredSlug 縺ｯ蟆主・縺励↑縺・ｼ・  - providerSlug 譏守､ｺ譎ゅ・蠖楢ｩｲ slug 縺ｮ蜷域・ id・・ide-pair 竊・shared・峨・縺ｿ謗｢邏｢縺励∵悴隗｣豎ｺ縺ｯ false 繧定ｿ斐☆・亥他縺ｳ蜃ｺ縺怜・縺ｮ荳崎ｶｳ隴ｦ蜻顔畑・・  - 譌ｧ resolver 縺ｮ繝・せ繝育ｾ､繧偵メ繝｣繝阪Ν蜈･蜉帙∈遘ｻ讀阪＠縺ｦ邱醍ｶｭ謖√＠縲｝roviderSlug 蛻ｶ髯撰ｼ郁ｩｲ蠖・slug 縺ｮ縺ｿ / 譛ｪ隗｣豎ｺ false・峨・譁ｰ繝・せ繝医′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 4.4, 4.5, 3.3_
   - _Boundary: GazeChannelResolver_
 
-- [x] 4.2 FacialController を型付き注入とチャネル起点の gaze 配線へ置換する
-  - リフレクション注入一式（Configure メソッド探索・引数読み戻し・PascalCase 変換・gaze config リスト型判定）を削除し、`is` キャストによる型付き注入（チャネル id 列。注入 → child scope build → OnStart の順序維持）へ置換する
-  - GazeSnapshot の id フィールドを ExpressionId から ChannelId へリネームし（Breaking。関連 XML doc 追従）、チャネル単位の snapshot 生成へ置換する（バッファ運用維持 = 毎フレーム GC ゼロ）
-  - 候補 Subscribe を「binding slug 一覧 × チャネル × 3 形」の規約 helper 全合成へ置換する（distinct チャネルは明示 id を直接 Subscribe、providerSlug 明示チャネルは当該 slug のみ合成）。Spec 1 の Adapters 側合成 helper 呼び出しを規約 helper へ置換する
-  - 目ボーン provider の構築（bone path を持つチャネルのみ binding 構築）と provider / binding 型をチャネル追従させる（回転適用・読取委譲は挙動互換で無改修）
-  - legacy 検出時の rebuild 警告 1 回（移行ガイド誘導）と、providerSlug 明示チャネルが未解決の場合の不足警告 1 回を追加する（無警告沈黙の禁止）
-  - EditMode テストで「Fake binding への注入呼び出し検証」「候補 Subscribe 集合（slug × channel × 3 形 / providerSlug 制限 / distinct 直接）」「legacy 警告 1 回性」「snapshot がチャネル id を運ぶこと」が緑になる (観測可能な完了条件)
+- [x] 4.2 FacialController 繧貞梛莉倥″豕ｨ蜈･縺ｨ繝√Ε繝阪Ν襍ｷ轤ｹ縺ｮ gaze 驟咲ｷ壹∈鄂ｮ謠帙☆繧・  - 繝ｪ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ豕ｨ蜈･荳蠑擾ｼ・onfigure 繝｡繧ｽ繝・ラ謗｢邏｢繝ｻ蠑墓焚隱ｭ縺ｿ謌ｻ縺励・PascalCase 螟画鋤繝ｻgaze config 繝ｪ繧ｹ繝亥梛蛻､螳夲ｼ峨ｒ蜑企勁縺励～is` 繧ｭ繝｣繧ｹ繝医↓繧医ｋ蝙倶ｻ倥″豕ｨ蜈･・医メ繝｣繝阪Ν id 蛻励よｳｨ蜈･ 竊・child scope build 竊・OnStart 縺ｮ鬆・ｺ冗ｶｭ謖・ｼ峨∈鄂ｮ謠帙☆繧・  - GazeSnapshot 縺ｮ id 繝輔ぅ繝ｼ繝ｫ繝峨ｒ ExpressionId 縺九ｉ ChannelId 縺ｸ繝ｪ繝阪・繝縺暦ｼ・reaking縲る未騾｣ XML doc 霑ｽ蠕難ｼ峨√メ繝｣繝阪Ν蜊倅ｽ阪・ snapshot 逕滓・縺ｸ鄂ｮ謠帙☆繧具ｼ医ヰ繝・ヵ繧｡驕狗畑邯ｭ謖・= 豈弱ヵ繝ｬ繝ｼ繝 GC 繧ｼ繝ｭ・・  - 蛟呵｣・Subscribe 繧偵恵inding slug 荳隕ｧ ﾃ・繝√Ε繝阪Ν ﾃ・3 蠖｢縲阪・隕冗ｴ・helper 蜈ｨ蜷域・縺ｸ鄂ｮ謠帙☆繧具ｼ・istinct 繝√Ε繝阪Ν縺ｯ譏守､ｺ id 繧堤峩謗･ Subscribe縲｝roviderSlug 譏守､ｺ繝√Ε繝阪Ν縺ｯ蠖楢ｩｲ slug 縺ｮ縺ｿ蜷域・・峨４pec 1 縺ｮ Adapters 蛛ｴ蜷域・ helper 蜻ｼ縺ｳ蜃ｺ縺励ｒ隕冗ｴ・helper 縺ｸ鄂ｮ謠帙☆繧・  - 逶ｮ繝懊・繝ｳ provider 縺ｮ讒狗ｯ会ｼ・one path 繧呈戟縺､繝√Ε繝阪Ν縺ｮ縺ｿ binding 讒狗ｯ会ｼ峨→ provider / binding 蝙九ｒ繝√Ε繝阪Ν霑ｽ蠕薙＆縺帙ｋ・亥屓霆｢驕ｩ逕ｨ繝ｻ隱ｭ蜿門ｧ碑ｭｲ縺ｯ謖吝虚莠呈鋤縺ｧ辟｡謾ｹ菫ｮ・・  - legacy 讀懷・譎ゅ・ rebuild 隴ｦ蜻・1 蝗橸ｼ育ｧｻ陦後ぎ繧､繝芽ｪ伜ｰ趣ｼ峨→縲｝roviderSlug 譏守､ｺ繝√Ε繝阪Ν縺梧悴隗｣豎ｺ縺ｮ蝣ｴ蜷医・荳崎ｶｳ隴ｦ蜻・1 蝗槭ｒ霑ｽ蜉縺吶ｋ・育┌隴ｦ蜻頑ｲ磯ｻ吶・遖∵ｭ｢・・  - EditMode 繝・せ繝医〒縲熊ake binding 縺ｸ縺ｮ豕ｨ蜈･蜻ｼ縺ｳ蜃ｺ縺玲､懆ｨｼ縲阪悟呵｣・Subscribe 髮・粋・・lug ﾃ・channel ﾃ・3 蠖｢ / providerSlug 蛻ｶ髯・/ distinct 逶ｴ謗･・峨阪畦egacy 隴ｦ蜻・1 蝗樊ｧ縲阪茎napshot 縺後メ繝｣繝阪Ν id 繧帝°縺ｶ縺薙→縲阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 8.1, 8.3, 8.4, 4.9, 2.7, 1.4, 3.4_
   - _Depends: 1.3, 2.2, 2.3, 4.1_
 
-- [x] 4.3 (P) ボーン path 解決の単純名フォールバックを追加する
-  - 相対 path 解決失敗時に末尾セグメントの単純名解決へフォールバックし、目線タブの再解決操作へ誘導する警告を 1 回出す（dedupe は既存機構流用）。完全失敗時は既存の警告 + null を維持する
-  - フォールバック時の同名ボーン複数ヒットは既存の複数ヒット警告がそのまま機能することを確認する
-  - EditMode テストで「path 一致の従来解決」「path 不一致 → 単純名フォールバック + 警告 1 回」「完全失敗の既存挙動維持」が緑になる (観測可能な完了条件)
+- [x] 4.3 (P) 繝懊・繝ｳ path 隗｣豎ｺ縺ｮ蜊倡ｴ泌錐繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繧定ｿｽ蜉縺吶ｋ
+  - 逶ｸ蟇ｾ path 隗｣豎ｺ螟ｱ謨玲凾縺ｫ譛ｫ蟆ｾ繧ｻ繧ｰ繝｡繝ｳ繝医・蜊倡ｴ泌錐隗｣豎ｺ縺ｸ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ縺励∫岼邱壹ち繝悶・蜀崎ｧ｣豎ｺ謫堺ｽ懊∈隱伜ｰ弱☆繧玖ｭｦ蜻翫ｒ 1 蝗槫・縺呻ｼ・edupe 縺ｯ譌｢蟄俶ｩ滓ｧ区ｵ∫畑・峨ょｮ悟・螟ｱ謨玲凾縺ｯ譌｢蟄倥・隴ｦ蜻・+ null 繧堤ｶｭ謖√☆繧・  - 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ譎ゅ・蜷悟錐繝懊・繝ｳ隍・焚繝偵ャ繝医・譌｢蟄倥・隍・焚繝偵ャ繝郁ｭｦ蜻翫′縺昴・縺ｾ縺ｾ讖溯・縺吶ｋ縺薙→繧堤｢ｺ隱阪☆繧・  - EditMode 繝・せ繝医〒縲継ath 荳閾ｴ縺ｮ蠕捺擂隗｣豎ｺ縲阪継ath 荳堺ｸ閾ｴ 竊・蜊倡ｴ泌錐繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ + 隴ｦ蜻・1 蝗槭阪悟ｮ悟・螟ｱ謨励・譌｢蟄俶嫌蜍慕ｶｭ謖√阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 7.3_
   - _Boundary: BoneTransformResolver_
 
-- [x] 4.4 旧 GazeConfigs 前提の core テスト群を新データモデルへ書き換える
-  - FacialController / 解決 / 目ボーン provider / parser・converter 系の旧 `_gazeConfigs` / GazeBindingConfig 前提テスト（15+ ファイル規模）をチャネル前提へ書き換える（design Risks の独立タスク化指示）
-  - 挙動互換部分（3 段解決・bone 適用・GC ゼロ・Subscribe ハンドラの provider 再構築のみ）のテスト意図を変えず、入力データ構築のみ差し替える
-  - core パッケージの gaze 関連 EditMode / PlayMode テストが新モデルで全緑になる (観測可能な完了条件)
+- [x] 4.4 譌ｧ GazeConfigs 蜑肴署縺ｮ core 繝・せ繝育ｾ､繧呈眠繝・・繧ｿ繝｢繝・Ν縺ｸ譖ｸ縺肴鋤縺医ｋ
+  - FacialController / 隗｣豎ｺ / 逶ｮ繝懊・繝ｳ provider / parser繝ｻconverter 邉ｻ縺ｮ譌ｧ `_gazeConfigs` / GazeBindingConfig 蜑肴署繝・せ繝茨ｼ・5+ 繝輔ぃ繧､繝ｫ隕乗ｨ｡・峨ｒ繝√Ε繝阪Ν蜑肴署縺ｸ譖ｸ縺肴鋤縺医ｋ・・esign Risks 縺ｮ迢ｬ遶九ち繧ｹ繧ｯ蛹匁欠遉ｺ・・  - 謖吝虚莠呈鋤驛ｨ蛻・ｼ・ 谿ｵ隗｣豎ｺ繝ｻbone 驕ｩ逕ｨ繝ｻGC 繧ｼ繝ｭ繝ｻSubscribe 繝上Φ繝峨Λ縺ｮ provider 蜀肴ｧ狗ｯ峨・縺ｿ・峨・繝・せ繝域э蝗ｳ繧貞､峨∴縺壹∝・蜉帙ョ繝ｼ繧ｿ讒狗ｯ峨・縺ｿ蟾ｮ縺玲崛縺医ｋ
+  - core 繝代ャ繧ｱ繝ｼ繧ｸ縺ｮ gaze 髢｢騾｣ EditMode / PlayMode 繝・せ繝医′譁ｰ繝｢繝・Ν縺ｧ蜈ｨ邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 1.4, 2.2, 4.4_
 
-## 拡張 binding: OSC / InputSystem / iFacialMocap / Timeline・rec の追従
-
-- [ ] 5. 拡張 binding: 宣言・注入契約の実装と id 合成の規約集約
-
-- [x] 5.1 (P) OSC 送信 binding をチャネル注入へ一本化し旧 id 供給 API を廃止する
-  - チャネル注入契約を実装し、広告ペア構築（Spec 1 の広告機構は無変更）と GazeSnapshot 送出フィルタの id 源を注入チャネル id 列に一本化する
-  - serialized の明示 gaze id リスト・その公開 API・options JSON の gaze id キー・SO 直読みフォールバックを削除する（Breaking。CHANGELOG / 移行ガイドはタスク 7.3）
-  - 未注入の単体使用時はチャネル集合を空として gaze 送出・広告なし + 警告 1 回とする（無警告沈黙の禁止）
-  - EditMode テストで「注入チャネル id → 広告ペア構築」「既定構成で広告 id が `"gaze"`」「旧 API・旧 options キーの不在」「未注入警告 1 回」が緑になる (観測可能な完了条件)
+## 諡｡蠑ｵ binding: OSC / InputSystem / iFacialMocap / Timeline繝ｻrec 縺ｮ霑ｽ蠕・
+- [ ] 5. 諡｡蠑ｵ binding: 螳｣險繝ｻ豕ｨ蜈･螂醍ｴ・・螳溯｣・→ id 蜷域・縺ｮ隕冗ｴ・寔邏・
+- [x] 5.1 (P) OSC 騾∽ｿ｡ binding 繧偵メ繝｣繝阪Ν豕ｨ蜈･縺ｸ荳譛ｬ蛹悶＠譌ｧ id 萓帷ｵｦ API 繧貞ｻ・ｭ｢縺吶ｋ
+  - 繝√Ε繝阪Ν豕ｨ蜈･螂醍ｴ・ｒ螳溯｣・＠縲∝ｺ・相繝壹い讒狗ｯ会ｼ・pec 1 縺ｮ蠎・相讖滓ｧ九・辟｡螟画峩・峨→ GazeSnapshot 騾∝・繝輔ぅ繝ｫ繧ｿ縺ｮ id 貅舌ｒ豕ｨ蜈･繝√Ε繝阪Ν id 蛻励↓荳譛ｬ蛹悶☆繧・  - serialized 縺ｮ譏守､ｺ gaze id 繝ｪ繧ｹ繝医・縺昴・蜈ｬ髢・API繝ｻoptions JSON 縺ｮ gaze id 繧ｭ繝ｼ繝ｻSO 逶ｴ隱ｭ縺ｿ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繧貞炎髯､縺吶ｋ・・reaking縲・HANGELOG / 遘ｻ陦後ぎ繧､繝峨・繧ｿ繧ｹ繧ｯ 7.3・・  - 譛ｪ豕ｨ蜈･縺ｮ蜊倅ｽ謎ｽｿ逕ｨ譎ゅ・繝√Ε繝阪Ν髮・粋繧堤ｩｺ縺ｨ縺励※ gaze 騾∝・繝ｻ蠎・相縺ｪ縺・+ 隴ｦ蜻・1 蝗槭→縺吶ｋ・育┌隴ｦ蜻頑ｲ磯ｻ吶・遖∵ｭ｢・・  - EditMode 繝・せ繝医〒縲梧ｳｨ蜈･繝√Ε繝阪Ν id 竊・蠎・相繝壹い讒狗ｯ峨阪梧里螳壽ｧ区・縺ｧ蠎・相 id 縺・`"gaze"`縲阪梧立 API繝ｻ譌ｧ options 繧ｭ繝ｼ縺ｮ荳榊惠縲阪梧悴豕ｨ蜈･隴ｦ蜻・1 蝗槭阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 11.2, 11.6, 8.4_
   - _Boundary: OscSenderAdapterBinding_
   - _Depends: 1.3, 4.2_
 
-- [x] 5.2 (P) OSC 受信 binding の注入置換と id 合成の規約集約を実装する
-  - Spec 1 の GazeConfig リスト Configure をチャネル注入契約へ置換する。突合警告は「広告 id が注入チャネル id 集合に無い」場合の 1 回警告へ読み替え（既定構成では恒常一致で非発火）、未注入時はスキップする（全広告 id への誤警告防止。送信側の未注入警告とは役割が異なる非対称として実装コメントに明記）
-  - gaze source 登録（手動 entry / 広告駆動とも）と広告解決内の id 合成を規約 helper へ置換する（`.left`/`.right` 連結の根絶。広告 accumulate / dirty / rebuild / immutable-swap / staleness の機構は無改修）
-  - 宣言契約を実装する（手動 gaze entry ごとの宣言 + 広告駆動のワイルドカード宣言 1 件）
-  - テストで「規約 helper 経由でも登録 id が現行互換」「突合警告の読み替え（既定構成で非発火 / 不一致 1 回 / 未注入スキップ）」「宣言列挙」が緑になり、Spec 1 の広告駆動テスト群が緑のまま維持される (観測可能な完了条件)
+- [x] 5.2 (P) OSC 蜿嶺ｿ｡ binding 縺ｮ豕ｨ蜈･鄂ｮ謠帙→ id 蜷域・縺ｮ隕冗ｴ・寔邏・ｒ螳溯｣・☆繧・  - Spec 1 縺ｮ GazeConfig 繝ｪ繧ｹ繝・Configure 繧偵メ繝｣繝阪Ν豕ｨ蜈･螂醍ｴ・∈鄂ｮ謠帙☆繧九らｪ∝粋隴ｦ蜻翫・縲悟ｺ・相 id 縺梧ｳｨ蜈･繝√Ε繝阪Ν id 髮・粋縺ｫ辟｡縺・榊ｴ蜷医・ 1 蝗櫁ｭｦ蜻翫∈隱ｭ縺ｿ譖ｿ縺茨ｼ域里螳壽ｧ区・縺ｧ縺ｯ諱貞ｸｸ荳閾ｴ縺ｧ髱樒匱轣ｫ・峨∵悴豕ｨ蜈･譎ゅ・繧ｹ繧ｭ繝・・縺吶ｋ・亥・蠎・相 id 縺ｸ縺ｮ隱､隴ｦ蜻企亟豁｢縲る∽ｿ｡蛛ｴ縺ｮ譛ｪ豕ｨ蜈･隴ｦ蜻翫→縺ｯ蠖ｹ蜑ｲ縺檎焚縺ｪ繧矩撼蟇ｾ遘ｰ縺ｨ縺励※螳溯｣・さ繝｡繝ｳ繝医↓譏手ｨ假ｼ・  - gaze source 逋ｻ骭ｲ・域焔蜍・entry / 蠎・相鬧・虚縺ｨ繧ゑｼ峨→蠎・相隗｣豎ｺ蜀・・ id 蜷域・繧定ｦ冗ｴ・helper 縺ｸ鄂ｮ謠帙☆繧具ｼ・.left`/`.right` 騾｣邨舌・譬ｹ邨ｶ縲ょｺ・相 accumulate / dirty / rebuild / immutable-swap / staleness 縺ｮ讖滓ｧ九・辟｡謾ｹ菫ｮ・・  - 螳｣險螂醍ｴ・ｒ螳溯｣・☆繧具ｼ域焔蜍・gaze entry 縺斐→縺ｮ螳｣險 + 蠎・相鬧・虚縺ｮ繝ｯ繧､繝ｫ繝峨き繝ｼ繝牙ｮ｣險 1 莉ｶ・・  - 繝・せ繝医〒縲瑚ｦ冗ｴ・helper 邨檎罰縺ｧ繧ら匳骭ｲ id 縺檎樟陦御ｺ呈鋤縲阪檎ｪ∝粋隴ｦ蜻翫・隱ｭ縺ｿ譖ｿ縺茨ｼ域里螳壽ｧ区・縺ｧ髱樒匱轣ｫ / 荳堺ｸ閾ｴ 1 蝗・/ 譛ｪ豕ｨ蜈･繧ｹ繧ｭ繝・・・峨阪悟ｮ｣險蛻玲嫌縲阪′邱代↓縺ｪ繧翫ヾpec 1 縺ｮ蠎・相鬧・虚繝・せ繝育ｾ､縺檎ｷ代・縺ｾ縺ｾ邯ｭ謖√＆繧後ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 3.3, 3.4, 4.2, 8.2, 11.3, 11.4_
   - _Boundary: OscReceiverAdapterBinding, GazeAdvertisementResolver_
   - _Depends: 1.2, 1.3, 4.2_
 
-- [x] 5.3 (P) InputSystem binding の一貫登録と Drawer のチャネル id 列挙化を実装する
-  - Configure の末尾 gaze 引数と注入済み config 保持を削除し、チャネル注入契約へ置換する（gaze entry のチャネル id が注入集合に無い場合は警告 1 回）
-  - Gaze 分岐の「実体 actionName 登録 + 規約 id エイリアス後付け」の二重登録を、規約 helper 合成 id での直接登録に一貫化する（side suffix の文字列補間を削除）
-  - Gaze entry の expressionId をチャネル id 参照として再解釈し（フィールド名維持・Tooltip 更新。serialized 資産の意味変更 = Breaking として 7.3 で移行ガイド記載）、宣言契約を実装、declared inputs へ gaze 規約 id を追加する
-  - Drawer: bindingMode=Gaze のとき expression ドロップダウンを Profile のチャネル id 列挙へ切り替える（Expression 名変換をやめ id 直接表示。Drawer テスト追従）
-  - EditMode テストで「規約 id の一貫登録（エイリアス不在）」「宣言」「チャネル id 不一致警告 1 回」「Drawer のチャネル id 列挙」が緑になる (観測可能な完了条件)
+- [x] 5.3 (P) InputSystem binding 縺ｮ荳雋ｫ逋ｻ骭ｲ縺ｨ Drawer 縺ｮ繝√Ε繝阪Ν id 蛻玲嫌蛹悶ｒ螳溯｣・☆繧・  - Configure 縺ｮ譛ｫ蟆ｾ gaze 蠑墓焚縺ｨ豕ｨ蜈･貂医∩ config 菫晄戟繧貞炎髯､縺励√メ繝｣繝阪Ν豕ｨ蜈･螂醍ｴ・∈鄂ｮ謠帙☆繧具ｼ・aze entry 縺ｮ繝√Ε繝阪Ν id 縺梧ｳｨ蜈･髮・粋縺ｫ辟｡縺・ｴ蜷医・隴ｦ蜻・1 蝗橸ｼ・  - Gaze 蛻・ｲ舌・縲悟ｮ滉ｽ・actionName 逋ｻ骭ｲ + 隕冗ｴ・id 繧ｨ繧､繝ｪ繧｢繧ｹ蠕御ｻ倥￠縲阪・莠碁㍾逋ｻ骭ｲ繧偵∬ｦ冗ｴ・helper 蜷域・ id 縺ｧ縺ｮ逶ｴ謗･逋ｻ骭ｲ縺ｫ荳雋ｫ蛹悶☆繧具ｼ・ide suffix 縺ｮ譁・ｭ怜・陬憺俣繧貞炎髯､・・  - Gaze entry 縺ｮ expressionId 繧偵メ繝｣繝阪Ν id 蜿ら・縺ｨ縺励※蜀崎ｧ｣驥医＠・医ヵ繧｣繝ｼ繝ｫ繝牙錐邯ｭ謖√・Tooltip 譖ｴ譁ｰ縲Ｔerialized 雉・肇縺ｮ諢丞袖螟画峩 = Breaking 縺ｨ縺励※ 7.3 縺ｧ遘ｻ陦後ぎ繧､繝芽ｨ倩ｼ会ｼ峨∝ｮ｣險螂醍ｴ・ｒ螳溯｣・‥eclared inputs 縺ｸ gaze 隕冗ｴ・id 繧定ｿｽ蜉縺吶ｋ
+  - Drawer: bindingMode=Gaze 縺ｮ縺ｨ縺・expression 繝峨Ο繝・・繝繧ｦ繝ｳ繧・Profile 縺ｮ繝√Ε繝阪Ν id 蛻玲嫌縺ｸ蛻・ｊ譖ｿ縺医ｋ・・xpression 蜷榊､画鋤繧偵ｄ繧・id 逶ｴ謗･陦ｨ遉ｺ縲・rawer 繝・せ繝郁ｿｽ蠕難ｼ・  - EditMode 繝・せ繝医〒縲瑚ｦ冗ｴ・id 縺ｮ荳雋ｫ逋ｻ骭ｲ・医お繧､繝ｪ繧｢繧ｹ荳榊惠・峨阪悟ｮ｣險縲阪後メ繝｣繝阪Ν id 荳堺ｸ閾ｴ隴ｦ蜻・1 蝗槭阪轡rawer 縺ｮ繝√Ε繝阪Ν id 蛻玲嫌縲阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 3.3, 4.2, 4.7, 8.2_
   - _Boundary: InputSystemAdapterBinding, InputSystemAdapterBindingDrawer_
   - _Depends: 1.2, 1.3, 4.2_
 
-- [x] 5.4 (P) iFacialMocap binding のハードコード吸収と宣言実装を行う
-  - 左右 sub のハードコード定数を規約 helper 合成へ置換する（合成結果は現行と同一文字列 = 追加設定なしで既定チャネルに接続される使用感を維持）
-  - 宣言契約を実装する（既定チャネル・左右ペアの 1 件宣言）。yaw/pitch 反転等の設定は binding 側に存続させる
-  - テストで「登録 id の現行互換（`ifm:gaze.left` / `ifm:gaze.right`）」「宣言内容」が緑になり、既存 iFM テストが緑のまま維持される (観測可能な完了条件)
+- [x] 5.4 (P) iFacialMocap binding 縺ｮ繝上・繝峨さ繝ｼ繝牙精蜿弱→螳｣險螳溯｣・ｒ陦後≧
+  - 蟾ｦ蜿ｳ sub 縺ｮ繝上・繝峨さ繝ｼ繝牙ｮ壽焚繧定ｦ冗ｴ・helper 蜷域・縺ｸ鄂ｮ謠帙☆繧具ｼ亥粋謌千ｵ先棡縺ｯ迴ｾ陦後→蜷御ｸ譁・ｭ怜・ = 霑ｽ蜉險ｭ螳壹↑縺励〒譌｢螳壹メ繝｣繝阪Ν縺ｫ謗･邯壹＆繧後ｋ菴ｿ逕ｨ諢溘ｒ邯ｭ謖・ｼ・  - 螳｣險螂醍ｴ・ｒ螳溯｣・☆繧具ｼ域里螳壹メ繝｣繝阪Ν繝ｻ蟾ｦ蜿ｳ繝壹い縺ｮ 1 莉ｶ螳｣險・峨Ｚaw/pitch 蜿崎ｻ｢遲峨・險ｭ螳壹・ binding 蛛ｴ縺ｫ蟄倡ｶ壹＆縺帙ｋ
+  - 繝・せ繝医〒縲檎匳骭ｲ id 縺ｮ迴ｾ陦御ｺ呈鋤・・ifm:gaze.left` / `ifm:gaze.right`・峨阪悟ｮ｣險蜀・ｮｹ縲阪′邱代↓縺ｪ繧翫∵里蟄・iFM 繝・せ繝医′邱代・縺ｾ縺ｾ邯ｭ謖√＆繧後ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 3.3, 4.2, 4.6_
   - _Boundary: IFacialMocapReceiverAdapterBinding_
   - _Depends: 1.2, 1.3_
 
-- [x] 5.5 (P) Timeline / rec の gaze 判定を新規約へ追従させる
-  - takeover 対象 source id の合成・検証を規約 helper 経由にする（Drawer / validation で非準拠 id を警告。Timeline 独自の isGaze フラグは存続）
-  - isGaze チャネル config について宣言契約を実装する（sub をチャネル id として宣言、チャネル id validation 非準拠は宣言から除外 + Editor validation 警告 — 診断連番 id の規約整合）
-  - rec 書き出しの gaze 分類を「profile のチャネル id 集合 + distinct 明示値 × 規約パース」ベースへ置換する（規約合成 id を分類できない現行の穴を解消）
-  - テストで「規約合成 id / distinct 明示 / 非 gaze sub の 3 系分類」「新規約 gaze チャネルを含む rec 記録の正分類・書き出し」「takeover 検証と非準拠警告」が緑になる (観測可能な完了条件)
+- [x] 5.5 (P) Timeline / rec 縺ｮ gaze 蛻､螳壹ｒ譁ｰ隕冗ｴ・∈霑ｽ蠕薙＆縺帙ｋ
+  - takeover 蟇ｾ雎｡ source id 縺ｮ蜷域・繝ｻ讀懆ｨｼ繧定ｦ冗ｴ・helper 邨檎罰縺ｫ縺吶ｋ・・rawer / validation 縺ｧ髱樊ｺ匁侠 id 繧定ｭｦ蜻翫５imeline 迢ｬ閾ｪ縺ｮ isGaze 繝輔Λ繧ｰ縺ｯ蟄倡ｶ夲ｼ・  - isGaze 繝√Ε繝阪Ν config 縺ｫ縺､縺・※螳｣險螂醍ｴ・ｒ螳溯｣・☆繧具ｼ・ub 繧偵メ繝｣繝阪Ν id 縺ｨ縺励※螳｣險縲√メ繝｣繝阪Ν id validation 髱樊ｺ匁侠縺ｯ螳｣險縺九ｉ髯､螟・+ Editor validation 隴ｦ蜻・窶・險ｺ譁ｭ騾｣逡ｪ id 縺ｮ隕冗ｴ・紛蜷茨ｼ・  - rec 譖ｸ縺榊・縺励・ gaze 蛻・｡槭ｒ縲継rofile 縺ｮ繝√Ε繝阪Ν id 髮・粋 + distinct 譏守､ｺ蛟､ ﾃ・隕冗ｴ・ヱ繝ｼ繧ｹ縲阪・繝ｼ繧ｹ縺ｸ鄂ｮ謠帙☆繧具ｼ郁ｦ冗ｴ・粋謌・id 繧貞・鬘槭〒縺阪↑縺・樟陦後・遨ｴ繧定ｧ｣豸茨ｼ・  - 繝・せ繝医〒縲瑚ｦ冗ｴ・粋謌・id / distinct 譏守､ｺ / 髱・gaze sub 縺ｮ 3 邉ｻ蛻・｡槭阪梧眠隕冗ｴ・gaze 繝√Ε繝阪Ν繧貞性繧 rec 險倬鹸縺ｮ豁｣蛻・｡槭・譖ｸ縺榊・縺励阪荊akeover 讀懆ｨｼ縺ｨ髱樊ｺ匁侠隴ｦ蜻翫阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 4.2_
   - _Boundary: TimelineAdapterBinding, RecToTimelineExporter_
   - _Depends: 1.2, 1.3_
 
-## Inspector: 目線タブ再設計と旧導線の全撤去
+## Inspector: 逶ｮ邱壹ち繝門・險ｭ險医→譌ｧ蟆守ｷ壹・蜈ｨ謦､蜴ｻ
 
-- [ ] 6. Inspector: 目線タブ 1 か所完結・自動解決・旧構造一掃（本 spec 最大の変更面積。段階削除で進める）
-
-- [x] 6.1 provider 列挙 helper と入力ソースドロップダウンを実装する
-  - 割当済み binding（SerializeReference 走査）から宣言 provider を列挙する Editor helper を、既存のソースポート列挙前例と同型で EditMode テスト可能な形に切り出す
-  - チャネルごとの入力ソースドロップダウン: 「自動」既定 + 宣言 provider の列挙（表示は binding displayName + slug、選択値は providerSlug へ保存、ワイルドカード宣言 provider は全チャネルの選択肢に表示）
-  - EditMode テストで「provider 列挙（宣言あり / なし / ワイルドカード）」「選択値の providerSlug 保存」が緑になる (観測可能な完了条件)
+- [ ] 6. Inspector: 逶ｮ邱壹ち繝・1 縺区園螳檎ｵ舌・閾ｪ蜍戊ｧ｣豎ｺ繝ｻ譌ｧ讒矩荳謗・ｼ域悽 spec 譛螟ｧ縺ｮ螟画峩髱｢遨阪よｮｵ髫主炎髯､縺ｧ騾ｲ繧√ｋ・・
+- [x] 6.1 provider 蛻玲嫌 helper 縺ｨ蜈･蜉帙た繝ｼ繧ｹ繝峨Ο繝・・繝繧ｦ繝ｳ繧貞ｮ溯｣・☆繧・  - 蜑ｲ蠖捺ｸ医∩ binding・・erializeReference 襍ｰ譟ｻ・峨°繧牙ｮ｣險 provider 繧貞・謖吶☆繧・Editor helper 繧偵∵里蟄倥・繧ｽ繝ｼ繧ｹ繝昴・繝亥・謖吝燕萓九→蜷悟梛縺ｧ EditMode 繝・せ繝亥庄閭ｽ縺ｪ蠖｢縺ｫ蛻・ｊ蜃ｺ縺・  - 繝√Ε繝阪Ν縺斐→縺ｮ蜈･蜉帙た繝ｼ繧ｹ繝峨Ο繝・・繝繧ｦ繝ｳ: 縲瑚・蜍輔肴里螳・+ 螳｣險 provider 縺ｮ蛻玲嫌・郁｡ｨ遉ｺ縺ｯ binding displayName + slug縲・∈謚槫､縺ｯ providerSlug 縺ｸ菫晏ｭ倥√Ρ繧､繝ｫ繝峨き繝ｼ繝牙ｮ｣險 provider 縺ｯ蜈ｨ繝√Ε繝阪Ν縺ｮ驕ｸ謚櫁い縺ｫ陦ｨ遉ｺ・・  - EditMode 繝・せ繝医〒縲継rovider 蛻玲嫌・亥ｮ｣險縺ゅｊ / 縺ｪ縺・/ 繝ｯ繧､繝ｫ繝峨き繝ｼ繝会ｼ峨阪碁∈謚槫､縺ｮ providerSlug 菫晏ｭ倥阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 4.3, 4.8_
 
-- [ ] 6.2 目線タブ本体（チャネルリスト・既定保護・上級 foldout・legacy HelpBox）を実装する
-  - 目線タブを「legacy 検出 HelpBox（移行ガイド誘導 + 旧データクリアボタン）/ 参照モデル / チャネルリスト / チャネル本体（入力ソース・目ボーン・可動角）/ 上級 foldout（distinct 左右 id・初期回転・軸）」で構成し、gaze の全設定を 1 か所で編集可能にする
-  - チャネルリスト: 先頭 = 既定チャネル（id 非編集・削除ボタン非表示のラベル表示）、追加チャネルは id validation（規約 helper）+ リスト内重複禁止 + 削除可、「チャネルを追加」は上級者向け折りたたみ内に配置
-  - 既定構成（規約チャネル 1 件 + 「自動」）では上級設定を前面に出さず、目ボーンと入力ソース選択が主要操作となる表示にする
-  - すべての編集を既存 SerializedObject / Undo パイプライン経由とし、OnEnable で既定チャネル不変条件を SerializedProperty 上で修復する
-  - EditMode テストで「既定チャネル保護（削除・id 編集不可）validation」「追加 id validation / 重複禁止」「legacy HelpBox 表示条件とクリアボタンの stale 行除去」が緑になる（UIToolkit の panel 未接続制約に留意しロジックは helper へ抽出。既知の disposed SerializedObject ガードを維持） (観測可能な完了条件)
+- [x] 6.2 逶ｮ邱壹ち繝匁悽菴難ｼ医メ繝｣繝阪Ν繝ｪ繧ｹ繝医・譌｢螳壻ｿ晁ｭｷ繝ｻ荳顔ｴ・foldout繝ｻlegacy HelpBox・峨ｒ螳溯｣・☆繧・  - 逶ｮ邱壹ち繝悶ｒ縲畦egacy 讀懷・ HelpBox・育ｧｻ陦後ぎ繧､繝芽ｪ伜ｰ・+ 譌ｧ繝・・繧ｿ繧ｯ繝ｪ繧｢繝懊ち繝ｳ・・ 蜿ら・繝｢繝・Ν / 繝√Ε繝阪Ν繝ｪ繧ｹ繝・/ 繝√Ε繝阪Ν譛ｬ菴難ｼ亥・蜉帙た繝ｼ繧ｹ繝ｻ逶ｮ繝懊・繝ｳ繝ｻ蜿ｯ蜍戊ｧ抵ｼ・ 荳顔ｴ・foldout・・istinct 蟾ｦ蜿ｳ id繝ｻ蛻晄悄蝗櫁ｻ｢繝ｻ霆ｸ・峨阪〒讒区・縺励“aze 縺ｮ蜈ｨ險ｭ螳壹ｒ 1 縺区園縺ｧ邱ｨ髮・庄閭ｽ縺ｫ縺吶ｋ
+  - 繝√Ε繝阪Ν繝ｪ繧ｹ繝・ 蜈磯ｭ = 譌｢螳壹メ繝｣繝阪Ν・・d 髱樒ｷｨ髮・・蜑企勁繝懊ち繝ｳ髱櫁｡ｨ遉ｺ縺ｮ繝ｩ繝吶Ν陦ｨ遉ｺ・峨∬ｿｽ蜉繝√Ε繝阪Ν縺ｯ id validation・郁ｦ冗ｴ・helper・・ 繝ｪ繧ｹ繝亥・驥崎､・ｦ∵ｭ｢ + 蜑企勁蜿ｯ縲√後メ繝｣繝阪Ν繧定ｿｽ蜉縲阪・荳顔ｴ夊・髄縺第釜繧翫◆縺溘∩蜀・↓驟咲ｽｮ
+  - 譌｢螳壽ｧ区・・郁ｦ冗ｴ・メ繝｣繝阪Ν 1 莉ｶ + 縲瑚・蜍輔搾ｼ峨〒縺ｯ荳顔ｴ夊ｨｭ螳壹ｒ蜑埼擇縺ｫ蜃ｺ縺輔★縲∫岼繝懊・繝ｳ縺ｨ蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭′荳ｻ隕∵桃菴懊→縺ｪ繧玖｡ｨ遉ｺ縺ｫ縺吶ｋ
+  - 縺吶∋縺ｦ縺ｮ邱ｨ髮・ｒ譌｢蟄・SerializedObject / Undo 繝代う繝励Λ繧､繝ｳ邨檎罰縺ｨ縺励＾nEnable 縺ｧ譌｢螳壹メ繝｣繝阪Ν荳榊､画擅莉ｶ繧・SerializedProperty 荳翫〒菫ｮ蠕ｩ縺吶ｋ
+  - EditMode 繝・せ繝医〒縲梧里螳壹メ繝｣繝阪Ν菫晁ｭｷ・亥炎髯､繝ｻid 邱ｨ髮・ｸ榊庄・益alidation縲阪瑚ｿｽ蜉 id validation / 驥崎､・ｦ∵ｭ｢縲阪畦egacy HelpBox 陦ｨ遉ｺ譚｡莉ｶ縺ｨ繧ｯ繝ｪ繧｢繝懊ち繝ｳ縺ｮ stale 陦碁勁蜴ｻ縲阪′邱代↓縺ｪ繧具ｼ・IToolkit 縺ｮ panel 譛ｪ謗･邯壼宛邏・↓逡呎э縺励Ο繧ｸ繝・け縺ｯ helper 縺ｸ謚ｽ蜃ｺ縲よ里遏･縺ｮ disposed SerializedObject 繧ｬ繝ｼ繝峨ｒ邯ｭ謖・ｼ・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 1.3, 1.5, 2.7_
 
-- [ ] 6.3 目ボーン自動解決の自動実行と Animator 起点フルパス保存を実装する
-  - 参照モデルの変更（null → 非 null / 別モデル）を検知して自動解決を自動実行する（現行の `*` マーク表示のみの置換）。自動実行は空の bone path フィールドのみ補完し、手動編集済み非空 path は上書きしない
-  - path 生成は参照モデル内 Animator の Transform 起点の階層パス（`/` 区切り）で保存する（旧 backlog S-1 の単純名保存問題の解消。Animator 不在時は参照モデル root 起点 + 注意ログ）。Humanoid → 名前ヒューリスティックの 2 段解決は現行維持
-  - 明示的な再解決操作（チャネル別 / 一括、上書き確認あり）を提供し、解決不能時は HelpBox で明示 + 手動設定の手掛かり（Humanoid マッピング / 命名規則 / path 直接入力）を案内する
-  - EditMode テストで「自動実行の発火条件」「非空 path の非上書き」「Animator 起点の path 生成」「解決不能時の案内表示条件」が緑になる (観測可能な完了条件)
+- [ ] 6.3 逶ｮ繝懊・繝ｳ閾ｪ蜍戊ｧ｣豎ｺ縺ｮ閾ｪ蜍募ｮ溯｡後→ Animator 襍ｷ轤ｹ繝輔Ν繝代せ菫晏ｭ倥ｒ螳溯｣・☆繧・  - 蜿ら・繝｢繝・Ν縺ｮ螟画峩・・ull 竊・髱・null / 蛻･繝｢繝・Ν・峨ｒ讀懃衍縺励※閾ｪ蜍戊ｧ｣豎ｺ繧定・蜍募ｮ溯｡後☆繧具ｼ育樟陦後・ `*` 繝槭・繧ｯ陦ｨ遉ｺ縺ｮ縺ｿ縺ｮ鄂ｮ謠幢ｼ峨り・蜍募ｮ溯｡後・遨ｺ縺ｮ bone path 繝輔ぅ繝ｼ繝ｫ繝峨・縺ｿ陬懷ｮ後＠縲∵焔蜍慕ｷｨ髮・ｸ医∩髱樒ｩｺ path 縺ｯ荳頑嶌縺阪＠縺ｪ縺・  - path 逕滓・縺ｯ蜿ら・繝｢繝・Ν蜀・Animator 縺ｮ Transform 襍ｷ轤ｹ縺ｮ髫主ｱ､繝代せ・・/` 蛹ｺ蛻・ｊ・峨〒菫晏ｭ倥☆繧具ｼ域立 backlog S-1 縺ｮ蜊倡ｴ泌錐菫晏ｭ伜撫鬘後・隗｣豸医・nimator 荳榊惠譎ゅ・蜿ら・繝｢繝・Ν root 襍ｷ轤ｹ + 豕ｨ諢上Ο繧ｰ・峨・umanoid 竊・蜷榊燕繝偵Η繝ｼ繝ｪ繧ｹ繝・ぅ繝・け縺ｮ 2 谿ｵ隗｣豎ｺ縺ｯ迴ｾ陦檎ｶｭ謖・  - 譏守､ｺ逧・↑蜀崎ｧ｣豎ｺ謫堺ｽ懶ｼ医メ繝｣繝阪Ν蛻･ / 荳諡ｬ縲∽ｸ頑嶌縺咲｢ｺ隱阪≠繧奇ｼ峨ｒ謠蝉ｾ帙＠縲∬ｧ｣豎ｺ荳崎・譎ゅ・ HelpBox 縺ｧ譏守､ｺ + 謇句虚險ｭ螳壹・謇区寺縺九ｊ・・umanoid 繝槭ャ繝斐Φ繧ｰ / 蜻ｽ蜷崎ｦ丞援 / path 逶ｴ謗･蜈･蜉幢ｼ峨ｒ譯亥・縺吶ｋ
+  - EditMode 繝・せ繝医〒縲瑚・蜍募ｮ溯｡後・逋ｺ轣ｫ譚｡莉ｶ縲阪碁撼遨ｺ path 縺ｮ髱樔ｸ頑嶌縺阪阪窟nimator 襍ｷ轤ｹ縺ｮ path 逕滓・縲阪瑚ｧ｣豎ｺ荳崎・譎ゅ・譯亥・陦ｨ遉ｺ譚｡莉ｶ縲阪′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 6.4 旧導線・孤児削除・isGaze validation を撤去し旧型を一掃する
-  - 孤児 GazeConfig 削除の 3 トリガ一式 / 隠し dropdown デッドパス / isGaze Toggle 行 UI と連動 validation / GazeConfig 生成 3 導線 / gaze 候補列挙 / look* の UI・validation を撤去し、表情ライブラリタブから gaze 関連 UI を完全に除去する
-  - 依存側の置換完了を受けて、旧型（GazeBindingConfig / 旧 resolver / 旧 gaze config DTO）と Spec 1 の Adapters 側合成 helper・side enum を削除する（解決結果型は後継 resolver へ移設済みであること）
-  - 旧構造（isGaze / SO ルート gaze config リスト / 生成 3 導線）を参照するコードがプロジェクト全体でゼロになり、Editor asmdef 含む全 asmdef がコンパイル可能で Editor テストが緑になる (観測可能な完了条件)
+- [ ] 6.4 譌ｧ蟆守ｷ壹・蟄､蜈仙炎髯､繝ｻisGaze validation 繧呈彫蜴ｻ縺玲立蝙九ｒ荳謗・☆繧・  - 蟄､蜈・GazeConfig 蜑企勁縺ｮ 3 繝医Μ繧ｬ荳蠑・/ 髫縺・dropdown 繝・ャ繝峨ヱ繧ｹ / isGaze Toggle 陦・UI 縺ｨ騾｣蜍・validation / GazeConfig 逕滓・ 3 蟆守ｷ・/ gaze 蛟呵｣懷・謖・/ look* 縺ｮ UI繝ｻvalidation 繧呈彫蜴ｻ縺励∬｡ｨ諠・Λ繧､繝悶Λ繝ｪ繧ｿ繝悶°繧・gaze 髢｢騾｣ UI 繧貞ｮ悟・縺ｫ髯､蜴ｻ縺吶ｋ
+  - 萓晏ｭ伜・縺ｮ鄂ｮ謠帛ｮ御ｺ・ｒ蜿励￠縺ｦ縲∵立蝙具ｼ・azeBindingConfig / 譌ｧ resolver / 譌ｧ gaze config DTO・峨→ Spec 1 縺ｮ Adapters 蛛ｴ蜷域・ helper繝ｻside enum 繧貞炎髯､縺吶ｋ・郁ｧ｣豎ｺ邨先棡蝙九・蠕檎ｶ・resolver 縺ｸ遘ｻ險ｭ貂医∩縺ｧ縺ゅｋ縺薙→・・  - 譌ｧ讒矩・・sGaze / SO 繝ｫ繝ｼ繝・gaze config 繝ｪ繧ｹ繝・/ 逕滓・ 3 蟆守ｷ夲ｼ峨ｒ蜿ら・縺吶ｋ繧ｳ繝ｼ繝峨′繝励Ο繧ｸ繧ｧ繧ｯ繝亥・菴薙〒繧ｼ繝ｭ縺ｫ縺ｪ繧翫・ditor asmdef 蜷ｫ繧蜈ｨ asmdef 縺後さ繝ｳ繝代う繝ｫ蜿ｯ閭ｽ縺ｧ Editor 繝・せ繝医′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 9.2_
   - _Depends: 4.2, 5.1, 5.2, 5.3, 5.5_
 
-## サンプル・ドキュメント: 新スキーマ追従と移行ガイド
-
-- [ ] 7. サンプル・ドキュメント: 4+ 系統のアセット更新と破壊的変更の文書化
-
-- [ ] 7.1 (P) OSC 2 サンプルと MultiSourceBlendDemo を新スキーマへ更新する
-  - MultiSourceBlendDemo / OscOutputDemo / OscReceiverDemo の Profile アセットと対応 profile.json を新スキーマ（Gaze セクション、isGaze / gaze_configs なし）へ更新する。gaze 構成は既定チャネル `"gaze"` + 入力ソース選択のみとし上級設定を使用しない
-  - OscOutputDemo の options JSON から廃止済み gaze id キーを除去する
-  - 各サンプル README を新しい gaze 設定手順（Gaze セクション + 入力ソース選択）へ更新する
-  - **M-28 交差の注記**: MultiSourceBlendDemo 更新は pre-existing 赤 `SampleAssetsAreInSyncTests` 4 件と交差するが M-28 は取り込まず、当該 4 件は FAIL 判定から除外する（Req 12.6）
-  - 3 サンプルの Profile / JSON が新スキーマで読み込まれ、旧スキーマ警告が出ない構成になっている（起動動作確認はタスク 8.4） (観測可能な完了条件)
+## 繧ｵ繝ｳ繝励Ν繝ｻ繝峨く繝･繝｡繝ｳ繝・ 譁ｰ繧ｹ繧ｭ繝ｼ繝櫁ｿｽ蠕薙→遘ｻ陦後ぎ繧､繝・
+- [ ] 7. 繧ｵ繝ｳ繝励Ν繝ｻ繝峨く繝･繝｡繝ｳ繝・ 4+ 邉ｻ邨ｱ縺ｮ繧｢繧ｻ繝・ヨ譖ｴ譁ｰ縺ｨ遐ｴ螢顔噪螟画峩縺ｮ譁・嶌蛹・
+- [ ] 7.1 (P) OSC 2 繧ｵ繝ｳ繝励Ν縺ｨ MultiSourceBlendDemo 繧呈眠繧ｹ繧ｭ繝ｼ繝槭∈譖ｴ譁ｰ縺吶ｋ
+  - MultiSourceBlendDemo / OscOutputDemo / OscReceiverDemo 縺ｮ Profile 繧｢繧ｻ繝・ヨ縺ｨ蟇ｾ蠢・profile.json 繧呈眠繧ｹ繧ｭ繝ｼ繝橸ｼ・aze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ縲（sGaze / gaze_configs 縺ｪ縺暦ｼ峨∈譖ｴ譁ｰ縺吶ｋ縲Ｈaze 讒区・縺ｯ譌｢螳壹メ繝｣繝阪Ν `"gaze"` + 蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭・縺ｿ縺ｨ縺嶺ｸ顔ｴ夊ｨｭ螳壹ｒ菴ｿ逕ｨ縺励↑縺・  - OscOutputDemo 縺ｮ options JSON 縺九ｉ蟒・ｭ｢貂医∩ gaze id 繧ｭ繝ｼ繧帝勁蜴ｻ縺吶ｋ
+  - 蜷・し繝ｳ繝励Ν README 繧呈眠縺励＞ gaze 險ｭ螳壽焔鬆・ｼ・aze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ + 蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚橸ｼ峨∈譖ｴ譁ｰ縺吶ｋ
+  - **M-28 莠､蟾ｮ縺ｮ豕ｨ險・*: MultiSourceBlendDemo 譖ｴ譁ｰ縺ｯ pre-existing 襍､ `SampleAssetsAreInSyncTests` 4 莉ｶ縺ｨ莠､蟾ｮ縺吶ｋ縺・M-28 縺ｯ蜿悶ｊ霎ｼ縺ｾ縺壹∝ｽ楢ｩｲ 4 莉ｶ縺ｯ FAIL 蛻､螳壹°繧蛾勁螟悶☆繧具ｼ・eq 12.6・・  - 3 繧ｵ繝ｳ繝励Ν縺ｮ Profile / JSON 縺梧眠繧ｹ繧ｭ繝ｼ繝槭〒隱ｭ縺ｿ霎ｼ縺ｾ繧後∵立繧ｹ繧ｭ繝ｼ繝櫁ｭｦ蜻翫′蜃ｺ縺ｪ縺・ｧ区・縺ｫ縺ｪ縺｣縺ｦ縺・ｋ・郁ｵｷ蜍募虚菴懃｢ｺ隱阪・繧ｿ繧ｹ繧ｯ 8.4・・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.6, 11.6_
   - _Boundary: MultiSourceBlendDemo, OscOutputDemo, OscReceiverDemo_
 
-- [ ] 7.2 (P) iFacialMocap demo と lipsync 2 サンプルの stale アセットを更新する
-  - iFM demo README の旧手順（GazeBindingConfig での目ボーン結線）を新手順（追加設定なしで既定チャネルに接続 + 目ボーン設定のみ）へ置換する
-  - iFM demo / MicLipSyncDemo / AnimationClipLipSyncDemo の Profile アセットを再保存し stale な旧キー行を除去する（新キーの空リスト行が残るのは仕様）
-  - アセット diff で旧キー `_gazeConfigs` 行が 3 アセットから消えている (観測可能な完了条件)
+- [ ] 7.2 (P) iFacialMocap demo 縺ｨ lipsync 2 繧ｵ繝ｳ繝励Ν縺ｮ stale 繧｢繧ｻ繝・ヨ繧呈峩譁ｰ縺吶ｋ
+  - iFM demo README 縺ｮ譌ｧ謇矩・ｼ・azeBindingConfig 縺ｧ縺ｮ逶ｮ繝懊・繝ｳ邨千ｷ夲ｼ峨ｒ譁ｰ謇矩・ｼ郁ｿｽ蜉險ｭ螳壹↑縺励〒譌｢螳壹メ繝｣繝阪Ν縺ｫ謗･邯・+ 逶ｮ繝懊・繝ｳ險ｭ螳壹・縺ｿ・峨∈鄂ｮ謠帙☆繧・  - iFM demo / MicLipSyncDemo / AnimationClipLipSyncDemo 縺ｮ Profile 繧｢繧ｻ繝・ヨ繧貞・菫晏ｭ倥＠ stale 縺ｪ譌ｧ繧ｭ繝ｼ陦後ｒ髯､蜴ｻ縺吶ｋ・域眠繧ｭ繝ｼ縺ｮ遨ｺ繝ｪ繧ｹ繝郁｡後′谿九ｋ縺ｮ縺ｯ莉墓ｧ假ｼ・  - 繧｢繧ｻ繝・ヨ diff 縺ｧ譌ｧ繧ｭ繝ｼ `_gazeConfigs` 陦後′ 3 繧｢繧ｻ繝・ヨ縺九ｉ豸医∴縺ｦ縺・ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 12.5_
   - _Boundary: IFacialMocapReceiverDemo, MicLipSyncDemo, AnimationClipLipSyncDemo_
 
-- [ ] 7.3 (P) 移行ガイドと CHANGELOG を破壊的変更へ追従させる
-  - migration-guide の陳腐化節（存在しない型 `InputSystemGazeBinding` / `_gazeInputBindings` を参照する L232-273 相当）を除去し、新スキーマへの移行手順に置き換える: SO / JSON 両経路の再設定手順、isGaze ダミー Expression の削除手順、InputSystem gaze entry の expressionId → チャネル id 読み替え、options JSON キー削除、distinct 上級構成で actionName 由来 id が解決不能になる注意、.fcrec 記録済みデータの旧 id 残存の既知事項、第三者 binding の interface 実装手順
-  - Fork 実機（`D:\Unvgi\Repositries\UnvgiFacialVerification`）の Profile が同手順の対象であることを明示する（手動再設定方針 = D-3。自動マイグレータなし）
-  - core + 変更拡張（osc / inputsystem / ifacialmocap / timeline）の CHANGELOG に Breaking changes を記録する（isGaze 廃止 / Gaze セクション統合 / JSON スキーマ変更 / GazeSnapshot の id リネーム / 送信側旧 API・options キー廃止 / InputSystem 登録流儀変更）
-  - 移行ガイドから旧型参照が消え、旧データ保有者が再設定手順を辿れる状態になっている (観測可能な完了条件)
+- [ ] 7.3 (P) 遘ｻ陦後ぎ繧､繝峨→ CHANGELOG 繧堤ｴ螢顔噪螟画峩縺ｸ霑ｽ蠕薙＆縺帙ｋ
+  - migration-guide 縺ｮ髯ｳ閻仙喧遽・亥ｭ伜惠縺励↑縺・梛 `InputSystemGazeBinding` / `_gazeInputBindings` 繧貞盾辣ｧ縺吶ｋ L232-273 逶ｸ蠖難ｼ峨ｒ髯､蜴ｻ縺励∵眠繧ｹ繧ｭ繝ｼ繝槭∈縺ｮ遘ｻ陦梧焔鬆・↓鄂ｮ縺肴鋤縺医ｋ: SO / JSON 荳｡邨瑚ｷｯ縺ｮ蜀崎ｨｭ螳壽焔鬆・（sGaze 繝繝溘・ Expression 縺ｮ蜑企勁謇矩・！nputSystem gaze entry 縺ｮ expressionId 竊・繝√Ε繝阪Ν id 隱ｭ縺ｿ譖ｿ縺医｛ptions JSON 繧ｭ繝ｼ蜑企勁縲‥istinct 荳顔ｴ壽ｧ区・縺ｧ actionName 逕ｱ譚･ id 縺瑚ｧ｣豎ｺ荳崎・縺ｫ縺ｪ繧区ｳｨ諢上・fcrec 險倬鹸貂医∩繝・・繧ｿ縺ｮ譌ｧ id 谿句ｭ倥・譌｢遏･莠矩・∫ｬｬ荳芽・binding 縺ｮ interface 螳溯｣・焔鬆・  - Fork 螳滓ｩ滂ｼ・D:\Unvgi\Repositries\UnvgiFacialVerification`・峨・ Profile 縺悟酔謇矩・・蟇ｾ雎｡縺ｧ縺ゅｋ縺薙→繧呈・遉ｺ縺吶ｋ・域焔蜍募・險ｭ螳壽婿驥・= D-3縲り・蜍輔・繧､繧ｰ繝ｬ繝ｼ繧ｿ縺ｪ縺暦ｼ・  - core + 螟画峩諡｡蠑ｵ・・sc / inputsystem / ifacialmocap / timeline・峨・ CHANGELOG 縺ｫ Breaking changes 繧定ｨ倬鹸縺吶ｋ・・sGaze 蟒・ｭ｢ / Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ邨ｱ蜷・/ JSON 繧ｹ繧ｭ繝ｼ繝槫､画峩 / GazeSnapshot 縺ｮ id 繝ｪ繝阪・繝 / 騾∽ｿ｡蛛ｴ譌ｧ API繝ｻoptions 繧ｭ繝ｼ蟒・ｭ｢ / InputSystem 逋ｻ骭ｲ豬∝о螟画峩・・  - 遘ｻ陦後ぎ繧､繝峨°繧画立蝙句盾辣ｧ縺梧ｶ医∴縲∵立繝・・繧ｿ菫晄怏閠・′蜀崎ｨｭ螳壽焔鬆・ｒ霎ｿ繧後ｋ迥ｶ諷九↓縺ｪ縺｣縺ｦ縺・ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 13.1, 13.2, 13.3_
   - _Boundary: migration-guide, CHANGELOG_
 
-- [ ] 7.4 (P) mental-model / technical-spec / requirements の gaze 記述を更新する
-  - mental-model と quickstart 系ドキュメントへ新しい gaze 設定手順（Gaze セクション・入力ソース選択・目ボーン自動解決）を反映する
-  - 「目レイヤー = まばたき等の BlendShape 表情（レイヤー合成参加）」「Gaze = ボーン駆動の独立チャネル（レイヤー合成不参加）」の用語分離を明文化し、docs/requirements.md の「目レイヤー = まばたき・目線」記述と整合させる（design Decision 2）
-  - docs/technical-spec.md §12/§17 の gaze_follow / gaze_camera「Expression テンプレート」構想を、procedural gaze 入力ソース切替（S2-3 再解釈）に基づく記述へ更新する
-  - Timeline の gaze チャネル sub は既定チャネル id を推奨とする旨をサンプル / ドキュメントに明記する
-  - 各ドキュメントから新 identity モデル（規約 id・入力ソース選択・レイヤー外チャネル）が一貫して読み取れる (観測可能な完了条件)
+- [ ] 7.4 (P) mental-model / technical-spec / requirements 縺ｮ gaze 險倩ｿｰ繧呈峩譁ｰ縺吶ｋ
+  - mental-model 縺ｨ quickstart 邉ｻ繝峨く繝･繝｡繝ｳ繝医∈譁ｰ縺励＞ gaze 險ｭ螳壽焔鬆・ｼ・aze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ繝ｻ蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭・逶ｮ繝懊・繝ｳ閾ｪ蜍戊ｧ｣豎ｺ・峨ｒ蜿肴丐縺吶ｋ
+  - 縲檎岼繝ｬ繧､繝､繝ｼ = 縺ｾ縺ｰ縺溘″遲峨・ BlendShape 陦ｨ諠・ｼ医Ξ繧､繝､繝ｼ蜷域・蜿ょ刈・峨阪隈aze = 繝懊・繝ｳ鬧・虚縺ｮ迢ｬ遶九メ繝｣繝阪Ν・医Ξ繧､繝､繝ｼ蜷域・荳榊盾蜉・峨阪・逕ｨ隱槫・髮｢繧呈・譁・喧縺励‥ocs/requirements.md 縺ｮ縲檎岼繝ｬ繧､繝､繝ｼ = 縺ｾ縺ｰ縺溘″繝ｻ逶ｮ邱壹崎ｨ倩ｿｰ縺ｨ謨ｴ蜷医＆縺帙ｋ・・esign Decision 2・・  - docs/technical-spec.md ﾂｧ12/ﾂｧ17 縺ｮ gaze_follow / gaze_camera縲窪xpression 繝・Φ繝励Ξ繝ｼ繝医肴ｧ区Φ繧偵｝rocedural gaze 蜈･蜉帙た繝ｼ繧ｹ蛻・崛・・2-3 蜀崎ｧ｣驥茨ｼ峨↓蝓ｺ縺･縺剰ｨ倩ｿｰ縺ｸ譖ｴ譁ｰ縺吶ｋ
+  - Timeline 縺ｮ gaze 繝√Ε繝阪Ν sub 縺ｯ譌｢螳壹メ繝｣繝阪Ν id 繧呈耳螂ｨ縺ｨ縺吶ｋ譌ｨ繧偵し繝ｳ繝励Ν / 繝峨く繝･繝｡繝ｳ繝医↓譏手ｨ倥☆繧・  - 蜷・ラ繧ｭ繝･繝｡繝ｳ繝医°繧画眠 identity 繝｢繝・Ν・郁ｦ冗ｴ・id繝ｻ蜈･蜉帙た繝ｼ繧ｹ驕ｸ謚槭・繝ｬ繧､繝､繝ｼ螟悶メ繝｣繝阪Ν・峨′荳雋ｫ縺励※隱ｭ縺ｿ蜿悶ｌ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 13.4, 13.5, 13.6_
   - _Boundary: docs/mental-model.md, docs/technical-spec.md, docs/requirements.md_
 
-## Validation: ゼロ設定 E2E・性能・全体スイープ
-
-- [ ] 8. Validation: OSC ゼロ設定 E2E・統合退行・GC・最終スイープ
-
-- [ ] 8.1 OSC 送受信ゼロ id 設定 E2E を検証する
-  - Spec 1 の決定論方式（受信 handler 直接呼び出し + UDP loopback）を踏襲する
-  - 既定チャネル: 送信側既定 Gaze セクション → 広告 id `"gaze"` → 受信側ゼロ id 設定（既定チャネル + 目ボーン path のみ）→ 目ボーン localRotation 反映まで assert する（Spec 1 D-1 案 (c) の完結 = 残る手動設定が受信側目ボーンのみであることの実証）
-  - 追加チャネル: ユーザー命名 id が広告に載り受信側同名チャネルで解決されることを検証する
-  - 既定構成で突合警告が発火しないこと、広告プロトコル（アドレス・flat pairs payload・chunk 分割規約）が無変更であることをテストで固定する
-  - 上記 PlayMode テスト群が緑になる (観測可能な完了条件)
+## Validation: 繧ｼ繝ｭ險ｭ螳・E2E繝ｻ諤ｧ閭ｽ繝ｻ蜈ｨ菴薙せ繧､繝ｼ繝・
+- [ ] 8. Validation: OSC 繧ｼ繝ｭ險ｭ螳・E2E繝ｻ邨ｱ蜷磯陦後・GC繝ｻ譛邨ゅせ繧､繝ｼ繝・
+- [ ] 8.1 OSC 騾∝女菫｡繧ｼ繝ｭ id 險ｭ螳・E2E 繧呈､懆ｨｼ縺吶ｋ
+  - Spec 1 縺ｮ豎ｺ螳夊ｫ匁婿蠑擾ｼ亥女菫｡ handler 逶ｴ謗･蜻ｼ縺ｳ蜃ｺ縺・+ UDP loopback・峨ｒ雕剰･ｲ縺吶ｋ
+  - 譌｢螳壹メ繝｣繝阪Ν: 騾∽ｿ｡蛛ｴ譌｢螳・Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ 竊・蠎・相 id `"gaze"` 竊・蜿嶺ｿ｡蛛ｴ繧ｼ繝ｭ id 險ｭ螳夲ｼ域里螳壹メ繝｣繝阪Ν + 逶ｮ繝懊・繝ｳ path 縺ｮ縺ｿ・俄・ 逶ｮ繝懊・繝ｳ localRotation 蜿肴丐縺ｾ縺ｧ assert 縺吶ｋ・・pec 1 D-1 譯・(c) 縺ｮ螳檎ｵ・= 谿九ｋ謇句虚險ｭ螳壹′蜿嶺ｿ｡蛛ｴ逶ｮ繝懊・繝ｳ縺ｮ縺ｿ縺ｧ縺ゅｋ縺薙→縺ｮ螳溯ｨｼ・・  - 霑ｽ蜉繝√Ε繝阪Ν: 繝ｦ繝ｼ繧ｶ繝ｼ蜻ｽ蜷・id 縺悟ｺ・相縺ｫ霈峨ｊ蜿嶺ｿ｡蛛ｴ蜷悟錐繝√Ε繝阪Ν縺ｧ隗｣豎ｺ縺輔ｌ繧九％縺ｨ繧呈､懆ｨｼ縺吶ｋ
+  - 譌｢螳壽ｧ区・縺ｧ遯∝粋隴ｦ蜻翫′逋ｺ轣ｫ縺励↑縺・％縺ｨ縲∝ｺ・相繝励Ο繝医さ繝ｫ・医い繝峨Ξ繧ｹ繝ｻflat pairs payload繝ｻchunk 蛻・牡隕冗ｴ・ｼ峨′辟｡螟画峩縺ｧ縺ゅｋ縺薙→繧偵ユ繧ｹ繝医〒蝗ｺ螳壹☆繧・  - 荳願ｨ・PlayMode 繝・せ繝育ｾ､縺檎ｷ代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 11.1, 11.2, 11.3, 11.5_
   - _Depends: 5.1, 5.2_
 
-- [ ] 8.2 iFM / InputSystem / Timeline の統合と既存退行禁止を検証する
-  - iFM: 既定チャネルでの追加設定なし接続（現行互換の登録 id → 目ボーン provider 到達）を PlayMode で検証する
-  - InputSystem: gaze entry（チャネル id 参照）→ 規約 id 登録 → 目ボーン反映、distinct 構成の左右独立を検証する
-  - 既存退行禁止: Spec 1 の広告駆動 E2E 群 / Timeline gaze takeover / rec 書き出しの既存テストが新データモデルで緑のまま維持されることを確認する
-  - 上記 PlayMode シナリオ群が全て緑になる (観測可能な完了条件)
+- [ ] 8.2 iFM / InputSystem / Timeline 縺ｮ邨ｱ蜷医→譌｢蟄倬陦檎ｦ∵ｭ｢繧呈､懆ｨｼ縺吶ｋ
+  - iFM: 譌｢螳壹メ繝｣繝阪Ν縺ｧ縺ｮ霑ｽ蜉險ｭ螳壹↑縺玲磁邯夲ｼ育樟陦御ｺ呈鋤縺ｮ逋ｻ骭ｲ id 竊・逶ｮ繝懊・繝ｳ provider 蛻ｰ驕費ｼ峨ｒ PlayMode 縺ｧ讀懆ｨｼ縺吶ｋ
+  - InputSystem: gaze entry・医メ繝｣繝阪Ν id 蜿ら・・俄・ 隕冗ｴ・id 逋ｻ骭ｲ 竊・逶ｮ繝懊・繝ｳ蜿肴丐縲‥istinct 讒区・縺ｮ蟾ｦ蜿ｳ迢ｬ遶九ｒ讀懆ｨｼ縺吶ｋ
+  - 譌｢蟄倬陦檎ｦ∵ｭ｢: Spec 1 縺ｮ蠎・相鬧・虚 E2E 鄒､ / Timeline gaze takeover / rec 譖ｸ縺榊・縺励・譌｢蟄倥ユ繧ｹ繝医′譁ｰ繝・・繧ｿ繝｢繝・Ν縺ｧ邱代・縺ｾ縺ｾ邯ｭ謖√＆繧後ｋ縺薙→繧堤｢ｺ隱阪☆繧・  - 荳願ｨ・PlayMode 繧ｷ繝翫Μ繧ｪ鄒､縺悟・縺ｦ邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 4.6, 4.7, 10.3, 11.4_
   - _Depends: 5.3, 5.4, 5.5_
 
-- [ ] 8.3 (P) gaze 経路の GC ゼロと自己修復の非再入を検証する
-  - チャネル構成済み状態で snapshot 構築 + 目ボーン適用を 100 フレーム実行し gaze 経路由来の GC allocation が 0 byte であることを検証する（既存 GC テストの新モデル追従）
-  - Gaze セクションアクセサの連続呼び出しで修復済みリストの再確保が発生しないことを検証する
-  - 上記 PlayMode 性能テストが緑になる (観測可能な完了条件)
+- [ ] 8.3 (P) gaze 邨瑚ｷｯ縺ｮ GC 繧ｼ繝ｭ縺ｨ閾ｪ蟾ｱ菫ｮ蠕ｩ縺ｮ髱槫・蜈･繧呈､懆ｨｼ縺吶ｋ
+  - 繝√Ε繝阪Ν讒区・貂医∩迥ｶ諷九〒 snapshot 讒狗ｯ・+ 逶ｮ繝懊・繝ｳ驕ｩ逕ｨ繧・100 繝輔Ξ繝ｼ繝螳溯｡後＠ gaze 邨瑚ｷｯ逕ｱ譚･縺ｮ GC allocation 縺・0 byte 縺ｧ縺ゅｋ縺薙→繧呈､懆ｨｼ縺吶ｋ・域里蟄・GC 繝・せ繝医・譁ｰ繝｢繝・Ν霑ｽ蠕難ｼ・  - Gaze 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ繧｢繧ｯ繧ｻ繧ｵ縺ｮ騾｣邯壼他縺ｳ蜃ｺ縺励〒菫ｮ蠕ｩ貂医∩繝ｪ繧ｹ繝医・蜀咲｢ｺ菫昴′逋ｺ逕溘＠縺ｪ縺・％縺ｨ繧呈､懆ｨｼ縺吶ｋ
+  - 荳願ｨ・PlayMode 諤ｧ閭ｽ繝・せ繝医′邱代↓縺ｪ繧・(隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 1.1, 1.4_
-  - _Boundary: 性能テスト（core PlayMode/Performance）_
+  - _Boundary: 諤ｧ閭ｽ繝・せ繝茨ｼ・ore PlayMode/Performance・雲
   - _Depends: 4.2_
 
-- [ ] 8.4 全体スイープとスコープ遵守の最終確認を実施する
-  - EditMode / PlayMode の全テストを batchmode で実行し、本 spec の変更起因の赤がゼロであることを確認する（冒頭一覧の pre-existing 赤は 1.1 のベースラインと突合して除外判定。M-28 は Req 12.6 どおり不取り込み）
-  - 3 サンプル Scene の起動でスキーマ関連の警告・エラーが出ず gaze を含めて動作することを確認する
-  - スコープ外事項（M-13 合成戦略 / M-5 procedural 実装 / Vector3・VRM / 広告プロトコル変更 / M-29 BlendShape gaze 配線）が成果物に混入していないことを確認し、実装中に必要が生じた項目は backlog 記録または新 spec 起票で決着していることを確認する
-  - 全体スイープ結果とスコープ遵守確認が記録され、Fork 実機 Profile の再設定が spec 外フォローアップとして引き継がれている (観測可能な完了条件)
+- [ ] 8.4 蜈ｨ菴薙せ繧､繝ｼ繝励→繧ｹ繧ｳ繝ｼ繝鈴・螳医・譛邨ら｢ｺ隱阪ｒ螳滓命縺吶ｋ
+  - EditMode / PlayMode 縺ｮ蜈ｨ繝・せ繝医ｒ batchmode 縺ｧ螳溯｡後＠縲∵悽 spec 縺ｮ螟画峩襍ｷ蝗縺ｮ襍､縺後ぞ繝ｭ縺ｧ縺ゅｋ縺薙→繧堤｢ｺ隱阪☆繧具ｼ亥・鬆ｭ荳隕ｧ縺ｮ pre-existing 襍､縺ｯ 1.1 縺ｮ繝吶・繧ｹ繝ｩ繧､繝ｳ縺ｨ遯∝粋縺励※髯､螟門愛螳壹・-28 縺ｯ Req 12.6 縺ｩ縺翫ｊ荳榊叙繧願ｾｼ縺ｿ・・  - 3 繧ｵ繝ｳ繝励Ν Scene 縺ｮ襍ｷ蜍輔〒繧ｹ繧ｭ繝ｼ繝樣未騾｣縺ｮ隴ｦ蜻翫・繧ｨ繝ｩ繝ｼ縺悟・縺・gaze 繧貞性繧√※蜍穂ｽ懊☆繧九％縺ｨ繧堤｢ｺ隱阪☆繧・  - 繧ｹ繧ｳ繝ｼ繝怜､紋ｺ矩・ｼ・-13 蜷域・謌ｦ逡･ / M-5 procedural 螳溯｣・/ Vector3繝ｻVRM / 蠎・相繝励Ο繝医さ繝ｫ螟画峩 / M-29 BlendShape gaze 驟咲ｷ夲ｼ峨′謌先棡迚ｩ縺ｫ豺ｷ蜈･縺励※縺・↑縺・％縺ｨ繧堤｢ｺ隱阪＠縲∝ｮ溯｣・ｸｭ縺ｫ蠢・ｦ√′逕溘§縺滄・岼縺ｯ backlog 險倬鹸縺ｾ縺溘・譁ｰ spec 襍ｷ逾ｨ縺ｧ豎ｺ逹縺励※縺・ｋ縺薙→繧堤｢ｺ隱阪☆繧・  - 蜈ｨ菴薙せ繧､繝ｼ繝礼ｵ先棡縺ｨ繧ｹ繧ｳ繝ｼ繝鈴・螳育｢ｺ隱阪′險倬鹸縺輔ｌ縲：ork 螳滓ｩ・Profile 縺ｮ蜀崎ｨｭ螳壹′ spec 螟悶ヵ繧ｩ繝ｭ繝ｼ繧｢繝・・縺ｨ縺励※蠑輔″邯吶′繧後※縺・ｋ (隕ｳ貂ｬ蜿ｯ閭ｽ縺ｪ螳御ｺ・擅莉ｶ)
   - _Requirements: 12.2, 12.6, 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
   - _Depends: 7.1, 7.2, 8.1, 8.2_
+
