@@ -56,10 +56,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
     /// </remarks>
     [Serializable]
     [FacialAdapterBinding(displayName: "iFacialMocap Receiver")]
-    public sealed class IFacialMocapReceiverAdapterBinding : AdapterBindingBase
+    public sealed class IFacialMocapReceiverAdapterBinding : AdapterBindingBase, IGazeSourceProvider
     {
-        public const string GazeLeftSub = "gaze.left";
-        public const string GazeRightSub = "gaze.right";
         public const string HeadSub = "head";
 
         private const int HeadAxisCountRotationOnly = 3;
@@ -186,6 +184,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         public bool IsStarted => _started;
 
+        /// <inheritdoc />
+        public IEnumerable<GazeSourceDeclaration> GetGazeSourceDeclarations()
+        {
+            yield return new GazeSourceDeclaration(GazeSourceIdConvention.DefaultChannelId, true);
+        }
+
         /// <summary>テスト/診断用に設定とマッピングを流し込む。</summary>
         public void Configure(IFacialMocapRuntimeSettingsSO settings, List<IFacialMocapBlendShapeMapping> mappings = null)
         {
@@ -258,8 +262,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
             if (settings.EnableGaze)
             {
-                _gazeLeft = RegisterGazeSource(slug, GazeLeftSub);
-                _gazeRight = RegisterGazeSource(slug, GazeRightSub);
+                _gazeLeft = RegisterGazeSource(slug, GazeSide.Left);
+                _gazeRight = RegisterGazeSource(slug, GazeSide.Right);
                 registeredAny |= _gazeLeft != null || _gazeRight != null;
             }
 
@@ -387,9 +391,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
         }
 
-        private GazeVector2InputSource RegisterGazeSource(AdapterSlug slug, string sub)
+        private GazeVector2InputSource RegisterGazeSource(AdapterSlug slug, GazeSide side)
         {
-            string id = slug.Value + ":" + sub;
+            string sub = GazeSourceIdConvention.ComposeSub(GazeSourceIdConvention.DefaultChannelId, side);
+            string id = GazeSourceIdConvention.Compose(slug.Value, GazeSourceIdConvention.DefaultChannelId, side);
             if (!InputSourceId.TryParse(id, out InputSourceId sourceId))
             {
                 Debug.LogWarning(
@@ -533,8 +538,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             if (_registry != null && _slug.Value != null)
             {
                 _registry.Unregister(_slug);
-                _registry.Unregister(_slug, GazeLeftSub);
-                _registry.Unregister(_slug, GazeRightSub);
+                _registry.Unregister(
+                    _slug,
+                    GazeSourceIdConvention.ComposeSub(GazeSourceIdConvention.DefaultChannelId, GazeSide.Left));
+                _registry.Unregister(
+                    _slug,
+                    GazeSourceIdConvention.ComposeSub(GazeSourceIdConvention.DefaultChannelId, GazeSide.Right));
                 _registry.Unregister(_slug, HeadSub);
             }
 

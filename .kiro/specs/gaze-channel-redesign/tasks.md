@@ -145,7 +145,7 @@
   - _Boundary: InputSystemAdapterBinding, InputSystemAdapterBindingDrawer_
   - _Depends: 1.2, 1.3, 4.2_
 
-- [ ] 5.4 (P) iFacialMocap binding のハードコード吸収と宣言実装を行う
+- [x] 5.4 (P) iFacialMocap binding のハードコード吸収と宣言実装を行う
   - 左右 sub のハードコード定数を規約 helper 合成へ置換する（合成結果は現行と同一文字列 = 追加設定なしで既定チャネルに接続される使用感を維持）
   - 宣言契約を実装する（既定チャネル・左右ペアの 1 件宣言）。yaw/pitch 反転等の設定は binding 側に存続させる
   - テストで「登録 id の現行互換（`ifm:gaze.left` / `ifm:gaze.right`）」「宣言内容」が緑になり、既存 iFM テストが緑のまま維持される (観測可能な完了条件)
