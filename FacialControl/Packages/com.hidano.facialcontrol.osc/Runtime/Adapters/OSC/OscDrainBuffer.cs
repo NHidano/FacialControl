@@ -7,6 +7,7 @@ namespace Hidano.FacialControl.Adapters.OSC
     {
         private readonly byte[] _bytes;
         private readonly OscResolvedMessage[] _records;
+        private readonly int[] _lengths;
         private readonly int _slotBytes;
 
         public OscDrainBuffer(in OscReceiveOptions options)
@@ -14,12 +15,20 @@ namespace Hidano.FacialControl.Adapters.OSC
             _slotBytes = options.DatagramSlotBytes;
             _bytes = new byte[options.DatagramSlotBytes * options.DatagramSlotCount];
             _records = new OscResolvedMessage[options.DatagramSlotCount * RecordsPerSlot(options.DatagramSlotBytes)];
+            _lengths = new int[options.DatagramSlotCount];
         }
 
         private static int RecordsPerSlot(int slotBytes) => Math.Max(1, slotBytes / 16);
 
         public int DatagramCount { get; private set; }
         public int RecordCount { get; private set; }
+
+        public ReadOnlySpan<byte> GetDatagram(int index)
+        {
+            if ((uint)index >= (uint)DatagramCount) throw new ArgumentOutOfRangeException(nameof(index));
+            int offset = index * _slotBytes;
+            return new ReadOnlySpan<byte>(_bytes, offset, _lengths[index]);
+        }
 
         public ref readonly OscResolvedMessage GetRecord(int index)
         {
@@ -49,6 +58,7 @@ namespace Hidano.FacialControl.Adapters.OSC
 
             int byteOffset = DatagramCount * _slotBytes;
             datagram.CopyTo(new Span<byte>(_bytes, byteOffset, datagram.Length));
+            _lengths[DatagramCount] = datagram.Length;
             int recordOffset = RecordCount;
             for (int i = 0; i < records.Length; i++)
             {
