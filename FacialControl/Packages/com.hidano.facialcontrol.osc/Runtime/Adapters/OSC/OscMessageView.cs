@@ -11,6 +11,23 @@ namespace Hidano.FacialControl.Adapters.OSC
         public ulong TimestampKey { get; }
         public int ArgumentCount => TypeTags.Length;
 
+        public bool TryGetFirstAsFloat(out float value)
+        {
+            var reader = new OscArgumentReader(TypeTags, Arguments);
+            if (!reader.TryReadNext(out var argument))
+            {
+                value = default;
+                return false;
+            }
+
+            return argument.TryGetFloat(out value);
+        }
+
+        public OscArgumentReader GetArgumentReader()
+        {
+            return new OscArgumentReader(TypeTags, Arguments);
+        }
+
         public OscMessageView(
             ReadOnlySpan<byte> address, ReadOnlySpan<byte> typeTags,
             ReadOnlySpan<byte> arguments, ReadOnlySpan<byte> element, ulong timestampKey)
