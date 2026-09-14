@@ -59,6 +59,39 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
         }
 
         [Test]
+        public void HostConfigure_PropagatesReceiveOptionsBeforeStarting()
+        {
+            int port = AllocatePortRange();
+            var hostObject = new GameObject("OscReceiverHostTest");
+            _hosts.Add(hostObject);
+            var host = hostObject.AddComponent<OscReceiverHost>();
+            var buffer = new OscDoubleBuffer(1);
+            var options = new OscReceiveOptions(512, 4, 8192);
+
+            try
+            {
+                host.Configure(
+                    "127.0.0.1",
+                    port,
+                    buffer,
+                    new[] { new OscMapping("/avatar/parameters/smile", "smile", "emotion") },
+                    null,
+                    BundleInterpretationMode.IndividualMessage,
+                    null,
+                    options);
+
+                Assert.That(host.Receiver, Is.Not.Null);
+                Assert.That(host.Receiver.ReceiveOptions.DatagramSlotBytes, Is.EqualTo(512));
+                Assert.That(host.Receiver.ReceiveOptions.DatagramSlotCount, Is.EqualTo(4));
+                Assert.That(host.Receiver.ReceiveOptions.SocketReceiveBufferBytes, Is.EqualTo(8192));
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
+        }
+
+        [Test]
         public void StartReceiving_PortOccupied_IncrementsPortAndLogsWarning()
         {
             int port = AllocatePortRange();
