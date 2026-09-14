@@ -42,7 +42,7 @@ OSC 受信経路の zero-alloc 化（osc-receive-zero-alloc）。背景: OSC 受
 2. When 受信スレッドが `Socket.ReceiveFrom` でデータグラムを受け取った, the OSC Receiver shall そのデータグラムをリングバッファ上のスロットへ直接書き込み、コピー用の新規 `byte[]` を生成しない。
 3. The OSC Receiver shall データグラムの解析（bundle / message 走査、アドレス解決、値抽出）を受信スレッド上で完了し、メインスレッドのフレーム処理に依存しない。
 4. While 受信スレッドが動作中, the OSC Receiver shall 1 フレーム間に複数のデータグラム（MTU 分割された 2 パケット以上を含む）を受信・解析できる。
-5. When 受信スレッドの処理がリングバッファの空きスロットを使い切った, the OSC Receiver shall ヒープ確保で拡張せず、最古または新着のデータグラムを破棄し、Unity 標準ログの Warning でその事実を一度だけ通知する。
+5. When 受信スレッドの処理がリングバッファの空きスロットを使い切った, the OSC Receiver shall ヒープ確保で拡張せず、最古の未処理データグラムを上書き破棄して最新のデータグラムを優先し、Unity 標準ログの Warning でその事実を一度だけ通知する。
 6. When 受信停止またはコンポーネント破棄が要求された, the OSC Receiver shall 受信スレッドとソケットを確実に終了・解放し、以降のコールバックを発火しない。
 7. The OSC Receiver shall 待受ポートの決定に既存の `OscPortResolver` によるポート自動解決を引き続き使用し、解決結果の意味論を変更しない。
 8. If ソケットのバインドまたは受信で例外が発生した, then the OSC Receiver shall Unity 標準ログ（`Debug.LogWarning` / `Debug.LogError`）で通知し、受信スレッドを安全に終了させ、メインスレッドを停止させない。
