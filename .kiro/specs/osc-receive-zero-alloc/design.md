@@ -145,15 +145,15 @@ Packages/com.hidano.facialcontrol.osc/
 │       │   ├── OscReceiveOptions.cs             # 新規: スロット/リング/ソケット設定（readonly struct）
 │       │   ├── OscReceiveDiagnostics.cs         # 新規: Interlocked カウンタと一度きり警告状態
 │       │   ├── IOscResolvedMessageHandler.cs    # 新規: binding のメインスレッド受け口
-│       │   ├── OscMessageSerializer.cs          # 新規: uOSC.Message → OSC ワイヤ（facade 専用）
+│       │   ├── OscMessageSerializer.cs          # 新規: uOSC.Message → OSC ワイヤ（facade 専用、internal）
 │       │   ├── OscReceiver.cs                   # 変更: ループ所有・テーブル構築・apply・facade
 │       │   ├── OscReceiverHost.cs               # 変更: uOscServer 撤去、Update でドレイン
 │       │   ├── OscBundleAccumulator.cs          # 変更: フレームリストのプール化
 │       │   └── OscAddressFormatter.cs           # 変更: GetOrAddAddressUtf8(pool, address) 追加
 │       ├── AdapterBindings/
 │       │   └── OscReceiverAdapterBinding.cs     # 変更: IOscResolvedMessageHandler 実装、byte fast path、gaze route set
-│       ├── RuntimeSettings/OscRuntimeSettingsSO.cs   # 変更: 受信リング設定（加算）
-│       └── Json/Dto/OscReceiverOptionsDto.cs         # 変更: 同上 DTO（加算、既定値で後方互換）
+│       ├── RuntimeSettings/OscRuntimeSettingsSO.cs   # 変更なし（受信リング設定の公開は backlog）
+│       └── Json/Dto/OscReceiverOptionsDto.cs         # 変更なし
 ├── Tests/
 │   ├── EditMode/Adapters/OSC/
 │   │   ├── OscPacketReaderTests.cs              # 新規: 手組みパケットでの走査・型タグ・不正処理
@@ -166,7 +166,7 @@ Packages/com.hidano.facialcontrol.osc/
 │       ├── Integration/OscUdpReceiveLoopTests.cs       # 新規: bind / 停止 / 溢れ警告 / 不正パケット継続
 │       ├── Integration/OscSendReceiveE2ETests.cs       # 既存維持（新経路で緑）
 │       └── Performance/OscReceiverGCAllocationTests.cs # 置換: UDP loopback + 全スレッド計測
-├── Documentation~/osc-receiver-options.md       # 変更: 受信リング設定の追記
+├── Documentation~/osc-receiver-options.md       # 変更: 受信経路が uOSC 非依存になった旨と診断カウンタの追記
 └── CHANGELOG.md                                 # 変更
 ```
 
@@ -176,7 +176,7 @@ Packages/com.hidano.facialcontrol.osc/
 - `Runtime/Adapters/OSC/OscBundleAccumulator.cs` — `_framePool` を追加し `CompleteCurrentBundleLocked` / `CompleteBareMessagesLocked` / `ApplyFrame` で再利用。`RecordMessage(uOSC.Message, …)` は残す。
 - `Runtime/Adapters/AdapterBindings/OscReceiverAdapterBinding.cs` — `IOscResolvedMessageHandler` を実装（`HandleIncomingOscMessage(in OscMessageView, in OscResolvedMessage)`）。既存 `HandleIncomingOscMessage(uOSC.Message)` は削除せず、内部で `OscReceiver` の facade に委譲するか `[Obsolete]` 相当の互換維持（呼び出し元はリポジトリ内に存在しない）。heartbeat / gaze 広告 / preset のバイト列 unchanged fast path。gaze route を `List<GazeRoute>[] _gazeRouteSets` + `string[] _gazeRouteAddresses` で保持し `Receiver.SetGazeAddresses` へ登録。gaze フレームリストのプール化。
 - `Runtime/Adapters/OSC/OscAddressFormatter.cs` — `GetOrAddAddressUtf8(Dictionary<string, byte[]> pool, string address)` を追加（UTF-8 生成規則は既存と同じ `Encoding.UTF8`）。
-- `Runtime/Adapters/RuntimeSettings/OscRuntimeSettingsSO.cs`、`Runtime/Adapters/Json/Dto/OscReceiverOptionsDto.cs` — `receiveDatagramSlotBytes`（既定 2048）、`receiveDatagramSlotCount`（既定 32）、`receiveSocketBufferBytes`（既定 0 = OS 既定）を加算。既存 JSON は既定値で読める。
+- `Runtime/Adapters/RuntimeSettings/OscRuntimeSettingsSO.cs`、`Runtime/Adapters/Json/Dto/OscReceiverOptionsDto.cs` — 変更なし。受信リング設定は `OscReceiveOptions`（既定 2048 byte × 32、ソケットバッファ OS 既定）をコードから渡す形に留める。
 - `Runtime/Hidano.FacialControl.Osc.asmdef` — 参照変更なし（`uOSC.Runtime` は facade のため維持）。
 
 ## System Flows
@@ -210,6 +210,7 @@ sequenceDiagram
 
 - ドレインは `OscReceiverHost.Update()`（現行 `uOscServer.Update()` と同じフェーズ）。反映順序はデータグラム到着順・データグラム内要素順を保存する。
 - レコードの `TableVersion` が現行テーブルと異なる場合はそのレコードを破棄する（マッピング再構築直後の最大 1 フレーム分）。
+- **マッピング再構築の単一コミット点**：`OscReceiverHost.ReconfigureMappings(buffer, mappings, accumulator)` → `OscReceiver.Reconfigure(buffer, mappings, accumulator)` が、メインスレッド上で (1) 新テーブルを `Version + 1` で構築 → (2) `_buffer` / `_bundleAccumulator` / `_mappings` を差し替え → (3) `Volatile.Write(ref _table, newTable)` の順に**同一メソッド内で連続実行**する。`Apply` と `Reconfigure` は同一スレッド（メイン）なので割り込まれず、受信スレッドは (3) の前後どちらのテーブルで分類しても `TableVersion` によって新旧が判別できる。binding 側の既存順序（`BuildNormalLookup` → `_buffer.Resize` → 新 accumulator → `ReconfigureMappings`）は維持し、`Resize` されたバッファと新テーブルは (2)(3) で同時に公開される。旧版レコードは `Apply` で `StaleRecordCount++` して破棄。
 - `receivedAtSeconds`（bundle timeout 用）は反映時にメインスレッドで `ITimeProvider` / `Time.unscaledTimeAsDouble` から取得する（既存と同一の時刻源）。
 
 ### 溢れ・不正パケット・停止
@@ -234,7 +235,11 @@ flowchart TD
 ```
 
 - 一度きり警告はメインスレッドのドレイン時に各カウンタの「0 → 非 0」遷移で `Debug.LogWarning` する（受信スレッドから警告ログを出さない）。
-- 停止：`StopReceiving()` → `_stopRequested = 1` → `Socket.Close()`（ブロッキング `Receive` を解除）→ `Thread.Join(500 ms)` → リングを `Clear()`。停止後に `PumpReceived()` は no-op。`Faulted` になった受信器はリング残量のドレインだけ行い、再開は `StartReceiving()` の再呼び出しで行う。
+- 停止：`StopReceiving()` → `_stopRequested = 1` → `Socket.Close()`（ブロッキング `Receive` を解除）→ `Thread.Join(500 ms)`。
+  - Join 成功（`State = Stopped`）：リングを `Clear()`。以後 `PumpReceived()` は no-op。`StartReceiving()` で再開可能。
+  - Join タイムアウト（`State = Stopping`）：受信スレッドがまだ予約スロットへ書き込み中の可能性があるため、**リングを `Clear` せず、再利用も破棄もしない**。`StartReceiving()` は `Debug.LogError` して拒否。`Dispose` / `OnDestroy` はリングとループへの参照を保持したまま（受信スレッドが最終的に `Receive` から例外で抜けて `Stopped` へ遷移するまで GC 対象にならない）終了する。ループは `State` が `Stopped` になった時点で自分でリングを `Clear` する。再開は新しい `OscReceiver` / `OscReceiverHost` の生成で行う。
+  - `Faulted` になった受信器はリング残量のドレインだけ行い、再開は `StartReceiving()` の再呼び出しで行う（スレッドは既に終了済み）。
+  - PlayMode `OscUdpReceiveLoopTests` に「`Close` で `Receive` が解除され 500 ms 以内に Join 成功する」を Windows/Mono の契約として含める。解除されない環境が見つかった場合は `Stopping` 経路の安全性（再起動拒否・二重書込なし）を検証する。
 
 ## Requirements Traceability
 
@@ -378,7 +383,7 @@ public struct OscReceiveThreadHooks
 - Invariants: 受信スレッドはスロットバイト・レコード・診断カウンタ・不変テーブル以外に触れない。
 
 ##### State Management
-- State model: `Stopped → Running → (Stopping → Stopped | Faulted)`。
+- State model: `Stopped → Running → (Stopping → Stopped | Faulted)`。`Stopping` は「停止要求済みだが受信スレッドの終了未確認」を表し、この状態では `Start` 拒否・リング不変（上記 停止 契約）。
 - Concurrency strategy: `_stopRequested`（`Volatile`）、`Socket.Close()` で解除。`ObjectDisposedException` / `SocketException(Interrupted, OperationAborted)` は停止要求中なら黙って終了、それ以外は `Debug.LogException` + `Faulted`。
 - `SocketException(MessageSize)` は継続（`OversizedDatagramCount++`）。`ConnectionReset`（Windows の ICMP 到達不能通知）も継続。
 
@@ -395,11 +400,21 @@ public struct OscReceiveThreadHooks
 | Requirements | 1.1, 1.2, 1.4, 1.5 |
 
 **Responsibilities & Constraints**
-- コンストラクタで `byte[SlotCount * SlotBytes]`、`OscResolvedMessage[SlotCount * RecordsPerSlot]`、`SlotHeader[SlotCount]`（length, recordCount, sequence, tableVersion）を一度だけ確保。
-- `TryReserveSlot(out int slot)`：ロック下で tail スロットを予約。空きがなければ head を進めて最古コミット済みを破棄し `DroppedDatagramCount++`。予約中スロットは常に 1 つ。
-- `Commit(slot, length, recordCount, tableVersion)`：ロック下で tail を進める。
-- `Abort(slot)`：受信失敗時に予約解除。
-- `Drain(OscDrainBuffer target)`：ロック下で `[head, tail)` のスロットバイトとレコードを target へ memcpy、head = tail。戻り値はデータグラム数。
+- コンストラクタで `byte[SlotCount * SlotBytes]`、`OscResolvedMessage[SlotCount * RecordsPerSlot]`、`SlotHeader[SlotCount]`（state, length, recordCount, sequence, tableVersion）を一度だけ確保。
+- **スロット状態と索引**：各スロットは `Free / Reserved / Committed` のいずれか。索引は `head`（最古の Committed）、`committedTail`（次に Commit されるべき位置 = `[head, committedTail)` が Committed 列）、`reservedTail`（次に Reserve される位置。`reservedTail == committedTail` なら予約なし、`reservedTail == committedTail + 1` なら 1 スロット Reserved）。すべて単調増加の論理カウンタで、物理索引は `% SlotCount`。
+- **不変条件**：(I1) `head ≤ committedTail ≤ reservedTail ≤ head + SlotCount`。(I2) Reserved スロットは常に高々 1 つで、`Drain` の対象 `[head, committedTail)` に含まれない。(I3) `Drain` / `Clear` は Reserved スロットのバイトに触れない。(I4) Committed 列は Commit 順 = Drain 順。
+- **状態遷移**（すべて `_sync` ロック下）：
+  | 操作 | 事前 | 遷移 | 事後 |
+  |---|---|---|---|
+  | `TryReserveSlot` | 予約なし、`reservedTail − head < SlotCount` | `slot[reservedTail] = Reserved; reservedTail++` | 予約 1 |
+  | `TryReserveSlot`（満杯） | 予約なし、`reservedTail − head == SlotCount` | `slot[head] = Free; head++; DroppedDatagramCount++` の後に通常予約 | 最古 Committed を 1 つ破棄。`head == committedTail` のときは Committed 列が空なので破棄対象がない（`reservedTail − head == SlotCount` かつ予約なしなら必ず Committed 列は満杯のため到達しない） |
+  | `Commit` | `slot == committedTail`、Reserved | `slot = Committed; committedTail++` | 予約なし |
+  | `Abort` | `slot == committedTail`、Reserved | `slot = Free; reservedTail--` | 予約なし |
+  | `Drain` | — | `[head, committedTail)` を target へコピーし `slot = Free; head = committedTail` | Reserved は不変 |
+  | `Clear` | 予約なし（`Stopped` 時のみ） | 全 Free、`head = committedTail = reservedTail` | — |
+- **producer ブロック中の consumer 可視範囲**：受信スレッドが `Reserve` 後に `Socket.Receive` でブロックしている間、consumer は `[head, committedTail)` のみをドレインできる。Reserved スロットは `Commit` されるまで不可視。
+- **wrap-around**：物理索引は `% SlotCount` で計算し、コピーは `[head, committedTail)` が物理的に分断される場合 2 回の memcpy に分ける。
+- `Commit(slot, length, recordCount, tableVersion)` / `Abort(slot)` / `Drain(OscDrainBuffer target)`（戻り値はデータグラム数）は上表のとおり。
 - `CommitExternal(ReadOnlySpan<byte> datagram, OscAddressKeyTable table)`：facade 用。予約 → コピー → `ParseAndClassify` → コミット（メインスレッドから呼ばれる。ロックにより受信スレッドと安全に共存）。
 - `Clear()`：head = tail、予約解除。
 
@@ -427,10 +442,10 @@ public sealed class OscDatagramRing
     public void Clear();
 }
 ```
-- Invariants: `0 ≤ tail − head ≤ SlotCount − 1`（予約スロット分を残す）。コミット順 = ドレイン順。
+- Invariants: 上記 I1〜I4。
 
 **Implementation Notes**
-- Validation: EditMode `OscDatagramRingTests` — 満杯時に最古が消え最新が残る、`Drain` 後に空、`CommitExternal` と `TryReserveSlot` の混在、`Clear`。
+- Validation: EditMode `OscDatagramRingTests` — 満杯時に最古が消え最新が残る、`Drain` 後に空、`CommitExternal` と `TryReserveSlot` の混在、`Clear`、`Abort` 後の再予約、wrap-around 境界（`SlotCount` の倍数 ±1）、Reserved 中の `Drain` が Reserved に触れないこと。加えて producer / consumer を別スレッドで回す並行テスト（EditMode、`Thread` 2 本 × 10,000 データグラム、順序保存とドロップ数の整合を検証）。
 - Risks: レコード数超過（`TruncatedDatagramCount`）は 1472 byte / 16 byte = 92 メッセージ以下なら発生しない。
 
 #### OscDrainBuffer
@@ -467,7 +482,7 @@ public sealed class OscDrainBuffer
 - `#bundle`（8 byte 識別子 + 8 byte timestamp）と単一 message の両方を受理。ネスト bundle は深さ 8 まで固定スタックで追跡し、超過は要素スキップ。
 - bare（トップレベル非 bundle）message の `TimestampKey` は `0x1`（uOSC と同一）。bundle 内要素は bundle の timestamp、ネストは内側の timestamp。
 - 要素サイズは 4 の倍数かつ残量以内を必須（uOSC と同じ）。address は空でないこと（先頭 `/` は uOSC 同様に強制しない）。typetag は `,` 始まり。
-- 既知タグ：payload あり `i`(4) `f`(4) `s`(pad4) `b`(4+len pad4) `h`(8) `d`(8) `t`(8)、payload なし `T` `F` `N` `I`。未知タグ → その message をスキップ（`OscPacketError.UnknownTypeTag`）し次の要素へ。
+- 既知タグ：payload あり `i`(4) `f`(4) `s`(pad4) `b`(4+len pad4)、payload なし `T` `F`（現行 uOSC と同じ受理集合。Req 2.4）。未知タグ → その message をスキップ（`OscPacketError.UnknownTypeTag`）し次の要素へ（現行 uOSC は未知タグの payload を消費せず後続をずらして解析するため、ここは「message 単位スキップ」で堅牢化する。可観測差分は「壊れた message が誤った値として反映されなくなる」方向のみ）。`h d t N I` の受理は backlog 送り。
 - 長さ不足・アライメント違反・引数長不一致 → message（または bundle）スキップ、`SkippedElementCount++`、`LastError` 更新、例外を投げない。
 - float は `BinaryPrimitives.ReadInt32BigEndian` → `BitConverter.Int32BitsToSingle`（確保なし）。
 
@@ -476,8 +491,7 @@ public sealed class OscDrainBuffer
 public static class OscTypeTag
 {
     public const byte Int32 = (byte)'i', Float32 = (byte)'f', String = (byte)'s', Blob = (byte)'b',
-                      Int64 = (byte)'h', Float64 = (byte)'d', TimeTag = (byte)'t',
-                      True = (byte)'T', False = (byte)'F', Nil = (byte)'N', Infinitum = (byte)'I';
+                      True = (byte)'T', False = (byte)'F';
     public static bool HasPayload(byte tag);
     public static bool IsKnown(byte tag);
 }
@@ -517,7 +531,6 @@ public readonly ref struct OscArgument
     public ReadOnlySpan<byte> Bytes { get; }   // s: NUL/pad なし, b: blob 本体, 数値: 生 BE バイト
     public bool TryGetFloat(out float v);      // f / i
     public bool TryGetInt32(out int v);        // i
-    public bool TryGetInt64(out long v);       // h / i
     public bool IsString => Tag == OscTypeTag.String;
     public bool IsBlob => Tag == OscTypeTag.Blob;
 }
@@ -623,7 +636,7 @@ public static class OscMessageClassifier
 - 分類規則：
   - `TryResolve` 失敗 → レコードなし（3.4。既存でも未マッピング + listener なしは状態変更ゼロ）。
   - `HasFloat` は `TryGetFirstAsFloat`（`f` / `i` のみ）。`,T` などは `HasFloat=false` のまま届け、既存の「既知アドレスなら staleness 更新のみ」を維持。
-  - `SenderId`：引数 1 が `b`(16 byte) → `Guid`、または `s` で `Guid.TryParse(ReadOnlySpan<char>)`（ASCII を `stackalloc char[64]` へ拡張）。引数 2 が `s` → `long.TryParse(ReadOnlySpan<char>)`、`i` / `h` → 数値。既存 `TryParseSenderIdentity` と同じ受理集合。
+  - `SenderId`：引数 1 が `b`(16 byte) → `new Guid(ReadOnlySpan<byte>)`（既存 `new Guid(byte[])` と同じバイト順解釈）、または `s` で `Guid.TryParse(ReadOnlySpan<char>)`（ASCII を `stackalloc char[64]` へ拡張）。引数 2 が `s` → `long.TryParse(ReadOnlySpan<char>)`、`i` → 数値。既存 `TryParseSenderIdentity` と同じ受理集合。blob 表現と文字列表現で同一 sender が同一 `SenderIdentity` になることを固定バイト列で検証する（`OscMessageClassifierTests`）。
   - `Heartbeat` / `Preset` / `GazeAdvertisement`：レコードのみ（バイト列はメインスレッドで view から読む）。
 - Postconditions: 確保なし。`records` 容量超過時は残りを捨て `TruncatedDatagramCount++`。
 
@@ -648,10 +661,11 @@ public interface IOscResolvedMessageHandler
 
 **Responsibilities & Constraints**
 - `Initialize(...)`：既存シグネチャ維持。`OscMapping[]` からテーブルを再構築し `Version++` で公開。`_addressToIndex` / `_blendShapeNameToIndex` は撤去（テーブルが代替）。
-- `StartReceiving()`：既存のポート解決・ログ文言を維持し `OscUdpReceiveLoop.Start`。`_messageFilter` が非 null なら「UDP 経路では無視される」旨を一度だけ警告。
+- `StartReceiving()`：既存のポート解決・ログ文言を維持し `OscUdpReceiveLoop.Start`。`_messageFilter` と resolved handler の両方が設定されている場合は「filter は無視され handler が優先される」旨を一度だけ警告。前回の `StopReceiving` で受信スレッドの終了が確認できていない（`ReceiveLoop.State == Stopping`）場合は `Debug.LogError` して起動しない（下記 停止 契約）。
 - `PumpReceived()`（新規、メインスレッド）：`ring.Drain(drainBuffer)` → 各レコードに `Apply`。`OscReceiverHost.Update()` と facade から呼ばれる。
-- `Apply(in view, in resolved)`：`resolved.TableVersion != table.Version` → 破棄。`handler?.HandleIncomingOscMessage` が false → return。`!HasFloat` → return。`MappingIndex ≥ 0` → `WriteValue`（AtomicSwap なら `RecordBundleMessage(timestampKey, index, value, now)`、それ以外 `Write`）。`ListenerSlot ≥ 0` → `_listenerSlots[slot]?.Invoke(value)`（例外は `Debug.LogException` で握る、既存どおり）。
-- `HandleOscMessage(uOSC.Message)`：`!_initialized || _buffer == null` → return。`address` null/空 → return（既存）。`_messageFilter` が設定されていればここでのみ呼ぶ（既存互換）。`OscMessageSerializer.TryWrite(message, _facadeScratch, out length)` → `ring.CommitExternal(span, table)` → `PumpReceived()`。
+- `Apply(in view, in resolved)`：`resolved.TableVersion != table.Version` → 破棄。**前段フィルタ**を 1 回だけ実行する：resolved handler が設定されていれば `handler.HandleIncomingOscMessage(in view, in resolved)`、設定されておらず `_messageFilter` が設定されていれば `_messageFilter(_facadeMessage)`（facade 経路でのみ非 null。UDP 経路では `_facadeMessage` が既定値のため filter は呼ばれずスキップ）、どちらも未設定なら通過。前段が false → return。`!HasFloat` → return。`MappingIndex ≥ 0` → `WriteValue`（AtomicSwap なら `RecordBundleMessage(timestampKey, index, value, now)`、それ以外 `Write`）。`ListenerSlot ≥ 0` → `_listenerSlots[slot]?.Invoke(value)`（例外は `Debug.LogException` で握る、既存どおり）。
+- **filter / handler 排他契約**：`SetMessageFilter` と `SetResolvedMessageHandler` は排他で、同一メッセージに対して前段フィルタは必ず 1 回だけ呼ばれる。両方設定時は handler を優先し filter は呼ばない。これにより facade 経由で通常メッセージが二重処理（`MarkAcceptedPacket` の重複等）されることを防ぐ。binding は `SetResolvedMessageHandler` のみを使い、`SetMessageFilter` は外部の旧利用者向けに残す。
+- `HandleOscMessage(uOSC.Message)`：`!_initialized || _buffer == null` → return。`address` null/空 → return（既存）。`OscMessageSerializer.TryWrite(message, _facadeScratch, out length)` → `_facadeMessage = message` → `ring.CommitExternal(span, table)` → `PumpReceived()` → `_facadeMessage = default`。filter はここでは直接呼ばず、`Apply` の前段フィルタとして 1 回だけ呼ばれる。`CommitExternal` は UDP 由来の未ドレインデータグラムより後ろにコミットされるため、facade メッセージの適用順は「先にリングにあったもの → facade」となる（既存でも `uOscServer.Update` の後に呼ばれる場合は同じ順序）。
 - `RegisterAnalogListener` / `UnregisterAnalogListener`：既存の `Dictionary<string, Action<float>>` を維持しつつ `Action<float>[] _listenerSlots` と `string[] _listenerAddresses` を再構築し、テーブルを再公開。
 - `SetGazeAddresses(IReadOnlyList<string>)`（新規）：binding から gaze route アドレス列を受け取りテーブル再公開。
 - `SetResolvedMessageHandler(IOscResolvedMessageHandler)`（新規）。
@@ -688,15 +702,16 @@ public partial class OscReceiver : MonoBehaviour
 #### OscMessageSerializer（facade 専用）
 
 ```csharp
-public static class OscMessageSerializer
+internal static class OscMessageSerializer   // facade 専用。InternalsVisibleTo でテストから参照
 {
-    // values の型: float→f, int→i, long→h, double→d, string→s, byte[]→b, bool→T/F, null→N。その他は false。
+    // values の型: float→f, int→i, string→s, byte[]→b, bool→T/F。その他（long/double/null 等）は false（既存 uOSC.Message.Write と同じ受理集合）。
     // timestamp が IsBundleTimestamp なら #bundle で包む（TimestampKey を透過させるため）。
     public static bool TryWrite(uOSC.Message message, byte[] destination, out int length);
     public static int GetRequiredLength(uOSC.Message message);
 }
 ```
 - 確保なし（`Encoding.UTF8.GetBytes(string, int, int, byte[], int)`）。`destination` 不足時は false（呼び出し側は 64 KB スクラッチを持つ）。
+- `internal` に留める理由：Req 5.3 / 5.4 は facade 互換のみを要求し、外部公開 API の追加は求めていない。
 
 #### OscBundleAccumulator（変更）
 
@@ -751,11 +766,11 @@ public static class OscMessageSerializer
 ### Logical Data Model（Adapters 層内）
 - `OscDatagramRing`：`SlotHeader { int Length; int RecordCount; int TableVersion; uint Sequence }` × SlotCount、`byte[]`、`OscResolvedMessage[]`。自然キーは `Sequence`（単調増加、ドロップ検知用）。
 - `OscAddressKeyTable`：`Entry { byte[] KeyUtf8; uint Hash; int MappingIndex; int GazeRouteSet; int ListenerSlot; OscControlKind Control }`、`int[] Buckets`（2 のべき、負荷率 ≤ 0.5）、`int[] Next`。参照整合：`MappingIndex < runtimeMappings.Length`、`GazeRouteSet < gazeAddresses.Count`、`ListenerSlot < listenerAddresses.Count` を Builder が保証。
-- 一貫性：テーブルとレコードは `Version` で結び付く。`OscDoubleBuffer.Resize` / 差し替え（`ReconfigureMappings`）と同じ呼び出しでテーブルも差し替え、古いレコードは版不一致で破棄される。
+- 一貫性：テーブルとレコードは `Version` で結び付く。`OscReceiver.Reconfigure(buffer, mappings, accumulator)` がバッファ・accumulator・テーブルを単一のメインスレッド コミット点で差し替え（System Flows 参照）、古いレコードは版不一致で破棄される。
 
 ### Data Contracts & Integration
-- ワイヤ形式は変更しない（送信側 `OscBundleBuilder` が正）。受信側は上位互換で受理集合を広げる（`h d t N I`）。
-- `OscReceiverOptionsDto` に `receiveDatagramSlotBytes` / `receiveDatagramSlotCount` / `receiveSocketBufferBytes` を加算。省略時は既定値。JSON 後方互換。
+- ワイヤ形式は変更しない（送信側 `OscBundleBuilder` が正）。受信側の受理集合は現行 uOSC と同じ（`i f s b T F`）。
+- 受信リング設定（`OscReceiveOptions`）はコード経由（`OscReceiver.ReceiveOptions` / `OscReceiverHost.Configure` overload）のみで、`OscRuntimeSettingsSO` / `OscReceiverOptionsDto` / Inspector / JSON への公開は本仕様では行わない（backlog へ「受信リング設定の公開」として送る）。既定値 2048 byte × 32 スロットは送信側 1472 分割と一般的な OSC 送信元を十分にカバーする。
 
 ## Error Handling
 
@@ -780,7 +795,7 @@ public static class OscMessageSerializer
 | heartbeat scratch 超過 | binding | 切り詰め、警告 1 回 | — |
 
 ### Monitoring
-- `OscReceiveDiagnostics`：`ReceivedDatagramCount`, `DroppedDatagramCount`, `OversizedDatagramCount`, `TruncatedDatagramCount`, `MalformedElementCount`, `StaleRecordCount`, `HeartbeatArrivalCount`（binding が heartbeat レコード適用時に加算）、`ReceiveThreadAllocatedBytes`（`CaptureThreadAllocationStats=true` のときのみ受信スレッドが `GC.GetAllocatedBytesForCurrentThread()` を各データグラム後に書き込む）。
+- `OscReceiveDiagnostics`：`ReceivedDatagramCount`（受信スレッド）, `AppliedDatagramCount`（メインスレッドのドレインで加算）, `DroppedDatagramCount`, `OversizedDatagramCount`, `TruncatedDatagramCount`, `MalformedElementCount`, `StaleRecordCount`, `HeartbeatArrivalCount`（binding が heartbeat レコード適用時に加算）、`ReceiveThreadAllocatedBytes`（`CaptureThreadAllocationStats=true` のときのみ受信スレッドが `GC.GetAllocatedBytesForCurrentThread()` を各データグラム後に書き込む）。
 - Inspector（`OscReceiverAdapterBindingDrawer`）への表示は本仕様の範囲外（将来の加算）。
 
 ## Testing Strategy
@@ -807,11 +822,11 @@ public static class OscMessageSerializer
   - M2: 受信スレッド `GC.GetAllocatedBytesForCurrentThread()` の計測窓前後差分（`CaptureThreadAllocationStats=true`、`Diagnostics.ReceiveThreadAllocatedBytes`）。
   - M3（記録のみ）: `GC.GetTotalAllocatedBytes(true)` をリフレクションで取得できれば窓前後差分をログ。
 - **Positive control（較正）**：計測窓の前に `ThreadHooks.OnDatagramCommitted = () => sink = new byte[1024]` を注入して 5 フレーム送受信し、M1 のフレーム合計が > 0 になることを確認する。> 0 なら `profilerSeesWorkerThread = true`。その後フックを外し、ウォームアップをやり直す。
-- **Authoritative**：
-  - `profilerSeesWorkerThread == true`：M1 の各フレーム値が 0（heartbeat 到着フレームを除く）**かつ** M2 差分 == 0 を assert。
-  - `profilerSeesWorkerThread == false`：M1 は**メインスレッドの**計測として扱い各フレーム 0（heartbeat 到着フレーム除く）を assert し、受信スレッドは M2 差分 == 0 を assert（M2 が authoritative）。テスト出力に「ProfilerRecorder はワーカースレッドを集計しなかったため M2 を authoritative とした」と記録する。
-  - いずれの場合も M2 は heartbeat フレームを含む全窓で 0 でなければならない（受信スレッドは制御メッセージでも確保しない設計）。
-- **heartbeat 到着フレームの除外**（8.5）：各フレーム末に `Diagnostics.HeartbeatArrivalCount` を読み、前フレームから増えたフレームを除外。除外フレーム数と番号をテスト出力に記録。
+- **ゲートの独立性**：受信スレッドとメインスレッドを別々の assert として扱い、計測器の自己判定に依存しない。
+  - G1（受信スレッド、常に必須）：M2 差分 == 0 を計測窓全体（heartbeat フレームを含む）で assert。受信スレッドは制御メッセージでも確保しない設計のため除外はない。
+  - G2（メインスレッド、常に必須）：M1 の各フレーム値が 0（heartbeat 到着フレームを除く）を assert。`profilerSeesWorkerThread == true` の場合 M1 には受信スレッド分も含まれるが、G1 が 0 なら差は生じない。
+  - positive control の結果は「M1 が受信スレッドを観測できたか」の**記録**にのみ使い、`false` の場合はテスト出力と `validation.md` に「環境制限: ProfilerRecorder は受信スレッドを集計しない。受信スレッドのゲートは G1」と明記する。positive control で M2 も増えなかった場合（計測器自体の故障）はテストを **Inconclusive**（`Assert.Inconclusive`）にし、PASS 扱いにしない。
+- **heartbeat 到着フレームの除外**（8.5）：フレーム番号のタイミング依存を避け、「送った番号」ではなく「適用された事実」で判定する。各フレームの `Update` ドレイン直後に `Diagnostics.AppliedDatagramCount`（ドレインで適用したデータグラム数、メインスレッドで加算）と `HeartbeatArrivalCount` を読み、`HeartbeatArrivalCount` の増分が 1 以上のフレームを除外する。heartbeat フレームは 25 フレームごとに送るが、隣接フレームへずれても適用側のカウンタで正しく除外される。計測 100 フレームは `yield return null` ではなく `yield return new WaitForFixedUpdate()` → `yield return null` の順で 1 フレームを構成し、`Update` ドレイン → `FixedUpdate` の `OnFixedTick` の両方が各フレームで 1 回ずつ走ることを `Diagnostics` のカウンタで確認する。窓の開始前に「送信済みデータグラム数 == 適用済みデータグラム数」になるまで待つ（最大 1 秒）ことで、ウォームアップ分の遅延到着が計測窓へ漏れないようにする。除外フレーム数と番号をテスト出力に記録。
 - **失敗メッセージ**（8.7）：`frame={i} gcAllocBytes={v} heartbeatFrame={bool}` を列挙。
 - **既存シナリオ**：`OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation` / `GazeAdvertisement_ContentUnchanged_ArrivesEveryTick_ZeroAllocPerFrame` / `GazeVector2InputSource_ReadAfterAutoCreation_ZeroAlloc` は facade 経由のまま維持（メインスレッド計測）。baseline 記録テスト 2 件は UDP 経由の 0 byte assert へ置換。
 
@@ -846,5 +861,6 @@ flowchart LR
 ## Open Questions / Risks
 - Unity 6000.3.19f1 の `ProfilerRecorder` がユーザースレッドの GC.Alloc を集計するか — positive control で自動判定し、authoritative を切り替える（上記）。結果を `validation.md` に記録し、次回以降は固定化を検討する。
 - `Socket.Receive` が Unity 6 Mono で確保ゼロか — M2 で検出。確保があれば where-allocation 方式へ `OscUdpReceiveLoop` 内で切替（公開契約不変）。
-- `ZombieEvictionPolicy.Observe` / `RememberBundleSenderDecision` の定常確保 — 既知 sender の再観測・`Dictionary<ulong,bool>` の bounded 運用は確保なしの見込み。GC ゲートで検証し、必要なら `Observe` の fast path を追加（binding 内の加算）。
+- `ZombieEvictionPolicy.Observe` / `RememberBundleSenderDecision` の定常確保 — コード確認済み（2026-09-15）：`SenderIdentity` は `IEquatable` 実装で boxing なし、`Dictionary<Guid,…>.Values` の列挙は struct enumerator、`Dictionary<ulong,bool>` + bounded `Queue<ulong>` は定常で確保なし。sender 切替時のみ `Debug.Log` の文字列確保（既存挙動、計測窓では発生しない）。sender_id は実送信で毎フレーム届くため GC テストの定常ワークロードに含める（既に (a) に含まれる）。
+- `Socket.Receive` の oversized datagram 挙動 — Windows/Mono では `SocketException(MessageSize)` が期待されるが、切り詰め値が返る実装もあり得る。`OscUdpReceiveLoopTests` で「スロットサイズ + 1 byte のデータグラム」を送り、例外か切り詰めかを確認して `OversizedDatagramCount` の判定方法をテストで固定する（切り詰めの場合は `Receive` の戻り値 == スロット長かつ `Socket.Available` 等で判定できないため、`MSG_TRUNC` 相当が取れない環境では「スロット長ちょうどのデータグラムは oversized 疑い」として警告に留める）。
 - 送信元エンドポイントを将来使う場合（送信元別フィルタ）は `ReceiveFrom` + 非確保 `EndPoint` が必要。本仕様では非目標として記録。
