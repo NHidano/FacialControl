@@ -6,6 +6,14 @@ using UnityEngine;
 
 namespace Hidano.FacialControl.Adapters.OSC
 {
+    public enum OscReceiveState : byte
+    {
+        Stopped,
+        Running,
+        Stopping,
+        Faulted
+    }
+
     public struct OscReceiveThreadHooks
     {
         public Action OnThreadStarted;
@@ -26,6 +34,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         private int _stopRequested;
         private int _isRunning;
         private int _faulted;
+        private int _state;
         private int _boundPort = -1;
 
         public OscUdpReceiveLoop(OscDatagramRing ring, OscReceiveDiagnostics diagnostics)
@@ -49,6 +58,7 @@ namespace Hidano.FacialControl.Adapters.OSC
 
         public bool IsRunning => Volatile.Read(ref _isRunning) != 0;
         public bool Faulted => Volatile.Read(ref _faulted) != 0;
+        public OscReceiveState State => (OscReceiveState)Volatile.Read(ref _state);
         public int BoundPort => Volatile.Read(ref _boundPort);
 
         public void Start(int port, in OscReceiveOptions options)
@@ -56,11 +66,16 @@ namespace Hidano.FacialControl.Adapters.OSC
             lock (_stateLock)
             {
                 if (IsRunning) return;
-                if (_thread != null && _thread.IsAlive) return;
+                if (State == OscReceiveState.Stopping || (_thread != null && _thread.IsAlive))
+                {
+                    Debug.LogError("[OscReceiver] UDP receive loop is still stopping; Start is rejected.");
+                    return;
+                }
 
                 _options = options;
                 _stopRequested = 0;
                 _faulted = 0;
+                Volatile.Write(ref _state, (int)OscReceiveState.Stopped);
                 _boundPort = port;
                 try
                 {
@@ -78,12 +93,15 @@ namespace Hidano.FacialControl.Adapters.OSC
                         Name = "FacialControl.OscReceive:" + port
                     };
                     Volatile.Write(ref _isRunning, 1);
+                    Volatile.Write(ref _state, (int)OscReceiveState.Running);
                     _thread.Start();
                 }
                 catch (Exception ex)
                 {
                     Volatile.Write(ref _faulted, 1);
                     Volatile.Write(ref _isRunning, 0);
+                    Volatile.Write(ref _state, (int)OscReceiveState.Faulted);
+                    _thread = null;
                     CloseSocket();
                     Debug.LogError("[OscReceiver] UDP bind failed on port " + port + ": " + ex.Message);
                 }
@@ -98,6 +116,8 @@ namespace Hidano.FacialControl.Adapters.OSC
                 thread = _thread;
                 if (thread == null && _socket == null) return;
                 Volatile.Write(ref _stopRequested, 1);
+                if (thread != null && thread.IsAlive)
+                    Volatile.Write(ref _state, (int)OscReceiveState.Stopping);
                 CloseSocket();
             }
 
@@ -107,8 +127,12 @@ namespace Hidano.FacialControl.Adapters.OSC
             if (thread == null || !thread.IsAlive)
             {
                 Volatile.Write(ref _isRunning, 0);
-                _ring.Clear();
-                lock (_stateLock) _thread = null;
+                lock (_stateLock)
+                {
+                    _thread = null;
+                    if (State != OscReceiveState.Faulted)
+                        Volatile.Write(ref _state, (int)OscReceiveState.Stopped);
+                }
             }
         }
 
@@ -137,10 +161,17 @@ namespace Hidano.FacialControl.Adapters.OSC
                             continue;
                         }
 
+                        if (Volatile.Read(ref _stopRequested) != 0)
+                        {
+                            _ring.Abort(slot);
+                            break;
+                        }
+
                         _ring.Commit(slot, length, 0, 0);
                         committed = true;
                         _diagnostics.IncrementReceivedDatagrams();
-                        hooks.OnDatagramCommitted?.Invoke();
+                        if (Volatile.Read(ref _stopRequested) == 0)
+                            hooks.OnDatagramCommitted?.Invoke();
                         if (_options.CaptureThreadAllocationStats)
                             _diagnostics.SetReceiveThreadAllocatedBytes(GC.GetAllocatedBytesForCurrentThread());
                     }
@@ -155,6 +186,11 @@ namespace Hidano.FacialControl.Adapters.OSC
                         if (Volatile.Read(ref _stopRequested) != 0) break;
                         throw;
                     }
+                    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.MessageSize)
+                    {
+                        if (!committed) _ring.Abort(slot);
+                        _diagnostics.IncrementOversizedDatagrams();
+                    }
                     catch
                     {
                         if (!committed) _ring.Abort(slot);
@@ -167,6 +203,7 @@ namespace Hidano.FacialControl.Adapters.OSC
                 if (Volatile.Read(ref _stopRequested) == 0)
                 {
                     Volatile.Write(ref _faulted, 1);
+                    Volatile.Write(ref _state, (int)OscReceiveState.Faulted);
                     Debug.LogException(ex);
                 }
             }
@@ -176,6 +213,12 @@ namespace Hidano.FacialControl.Adapters.OSC
                 catch (Exception ex) { Debug.LogException(ex); }
                 Volatile.Write(ref _isRunning, 0);
                 CloseSocket();
+                if (Volatile.Read(ref _stopRequested) != 0)
+                {
+                    try { _ring.Clear(); }
+                    catch (Exception ex) { Debug.LogException(ex); }
+                    Volatile.Write(ref _state, (int)OscReceiveState.Stopped);
+                }
             }
         }
 

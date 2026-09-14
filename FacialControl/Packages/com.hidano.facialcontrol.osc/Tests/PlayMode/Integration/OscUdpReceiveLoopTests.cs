@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.TestTools;
 using Hidano.FacialControl.Adapters.OSC;
 
@@ -61,6 +63,60 @@ namespace Hidano.FacialControl.Tests.PlayMode.Integration
                 int boundPort = loop.BoundPort;
                 loop.Start(port, options);
                 Assert.That(loop.BoundPort, Is.EqualTo(boundPort));
+                yield return null;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Stop_ClosesSocketJoinsThreadAndSuppressesCallbacks()
+        {
+            var diagnostics = new OscReceiveDiagnostics();
+            var options = OscReceiveOptions.Default;
+            var ring = new OscDatagramRing(options, diagnostics);
+            using (var loop = new OscUdpReceiveLoop(ring, diagnostics))
+            {
+                int callbacks = 0;
+                loop.ThreadHooks = new OscReceiveThreadHooks
+                {
+                    OnDatagramCommitted = () => callbacks++
+                };
+
+                int port = OscPortResolver.ResolveAvailablePort(38200);
+                loop.Start(port, options);
+                Assert.That(loop.State, Is.EqualTo(OscReceiveState.Running));
+
+                loop.Stop();
+                Assert.That(loop.State, Is.EqualTo(OscReceiveState.Stopped));
+                Assert.That(loop.IsRunning, Is.False);
+                Assert.That(ring.PendingDatagramCount, Is.Zero);
+
+                int callbackCountAfterStop = callbacks;
+                using (var sender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+                {
+                    sender.SendTo(new byte[] { 1 }, new IPEndPoint(IPAddress.Loopback, port));
+                }
+                yield return null;
+                Assert.That(callbacks, Is.EqualTo(callbackCountAfterStop));
+
+                loop.Stop();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Start_WhenPortIsOccupied_FaultsWithoutStartingThread()
+        {
+            var options = OscReceiveOptions.Default;
+            var ring = new OscDatagramRing(options, new OscReceiveDiagnostics());
+            using (var occupied = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp))
+            using (var loop = new OscUdpReceiveLoop(ring, new OscReceiveDiagnostics()))
+            {
+                occupied.Bind(new IPEndPoint(IPAddress.IPv6Any, 38300));
+                LogAssert.Expect(LogType.Error, new Regex(@"^\[OscReceiver\] UDP bind failed on port 38300: .*"));
+
+                loop.Start(38300, options);
+                Assert.That(loop.State, Is.EqualTo(OscReceiveState.Faulted));
+                Assert.That(loop.Faulted, Is.True);
+                Assert.That(loop.IsRunning, Is.False);
                 yield return null;
             }
         }
