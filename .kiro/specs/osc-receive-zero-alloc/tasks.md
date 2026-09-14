@@ -102,7 +102,7 @@
   - 完了条件: PlayMode で実 UDP 送信 → ポンプ → ダブルバッファに値が入り listener が既存と同じ引数で 1 回呼ばれる。溢れ・不正要素の警告が `LogAssert` で 1 回だけ観測される
   - _Requirements: 1.5, 1.7, 5.5, 5.6, 10.7_
 
-- [ ] 5.2 (P) uOSC.Message からワイヤ形式への一方向シリアライザ
+- [x] 5.2 (P) uOSC.Message からワイヤ形式への一方向シリアライザ
   - float / int / string / byte[] / bool を既存 uOSC.Message の受理集合どおり型タグ付きで書き出し、タイムスタンプが bundle 値なら `#bundle` で包む。宛先不足やサポート外型は false を返す。確保なし（固定宛先へ直接エンコード）で internal に留める
   - EditMode テスト: 各型 → bytes → パケットリーダーで同値、bundle タイムスタンプが透過する、bare は immediate になる
   - 完了条件: 往復テストが緑
