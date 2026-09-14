@@ -86,7 +86,7 @@ namespace Hidano.FacialControl.Adapters.OSC
                 }
 
                 _bareRead = true;
-                if (!TryParseMessage(_packet, OscBundleAccumulatorImmediateTimestamp, out message, out var error))
+                if (!TryParseMessage(_packet, 0, OscBundleAccumulatorImmediateTimestamp, out message, out var error))
                 {
                     return Fail(error);
                 }
@@ -157,7 +157,7 @@ namespace Hidano.FacialControl.Adapters.OSC
                     continue;
                 }
 
-                if (TryParseMessage(element, frame.Timestamp, out message, out var error))
+                if (TryParseMessage(element, elementStart, frame.Timestamp, out message, out var error))
                 {
                     return true;
                 }
@@ -170,7 +170,7 @@ namespace Hidano.FacialControl.Adapters.OSC
 
         private const ulong OscBundleAccumulatorImmediateTimestamp = 0x1UL;
 
-        private bool TryParseMessage(ReadOnlySpan<byte> packet, ulong timestamp, out OscMessageView message,
+        private bool TryParseMessage(ReadOnlySpan<byte> packet, int elementOffset, ulong timestamp, out OscMessageView message,
             out OscPacketError error)
         {
             message = default;
@@ -222,7 +222,7 @@ namespace Hidano.FacialControl.Adapters.OSC
                 return false;
             }
 
-            message = new OscMessageView(address, typeTags, arguments, packet, timestamp);
+            message = new OscMessageView(address, typeTags, arguments, packet, timestamp, elementOffset);
             return true;
         }
 

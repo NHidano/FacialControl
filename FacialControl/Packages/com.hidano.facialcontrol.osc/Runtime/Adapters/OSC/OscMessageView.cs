@@ -8,6 +8,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         public ReadOnlySpan<byte> TypeTags { get; }
         public ReadOnlySpan<byte> Arguments { get; }
         public ReadOnlySpan<byte> Element { get; }
+        public int ElementOffset { get; }
         public ulong TimestampKey { get; }
         public int ArgumentCount => TypeTags.Length;
 
@@ -30,13 +31,14 @@ namespace Hidano.FacialControl.Adapters.OSC
 
         public OscMessageView(
             ReadOnlySpan<byte> address, ReadOnlySpan<byte> typeTags,
-            ReadOnlySpan<byte> arguments, ReadOnlySpan<byte> element, ulong timestampKey)
+            ReadOnlySpan<byte> arguments, ReadOnlySpan<byte> element, ulong timestampKey, int elementOffset = 0)
         {
             Address = address;
             TypeTags = typeTags;
             Arguments = arguments;
             Element = element;
             TimestampKey = timestampKey;
+            ElementOffset = elementOffset;
         }
     }
 }
