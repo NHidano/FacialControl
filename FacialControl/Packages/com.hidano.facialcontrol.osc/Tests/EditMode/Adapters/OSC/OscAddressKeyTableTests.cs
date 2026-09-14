@@ -75,6 +75,84 @@ namespace Hidano.FacialControl.Adapters.OSC.Tests
             Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
 
+        [Test]
+        public void TryResolve_MatchesUtf8SpecialCharactersAndGazeAddressesWithoutSubstring()
+        {
+            var pool = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            var table = new OscAddressKeyTable.Builder(pool)
+                .SetMappings(new[] { new OscMapping("", "笑顔.special", "layer") })
+                .SetGazeAddresses(new[]
+                {
+                    "/avatar/parameters/GazePatternX",
+                    "/avatar/parameters/GazePatternY",
+                    "/ARKit/eyeLookUpLeft"
+                })
+                .Build(3);
+
+            Assert.That(table.TryResolve(Utf8("/avatar/parameters/笑顔.special"), out var vrChat), Is.True);
+            Assert.That(vrChat.MappingIndex, Is.EqualTo(0));
+            Assert.That(table.TryResolve(Utf8("/ARKit/笑顔.special"), out var arKit), Is.True);
+            Assert.That(arKit.MappingIndex, Is.EqualTo(0));
+
+            Assert.That(table.TryResolve(Utf8("/avatar/parameters/GazePatternX"), out var gazeX), Is.True);
+            Assert.That(gazeX.GazeRouteSet, Is.EqualTo(0));
+            Assert.That(table.TryResolve(Utf8("/avatar/parameters/GazePatternY"), out var gazeY), Is.True);
+            Assert.That(gazeY.GazeRouteSet, Is.EqualTo(1));
+            Assert.That(table.TryResolve(Utf8("/ARKit/eyeLookUpLeft"), out var eyeLook), Is.True);
+            Assert.That(eyeLook.GazeRouteSet, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void TryResolve_ProbesPastInitialBucketCollisionWithoutAllocating()
+        {
+            var pool = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            var table = new OscAddressKeyTable.Builder(pool)
+                .SetMappings(new[] { new OscMapping("/known", "known", "layer") })
+                .Build(4);
+            byte[] known = Utf8("/known");
+            string collidingUnknownText = FindDifferentAddressWithSameInitialBucket(known, table);
+            byte[] collidingUnknown = Utf8(collidingUnknownText);
+
+            Assert.That(table.TryResolve(known, out var resolution), Is.True);
+            Assert.That(resolution.MappingIndex, Is.EqualTo(0));
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.That(table.TryResolve(collidingUnknown, out _), Is.False);
+            }
+
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+        }
+
+        private static string FindDifferentAddressWithSameInitialBucket(byte[] known, OscAddressKeyTable table)
+        {
+            int bucketCount = 1;
+            while (bucketCount < table.EntryCount * 2)
+            {
+                bucketCount <<= 1;
+            }
+
+            int mask = bucketCount - 1;
+            int knownBucket = (int)OscAddressKeyTable.Hash(known) & mask;
+            for (int i = 0; i < 10000; i++)
+            {
+                string candidate = "/unknown" + i;
+                if (candidate == "/known")
+                {
+                    continue;
+                }
+
+                if (((int)OscAddressKeyTable.Hash(Utf8(candidate)) & mask) == knownBucket)
+                {
+                    return candidate;
+                }
+            }
+
+            Assert.Fail("Could not construct a deterministic open-addressing collision.");
+            return string.Empty;
+        }
+
         private static byte[] Utf8(string value) => Encoding.UTF8.GetBytes(value);
     }
 }

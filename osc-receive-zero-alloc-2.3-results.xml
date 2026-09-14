@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Failed(Child)" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.078719">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="2095" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.078719" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1704" name="Hidano.FacialControl.Osc.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Osc.Tests.EditMode.dll" runstate="Runnable" testcasecount="327" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.048264" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="53136" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1705" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="327" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.047705" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1706" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="327" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.047328" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1713" name="Osc" fullname="Hidano.FacialControl.Osc" runstate="Runnable" testcasecount="45" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.042995" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestSuite" id="1714" name="Tests" fullname="Hidano.FacialControl.Osc.Tests" runstate="Runnable" testcasecount="45" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.042662" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-suite type="TestSuite" id="1715" name="EditMode" fullname="Hidano.FacialControl.Osc.Tests.EditMode" runstate="Runnable" testcasecount="45" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.042333" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[One or more child tests had errors]]></message>
+                </failure>
+                <test-suite type="TestSuite" id="1716" name="Adapters" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters" runstate="Runnable" testcasecount="45" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.038714" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <failure>
+                    <message><![CDATA[One or more child tests had errors]]></message>
+                  </failure>
+                  <test-suite type="TestSuite" id="1718" name="OSC" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC" runstate="Runnable" testcasecount="14" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.037602" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+                    <properties />
+                    <failure>
+                      <message><![CDATA[One or more child tests had errors]]></message>
+                    </failure>
+                    <test-suite type="TestFixture" id="1680" name="OscPacketReaderTests" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" testcasecount="11" result="Failed" site="Child" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.036477" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+                      <properties />
+                      <failure>
+                        <message><![CDATA[One or more child tests had errors]]></message>
+                      </failure>
+                      <test-case id="1687" name="TryReadNext_DoesNotAllocateWhileScanning" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_DoesNotAllocateWhileScanning" methodname="TryReadNext_DoesNotAllocateWhileScanning" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1313632275" result="Passed" start-time="2026-09-14 15:25:04Z" end-time="2026-09-14 15:25:05Z" duration="0.010902" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1690" name="TryReadNext_EmptyBundleReturnsNoMessagesWithoutAllocating" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_EmptyBundleReturnsNoMessagesWithoutAllocating" methodname="TryReadNext_EmptyBundleReturnsNoMessagesWithoutAllocating" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="380224569" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000884" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1688" name="TryReadNext_EnumeratesBundleMessagesInArrivalOrderWithTimestamp" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_EnumeratesBundleMessagesInArrivalOrderWithTimestamp" methodname="TryReadNext_EnumeratesBundleMessagesInArrivalOrderWithTimestamp" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1740447329" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000711" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1689" name="TryReadNext_PropagatesNestedBundleTimestampDepthFirst" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_PropagatesNestedBundleTimestampDepthFirst" methodname="TryReadNext_PropagatesNestedBundleTimestampDepthFirst" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1821111528" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000263" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1691" name="TryReadNext_ReadsAllMessagesFromMtuSplitBuilderPacketsWithSharedTimestamp" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_ReadsAllMessagesFromMtuSplitBuilderPacketsWithSharedTimestamp" methodname="TryReadNext_ReadsAllMessagesFromMtuSplitBuilderPacketsWithSharedTimestamp" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1152338740" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.006598" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                        <output><![CDATA[[OscBundleBuilder] OSC bundle exceeded MTU payload 1472 bytes and was split into 28 bundles with the same timestamp.
+]]></output>
+                      </test-case>
+                      <test-case id="1682" name="TryReadNext_ReadsFloatIntAndPayloadlessBoolean" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_ReadsFloatIntAndPayloadlessBoolean" methodname="TryReadNext_ReadsFloatIntAndPayloadlessBoolean" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1718944100" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000784" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1681" name="TryReadNext_ReadsJapaneseAddressAndSequentialBlobStringArguments" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_ReadsJapaneseAddressAndSequentialBlobStringArguments" methodname="TryReadNext_ReadsJapaneseAddressAndSequentialBlobStringArguments" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="184880379" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000483" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1683" name="TryReadNext_RejectsMalformedMessageWithoutThrowing" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_RejectsMalformedMessageWithoutThrowing" methodname="TryReadNext_RejectsMalformedMessageWithoutThrowing" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="2020426893" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000751" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1684" name="TryReadNext_SkipsMalformedElementsAndContinuesInArrivalOrder" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_SkipsMalformedElementsAndContinuesInArrivalOrder" methodname="TryReadNext_SkipsMalformedElementsAndContinuesInArrivalOrder" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1414028016" result="Failed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.003415" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                        <failure>
+                          <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                          <stack-trace><![CDATA[at Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_SkipsMalformedElementsAndContinuesInArrivalOrder () [0x000dc] in .\Packages\com.hidano.facialcontrol.osc\Tests\EditMode\Adapters\OSC\OscPacketReaderTests.cs:78
+]]></stack-trace>
+                        </failure>
+                      </test-case>
+                      <test-case id="1685" name="TryReadNext_SkipsMisalignedElementAndContinues" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_SkipsMisalignedElementAndContinues" methodname="TryReadNext_SkipsMisalignedElementAndContinues" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="2015429336" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000295" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                      </test-case>
+                      <test-case id="1686" name="TryReadNext_SkipsOverdeepNestedBundleAndContinues" fullname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests.TryReadNext_SkipsOverdeepNestedBundleAndContinues" methodname="TryReadNext_SkipsOverdeepNestedBundleAndContinues" classname="Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC.OscPacketReaderTests" runstate="Runnable" seed="1677248938" result="Passed" start-time="2026-09-14 15:25:05Z" end-time="2026-09-14 15:25:05Z" duration="0.000257" asserts="0">
+                        <properties>
+                          <property name="retryIteration" value="0" />
+                          <property name="repeatIteration" value="0" />
+                        </properties>
+                        <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                      </test-case>
+                    </test-suite>
+                  </test-suite>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
