@@ -36,6 +36,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         private int _faulted;
         private int _state;
         private int _boundPort = -1;
+        private Exception _pendingFault;
 
         public OscUdpReceiveLoop(OscDatagramRing ring, OscReceiveDiagnostics diagnostics)
         {
@@ -63,6 +64,22 @@ namespace Hidano.FacialControl.Adapters.OSC
         public bool Faulted => Volatile.Read(ref _faulted) != 0;
         public OscReceiveState State => (OscReceiveState)Volatile.Read(ref _state);
         public int BoundPort => Volatile.Read(ref _boundPort);
+
+        /// <summary>
+        /// 受信スレッドで発生した例外をメインスレッドへ引き渡す（一度取り出すと消える）。
+        /// 受信スレッドは Unity API（<c>Debug.Log*</c>）を呼ばず、ここに記録するだけにとどめる（Req 10.7）。
+        /// </summary>
+        public bool TryTakeFault(out Exception fault)
+        {
+            fault = Interlocked.Exchange(ref _pendingFault, null);
+            return fault != null;
+        }
+
+        private void RecordFault(Exception fault)
+        {
+            // 最初の例外を優先して保持する。
+            Interlocked.CompareExchange(ref _pendingFault, fault, null);
+        }
 
         public void Start(int port, in OscReceiveOptions options)
         {
@@ -215,19 +232,19 @@ namespace Hidano.FacialControl.Adapters.OSC
                 {
                     Volatile.Write(ref _faulted, 1);
                     Volatile.Write(ref _state, (int)OscReceiveState.Faulted);
-                    Debug.LogException(ex);
+                    RecordFault(ex);
                 }
             }
             finally
             {
                 try { hooks.OnThreadStopping?.Invoke(); }
-                catch (Exception ex) { Debug.LogException(ex); }
+                catch (Exception ex) { RecordFault(ex); }
                 Volatile.Write(ref _isRunning, 0);
                 CloseSocket();
                 if (Volatile.Read(ref _stopRequested) != 0)
                 {
                     try { _ring.Clear(); }
-                    catch (Exception ex) { Debug.LogException(ex); }
+                    catch (Exception ex) { RecordFault(ex); }
                     Volatile.Write(ref _state, (int)OscReceiveState.Stopped);
                 }
             }

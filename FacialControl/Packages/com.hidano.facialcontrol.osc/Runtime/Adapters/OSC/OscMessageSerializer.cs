@@ -50,6 +50,10 @@ namespace Hidano.FacialControl.Adapters.OSC
                 destination[offset++] = GetTypeTag(message.values[i]);
             }
 
+            // OSC 文字列は必ず NUL 終端を含めて 4 byte 境界へ揃える。
+            // 終端を数えずに揃えると ",fff" のように長さが 4 の倍数のとき NUL が消え、
+            // リーダーが次の NUL まで型タグを読み進めてしまう。
+            destination[offset++] = 0;
             PadString(destination, typeTagStart, offset - typeTagStart, ref offset);
             for (var i = 0; i < message.values.Length; i++)
             {
@@ -93,7 +97,8 @@ namespace Hidano.FacialControl.Adapters.OSC
             try
             {
                 var addressLength = PaddedStringLength(message.address);
-                var typeTagLength = PaddedStringLengthForPayload(message.values.Length + 1);
+                // ',' + 型タグ + NUL 終端
+                var typeTagLength = PaddedStringLengthForPayload(message.values.Length + 2);
                 var payloadLength = 0;
                 for (var i = 0; i < message.values.Length; i++)
                 {
@@ -120,6 +125,12 @@ namespace Hidano.FacialControl.Adapters.OSC
 
                         payloadLength = checked(payloadLength + 4 + Align4(blob.Length));
                     }
+                    else if (value is long int64)
+                    {
+                        // 実ワイヤ形式（OscSender / OscBundleBuilder）は sender_id の startedAtUnixMs を
+                        // 10 進文字列で送るため、facade の long も同じ表現へ写像する。
+                        payloadLength = checked(payloadLength + PaddedStringLength(FormatInt64(int64)));
+                    }
                     else if (!(value is bool))
                     {
                         return false;
@@ -140,9 +151,14 @@ namespace Hidano.FacialControl.Adapters.OSC
         {
             if (value is int) return OscTypeTag.Int32;
             if (value is float) return OscTypeTag.Float32;
-            if (value is string) return OscTypeTag.String;
+            if (value is string || value is long) return OscTypeTag.String;
             if (value is byte[]) return OscTypeTag.Blob;
             return (bool)value ? OscTypeTag.True : OscTypeTag.False;
+        }
+
+        private static string FormatInt64(long value)
+        {
+            return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private static void WriteValue(object value, byte[] destination, ref int offset)
@@ -160,6 +176,10 @@ namespace Hidano.FacialControl.Adapters.OSC
             else if (value is string text)
             {
                 WritePaddedString(text, destination, ref offset);
+            }
+            else if (value is long int64)
+            {
+                WritePaddedString(FormatInt64(int64), destination, ref offset);
             }
             else if (value is byte[] blob)
             {

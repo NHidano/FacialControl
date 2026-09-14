@@ -141,11 +141,6 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
         }
 
-        private void Update()
-        {
-            _receiver?.PumpReceived();
-        }
-
         private double GetCurrentTimeSeconds()
         {
             return _timeProvider != null ? _timeProvider.UnscaledTimeSeconds : Time.unscaledTimeAsDouble;

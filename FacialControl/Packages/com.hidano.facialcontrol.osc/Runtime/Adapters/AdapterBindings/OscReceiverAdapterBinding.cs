@@ -1391,6 +1391,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                     _heartbeatScratchOffsets[_heartbeatScratchNameCount] = _heartbeatScratchByteCount;
                 }
             }
+
+            // ProcessPendingHeartbeatMappings は dirty が立っていなければ即 return するため、
+            // chunk を積むたびに必ず立てる（unchanged 判定はバイト列ハッシュ側で行う）。
+            Volatile.Write(ref _heartbeatDirty, 1);
         }
 
         private void HandleHeartbeatMessage(uOSC.Message message)

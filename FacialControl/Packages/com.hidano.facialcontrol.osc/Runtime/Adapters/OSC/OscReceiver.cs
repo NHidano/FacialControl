@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Hidano.FacialControl.Domain.Interfaces;
 using Hidano.FacialControl.Domain.Models;
 using UnityEngine;
@@ -8,7 +7,8 @@ using UnityEngine;
 namespace Hidano.FacialControl.Adapters.OSC
 {
     /// <summary>
-    /// uOsc サーバーをラップし、OSC メッセージを受信して OscDoubleBuffer に書き込む。
+    /// 自前 UDP 受信ループ・データグラムリング・アドレス解決テーブルを所有し、
+    /// 受信した OSC メッセージをメインスレッドで OscDoubleBuffer に書き込む。
     /// VRChat / ARKit アドレスパターンを解析し、マッピングテーブルに基づいてバッファインデックスに変換する。
     /// </summary>
     public class OscReceiver : MonoBehaviour
@@ -36,7 +36,10 @@ namespace Hidano.FacialControl.Adapters.OSC
         private OscReceiveOptions _receiveOptions = OscReceiveOptions.Default;
         private OscAddressKeyTable _table = OscAddressKeyTable.Empty;
         private readonly Dictionary<string, byte[]> _utf8Pool = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        // facade 用: 1 件の uOSC.Message は高々 1 要素のワイヤ形式に直列化される。
+        private const int FacadeRecordCapacity = 4;
         private byte[] _facadeScratch;
+        private OscResolvedMessage[] _facadeRecords;
         private IOscResolvedMessageHandler _resolvedMessageHandler;
         private Action<float>[] _listenerSlots = Array.Empty<Action<float>>();
         private string[] _listenerAddresses = Array.Empty<string>();
@@ -205,6 +208,10 @@ namespace Hidano.FacialControl.Adapters.OSC
             _receiveLoop?.Stop();
         }
 
+        /// <summary>
+        /// 受信スレッドがコミットしたデータグラムをメインスレッドでドレインし、適用する。
+        /// <see cref="Update"/> から毎フレーム呼ばれる。テストから直接呼んでもよい。
+        /// </summary>
         public void PumpReceived()
         {
             if (!_initialized || _ring == null || _drainBuffer == null) return;
@@ -215,6 +222,20 @@ namespace Hidano.FacialControl.Adapters.OSC
                 Apply(_drainBuffer.GetView(i), in resolved);
             }
             WarnDiagnostics();
+            ReportReceiveLoopFault();
+        }
+
+        private void Update()
+        {
+            PumpReceived();
+        }
+
+        private void ReportReceiveLoopFault()
+        {
+            if (_receiveLoop != null && _receiveLoop.TryTakeFault(out Exception fault))
+            {
+                Debug.LogError("[OscReceiver] OSC 受信ポート " + _activePort + " の受信スレッドで例外が発生しました: " + fault);
+            }
         }
 
         private OscAddressKeyTable GetTable() => System.Threading.Volatile.Read(ref _table);
@@ -261,10 +282,15 @@ namespace Hidano.FacialControl.Adapters.OSC
         }
 
         /// <summary>
-        /// OSC メッセージを処理し、バッファに書き込む。
-        /// uOscServer の onDataReceived コールバックから呼ばれる。
+        /// uOSC 互換 facade。<see cref="uOSC.Message"/> をワイヤ形式へ直列化し、
+        /// UDP 経路と同じパーサー・分類器・適用処理を同期的に通す。
         /// テスト用にも public として公開。
         /// </summary>
+        /// <remarks>
+        /// リングは受信スレッドが <c>Socket.Receive</c> 中もスロットを予約し続ける SPSC 構造のため、
+        /// メインスレッドから <see cref="OscDatagramRing.CommitExternal"/> しても予約競合で破棄される。
+        /// facade はリングを経由せず、メインスレッド所有の scratch 上で解析・分類して直接適用する。
+        /// </remarks>
         /// <param name="message">受信した OSC メッセージ。</param>
         public void HandleOscMessage(uOSC.Message message)
         {
@@ -297,42 +323,28 @@ namespace Hidano.FacialControl.Adapters.OSC
             if (requiredLength <= 0 || requiredLength > ushort.MaxValue)
                 return;
 
-            // Keep the compatibility facade synchronous while routing it through the
-            // same wire parser, classifier, and apply path as UDP input.
             _facadeScratch ??= new byte[ushort.MaxValue];
+            _facadeRecords ??= new OscResolvedMessage[FacadeRecordCapacity];
             if (!OscMessageSerializer.TryWrite(message, _facadeScratch, out int length))
                 return;
 
-            _ring.CommitExternal(new ReadOnlySpan<byte>(_facadeScratch, 0, length), GetTable());
-            PumpReceived();
-            return;
+            OscAddressKeyTable table = GetTable();
+            int count = OscMessageClassifier.ParseAndClassify(
+                new ReadOnlySpan<byte>(_facadeScratch, 0, length), table, _facadeRecords, _diagnostics);
+            for (int i = 0; i < count; i++)
+            {
+                ref readonly OscResolvedMessage resolved = ref _facadeRecords[i];
+                var reader = new OscPacketReader(
+                    new ReadOnlySpan<byte>(_facadeScratch, resolved.ElementOffset, resolved.ElementLength));
+                if (!reader.TryReadNext(out OscMessageView element))
+                    continue;
 
-            if (message.values == null || message.values.Length == 0)
-                return;
-
-            // float 値の取得
-            float value;
-            if (message.values[0] is float f)
-            {
-                value = f;
-            }
-            else if (message.values[0] is int i)
-            {
-                // int → float 変換（VRChat は int も送る場合がある）
-                value = i;
-            }
-            else
-            {
-                return;
+                var view = new OscMessageView(element.Address, element.TypeTags, element.Arguments,
+                    element.Element, resolved.TimestampKey, resolved.ElementOffset);
+                Apply(in view, in resolved);
             }
 
-            // アドレス完全一致による高速ルックアップ
-            byte[] addressBytes = Encoding.UTF8.GetBytes(message.address);
-            if (GetTable().TryResolve(addressBytes, out OscAddressResolution resolution) && resolution.MappingIndex >= 0)
-                WriteValue(message, resolution.MappingIndex, value);
-
-            // 加算的拡張: analog-input-binding 用任意アドレスリスナー通知 
-            NotifyAnalogListeners(message.address, value);
+            WarnDiagnostics();
         }
 
         /// <summary>
@@ -400,41 +412,6 @@ namespace Hidano.FacialControl.Adapters.OSC
                 }
             }
             RebuildListenerSlotsAndTable();
-        }
-
-        private void NotifyAnalogListeners(string address, float value)
-        {
-            Action<float> listener = null;
-            lock (_analogListenersLock)
-            {
-                if (_analogListeners == null)
-                    return;
-                _analogListeners.TryGetValue(address, out listener);
-            }
-
-            if (listener == null)
-                return;
-
-            try
-            {
-                listener.Invoke(value);
-            }
-            catch (Exception ex)
-            {
-                // 受信スレッドで例外が漏れて uOSC サーバが停止しないよう握り潰してログのみ
-                Debug.LogException(ex);
-            }
-        }
-
-        private void WriteValue(uOSC.Message message, int index, float value)
-        {
-            if (_bundleMode == BundleInterpretationMode.AtomicSwap && _bundleAccumulator != null)
-            {
-                _bundleAccumulator.RecordMessage(message, index, value, GetCurrentTimeSeconds());
-                return;
-            }
-
-            _buffer.Write(index, value);
         }
 
         private double GetCurrentTimeSeconds()
