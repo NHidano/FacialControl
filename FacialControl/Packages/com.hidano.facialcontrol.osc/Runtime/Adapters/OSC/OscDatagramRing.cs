@@ -150,6 +150,23 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
         }
 
+        internal void ParseAndCommit(int slot, int length, OscAddressKeyTable table)
+        {
+            if (table == null) throw new ArgumentNullException(nameof(table));
+            try
+            {
+                Span<OscResolvedMessage> records = GetSlotRecords(slot);
+                int count = OscMessageClassifier.ParseAndClassify(
+                    GetSlotBytes(slot).Slice(0, length), table, records, _diagnostics);
+                Commit(slot, length, count, table.Version);
+            }
+            catch
+            {
+                Abort(slot);
+                throw;
+            }
+        }
+
         public void Clear()
         {
             lock (_sync)

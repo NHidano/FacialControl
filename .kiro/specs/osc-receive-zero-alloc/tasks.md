@@ -94,7 +94,7 @@
   - _Requirements: 1.6, 1.8, 10.6, 10.7_
 
 - [ ] 5. OscReceiver / OscReceiverHost の新経路統合と uOSC 互換 facade
-- [ ] 5.1 受信器による所有・テーブル再構築・ドレイン適用
+- [x] 5.1 受信器による所有・テーブル再構築・ドレイン適用
   - 受信器が受信ループ・リング・ドレインバッファ・テーブルを所有し、初期化・analog listener 登録解除・gaze アドレス設定のたびにテーブルを version +1 で再構築して `Volatile.Write` で公開する。既存の string 辞書による解決は撤去する
   - マッピング再構築はバッファ・accumulator・mapping・テーブルを同一メソッド内で連続して差し替える単一コミット点とし、version 不一致の古いレコードは stale カウンタを増やして破棄する
   - 「ドレイン → 各レコード適用」のポンプをメインスレッド専用で用意する。適用は前段フィルタ（resolved handler が設定されていれば handler、なければ旧 uOSC.Message フィルタ、両方あれば handler 優先で filter は呼ばない）を必ず 1 回だけ実行し、float なしなら終了、mapping 一致でダブルバッファ書込（AtomicSwap 時は bundle 記録）、listener slot 一致で通知（例外は既存どおり握る）。受信時刻はメインスレッドで既存と同じ時刻源から取る

@@ -28,7 +28,6 @@ namespace Hidano.FacialControl.Adapters.OSC
     public sealed class OscReceiverHost : MonoBehaviour
     {
         private OscReceiver _receiver;
-        private uOSC.uOscServer _server;
         private OscDoubleBuffer _buffer;
         private OscBundleAccumulator _bundleAccumulator;
         private OscMapping[] _mappings;
@@ -89,8 +88,6 @@ namespace Hidano.FacialControl.Adapters.OSC
             _receiver.Port = port;
             _receiver.Initialize(buffer, mappings, bundleAccumulator, bundleMode, timeProvider);
             _receiver.StartReceiving();
-
-            _server = _receiver.GetComponent<uOSC.uOscServer>();
             _configured = true;
         }
 
@@ -128,6 +125,11 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
         }
 
+        private void Update()
+        {
+            _receiver?.PumpReceived();
+        }
+
         private double GetCurrentTimeSeconds()
         {
             return _timeProvider != null ? _timeProvider.UnscaledTimeSeconds : Time.unscaledTimeAsDouble;
@@ -156,19 +158,6 @@ namespace Hidano.FacialControl.Adapters.OSC
                     UnityEngine.Object.DestroyImmediate(_receiver);
                 }
                 _receiver = null;
-            }
-
-            if (_server != null)
-            {
-                if (UnityEngine.Application.isPlaying)
-                {
-                    UnityEngine.Object.Destroy(_server);
-                }
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(_server);
-                }
-                _server = null;
             }
 
             _configured = false;

@@ -56,6 +56,9 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
         }
 
+        /// <summary>受信スレッドが使用する不変テーブルのスナップショット取得。</summary>
+        public Func<OscAddressKeyTable> TableProvider { get; set; }
+
         public bool IsRunning => Volatile.Read(ref _isRunning) != 0;
         public bool Faulted => Volatile.Read(ref _faulted) != 0;
         public OscReceiveState State => (OscReceiveState)Volatile.Read(ref _state);
@@ -167,7 +170,15 @@ namespace Hidano.FacialControl.Adapters.OSC
                             break;
                         }
 
-                        _ring.Commit(slot, length, 0, 0);
+                        OscAddressKeyTable table = TableProvider != null ? TableProvider() : null;
+                        if (table == null)
+                        {
+                            _ring.Commit(slot, length, 0, 0);
+                        }
+                        else
+                        {
+                            _ring.ParseAndCommit(slot, length, table);
+                        }
                         committed = true;
                         _diagnostics.IncrementReceivedDatagrams();
                         if (Volatile.Read(ref _stopRequested) == 0)
