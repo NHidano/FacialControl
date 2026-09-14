@@ -36,6 +36,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         private OscReceiveOptions _receiveOptions = OscReceiveOptions.Default;
         private OscAddressKeyTable _table = OscAddressKeyTable.Empty;
         private readonly Dictionary<string, byte[]> _utf8Pool = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        private byte[] _facadeScratch;
         private IOscResolvedMessageHandler _resolvedMessageHandler;
         private Action<float>[] _listenerSlots = Array.Empty<Action<float>>();
         private string[] _listenerAddresses = Array.Empty<string>();
@@ -291,6 +292,20 @@ namespace Hidano.FacialControl.Adapters.OSC
                     return;
                 }
             }
+
+            int requiredLength = OscMessageSerializer.GetRequiredLength(message);
+            if (requiredLength <= 0 || requiredLength > ushort.MaxValue)
+                return;
+
+            // Keep the compatibility facade synchronous while routing it through the
+            // same wire parser, classifier, and apply path as UDP input.
+            _facadeScratch ??= new byte[ushort.MaxValue];
+            if (!OscMessageSerializer.TryWrite(message, _facadeScratch, out int length))
+                return;
+
+            _ring.CommitExternal(new ReadOnlySpan<byte>(_facadeScratch, 0, length), GetTable());
+            PumpReceived();
+            return;
 
             if (message.values == null || message.values.Length == 0)
                 return;
