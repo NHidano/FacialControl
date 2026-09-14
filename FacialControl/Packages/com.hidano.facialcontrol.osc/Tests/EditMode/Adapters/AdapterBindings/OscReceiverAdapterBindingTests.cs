@@ -71,6 +71,15 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
         }
 
         [Test]
+        public void Type_ImplementsResolvedMessageHandler_ForStructViewDispatch()
+        {
+            Assert.That(
+                typeof(IOscResolvedMessageHandler).IsAssignableFrom(typeof(OscReceiverAdapterBinding)),
+                Is.True,
+                "binding は resolved struct view handler を実装する必要があります。");
+        }
+
+        [Test]
         public void Type_IsConcreteSealedClass()
         {
             Type type = typeof(OscReceiverAdapterBinding);

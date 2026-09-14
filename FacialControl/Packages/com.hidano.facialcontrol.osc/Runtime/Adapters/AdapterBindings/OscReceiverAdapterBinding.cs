@@ -32,7 +32,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
     /// </remarks>
     [Serializable]
     [FacialAdapterBinding(displayName: "OSC Receiver")]
-    public sealed class OscReceiverAdapterBinding : AdapterBindingBase, IGazeChannelConsumer, IGazeSourceProvider
+    public sealed class OscReceiverAdapterBinding : AdapterBindingBase, IGazeChannelConsumer, IGazeSourceProvider, IOscResolvedMessageHandler
     {
         public enum MappingOrigin
         {
@@ -101,6 +101,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         [NonSerialized]
         private Dictionary<string, List<GazeRoute>> _gazeRoutes;
+
+        [NonSerialized]
+        private List<GazeRoute>[] _gazeRouteSets;
+
+        [NonSerialized]
+        private string[] _gazeRouteAddresses;
 
         [NonSerialized]
         private Dictionary<string, List<GazeRoute>> _manualGazeRoutes;
@@ -654,6 +660,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             {
                 if (_helperHost.Receiver != null)
                 {
+                    _helperHost.Receiver.SetResolvedMessageHandler(null);
                     _helperHost.Receiver.SetMessageFilter(null);
                 }
 
@@ -847,7 +854,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
             if (_helperHost.Receiver != null)
             {
-                _helperHost.Receiver.SetMessageFilter(HandleIncomingOscMessage);
+                _helperHost.Receiver.SetResolvedMessageHandler(this);
+                PublishGazeRoutesToReceiver();
             }
         }
 
@@ -989,6 +997,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _manualGazeSources = new List<GazeVector2InputSource>(_gazeSources);
             _manualGazeRuntimeEntries = new List<GazeRuntimeEntry>(_gazeRuntimeEntries);
             _manualGazeRoutes = _gazeRoutes;
+            PublishGazeRoutesToReceiver();
         }
 
         private GazeVector2InputSource RegisterGazeSource(
@@ -1138,6 +1147,91 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 MarkAcceptedPacket();
             }
 
+            return true;
+        }
+
+        public bool HandleIncomingOscMessage(in OscMessageView view, in OscResolvedMessage resolved)
+        {
+            if (resolved.Control == OscControlKind.SenderId)
+            {
+                HandleSenderIdentity(in resolved);
+                return false;
+            }
+
+            if (!IsAcceptedSender(resolved.TimestampKey)) return false;
+
+            if (resolved.Control == OscControlKind.Heartbeat ||
+                resolved.Control == OscControlKind.Preset ||
+                resolved.Control == OscControlKind.GazeAdvertisement)
+            {
+                return false;
+            }
+
+            bool handledGaze = false;
+            if (resolved.GazeRouteSet >= 0 && resolved.HasFloat &&
+                _gazeRouteSets != null && resolved.GazeRouteSet < _gazeRouteSets.Length)
+            {
+                List<GazeRoute> routes = _gazeRouteSets[resolved.GazeRouteSet];
+                BundleInterpretationMode mode = _effectiveSettings != null
+                    ? _effectiveSettings.BundleMode
+                    : BundleInterpretationMode.AtomicSwap;
+                for (int i = 0; i < routes.Count; i++)
+                {
+                    if (mode == BundleInterpretationMode.AtomicSwap)
+                        RecordBufferedGazeMessage(resolved.TimestampKey, routes[i], resolved.FloatValue);
+                    else
+                        routes[i].Runtime.Record(routes[i].AxisIndex, resolved.FloatValue);
+                }
+                handledGaze = true;
+            }
+
+            if (handledGaze || resolved.MappingIndex >= 0) MarkAcceptedPacket();
+            return true;
+        }
+
+        private void HandleSenderIdentity(in OscResolvedMessage resolved)
+        {
+            if (!resolved.SenderIdentityValid)
+            {
+                Debug.LogWarning("[OscReceiverAdapterBinding] sender_id message payload could not be interpreted.");
+                return;
+            }
+
+            if (_zombiePolicy == null) _zombiePolicy = new ZombieEvictionPolicy();
+            bool accepted;
+            try
+            {
+                accepted = _zombiePolicy.Observe(new SenderIdentity(
+                    resolved.SenderUuid, resolved.SenderStartedAtUnixMs));
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning("[OscReceiverAdapterBinding] sender_id message payload could not be interpreted.");
+                return;
+            }
+
+            if (_zombiePolicy.HasCurrentSender)
+            {
+                _currentSenderId = _zombiePolicy.CurrentSender;
+                _hasCurrentSenderId = true;
+            }
+
+            if (OscBundleAccumulator.IsBundleTimestamp(resolved.TimestampKey))
+                RememberBundleSenderDecision(resolved.TimestampKey, accepted);
+            else
+            {
+                _hasBareSenderDecision = true;
+                _bareSenderAccepted = accepted;
+            }
+        }
+
+        private bool IsAcceptedSender(ulong timestampKey)
+        {
+            if (OscBundleAccumulator.IsBundleTimestamp(timestampKey) &&
+                _bundleSenderDecisions != null &&
+                _bundleSenderDecisions.TryGetValue(timestampKey, out bool accepted)) return accepted;
+            if (!OscBundleAccumulator.IsBundleTimestamp(timestampKey) && _hasBareSenderDecision)
+                return _bareSenderAccepted;
             return true;
         }
 
@@ -1409,6 +1503,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             // Publish only fully-built immutable snapshots. Readers retain their local dictionary reference.
             Volatile.Write(ref _gazeRuntimeEntries, newRuntimeEntries);
             Volatile.Write(ref _gazeRoutes, newRoutes);
+            PublishGazeRoutesToReceiver(newRoutes);
 
             LogGazeRouteDiagnostics(_manualGazeRuntimeEntries, _autoGazeRuntimeEntriesById);
             WarnForUnmatchedGazeConfigs(_autoGazeRuntimeEntriesById);
@@ -1756,6 +1851,55 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
 
             return true;
+        }
+
+        private void PublishGazeRoutesToReceiver()
+        {
+            PublishGazeRoutesToReceiver(_gazeRoutes);
+        }
+
+        private void PublishGazeRoutesToReceiver(Dictionary<string, List<GazeRoute>> routes)
+        {
+            if (routes == null)
+            {
+                _gazeRouteSets = Array.Empty<List<GazeRoute>>();
+                _gazeRouteAddresses = Array.Empty<string>();
+            }
+            else
+            {
+                var addresses = new string[routes.Count];
+                var sets = new List<GazeRoute>[routes.Count];
+                int index = 0;
+                foreach (KeyValuePair<string, List<GazeRoute>> pair in routes)
+                {
+                    addresses[index] = pair.Key;
+                    sets[index] = pair.Value;
+                    index++;
+                }
+                _gazeRouteAddresses = addresses;
+                _gazeRouteSets = sets;
+            }
+
+            if (_helperHost != null && _helperHost.Receiver != null)
+                _helperHost.Receiver.SetGazeAddresses(_gazeRouteAddresses);
+        }
+
+        private void RecordBufferedGazeMessage(ulong timestampKey, GazeRoute route, float value)
+        {
+            if (_gazeBundleSync == null)
+            {
+                route.Runtime.Record(route.AxisIndex, value);
+                return;
+            }
+
+            double receivedAtSeconds = GetCurrentTimeSeconds();
+            lock (_gazeBundleSync)
+            {
+                if (OscBundleAccumulator.IsBundleTimestamp(timestampKey))
+                    RecordGazeBundleMessageLocked(timestampKey, route, value, receivedAtSeconds);
+                else
+                    RecordBareGazeMessageLocked(route, value);
+            }
         }
 
         private bool TryHandleGazeMessage(uOSC.Message message)
