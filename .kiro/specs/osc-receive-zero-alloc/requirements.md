@@ -39,7 +39,7 @@ OSC 受信経路の zero-alloc 化（osc-receive-zero-alloc）。背景: OSC 受
 
 #### Acceptance Criteria
 1. The OSC Receiver shall 受信開始時に固定サイズの `byte[]` リングバッファを一度だけ確保し、受信中はデータグラム受信のためのヒープ確保を行わない。
-2. When 受信スレッドが `Socket.ReceiveFrom` でデータグラムを受け取った, the OSC Receiver shall そのデータグラムをリングバッファ上のスロットへ直接書き込み、コピー用の新規 `byte[]` を生成しない。
+2. When 受信スレッドが `Socket` のブロッキング受信（`Receive` または `ReceiveFrom`。ランタイム上で確保が発生しない方を採用する）でデータグラムを受け取った, the OSC Receiver shall そのデータグラムをリングバッファ上のスロットへ直接書き込み、コピー用の新規 `byte[]` を生成しない。
 3. The OSC Receiver shall データグラムの解析（bundle / message 走査、アドレス解決、値抽出）を受信スレッド上で完了し、メインスレッドのフレーム処理に依存しない。
 4. While 受信スレッドが動作中, the OSC Receiver shall 1 フレーム間に複数のデータグラム（MTU 分割された 2 パケット以上を含む）を受信・解析できる。
 5. When 受信スレッドの処理がリングバッファの空きスロットを使い切った, the OSC Receiver shall ヒープ確保で拡張せず、最古の未処理データグラムを上書き破棄して最新のデータグラムを優先し、Unity 標準ログの Warning でその事実を一度だけ通知する。
