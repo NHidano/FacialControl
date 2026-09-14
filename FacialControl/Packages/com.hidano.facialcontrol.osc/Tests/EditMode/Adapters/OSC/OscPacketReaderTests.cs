@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Hidano.FacialControl.Adapters.OSC;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
 {
@@ -73,6 +75,78 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
             Assert.That(after - before, Is.EqualTo(0));
         }
 
+        [Test]
+        public void TryReadNext_EnumeratesBundleMessagesInArrivalOrderWithTimestamp()
+        {
+            var packet = Bundle(0x0000000200000000UL,
+                Message("/first", ",f", Float(0.25f)),
+                Message("/second", ",i", Int(7)));
+            var reader = new OscPacketReader(packet);
+
+            Assert.That(reader.TryReadNext(out var first), Is.True);
+            Assert.That(first.Address.SequenceEqual(Utf8("/first")), Is.True);
+            Assert.That(first.TimestampKey, Is.EqualTo(0x0000000200000000UL));
+            Assert.That(reader.TryReadNext(out var second), Is.True);
+            Assert.That(second.Address.SequenceEqual(Utf8("/second")), Is.True);
+            Assert.That(second.TimestampKey, Is.EqualTo(0x0000000200000000UL));
+            Assert.That(reader.TryReadNext(out _), Is.False);
+        }
+
+        [Test]
+        public void TryReadNext_PropagatesNestedBundleTimestampDepthFirst()
+        {
+            var packet = Bundle(3UL,
+                Message("/outer", ",T"),
+                Bundle(4UL, Message("/inner", ",f", Float(1f))));
+            var reader = new OscPacketReader(packet);
+
+            Assert.That(reader.TryReadNext(out var outer), Is.True);
+            Assert.That(outer.TimestampKey, Is.EqualTo(3UL));
+            Assert.That(reader.TryReadNext(out var inner), Is.True);
+            Assert.That(inner.TimestampKey, Is.EqualTo(4UL));
+            Assert.That(inner.Address.SequenceEqual(Utf8("/inner")), Is.True);
+            Assert.That(reader.TryReadNext(out _), Is.False);
+        }
+
+        [Test]
+        public void TryReadNext_EmptyBundleReturnsNoMessagesWithoutAllocating()
+        {
+            var packet = Bundle(5UL);
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            var reader = new OscPacketReader(packet);
+
+            Assert.That(reader.TryReadNext(out _), Is.False);
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(reader.SkippedElementCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void TryReadNext_ReadsAllMessagesFromMtuSplitBuilderPacketsWithSharedTimestamp()
+        {
+            using var builder = new OscBundleBuilder();
+            const ulong timestamp = 0x0000000800000000UL;
+            var messages = new OscEncodedFloat[1000];
+            for (var i = 0; i < messages.Length; i++)
+            {
+                messages[i] = new OscEncodedFloat(Utf8("/avatar/parameters/Value" + i), i / 1000f);
+            }
+
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("OscBundleBuilder.*MTU.*split"));
+            var packetCount = builder.BuildFloatBundle(timestamp, messages);
+            var messageCount = 0;
+            for (var packetIndex = 0; packetIndex < packetCount; packetIndex++)
+            {
+                var reader = new OscPacketReader(builder.GetPacketSpan(packetIndex));
+                while (reader.TryReadNext(out var message))
+                {
+                    Assert.That(message.TimestampKey, Is.EqualTo(timestamp));
+                    messageCount++;
+                }
+            }
+
+            Assert.That(messageCount, Is.EqualTo(messages.Length));
+        }
+
         private static byte[] Message(string address, string tags, params byte[][] arguments)
         {
             var bytes = new List<byte>();
@@ -81,6 +155,21 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
             foreach (var argument in arguments)
             {
                 bytes.AddRange(argument);
+            }
+
+            return bytes.ToArray();
+        }
+
+        private static byte[] Bundle(ulong timestamp, params byte[][] elements)
+        {
+            var bytes = new List<byte>(16);
+            bytes.AddRange(Utf8("#bundle"));
+            bytes.Add(0);
+            AddLong(bytes, timestamp);
+            foreach (var element in elements)
+            {
+                AddInt(bytes, element.Length);
+                bytes.AddRange(element);
             }
 
             return bytes.ToArray();
@@ -128,6 +217,18 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
         private static void AddInt(List<byte> bytes, int value)
         {
             bytes.AddRange(Int(value));
+        }
+
+        private static void AddLong(List<byte> bytes, ulong value)
+        {
+            bytes.Add((byte)(value >> 56));
+            bytes.Add((byte)(value >> 48));
+            bytes.Add((byte)(value >> 40));
+            bytes.Add((byte)(value >> 32));
+            bytes.Add((byte)(value >> 24));
+            bytes.Add((byte)(value >> 16));
+            bytes.Add((byte)(value >> 8));
+            bytes.Add((byte)value);
         }
     }
 }
