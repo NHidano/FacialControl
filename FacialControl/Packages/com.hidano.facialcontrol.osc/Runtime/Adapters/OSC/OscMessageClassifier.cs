@@ -5,6 +5,35 @@ namespace Hidano.FacialControl.Adapters.OSC
 {
     public static class OscMessageClassifier
     {
+        public static int ParseAndClassify(ReadOnlySpan<byte> datagram, OscAddressKeyTable table,
+            Span<OscResolvedMessage> records, OscReceiveDiagnostics diagnostics)
+        {
+            int count = 0;
+            var reader = new OscPacketReader(datagram);
+            while (reader.TryReadNext(out OscMessageView view))
+            {
+                if (!TryClassify(in view, table, out OscResolvedMessage record))
+                {
+                    continue;
+                }
+
+                if (count == records.Length)
+                {
+                    diagnostics?.IncrementTruncatedDatagrams();
+                    break;
+                }
+
+                records[count++] = record;
+            }
+
+            if (reader.SkippedElementCount != 0)
+            {
+                diagnostics?.IncrementMalformedElements();
+            }
+
+            return count;
+        }
+
         public static bool TryClassify(in OscMessageView view, OscAddressKeyTable table,
             out OscResolvedMessage record)
         {

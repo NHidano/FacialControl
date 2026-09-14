@@ -1,4 +1,8 @@
+using System;
+using System.Linq;
 using NUnit.Framework;
+using System.Text;
+using Hidano.FacialControl.Domain.Models;
 using Hidano.FacialControl.Adapters.OSC;
 
 namespace Hidano.FacialControl.Tests.EditMode.Adapters.OSC
@@ -48,6 +52,61 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.OSC
             ring.Abort(reserved);
             Assert.That(ring.TryReserveSlot(out int reused), Is.True);
             ring.Abort(reused);
+        }
+
+        [Test]
+        public void CommitExternal_ParsesClassifiesAndReconstructsMessageView()
+        {
+            var diagnostics = new OscReceiveDiagnostics();
+            var ring = new OscDatagramRing(Options, diagnostics);
+            var drain = new OscDrainBuffer(Options);
+            var table = new OscAddressKeyTable.Builder(new System.Collections.Generic.Dictionary<string, byte[]>())
+                .SetMappings(new[] { new OscMapping("/face", "Face", "layer") })
+                .Build(7);
+            var packet = Message("/face", ",f", Float(0.75f));
+
+            var records = new OscResolvedMessage[Options.DatagramSlotBytes / 16];
+            Assert.That(OscMessageClassifier.ParseAndClassify(packet, table, records, diagnostics), Is.EqualTo(1));
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 100; i++)
+            {
+                Assert.That(OscMessageClassifier.ParseAndClassify(packet, table, records, diagnostics), Is.EqualTo(1));
+            }
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+
+            ring.CommitExternal(packet, table);
+            Assert.That(ring.Drain(drain), Is.EqualTo(1));
+            Assert.That(drain.RecordCount, Is.EqualTo(1));
+            ref readonly var record = ref drain.GetRecord(0);
+            Assert.That(record.MappingIndex, Is.EqualTo(0));
+            Assert.That(record.HasFloat, Is.True);
+            Assert.That(record.FloatValue, Is.EqualTo(0.75f));
+            var view = drain.GetView(0);
+            Assert.That(view.Address.SequenceEqual(Encoding.UTF8.GetBytes("/face")), Is.True);
+            Assert.That(view.TryGetFirstAsFloat(out var value), Is.True);
+            Assert.That(value, Is.EqualTo(0.75f));
+        }
+
+        private static byte[] Message(string address, string tags, byte[] argument)
+        {
+            var result = new System.Collections.Generic.List<byte>();
+            AddPaddedString(result, address);
+            AddPaddedString(result, tags);
+            result.AddRange(argument);
+            return result.ToArray();
+        }
+
+        private static byte[] Float(float value)
+        {
+            var bits = BitConverter.SingleToInt32Bits(value);
+            return new[] { (byte)(bits >> 24), (byte)(bits >> 16), (byte)(bits >> 8), (byte)bits };
+        }
+
+        private static void AddPaddedString(System.Collections.Generic.List<byte> bytes, string value)
+        {
+            bytes.AddRange(Encoding.UTF8.GetBytes(value));
+            bytes.Add(0);
+            while ((bytes.Count & 3) != 0) bytes.Add(0);
         }
     }
 }

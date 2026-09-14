@@ -139,7 +139,8 @@ namespace Hidano.FacialControl.Adapters.OSC
             {
                 datagram.CopyTo(GetSlotBytes(slot));
                 Span<OscResolvedMessage> records = GetSlotRecords(slot);
-                int count = ParseAndClassify(datagram, table, records);
+                int count = OscMessageClassifier.ParseAndClassify(
+                    GetSlotBytes(slot).Slice(0, datagram.Length), table, records, _diagnostics);
                 Commit(slot, datagram.Length, count, table == null ? 0 : table.Version);
             }
             catch
@@ -157,22 +158,6 @@ namespace Hidano.FacialControl.Adapters.OSC
                 for (int i = 0; i < _headers.Length; i++) _headers[i].State = SlotState.Free;
                 _head = _committedTail = _reservedTail;
             }
-        }
-
-        private int ParseAndClassify(ReadOnlySpan<byte> packet, OscAddressKeyTable table, Span<OscResolvedMessage> destination)
-        {
-            int count = 0;
-            var reader = new OscPacketReader(packet);
-            while (reader.TryReadNext(out OscMessageView view))
-            {
-                if (OscMessageClassifier.TryClassify(in view, table, out OscResolvedMessage record))
-                {
-                    if (count == destination.Length) { _diagnostics.IncrementTruncatedDatagrams(); break; }
-                    destination[count++] = record;
-                }
-            }
-            if (reader.SkippedElementCount != 0) _diagnostics.IncrementMalformedElements();
-            return count;
         }
 
         private static int Physical(long logical, int count) => (int)(logical % count);
