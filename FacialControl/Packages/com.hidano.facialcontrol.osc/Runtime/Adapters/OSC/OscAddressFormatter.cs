@@ -47,6 +47,30 @@ namespace Hidano.FacialControl.Adapters.OSC
             return Encoding.UTF8.GetBytes(FormatBlendShapeAddress(preset, blendShapeName));
         }
 
+        public static byte[] GetOrAddAddressUtf8(
+            Dictionary<string, byte[]> addressBytesPool,
+            string address)
+        {
+            if (addressBytesPool == null)
+            {
+                throw new ArgumentNullException(nameof(addressBytesPool));
+            }
+
+            if (address == null)
+            {
+                throw new ArgumentNullException(nameof(address));
+            }
+
+            if (addressBytesPool.TryGetValue(address, out byte[] addressBytes))
+            {
+                return addressBytes;
+            }
+
+            addressBytes = Encoding.UTF8.GetBytes(address);
+            addressBytesPool.Add(address, addressBytes);
+            return addressBytes;
+        }
+
         public static string FormatBlendShapeAddress(string customPrefix, string blendShapeName)
         {
             ValidateCustomPrefix(customPrefix);
