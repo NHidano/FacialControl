@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.0662084">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="2111" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.066208" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1724" name="Hidano.FacialControl.Osc.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Osc.Tests.EditMode.dll" runstate="Runnable" testcasecount="343" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.031041" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="63148" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1725" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="343" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.029274" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1726" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="343" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.027646" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1730" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.025956" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1731" name="EditMode" fullname="Hidano.FacialControl.Tests.EditMode" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.025442" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1732" name="Adapters" fullname="Hidano.FacialControl.Tests.EditMode.Adapters" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.024939" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestSuite" id="1736" name="AdapterBindings" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings" runstate="Runnable" testcasecount="50" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.018406" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-suite type="TestFixture" id="1617" name="OscReceiverAdapterBindingTests" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings.OscReceiverAdapterBindingTests" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings.OscReceiverAdapterBindingTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.016846" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                    <properties />
+                    <test-case id="1621" name="Type_ImplementsResolvedMessageHandler_ForStructViewDispatch" fullname="Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings.OscReceiverAdapterBindingTests.Type_ImplementsResolvedMessageHandler_ForStructViewDispatch" methodname="Type_ImplementsResolvedMessageHandler_ForStructViewDispatch" classname="Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings.OscReceiverAdapterBindingTests" runstate="Runnable" seed="1139925125" result="Passed" start-time="2026-09-14 16:21:45Z" end-time="2026-09-14 16:21:45Z" duration="0.005700" asserts="0">
+                      <properties>
+                        <property name="retryIteration" value="0" />
+                        <property name="repeatIteration" value="0" />
+                      </properties>
+                      <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                    </test-case>
+                  </test-suite>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

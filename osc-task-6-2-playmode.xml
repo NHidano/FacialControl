@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.0715838">
+  <test-suite type="TestSuite" id="1562" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="421" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.071584" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1366" name="Hidano.FacialControl.Osc.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Osc.Tests.PlayMode.dll" runstate="Runnable" testcasecount="166" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.058730" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56368" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1367" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="166" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.055591" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1368" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="166" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.052683" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1369" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="166" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.049794" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestSuite" id="1370" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="166" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.047024" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-suite type="TestSuite" id="1371" name="Performance" fullname="Hidano.FacialControl.Tests.PlayMode.Performance" runstate="Runnable" testcasecount="10" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.043967" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[One or more child tests had errors]]></message>
+                </failure>
+                <test-suite type="TestFixture" id="1181" name="OscReceiverGCAllocationTests" fullname="Hidano.FacialControl.Tests.PlayMode.Performance.OscReceiverGCAllocationTests" classname="Hidano.FacialControl.Tests.PlayMode.Performance.OscReceiverGCAllocationTests" runstate="Runnable" testcasecount="5" result="Failed" site="Child" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.042645" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <failure>
+                    <message><![CDATA[One or more child tests had errors]]></message>
+                  </failure>
+                  <test-case id="1184" name="OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation" fullname="Hidano.FacialControl.Tests.PlayMode.Performance.OscReceiverGCAllocationTests.OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation" methodname="OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation" classname="Hidano.FacialControl.Tests.PlayMode.Performance.OscReceiverGCAllocationTests" runstate="Runnable" seed="1850918257" result="Failed" start-time="2026-09-14 16:31:47Z" end-time="2026-09-14 16:31:47Z" duration="0.033268" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <failure>
+                      <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+                      <stack-trace><![CDATA[at Hidano.FacialControl.Tests.PlayMode.Performance.OscReceiverGCAllocationTests.OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation () [0x00096] in .\Packages\com.hidano.facialcontrol.osc\Tests\PlayMode\Performance\OscReceiverGCAllocationTests.cs:122
+]]></stack-trace>
+                    </failure>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

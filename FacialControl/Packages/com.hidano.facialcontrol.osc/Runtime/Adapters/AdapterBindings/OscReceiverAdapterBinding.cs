@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Adapters.OSC;
@@ -46,6 +47,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         public const string GazeAdvertisementAddress = "/_facialcontrol/gaze";
 
         private const int MaxCachedBundleSenderDecisions = 32;
+        private const int HeartbeatScratchBytes = 32 * 1024;
+        private const int HeartbeatScratchNames = 1024;
 
         /// <summary>
         /// 環境/運用依存の Receiver 設定を保持する SettingsSO (sub-asset)。
@@ -226,6 +229,14 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         [NonSerialized]
         private bool _heartbeatAccumulating;
+
+        [NonSerialized] private byte[] _heartbeatScratchBytes;
+        [NonSerialized] private int[] _heartbeatScratchOffsets;
+        [NonSerialized] private int _heartbeatScratchByteCount;
+        [NonSerialized] private int _heartbeatScratchNameCount;
+        [NonSerialized] private uint _lastHeartbeatBytesHash;
+        [NonSerialized] private bool _hasProcessedHeartbeatBytes;
+        [NonSerialized] private bool _warnedHeartbeatScratchOverflow;
 
         [NonSerialized]
         private List<string> _gazeAdScratch;
@@ -717,6 +728,13 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _hasProcessedHeartbeat = false;
             _heartbeatAccumulationTimestamp = 0u;
             _heartbeatAccumulating = false;
+            _heartbeatScratchBytes = null;
+            _heartbeatScratchOffsets = null;
+            _heartbeatScratchByteCount = 0;
+            _heartbeatScratchNameCount = 0;
+            _lastHeartbeatBytesHash = 0u;
+            _hasProcessedHeartbeatBytes = false;
+            _warnedHeartbeatScratchOverflow = false;
             _gazeAdScratch = null;
             _gazeAdSync = null;
             _gazeAdDirty = 0;
@@ -817,6 +835,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _heartbeatScratch = new List<string>();
             _heartbeatProcessingScratch = new List<string>();
             _heartbeatSync = new object();
+            _heartbeatScratchBytes = new byte[HeartbeatScratchBytes];
+            _heartbeatScratchOffsets = new int[HeartbeatScratchNames + 1];
             _gazeAdScratch = new List<string>();
             _gazeAdSync = new object();
             _gazeAdProcessingScratch = new List<string>();
@@ -1164,6 +1184,11 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 resolved.Control == OscControlKind.Preset ||
                 resolved.Control == OscControlKind.GazeAdvertisement)
             {
+                if (resolved.Control == OscControlKind.Heartbeat)
+                {
+                    AccumulateHeartbeatBytes(in view);
+                    _helperHost?.Receiver?.Diagnostics?.IncrementHeartbeatArrivals();
+                }
                 return false;
             }
 
@@ -1319,6 +1344,52 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             {
                 ulong old = _bundleSenderDecisionOrder.Dequeue();
                 _bundleSenderDecisions.Remove(old);
+            }
+        }
+
+        private void AccumulateHeartbeatBytes(in OscMessageView view)
+        {
+            if (_heartbeatScratchBytes == null || _heartbeatScratchOffsets == null)
+            {
+                return;
+            }
+
+            lock (_heartbeatSync)
+            {
+                if (!_heartbeatAccumulating || view.TimestampKey != _heartbeatAccumulationTimestamp)
+                {
+                    _heartbeatScratchByteCount = 0;
+                    _heartbeatScratchNameCount = 0;
+                    _heartbeatScratchOffsets[0] = 0;
+                    _heartbeatAccumulationTimestamp = view.TimestampKey;
+                    _heartbeatAccumulating = true;
+                }
+
+                var reader = view.GetArgumentReader();
+                while (reader.TryReadNext(out OscArgument argument))
+                {
+                    if (!argument.IsString || argument.Bytes.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    if (_heartbeatScratchNameCount >= HeartbeatScratchNames ||
+                        argument.Bytes.Length > HeartbeatScratchBytes - _heartbeatScratchByteCount)
+                    {
+                        if (!_warnedHeartbeatScratchOverflow)
+                        {
+                            _warnedHeartbeatScratchOverflow = true;
+                            Debug.LogWarning("[OscReceiverAdapterBinding] heartbeat scratch exceeded 32 KB / 1024 names; remaining names were truncated.");
+                        }
+
+                        break;
+                    }
+
+                    argument.Bytes.CopyTo(new Span<byte>(_heartbeatScratchBytes, _heartbeatScratchByteCount, argument.Bytes.Length));
+                    _heartbeatScratchByteCount += argument.Bytes.Length;
+                    _heartbeatScratchNameCount++;
+                    _heartbeatScratchOffsets[_heartbeatScratchNameCount] = _heartbeatScratchByteCount;
+                }
             }
         }
 
@@ -1662,17 +1733,29 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         {
             if (Interlocked.Exchange(ref _heartbeatDirty, 0) == 0 ||
                 _heartbeatProcessingScratch == null ||
-                _runtimeMeshBlendShapeNames == null)
+                _runtimeMeshBlendShapeNames == null ||
+                _heartbeatScratchBytes == null)
             {
                 return;
             }
 
             lock (_heartbeatSync)
             {
-                _heartbeatProcessingScratch.Clear();
-                for (int i = 0; i < _heartbeatScratch.Count; i++)
+                uint bytesHash = ComputeHeartbeatBytesHash();
+                if (_hasProcessedHeartbeatBytes && bytesHash == _lastHeartbeatBytesHash)
                 {
-                    _heartbeatProcessingScratch.Add(_heartbeatScratch[i]);
+                    return;
+                }
+
+                _lastHeartbeatBytesHash = bytesHash;
+                _hasProcessedHeartbeatBytes = true;
+                _heartbeatProcessingScratch.Clear();
+                for (int i = 0; i < _heartbeatScratchNameCount; i++)
+                {
+                    int start = _heartbeatScratchOffsets[i];
+                    int length = _heartbeatScratchOffsets[i + 1] - start;
+                    _heartbeatProcessingScratch.Add(Encoding.UTF8.GetString(
+                        _heartbeatScratchBytes, start, length));
                 }
             }
 
@@ -1682,11 +1765,6 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
 
             uint heartbeatHash = HeartbeatHashHelper.ComputeFnv1a(_heartbeatProcessingScratch);
-            if (_hasProcessedHeartbeat && heartbeatHash == _lastHeartbeatHash)
-            {
-                return;
-            }
-
             _lastHeartbeatHash = heartbeatHash;
             _hasProcessedHeartbeat = true;
 
@@ -1714,6 +1792,29 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
 
             PublishRuntimeMappings(result);
+        }
+
+        private uint ComputeHeartbeatBytesHash()
+        {
+            unchecked
+            {
+                uint hash = HeartbeatHashHelper.Fnv1aOffsetBasis;
+                for (int i = 0; i < _heartbeatScratchNameCount; i++)
+                {
+                    int start = _heartbeatScratchOffsets[i];
+                    int end = _heartbeatScratchOffsets[i + 1];
+                    for (int j = start; j < end; j++)
+                    {
+                        hash ^= _heartbeatScratchBytes[j];
+                        hash *= HeartbeatHashHelper.Fnv1aPrime;
+                    }
+
+                    hash ^= 0;
+                    hash *= HeartbeatHashHelper.Fnv1aPrime;
+                }
+
+                return hash;
+            }
         }
 
         private void PublishRuntimeMappings(RuntimeMappingResolver.ResolveResult result)

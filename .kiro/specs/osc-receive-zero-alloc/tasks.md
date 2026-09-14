@@ -131,7 +131,7 @@
   - 完了条件: 既存の zombie eviction / gaze E2E / fail-safe テストが facade 経由・UDP 経由の両方で緑
   - _Requirements: 3.6, 4.1, 4.2, 5.1, 5.2, 5.7, 7.2, 7.4, 7.5_
 
-- [ ] 6.2 heartbeat のバイト列累積と unchanged ゲート
+- [x] 6.2 heartbeat のバイト列累積と unchanged ゲート
   - heartbeat チャンクを同一 bundle タイムスタンプで固定 byte scratch（32 KB / 1024 名）に追記し、タイムスタンプが変われば reset する。scratch 超過は切り詰めて一度だけ警告する。heartbeat 到着カウンタを加算する
   - FixedTick での処理は byte ハッシュを前回と比較し、同一かつ処理済みなら確保ゼロで終了。変化時のみ string 化して既存の一貫性チェック → string ハッシュ → mapping マージ → 公開 → 再構築の経路へ渡す（公開ハッシュの算出元は従来どおり string 列）
   - 完了条件: 既存の heartbeat 自動マッピング / 一貫性テストが緑（マッピング数・順序・未対応スキップ・チャンク欠落挙動が一致）、既存の「同一 heartbeat 連続到着で 100 フレーム 0 byte」テストが facade 経由で緑
