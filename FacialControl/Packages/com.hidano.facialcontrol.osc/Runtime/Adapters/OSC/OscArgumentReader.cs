@@ -92,7 +92,8 @@ namespace Hidano.FacialControl.Adapters.OSC
             return true;
         }
 
-        internal bool IsFullyConsumed => _tagIndex == _typeTags.Length && _offset == _arguments.Length;
+        internal bool IsFullyConsumed => Error == OscPacketError.None &&
+            _tagIndex == _typeTags.Length && _offset == _arguments.Length;
 
         private bool TryReadPaddedString(out ReadOnlySpan<byte> value)
         {

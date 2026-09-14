@@ -116,6 +116,17 @@ namespace Hidano.FacialControl.Adapters.OSC
                 {
                     SetError(elementSize >= 0 && elementSize <= frame.End - frame.Next
                         ? OscPacketError.Misaligned : OscPacketError.ArgumentOutOfRange);
+                    // A malformed size still identifies the next byte range when it
+                    // fits in the containing bundle. Consume that element and keep
+                    // looking so one bad element cannot hide later valid messages.
+                    if (elementSize >= 0 && elementSize <= frame.End - frame.Next)
+                    {
+                        frame.Next += elementSize;
+                        SetFrame(_depth - 1, frame);
+                        continue;
+                    }
+
+                    SetFrame(_depth - 1, frame);
                     _depth--;
                     continue;
                 }

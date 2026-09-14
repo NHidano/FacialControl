@@ -63,6 +63,58 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
         }
 
         [Test]
+        public void TryReadNext_SkipsMalformedElementsAndContinuesInArrivalOrder()
+        {
+            var packet = Bundle(9UL,
+                new byte[] { (byte)'/', 0, 0, 0 },
+                Message("", ",f", Float(1f)),
+                Message("/bad-tags", "f", Float(1f)),
+                Message("/missing-argument", ",f"),
+                Message("/unknown-tag", ",z"),
+                Message("/valid", ",f", Float(0.75f)));
+            var reader = new OscPacketReader(packet);
+
+            Assert.That(reader.TryReadNext(out var message), Is.True);
+            Assert.That(message.Address.SequenceEqual(Utf8("/valid")), Is.True);
+            Assert.That(reader.TryReadNext(out _), Is.False);
+            Assert.That(reader.SkippedElementCount, Is.EqualTo(5));
+            Assert.That(reader.LastError, Is.EqualTo(OscPacketError.UnknownTypeTag));
+        }
+
+        [Test]
+        public void TryReadNext_SkipsMisalignedElementAndContinues()
+        {
+            var packet = BundleWithRawElements(10UL,
+                new byte[] { 1, 2 },
+                Message("/after-misaligned", ",i", Int(3)));
+            var reader = new OscPacketReader(packet);
+
+            Assert.That(reader.TryReadNext(out var message), Is.True);
+            Assert.That(message.Address.SequenceEqual(Utf8("/after-misaligned")), Is.True);
+            Assert.That(reader.SkippedElementCount, Is.EqualTo(1));
+            Assert.That(reader.LastError, Is.EqualTo(OscPacketError.Misaligned));
+        }
+
+        [Test]
+        public void TryReadNext_SkipsOverdeepNestedBundleAndContinues()
+        {
+            var deep = Bundle(12UL, Message("/too-deep", ",T"));
+            for (var i = 0; i < 7; i++)
+            {
+                deep = Bundle(12UL, deep);
+            }
+
+            var packet = BundleWithRawElements(11UL, deep, Message("/after-depth", ",T"));
+            var reader = new OscPacketReader(packet);
+
+            Assert.That(reader.TryReadNext(out var message), Is.True);
+            Assert.That(message.Address.SequenceEqual(Utf8("/after-depth")), Is.True);
+            Assert.That(reader.TryReadNext(out _), Is.False);
+            Assert.That(reader.SkippedElementCount, Is.EqualTo(1));
+            Assert.That(reader.LastError, Is.EqualTo(OscPacketError.BundleTooDeep));
+        }
+
+        [Test]
         public void TryReadNext_DoesNotAllocateWhileScanning()
         {
             var packet = Message("/value", ",f", Float(0.25f));
@@ -161,6 +213,21 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
         }
 
         private static byte[] Bundle(ulong timestamp, params byte[][] elements)
+        {
+            var bytes = new List<byte>(16);
+            bytes.AddRange(Utf8("#bundle"));
+            bytes.Add(0);
+            AddLong(bytes, timestamp);
+            foreach (var element in elements)
+            {
+                AddInt(bytes, element.Length);
+                bytes.AddRange(element);
+            }
+
+            return bytes.ToArray();
+        }
+
+        private static byte[] BundleWithRawElements(ulong timestamp, params byte[][] elements)
         {
             var bytes = new List<byte>(16);
             bytes.AddRange(Utf8("#bundle"));
