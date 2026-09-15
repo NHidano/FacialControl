@@ -173,7 +173,10 @@ namespace Hidano.FacialControl.Adapters.OSC
                     bool committed = false;
                     try
                     {
-                        int length = _socket.Receive(_ring.GetSlotBytes(slot), SocketFlags.None);
+                        // Span<byte> オーバーロードは Unity Mono で呼び出しごとにスロット長の一時配列を確保するため、
+                        // backing 配列 + オフセットの byte[] オーバーロードで受ける（確保ゼロ、2026-09-15 実測）。
+                        ArraySegment<byte> segment = _ring.GetSlotSegment(slot);
+                        int length = _socket.Receive(segment.Array, segment.Offset, segment.Count, SocketFlags.None);
                         if (length > _ring.SlotBytes)
                         {
                             _diagnostics.IncrementOversizedDatagrams();
@@ -200,8 +203,6 @@ namespace Hidano.FacialControl.Adapters.OSC
                         _diagnostics.IncrementReceivedDatagrams();
                         if (Volatile.Read(ref _stopRequested) == 0)
                             hooks.OnDatagramCommitted?.Invoke();
-                        if (_options.CaptureThreadAllocationStats)
-                            _diagnostics.SetReceiveThreadAllocatedBytes(GC.GetAllocatedBytesForCurrentThread());
                     }
                     catch (SocketException ex) when (IsExpectedStop(ex))
                     {

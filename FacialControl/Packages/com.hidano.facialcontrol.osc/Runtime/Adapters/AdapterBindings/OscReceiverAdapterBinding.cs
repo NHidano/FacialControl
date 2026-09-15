@@ -868,8 +868,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _lastAcceptedPacketTime = ctx.TimeProvider.UnscaledTimeSeconds;
             _failSafeActive = false;
             _zombiePolicy = new ZombieEvictionPolicy();
-            _bundleSenderDecisions = new Dictionary<ulong, bool>();
-            _bundleSenderDecisionOrder = new Queue<ulong>();
+            // 上限 +1 で事前確保し、bundle タイムスタンプが増えても定常で再確保しない（GC ゲート対策）
+            _bundleSenderDecisions = new Dictionary<ulong, bool>(MaxCachedBundleSenderDecisions + 1);
+            _bundleSenderDecisionOrder = new Queue<ulong>(MaxCachedBundleSenderDecisions + 1);
             _heartbeatScratch = new List<string>();
             _heartbeatProcessingScratch = new List<string>();
             _heartbeatSync = new object();
@@ -1458,8 +1459,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         {
             if (_bundleSenderDecisions == null)
             {
-                _bundleSenderDecisions = new Dictionary<ulong, bool>();
-                _bundleSenderDecisionOrder = new Queue<ulong>();
+                _bundleSenderDecisions = new Dictionary<ulong, bool>(MaxCachedBundleSenderDecisions + 1);
+                _bundleSenderDecisionOrder = new Queue<ulong>(MaxCachedBundleSenderDecisions + 1);
             }
 
             if (!_bundleSenderDecisions.ContainsKey(timestampKey))

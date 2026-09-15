@@ -145,7 +145,7 @@
   - 完了条件: 既存の heartbeat 自動マッピング / 一貫性テストが緑（マッピング数・順序・未対応スキップ・チャンク欠落挙動が一致）、既存の「同一 heartbeat 連続到着で 100 フレーム 0 byte」テストが facade 経由で緑
   - _Requirements: 4.1, 4.3, 4.6, 4.7, 7.1_
 
-- [ ] 6.3 preset / gaze 広告のバイト列比較と string 化境界
+- [x] 6.3 preset / gaze 広告のバイト列比較と string 化境界
   - preset は引数を現在値の UTF-8（固定 256 byte）と比較し、差分があるときのみ string 化して preset 名 / カスタムプレフィックスを更新する
   - gaze 広告は heartbeat と同様に固定 byte scratch（8 KB / 256 ペア）へ累積し、byte ハッシュで gate してから既存の広告解析・route 再構築へ渡し、再構築後に受信器へ gaze アドレス列を再登録する
   - 完了条件: 既存の preset / gaze 広告テストが緑、既存の「gaze 広告が毎 tick 到着しても内容不変なら 0 byte」テストが facade 経由で緑
@@ -168,24 +168,24 @@
   - _Requirements: 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 8. GC アロケーションテストの昇格（実 UDP + 全スレッド）
-- [ ] 8.1 計測ワークロード送信器と計測器の自己検証
+- [x] 8.1 計測ワークロード送信器と計測器の自己検証
   - テスト側送信器: 送信側 bundle ビルダーで (a) 定常フレーム（sender_id + VRChat preset アドレスの ARKit 52 本 + gaze X/Y、1472 byte 分割で 2 パケット）と (b) heartbeat フレーム（(a) + blendshape_names チャンク + preset + gaze 広告）を事前生成し、接続済み UDP ソケットの `Send` で確保ゼロで送る。送信側本体コードは変更しない
-  - 計測器: M1 = ProfilerRecorder の `GC.Alloc`（`CollectOnlyOnCurrentThread` なし・フレーム合計）、M2 = 受信スレッドの `GetAllocatedBytesForCurrentThread` 窓前後差分、M3 = リフレクションで取れれば全体確保の記録のみ
-  - positive control テスト: データグラムコミット時フックで受信スレッドに意図的確保を注入し、M1 が受信スレッドを観測できたかを記録する。M2 も増えない場合は計測器故障として Inconclusive にする
-  - 完了条件: positive control テストが「M1 観測可否」をテスト出力に記録して完了し、M2 が注入分を検出する
+  - 計測器: M2 = Memory カウンタ「GC Allocated In Frame」（`ManagedAllocationProbe`、全スレッド・フレーム単位・byte 精度）を authoritative とする。M1 = ProfilerRecorder の `GC.Alloc`（`CollectOnlyOnCurrentThread`、メインスレッドのみ・診断用）、M3 = `GC.GetTotalMemory(false)` 差分の記録のみ。`GC.GetAllocatedBytesForCurrentThread` は Unity 6000.3.19f1 Mono で常に 0 のため使わない（2026-09-15 実測、design.md 参照）
+  - positive control テスト: データグラムコミット時フックで受信スレッドに 1 KB × 5 を注入し、M2 の窓合計の増分が注入量以上であることを assert する。M1 が受信スレッドを観測できたかは記録のみ（実測 false）
+  - 完了条件: positive control テストが「M1 観測可否」をテスト出力に記録して完了し、M2 が注入分を検出する（検出できない場合は Inconclusive ではなく失敗）
   - _Depends: 5.4, 6.3, 7.2_
   - _Requirements: 8.1, 8.2, 8.4, 10.3_
 
-- [ ] 8.2 100 フレーム 0 byte ゲートと heartbeat 除外
-  - 手順: binding 起動 → ウォームアップ 30 フレーム（heartbeat を含む）→ ヒープ安定化 → 「送信済み == 適用済みデータグラム数」まで待機（最大 1 秒）→ 計測 100 フレーム（`WaitForFixedUpdate` → `null` で 1 フレームを構成し、ドレインと FixedTick が各 1 回走ることをカウンタで確認）。heartbeat は 25 フレームごとに送る
+- [x] 8.2 100 フレーム 0 byte ゲートと heartbeat 除外
+  - 手順: binding 起動 → ウォームアップ 30 フレーム（heartbeat を含む）→ ヒープ安定化 → 「送信済み == 適用済みデータグラム数」まで待機（最大 1 秒）→ ハーネス固定分の計測 20 フレーム（製品経路を呼ばない `yield return null` ループの中央値）→ 計測 100 フレーム（`yield return null` 1 回 = 1 フレーム。ドレインと OnFixedTick を手動で各 1 回呼び、FixedTickCount で確認。バッチモードでは `WaitForFixedUpdate` が約 350 フレームを消費するため使わない）。heartbeat は 25 フレームごとに送る
   - 除外判定は送った番号ではなく適用側の heartbeat 到着カウンタの増分で行い、除外フレーム数と番号をテスト出力に記録する
-  - ゲートを独立に assert する: G1 = 受信スレッド M2 差分が窓全体で 0（除外なし）、G2 = メインスレッド M1 が heartbeat 除外後の全フレームで 0。失敗メッセージに `frame / gcAllocBytes / heartbeatFrame` を列挙する
+  - ゲート: heartbeat 到着フレームを除く各フレームで M2（「GC Allocated In Frame」= 全スレッド）が 0 であることを assert する（受信スレッド G1 とメインスレッド G2 は同一 assert で担保）。heartbeat 到着フレームの M2 / M1 値は記録のみ。失敗メッセージに `frame / gcAllocBytes / mainThreadGcAlloc / heartbeatFrame` と全フレームの値を列挙する。計測窓が触る配列・`WaitForFixedUpdate` は窓の前に確保し、ウォームアップは窓と同じ 1 フレーム構成で行う
   - 既存 baseline 記録テスト 2 件を UDP 経由の 0 byte assert へ置換し、facade 経由の既存シナリオ 3 件はメインスレッド計測のまま維持する。テストは PlayMode Performance 配下に置く
-  - 完了条件: G1 / G2 が緑（受信側 PlayMode GC テストが実 UDP 経由で 100 フレーム 0 byte）
+  - 完了条件: 受信側 PlayMode GC テストが実 UDP 経由で 100 フレーム（heartbeat 到着フレームを除く）全スレッド 0 byte で緑
   - _Requirements: 4.6, 6.4, 6.5, 8.1, 8.2, 8.3, 8.5, 8.6, 8.7, 9.1_
 
 - [ ] 9. 既存機能回帰と受入確認
-- [ ] 9.1 OSC 関連テスト全件と境界制約の確認
+- [x] 9.1 OSC 関連テスト全件と境界制約の確認
   - OSC パッケージの EditMode / PlayMode テストを全件実行し、pre-existing 赤（SampleAssetsAreInSync ×4、PlayMode OSC heartbeat / auto-mapping ×4、TenIndependentBindings_OneSwap フレーキー）を除いて緑であることを確認する
   - 送信側コード・uOSC パッケージ・uOSC 互換 facade が無変更であること、uOSC 型の参照が facade・旧フィルタ・既存記録 API・シリアライザに限定されること、Domain / Application 層に Socket や uOSC 型が入っていないこと、ifacialmocap 等の依存パッケージが無改修でコンパイル・動作することを確認する
   - 完了条件: テスト結果 XML で対象外を除く失敗が 0 件、VRChat 形式アドレスの受信・10 体構成の既存テストが緑

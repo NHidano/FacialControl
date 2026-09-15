@@ -11,7 +11,6 @@ namespace Hidano.FacialControl.Adapters.OSC
         public int DatagramSlotBytes { get; }
         public int DatagramSlotCount { get; }
         public int SocketReceiveBufferBytes { get; }
-        public bool CaptureThreadAllocationStats { get; }
 
         public static OscReceiveOptions Default => new OscReceiveOptions(
             DefaultDatagramSlotBytes, DefaultDatagramSlotCount, DefaultSocketReceiveBufferBytes);
@@ -19,8 +18,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         public OscReceiveOptions(
             int datagramSlotBytes,
             int datagramSlotCount,
-            int socketReceiveBufferBytes,
-            bool captureThreadAllocationStats = false)
+            int socketReceiveBufferBytes)
         {
             if (datagramSlotBytes < 512 || datagramSlotBytes > 65535)
                 throw new ArgumentOutOfRangeException(nameof(datagramSlotBytes));
@@ -32,7 +30,6 @@ namespace Hidano.FacialControl.Adapters.OSC
             DatagramSlotBytes = datagramSlotBytes;
             DatagramSlotCount = datagramSlotCount;
             SocketReceiveBufferBytes = socketReceiveBufferBytes;
-            CaptureThreadAllocationStats = captureThreadAllocationStats;
         }
     }
 }

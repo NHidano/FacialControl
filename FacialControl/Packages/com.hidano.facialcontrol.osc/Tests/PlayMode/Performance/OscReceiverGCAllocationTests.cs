@@ -180,22 +180,47 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
             for (int i = 0; i < senderUuid.Length; i++) senderUuid[i] = (byte)(i + 1);
             byte[] heartbeatAddress = Encoding.UTF8.GetBytes(OscReceiverAdapterBinding.BlendShapeNamesAddress);
 
+            // heartbeat は実送信と同様に heartbeat ごとに新しい bundle タイムスタンプを持たせる。
+            // 同じタイムスタンプを再送すると binding の chunk 蓄積が reset されず名前が重複し、
+            // 内容が同じでも「変更あり」として再構築（確保あり）が走る。
+            const int HeartbeatSets = 8;
+            var heartbeatPacketSets = new byte[HeartbeatSets][][];
+            int heartbeatIndex = 0;
             using (var builder = new OscBundleBuilder())
             {
                 int normalCount = builder.BuildFrameBundle(1, senderAddress, senderUuid, "1700000000000", addresses, values, 2);
                 normalPackets = CopyPackets(builder, normalCount);
-                int heartbeatCount = builder.BuildFrameBundle(
-                    2, senderAddress, senderUuid, "1700000000000", addresses, values, 2,
-                    heartbeatAddress, new[] { "smile", "frown" }, 2,
-                    Encoding.UTF8.GetBytes(OscReceiverAdapterBinding.PresetAddress),
-                    AddressPresetEstimator.PresetVrChat, null);
-                heartbeatPackets = CopyPackets(builder, heartbeatCount);
+                for (int k = 0; k < HeartbeatSets; k++)
+                {
+                    int heartbeatCount = builder.BuildFrameBundle(
+                        (ulong)(100 + k), senderAddress, senderUuid, "1700000000000", addresses, values, 2,
+                        heartbeatAddress, new[] { "smile", "frown" }, 2,
+                        Encoding.UTF8.GetBytes(OscReceiverAdapterBinding.PresetAddress),
+                        AddressPresetEstimator.PresetVrChat, null);
+                    heartbeatPacketSets[k] = CopyPackets(builder, heartbeatCount);
+                }
             }
+            heartbeatPackets = heartbeatPacketSets[0];
+
+            // 計測窓が触るものは全て窓の前に確保し、窓内で初回確保（JIT・容量拡張）が起きないようにする。
+            // 1 イテレーション = `yield return null` の 1 フレーム。バッチモードでは WaitForFixedUpdate が数百フレームを
+            // 消費して受信スレッドの確保フレームを見逃すため使わない。OnFixedTick は手動で呼び FixedTickCount で回数を確認する。
+            var allocations = new long[FrameCount];
+            var mainThreadAllocations = new long[FrameCount];
+            var heartbeatFrames = new List<int>(FrameCount);
+            var failures = new StringBuilder();
+            const int BaselineFrames = 20;
+            var harnessBaseline = new long[BaselineFrames];
+            var sendOnly = new long[BaselineFrames];
+            var sendAndPump = new long[BaselineFrames];
 
             using (var sender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-            using (var recorder = ProfilerRecorder.StartNew(
+            // M2: 全スレッドのマネージド確保（GC Allocated In Frame）。受信スレッド分を含む authoritative なゲート
+            using (var allThreads = ManagedAllocationProbe.Start(256))
+            // M1: メインスレッドの GC.Alloc マーカー（診断用。100 byte 単位に丸められ、受信スレッドは集計されない）
+            using (var mainThread = ProfilerRecorder.StartNew(
                        ProfilerCategory.Memory, "GC.Alloc", 256,
-                       ProfilerRecorderOptions.SumAllSamplesInFrame))
+                       ProfilerRecorderOptions.SumAllSamplesInFrame | ProfilerRecorderOptions.CollectOnlyOnCurrentThread))
             {
                 sender.Connect(new IPEndPoint(IPAddress.Loopback, receiver.ActivePort));
                 yield return null;
@@ -206,12 +231,15 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                     warmupSent += normalPackets.Length;
                     if (frame % 25 == 0)
                     {
+                        heartbeatPackets = heartbeatPacketSets[heartbeatIndex++ % HeartbeatSets];
                         SendPackets(sender, heartbeatPackets);
                         warmupSent += heartbeatPackets.Length;
                     }
                     yield return null;
                     receiver.PumpReceived();
                     _binding.OnFixedTick(1f / 60f);
+                    allocations[0] = allThreads.LastValue;
+                    mainThreadAllocations[0] = mainThread.LastValue;
                 }
 
                 for (int i = 0; i < 120 && receiver.Diagnostics.AppliedDatagramCount < warmupSent; i++)
@@ -227,14 +255,48 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                     receiver.PumpReceived();
                     _binding.OnFixedTick(1f / 60f);
                 }
+                Assert.That(_binding.InputSource, Is.Not.Null, "ウォームアップ中の heartbeat で自動マッピングが完了していること");
                 StabilizeManagedHeap();
-                long receiveBytesBefore = receiver.Diagnostics.ReceiveThreadAllocatedBytes;
+
+                // ハーネス固定分（テストランナーのコルーチン 1 ステップあたりの確保）を同じループ形で計測する。
+                // 製品経路は一切呼ばない。
+                for (int i = 0; i < BaselineFrames; i++)
+                {
+                    yield return null;
+                    harnessBaseline[i] = allThreads.LastValue;
+                }
+                long baseline = Median(harnessBaseline);
+
+                // 切り分け用の内訳（記録のみ）: 送信のみ / 送信 + ドレイン
+                long sentForBreakdown = receiver.Diagnostics.AppliedDatagramCount;
+                for (int i = 0; i < BaselineFrames; i++)
+                {
+                    SendPackets(sender, normalPackets);
+                    sentForBreakdown += normalPackets.Length;
+                    yield return null;
+                    sendOnly[i] = allThreads.LastValue;
+                }
+                for (int i = 0; i < BaselineFrames; i++)
+                {
+                    SendPackets(sender, normalPackets);
+                    sentForBreakdown += normalPackets.Length;
+                    yield return null;
+                    receiver.PumpReceived();
+                    sendAndPump[i] = allThreads.LastValue;
+                }
+                for (int i = 0; i < 120 && receiver.Diagnostics.AppliedDatagramCount < sentForBreakdown; i++)
+                {
+                    yield return null;
+                    receiver.PumpReceived();
+                }
+                Assert.That(receiver.Diagnostics.AppliedDatagramCount, Is.EqualTo(sentForBreakdown));
+
                 long heartbeatBefore = receiver.Diagnostics.HeartbeatArrivalCount;
                 long fixedTicksBefore = receiver.Diagnostics.FixedTickCount;
-                var allocations = new List<long>(FrameCount);
-                var heartbeatFrames = new List<int>();
-                long sent = warmupSent;
-                var fixedWait = new WaitForFixedUpdate();
+                long sent = sentForBreakdown;
+                heartbeatFrames.Clear();
+                // 直前の Assert（NUnit の constraint 生成）が同じフレームで確保するため、空フレームを挟んで窓から切り離す
+                yield return null;
 
                 for (int frame = 0; frame < FrameCount; frame++)
                 {
@@ -243,21 +305,19 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                     bool heartbeat = (frame + 1) % 25 == 0;
                     if (heartbeat)
                     {
+                        heartbeatPackets = heartbeatPacketSets[heartbeatIndex++ % HeartbeatSets];
                         SendPackets(sender, heartbeatPackets);
                         sent += heartbeatPackets.Length;
                     }
-                    yield return fixedWait;
                     yield return null;
                     receiver.PumpReceived();
                     _binding.OnFixedTick(1f / 60f);
                     long heartbeatAfter = receiver.Diagnostics.HeartbeatArrivalCount;
                     bool appliedHeartbeat = heartbeatAfter > heartbeatBefore;
                     heartbeatBefore = heartbeatAfter;
-                    if (frame >= 20)
-                    {
-                        allocations.Add(recorder.LastValue);
-                        if (appliedHeartbeat) heartbeatFrames.Add(frame);
-                    }
+                    allocations[frame] = allThreads.LastValue;
+                    mainThreadAllocations[frame] = mainThread.LastValue;
+                    if (appliedHeartbeat) heartbeatFrames.Add(frame);
                 }
 
                 for (int i = 0; i < 120 && receiver.Diagnostics.AppliedDatagramCount < sent; i++)
@@ -268,15 +328,51 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
 
                 Assert.That(receiver.Diagnostics.AppliedDatagramCount, Is.EqualTo(sent));
                 Assert.That(receiver.Diagnostics.FixedTickCount - fixedTicksBefore, Is.EqualTo(FrameCount));
-                Assert.That(receiver.Diagnostics.ReceiveThreadAllocatedBytes - receiveBytesBefore, Is.EqualTo(0));
-                for (int i = 0; i < allocations.Count; i++)
+
+                int failedFrames = 0;
+                long heartbeatFrameBytes = 0;
+                for (int frame = 0; frame < FrameCount; frame++)
                 {
-                    if (!heartbeatFrames.Contains(i + 20))
-                        Assert.That(allocations[i], Is.EqualTo(0),
-                            $"frame={i} gcAllocBytes={allocations[i]} heartbeatFrame=false");
+                    long productBytes = allocations[frame] - baseline;
+                    if (heartbeatFrames.Contains(frame))
+                    {
+                        heartbeatFrameBytes += productBytes;
+                        continue;
+                    }
+                    if (productBytes != 0)
+                    {
+                        failedFrames++;
+                        failures.Append("frame=").Append(frame)
+                            .Append(" gcAllocBytes=").Append(productBytes)
+                            .Append(" (allThreads=").Append(allocations[frame])
+                            .Append(" harnessBaseline=").Append(baseline)
+                            .Append(" mainThreadGcAlloc=").Append(mainThreadAllocations[frame])
+                            .Append(") heartbeatFrame=false\n");
+                    }
                 }
-                TestContext.Out.WriteLine($"[OscReceiverGCAllocationTests] frames={FrameCount} heartbeatFrames={string.Join(",", heartbeatFrames)} receiveThreadGcDelta={receiver.Diagnostics.ReceiveThreadAllocatedBytes - receiveBytesBefore}");
+                TestContext.Out.WriteLine(
+                    "[OscReceiverGCAllocationTests] frames=" + FrameCount +
+                    " harnessBaselinePerFrame=" + baseline +
+                    " heartbeatFrames=" + string.Join(",", heartbeatFrames) +
+                    " heartbeatFrameProductBytes=" + heartbeatFrameBytes +
+                    " breakdown(harness/sendOnly/sendAndPump/window median)=" + baseline + "/" + Median(sendOnly) + "/" + Median(sendAndPump) + "/" + Median(allocations) +
+                    " harnessPerFrame=" + string.Join(",", harnessBaseline) +
+                    " sendOnlyPerFrame=" + string.Join(",", sendOnly) +
+                    " sendAndPumpPerFrame=" + string.Join(",", sendAndPump) +
+                    " allThreadsPerFrame=" + string.Join(",", allocations) +
+                    " mainThreadPerFrame=" + string.Join(",", mainThreadAllocations));
+                Assert.That(failedFrames, Is.EqualTo(0),
+                    "heartbeat 到着フレームを除く " + failedFrames + " フレームで GC 確保を検出（ハーネス固定分 " + baseline + " byte/frame 差引後）:\n" + failures +
+                    "breakdown(harness/sendOnly/sendAndPump/window median)=" + baseline + "/" + Median(sendOnly) + "/" + Median(sendAndPump) + "/" + Median(allocations) +
+                    "\nallThreadsPerFrame=" + string.Join(",", allocations));
             }
+        }
+
+        private static long Median(long[] values)
+        {
+            var sorted = (long[])values.Clone();
+            Array.Sort(sorted);
+            return sorted[sorted.Length / 2];
         }
 
         [Test]
@@ -407,7 +503,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                 StalenessSeconds = 0f,
                 BundleMode = BundleInterpretationMode.IndividualMessage,
                 Mappings = new List<OscMappingEntry>(),
-                ReceiveOptions = new OscReceiveOptions(2048, 32, 0, captureThreadAllocationStats: true),
+                ReceiveOptions = new OscReceiveOptions(2048, 32, 0),
             };
 
             _binding.OnStart(CreateContext(registry, timeProvider, blendShapeNames));

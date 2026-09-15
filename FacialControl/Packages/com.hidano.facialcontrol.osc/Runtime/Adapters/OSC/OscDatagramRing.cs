@@ -75,6 +75,19 @@ namespace Hidano.FacialControl.Adapters.OSC
             return new Span<byte>(_bytes, slot * _slotBytes, _slotBytes);
         }
 
+        /// <summary>
+        /// 予約済みスロットの backing 配列とオフセットを返す。
+        /// <c>Socket.Receive(byte[], int, int, SocketFlags)</c> に渡すための API。
+        /// Unity 6000.3.19f1 Mono では <c>Socket.Receive(Span&lt;byte&gt;, SocketFlags)</c> が
+        /// 呼び出しごとにスロット長の一時配列を確保する（2026-09-15 実測: 2048 byte スロットで 2080 byte/回）ため、
+        /// 受信ループは Span ではなくこの配列オーバーロードを使う。
+        /// </summary>
+        public ArraySegment<byte> GetSlotSegment(int slot)
+        {
+            ValidateReserved(slot);
+            return new ArraySegment<byte>(_bytes, slot * _slotBytes, _slotBytes);
+        }
+
         public Span<OscResolvedMessage> GetSlotRecords(int slot)
         {
             ValidateReserved(slot);

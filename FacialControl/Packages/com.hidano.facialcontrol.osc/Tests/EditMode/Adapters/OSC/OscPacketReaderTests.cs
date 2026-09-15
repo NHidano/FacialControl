@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Hidano.FacialControl.Tests.Shared;
 using NUnit.Framework;
 using Hidano.FacialControl.Adapters.OSC;
 using UnityEngine;
@@ -118,13 +119,16 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
         public void TryReadNext_DoesNotAllocateWhileScanning()
         {
             var packet = Message("/value", ",f", Float(0.25f));
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            var reader = new OscPacketReader(packet);
-            Assert.That(reader.TryReadNext(out var message), Is.True);
-            Assert.That(message.TryGetFirstAsFloat(out _), Is.True);
-            var after = GC.GetAllocatedBytesForCurrentThread();
+            bool readOk = true;
+            long allocated = ManagedAllocationProbe.MeasureAllocatedBytes(() =>
+            {
+                var reader = new OscPacketReader(packet);
+                if (!reader.TryReadNext(out var message)) readOk = false;
+                if (!message.TryGetFirstAsFloat(out _)) readOk = false;
+            }, 100);
 
-            Assert.That(after - before, Is.EqualTo(0));
+            Assert.That(readOk, Is.True);
+            Assert.That(allocated, Is.EqualTo(0));
         }
 
         [Test]
@@ -164,12 +168,18 @@ namespace Hidano.FacialControl.Osc.Tests.EditMode.Adapters.OSC
         public void TryReadNext_EmptyBundleReturnsNoMessagesWithoutAllocating()
         {
             var packet = Bundle(5UL);
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            var reader = new OscPacketReader(packet);
+            bool anyMessage = false;
+            int skipped = -1;
+            long allocated = ManagedAllocationProbe.MeasureAllocatedBytes(() =>
+            {
+                var reader = new OscPacketReader(packet);
+                if (reader.TryReadNext(out _)) anyMessage = true;
+                skipped = reader.SkippedElementCount;
+            }, 100);
 
-            Assert.That(reader.TryReadNext(out _), Is.False);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
-            Assert.That(reader.SkippedElementCount, Is.EqualTo(0));
+            Assert.That(anyMessage, Is.False);
+            Assert.That(allocated, Is.EqualTo(0));
+            Assert.That(skipped, Is.EqualTo(0));
         }
 
         [Test]

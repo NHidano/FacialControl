@@ -9,7 +9,10 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.OSC
     /// <see cref="GC.GetAllocatedBytesForCurrentThread"/> が Unity の Mono ランタイム上で
     /// 実際の確保量を返すかを、メインスレッドとワーカースレッドの両方で確認する。
     /// 0 を返すなら、この API を前提にした「差分 0」の assert は空振りしている。
+    /// 2026-09-15 Unity 6000.3.19f1 で実測: 全ケース before=0 / after=0（API が常に 0 を返す）。
+    /// 通常スイートでは実行せず、ランタイム更新時に手動で再確認する。
     /// </summary>
+    [Explicit("Unity 6000.3.19f1 Mono では GC.GetAllocatedBytesForCurrentThread が常に 0 を返す（環境制限の記録）。")]
     public sealed class GcThreadAllocationApiProbeTests
     {
         private const int AllocationBytes = 64 * 1024;

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Hidano.FacialControl.Tests.Shared;
 using NUnit.Framework;
 using System.Text;
 using Hidano.FacialControl.Domain.Models;
@@ -67,12 +68,13 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.OSC
 
             var records = new OscResolvedMessage[Options.DatagramSlotBytes / 16];
             Assert.That(OscMessageClassifier.ParseAndClassify(packet, table, records, diagnostics), Is.EqualTo(1));
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < 100; i++)
+            int mismatches = 0;
+            long allocated = ManagedAllocationProbe.MeasureAllocatedBytes(() =>
             {
-                Assert.That(OscMessageClassifier.ParseAndClassify(packet, table, records, diagnostics), Is.EqualTo(1));
-            }
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+                if (OscMessageClassifier.ParseAndClassify(packet, table, records, diagnostics) != 1) mismatches++;
+            }, 100);
+            Assert.That(mismatches, Is.EqualTo(0));
+            Assert.That(allocated, Is.EqualTo(0));
 
             ring.CommitExternal(packet, table);
             Assert.That(ring.Drain(drain), Is.EqualTo(1));

@@ -119,7 +119,7 @@ graph TB
 | Buffers | 固定 `byte[]`（スロット連結）、固定 `OscResolvedMessage[]` | データグラムリング・ドレインバッファ | 起動時に一度だけ確保 |
 | Existing | `OscDoubleBuffer`（`NativeArray<float>`）、`OscBundleAccumulator`、`OscPortResolver`、`OscAddressFormatter` | 値反映・bundle 意味論・ポート解決・UTF-8 生成規則 | 変更は加算のみ |
 | Compat | `uOSC.Runtime`（`uOSC.Message` / `Timestamp` 型） | facade の入力型のみ | 受信ホットパスから uOSC を排除 |
-| Test | `com.unity.test-framework` 1.6.0、`Unity.Profiling.ProfilerRecorder`、`GC.GetAllocatedBytesForCurrentThread` | EditMode リーダー単体、PlayMode UDP loopback E2E、GC ゲート | 計測器の自己検証手順は Testing Strategy |
+| Test | `com.unity.test-framework` 1.6.0、`Unity.Profiling.ProfilerRecorder`（Memory カウンタ「GC Allocated In Frame」 = `ManagedAllocationProbe`） | EditMode リーダー単体、PlayMode UDP loopback E2E、GC ゲート | 計測器の自己検証手順は Testing Strategy。`GC.GetAllocatedBytesForCurrentThread` は Unity 6000.3.19f1 Mono で常に 0 を返すため使用しない（2026-09-15 実測） |
 
 ## File Structure Plan
 
@@ -274,7 +274,7 @@ flowchart TD
 | 6.4, 6.5 | IndividualMessage / staleness / FailSafe 経路 0 byte | OscReceiver.Apply, Binding 既存 | 変更なし・検証のみ | — |
 | 7.1–7.7 | 既存機能の挙動維持 | 全体 | facade 同一パーサ、順序保存 | 受信→反映 |
 | 7.8 | 既存テスト緑 | facade, Serializer | — | — |
-| 8.1–8.7 | GC テスト昇格 | OscReceiverGCAllocationTests, ThreadHooks, Diagnostics | `HeartbeatArrivalCount`, `ReceiveThreadAllocatedBytes` | Testing Strategy |
+| 8.1–8.7 | GC テスト昇格 | OscReceiverGCAllocationTests, ThreadHooks, Diagnostics, ManagedAllocationProbe | `HeartbeatArrivalCount`, `FixedTickCount`, `AppliedDatagramCount` | Testing Strategy |
 | 8.8 | リーダー EditMode 単体（TDD） | OscPacketReaderTests 他 | — | — |
 | 9.1–9.4 | 受入・実機確認 | Testing Strategy / Validation Hooks | Profiler 記録 | — |
 | 10.1–10.7 | 配置・非 vendor・sender 不変・通常 C#・標準ログ・受信スレッド制約 | Boundary Commitments, スレッド契約表 | — | — |
@@ -594,7 +594,7 @@ public sealed class OscAddressKeyTable
 - Invariants: テーブルは構築後不変。`TryResolve` はスレッド安全（読み取りのみ）。
 
 **Implementation Notes**
-- Validation: EditMode `OscAddressKeyTableTests` — 完全一致優先、後勝ち、フォールバックの prefix 両対応、2 バイト文字 / 特殊記号の完全一致、非一致で確保なし（`GC.GetAllocatedBytesForCurrentThread` 差分）、gaze + listener + mapping の合成。`OscReceiver.ExtractBlendShapeName` を使った既存解決との**同値性プロパティテスト**（ランダム mapping 集合に対して全アドレスで同じ index）。
+- Validation: EditMode `OscAddressKeyTableTests` — 完全一致優先、後勝ち、フォールバックの prefix 両対応、2 バイト文字 / 特殊記号の完全一致、非一致で確保なし（`ManagedAllocationProbe.MeasureAllocatedBytes` = 「GC Allocated In Frame」カウンタ差分。`ManagedAllocationProbeTests` で計測器が実確保を検出することを固定）、gaze + listener + mapping の合成。`OscReceiver.ExtractBlendShapeName` を使った既存解決との**同値性プロパティテスト**（ランダム mapping 集合に対して全アドレスで同じ index）。
 
 #### OscMessageClassifier / OscResolvedMessage
 
@@ -795,7 +795,7 @@ internal static class OscMessageSerializer   // facade 専用。InternalsVisible
 | heartbeat scratch 超過 | binding | 切り詰め、警告 1 回 | — |
 
 ### Monitoring
-- `OscReceiveDiagnostics`：`ReceivedDatagramCount`（受信スレッド）, `AppliedDatagramCount`（メインスレッドのドレインで加算）, `DroppedDatagramCount`, `OversizedDatagramCount`, `TruncatedDatagramCount`, `MalformedElementCount`, `StaleRecordCount`, `HeartbeatArrivalCount`（binding が heartbeat レコード適用時に加算）、`ReceiveThreadAllocatedBytes`（`CaptureThreadAllocationStats=true` のときのみ受信スレッドが `GC.GetAllocatedBytesForCurrentThread()` を各データグラム後に書き込む）。
+- `OscReceiveDiagnostics`：`ReceivedDatagramCount`（受信スレッド）, `AppliedDatagramCount`（メインスレッドのドレインで加算）, `DroppedDatagramCount`, `OversizedDatagramCount`, `TruncatedDatagramCount`, `MalformedElementCount`, `StaleRecordCount`, `HeartbeatArrivalCount`（binding が heartbeat レコード適用時に加算）、`FixedTickCount`（binding の `OnFixedTick` で加算。GC テストがフレーム構成を確認する）。受信スレッド単独の確保量カウンタは持たない（`GC.GetAllocatedBytesForCurrentThread` が Unity Mono で常に 0 のため。全スレッド計測は「GC Allocated In Frame」カウンタで行う）。
 - Inspector（`OscReceiverAdapterBindingDrawer`）への表示は本仕様の範囲外（将来の加算）。
 
 ## Testing Strategy
@@ -818,15 +818,16 @@ internal static class OscMessageSerializer   // facade 専用。InternalsVisible
 - **ワークロード**（8.4）：テスト内送信器 = `OscBundleBuilder` で事前生成した (a) 定常フレーム bundle（sender_id + VRChat preset アドレス ARKit 52 本 + gaze X/Y、1472 byte で 2 パケット）、(b) heartbeat フレーム bundle（(a) + `blendshape_names` チャンク + `preset` + `gaze` 広告）。送信は **接続済み UDP `Socket.Send(byte[], int, int, SocketFlags)`** で行い、テスト側の送信も確保ゼロにする。heartbeat は 25 フレームごと（100 フレーム中 4 回）。
 - **手順**：受信 binding 起動 → ウォームアップ 30 フレーム（heartbeat を含み、自動マッピング完了と facade スクラッチ等の遅延確保を済ませる）→ `StabilizeManagedHeap()` → 計測 100 フレーム（各フレーム `yield return null`、送信 → 受信スレッド → `Update` ドレイン → `OnFixedTick`）。
 - **計測器**：
-  - M1: `ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc", capacity: 256, ProfilerRecorderOptions.SumAllSamplesInFrame)`（`CollectOnlyOnCurrentThread` なし）。`GetSample(i)` でフレームごとの値を得る。
-  - M2: 受信スレッド `GC.GetAllocatedBytesForCurrentThread()` の計測窓前後差分（`CaptureThreadAllocationStats=true`、`Diagnostics.ReceiveThreadAllocatedBytes`）。
-  - M3（記録のみ）: `GC.GetTotalAllocatedBytes(true)` をリフレクションで取得できれば窓前後差分をログ。
-- **Positive control（較正）**：計測窓の前に `ThreadHooks.OnDatagramCommitted = () => sink = new byte[1024]` を注入して 5 フレーム送受信し、M1 のフレーム合計が > 0 になることを確認する。> 0 なら `profilerSeesWorkerThread = true`。その後フックを外し、ウォームアップをやり直す。
-- **ゲートの独立性**：受信スレッドとメインスレッドを別々の assert として扱い、計測器の自己判定に依存しない。
-  - G1（受信スレッド、常に必須）：M2 差分 == 0 を計測窓全体（heartbeat フレームを含む）で assert。受信スレッドは制御メッセージでも確保しない設計のため除外はない。
-  - G2（メインスレッド、常に必須）：M1 の各フレーム値が 0（heartbeat 到着フレームを除く）を assert。`profilerSeesWorkerThread == true` の場合 M1 には受信スレッド分も含まれるが、G1 が 0 なら差は生じない。
-  - positive control の結果は「M1 が受信スレッドを観測できたか」の**記録**にのみ使い、`false` の場合はテスト出力と `validation.md` に「環境制限: ProfilerRecorder は受信スレッドを集計しない。受信スレッドのゲートは G1」と明記する。positive control で M2 も増えなかった場合（計測器自体の故障）はテストを **Inconclusive**（`Assert.Inconclusive`）にし、PASS 扱いにしない。
-- **heartbeat 到着フレームの除外**（8.5）：フレーム番号のタイミング依存を避け、「送った番号」ではなく「適用された事実」で判定する。各フレームの `Update` ドレイン直後に `Diagnostics.AppliedDatagramCount`（ドレインで適用したデータグラム数、メインスレッドで加算）と `HeartbeatArrivalCount` を読み、`HeartbeatArrivalCount` の増分が 1 以上のフレームを除外する。heartbeat フレームは 25 フレームごとに送るが、隣接フレームへずれても適用側のカウンタで正しく除外される。計測 100 フレームは `yield return null` ではなく `yield return new WaitForFixedUpdate()` → `yield return null` の順で 1 フレームを構成し、`Update` ドレイン → `FixedUpdate` の `OnFixedTick` の両方が各フレームで 1 回ずつ走ることを `Diagnostics` のカウンタで確認する。窓の開始前に「送信済みデータグラム数 == 適用済みデータグラム数」になるまで待つ（最大 1 秒）ことで、ウォームアップ分の遅延到着が計測窓へ漏れないようにする。除外フレーム数と番号をテスト出力に記録。
+  - M2（authoritative）: Memory カウンタ「GC Allocated In Frame」（`ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame")`、共有ヘルパー `ManagedAllocationProbe`）。全スレッド・フレーム単位・byte 精度で、plain `Thread` 上の確保も計上する。`Profiler.enabled` に依存しない。各フレーム `LastValue` を読む。
+  - M1（診断用）: `ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc", 256, SumAllSamplesInFrame | CollectOnlyOnCurrentThread)`。メインスレッド分のみ。値が 100 byte 単位に丸められるため M2 との差し引きには使わず、失敗メッセージに併記するだけ。
+  - M3（記録のみ）: `GC.GetTotalMemory(false)`（= `Profiler.GetMonoUsedSizeLong`）の窓前後差分。Boehm のブロック粒度で小さな確保を取りこぼすため記録のみ。
+  - 2026-09-15 Unity 6000.3.19f1 実測（`GcInstrumentProbeTests`、`[Explicit]` で保存）: `GC.GetAllocatedBytesForCurrentThread` は全スレッドで常に 0、`GC.GetTotalAllocatedBytes` は存在しない、GC.Alloc マーカーは `CollectOnlyOnCurrentThread` 無しでも `Profiler.BeginThreadProfiling` で登録しても受信スレッドを集計しない（640 KB 注入に対し 10 KB）。「GC Allocated In Frame」だけが 640 KB を検出した。
+- **Positive control（較正、8.1）**：計測窓とは別のループで `ThreadHooks.OnDatagramCommitted = () => sink = new byte[1024]` を注入して 5 データグラム受信し、M2 の窓合計の増分（ベースライン 10 フレームとの差）が注入量以上であることを **assert** する。M1 の増分が注入量以上なら `profilerSeesWorkerThread = true` として記録する（実測では `false`）。
+- **ゲート**：
+  - G（全スレッド、常に必須）：heartbeat 到着フレームを除く各フレームで M2 == 0 を assert。M2 は受信スレッド分を含むため、受信スレッドのゲート（G1）とメインスレッドのゲート（G2）は同一 assert で担保される。
+  - heartbeat 到着フレームは M2 / M1 の値を記録のみ（unchanged heartbeat では 0 になる想定だが、仕様上は除外）。受信スレッドは制御メッセージでも確保しない設計だが、heartbeat フレームでの受信スレッド分は M2 から分離できないため、この分は positive control と `OscUdpReceiveLoop` / `OscMessageClassifier` の EditMode 確保 0 テストで担保する。
+  - positive control で M2 が注入分を検出できない場合はテスト**失敗**（計測器故障を PASS 扱いにしない）。`Assert.Inconclusive` は使わない。
+- **heartbeat 到着フレームの除外**（8.5）：フレーム番号のタイミング依存を避け、「送った番号」ではなく「適用された事実」で判定する。各フレームの `Update` ドレイン直後に `Diagnostics.AppliedDatagramCount`（ドレインで適用したデータグラム数、メインスレッドで加算）と `HeartbeatArrivalCount` を読み、`HeartbeatArrivalCount` の増分が 1 以上のフレームを除外する。heartbeat フレームは 25 フレームごとに送るが、隣接フレームへずれても適用側のカウンタで正しく除外される。計測 100 フレームは `yield return null` 1 回を 1 フレームとし、`PumpReceived`（ドレイン）と `OnFixedTick` をテストから各 1 回手動で呼び、`Diagnostics.FixedTickCount` で回数を確認する（`WaitForFixedUpdate` はバッチモードで 1 回あたり約 350 フレームを消費し、`LastValue` 読みが受信スレッドの確保フレームを見逃すため使わない — 2026-09-15 実測）。テストランナーはコルーチン 1 ステップあたり約 490 byte をメインスレッドで固定的に確保するため、製品経路を呼ばない同形の 20 フレームでハーネス分（中央値）を先に計測し、各フレームの M2 から差し引いた値を 0 と比較する。切り分け用に「送信のみ」「送信 + ドレイン」の内訳も記録する。窓の開始前に「送信済みデータグラム数 == 適用済みデータグラム数」になるまで待つ（最大 1 秒）ことで、ウォームアップ分の遅延到着が計測窓へ漏れないようにする。除外フレーム数と番号をテスト出力に記録。
 - **失敗メッセージ**（8.7）：`frame={i} gcAllocBytes={v} heartbeatFrame={bool}` を列挙。
 - **既存シナリオ**：`OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation` / `GazeAdvertisement_ContentUnchanged_ArrivesEveryTick_ZeroAllocPerFrame` / `GazeVector2InputSource_ReadAfterAutoCreation_ZeroAlloc` は facade 経由のまま維持（メインスレッド計測）。baseline 記録テスト 2 件は UDP 経由の 0 byte assert へ置換。
 
@@ -859,8 +860,8 @@ flowchart LR
 - 検証順序：EditMode 全緑 → PlayMode OSC 全緑（pre-existing 赤除外）→ GC ゲート → 実機。
 
 ## Open Questions / Risks
-- Unity 6000.3.19f1 の `ProfilerRecorder` がユーザースレッドの GC.Alloc を集計するか — positive control で自動判定し、authoritative を切り替える（上記）。結果を `validation.md` に記録し、次回以降は固定化を検討する。
-- `Socket.Receive` が Unity 6 Mono で確保ゼロか — M2 で検出。確保があれば where-allocation 方式へ `OscUdpReceiveLoop` 内で切替（公開契約不変）。
-- `ZombieEvictionPolicy.Observe` / `RememberBundleSenderDecision` の定常確保 — コード確認済み（2026-09-15）：`SenderIdentity` は `IEquatable` 実装で boxing なし、`Dictionary<Guid,…>.Values` の列挙は struct enumerator、`Dictionary<ulong,bool>` + bounded `Queue<ulong>` は定常で確保なし。sender 切替時のみ `Debug.Log` の文字列確保（既存挙動、計測窓では発生しない）。sender_id は実送信で毎フレーム届くため GC テストの定常ワークロードに含める（既に (a) に含まれる）。
+- ~~Unity 6000.3.19f1 の `ProfilerRecorder` がユーザースレッドの GC.Alloc を集計するか~~ — 2026-09-15 解決: GC.Alloc マーカーは集計しない（`BeginThreadProfiling` 登録でも同じ）。Memory カウンタ「GC Allocated In Frame」が全スレッドを計上するため、これを authoritative（M2）に固定した。`GC.GetAllocatedBytesForCurrentThread` は常に 0 を返す（`GcThreadAllocationApiProbeTests` / `GcInstrumentProbeTests` に記録）。
+- ~~`Socket.Receive` が Unity 6 Mono で確保ゼロか~~ — 2026-09-15 解決: `Socket.Receive(byte[], int, int, SocketFlags)` / `(..., out SocketError)` / `Socket.Send(byte[], int, int, SocketFlags)` は確保ゼロ。**`Socket.Receive(Span<byte>, SocketFlags)` は呼び出しごとに Span 長の一時配列を確保する**（2048 byte スロットで 2080 byte/回。実 UDP ゲートで「1 データグラムあたり 2080 byte」として検出）。受信ループは `OscDatagramRing.GetSlotSegment` で backing 配列 + オフセットを取り、byte[] オーバーロードで受ける。`ReceivePathAllocationProbeTests` で byte[] 系の確保ゼロを固定。
+- `ZombieEvictionPolicy.Observe` / `RememberBundleSenderDecision` の定常確保 — コード確認済み（2026-09-15）：`SenderIdentity` は `IEquatable` 実装で boxing なし、`Dictionary<Guid,…>.Values` の列挙は struct enumerator、`Dictionary<ulong,bool>` + bounded `Queue<ulong>` は定常で確保なし。ただし既定容量で生成すると上限 32 件に達するまで挿入のたびに成長確保が走る（実 UDP ゲートで heartbeat 翌フレームの 284 byte として観測）。上限 +1 で事前確保する形に修正済み（2026-09-15、修正後 3 回連続で再現なし）。sender 切替時のみ `Debug.Log` の文字列確保（既存挙動、計測窓では発生しない）。sender_id は実送信で毎フレーム届くため GC テストの定常ワークロードに含める（既に (a) に含まれる）。
 - `Socket.Receive` の oversized datagram 挙動 — Windows/Mono では `SocketException(MessageSize)` が期待されるが、切り詰め値が返る実装もあり得る。`OscUdpReceiveLoopTests` で「スロットサイズ + 1 byte のデータグラム」を送り、例外か切り詰めかを確認して `OversizedDatagramCount` の判定方法をテストで固定する（切り詰めの場合は `Receive` の戻り値 == スロット長かつ `Socket.Available` 等で判定できないため、`MSG_TRUNC` 相当が取れない環境では「スロット長ちょうどのデータグラムは oversized 疑い」として警告に留める）。
 - 送信元エンドポイントを将来使う場合（送信元別フィルタ）は `ReceiveFrom` + 非確保 `EndPoint` が必要。本仕様では非目標として記録。

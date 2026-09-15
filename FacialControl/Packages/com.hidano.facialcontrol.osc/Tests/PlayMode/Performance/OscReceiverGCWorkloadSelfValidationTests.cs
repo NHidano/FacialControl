@@ -2,10 +2,11 @@ using System;
 using System.Collections;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
+using System.Threading;
 using Hidano.FacialControl.Adapters.OSC;
 using Hidano.FacialControl.Domain.Services;
+using Hidano.FacialControl.Tests.Shared;
 using NUnit.Framework;
 using Unity.Profiling;
 using UnityEngine;
@@ -13,9 +14,20 @@ using UnityEngine.TestTools;
 
 namespace Hidano.FacialControl.Tests.PlayMode.Performance
 {
+    /// <summary>
+    /// spec osc-receive-zero-alloc 8.1: 計測ワークロード送信器と計測器の自己検証。
+    /// - 送信器: OscSend シーン相当のワークロードを OscBundleBuilder で事前構築し、接続済み UDP Socket.Send で送る。
+    /// - 計測器: M2 = 「GC Allocated In Frame」カウンタ（全スレッド・フレーム単位・byte 精度、<see cref="ManagedAllocationProbe"/>）、
+    ///   M1 = ProfilerRecorder の GC.Alloc マーカー（診断用。受信スレッドを集計しない）、
+    ///   M3 = GC.GetTotalMemory(false) の窓前後差分（記録のみ。ブロック粒度）。
+    /// - positive control: 受信スレッドのデータグラムコミット時フックで 1 KB × 5 を注入し、M2 が注入量以上を計上することを assert する。
+    /// </summary>
     public sealed class OscReceiverGCWorkloadSelfValidationTests
     {
         private const int MaxPacketSize = OscBundleBuilder.DefaultMaxPacketSize;
+        private const int PositiveControlBytesPerDatagram = 1024;
+        private const int PositiveControlDatagrams = 5;
+        private const int WindowFrames = 10;
 
         [UnityTest]
         public IEnumerator WorkloadSenderAndMeasurementInstruments_SelfValidate()
@@ -82,87 +94,131 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                 heartbeatPackets = CopyPackets(builder, builder.PacketCount);
             }
 
-            int port = OscPortResolver.ResolveAvailablePort(39700);
-            Assert.That(port, Is.GreaterThan(0));
-            var options = new OscReceiveOptions(2048, 32, 0, captureThreadAllocationStats: true);
-            var diagnostics = new OscReceiveDiagnostics();
-            var ring = new OscDatagramRing(options, diagnostics);
-            using (var loop = new OscUdpReceiveLoop(ring, diagnostics))
-            using (var sender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-            using (var recorder = ProfilerRecorder.StartNew(
-                       ProfilerCategory.Memory,
-                       "GC.Alloc",
-                       256,
-                       ProfilerRecorderOptions.SumAllSamplesInFrame))
+            var options = new OscReceiveOptions(2048, 32, 0);
+
+            // --- ワークロード受信: 全パケットが受信スレッドに届き、各計測器の値を記録する ---
             {
-                long m3Before = TryGetTotalAllocatedBytes();
-                loop.Start(port, options);
-                sender.Connect(new IPEndPoint(IPAddress.Loopback, port));
+                int port = OscPortResolver.ResolveAvailablePort(39700);
+                Assert.That(port, Is.GreaterThan(0));
+                var diagnostics = new OscReceiveDiagnostics();
+                var ring = new OscDatagramRing(options, diagnostics);
+                using (var loop = new OscUdpReceiveLoop(ring, diagnostics))
+                using (var sender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+                using (var m2 = ManagedAllocationProbe.Start())
+                using (var m1 = ProfilerRecorder.StartNew(
+                           ProfilerCategory.Memory, "GC.Alloc", 64, ProfilerRecorderOptions.SumAllSamplesInFrame))
+                {
+                    loop.Start(port, options);
+                    sender.Connect(new IPEndPoint(IPAddress.Loopback, port));
+                    yield return null;
 
-                long expectedPackets = normalPackets.Length + heartbeatPackets.Length;
-                SendPackets(sender, normalPackets);
-                SendPackets(sender, heartbeatPackets);
-
-                    for (int i = 0; i < 120 && diagnostics.ReceivedDatagramCount < expectedPackets; i++)
+                    long m2Baseline = 0;
+                    long m1Baseline = 0;
+                    for (int i = 0; i < WindowFrames; i++)
+                    {
                         yield return null;
+                        m2Baseline += m2.LastValue;
+                        m1Baseline += m1.LastValue;
+                    }
 
-                Assert.That(diagnostics.ReceivedDatagramCount, Is.EqualTo(expectedPackets), "事前構築パケットが全て受信されること");
-                long m3After = TryGetTotalAllocatedBytes();
-                TestContext.Out.WriteLine(
-                        "[OscReceiverGCWorkloadSelfValidation] normalPackets=" + expectedPackets +
-                        ", received=" + diagnostics.ReceivedDatagramCount +
-                        ", m1LastValue=" + recorder.LastValue +
-                        ", profilerSeesWorkerThread=" + (recorder.LastValue > 0) +
-                        ", m2ReceiveThreadAllocatedBytes=" + diagnostics.ReceiveThreadAllocatedBytes +
-                        ", m3TotalAllocatedDeltaBytes=" + (m3After - m3Before));
-                loop.Stop();
+                    long m3Before = GC.GetTotalMemory(false);
+                    long expectedPackets = normalPackets.Length + heartbeatPackets.Length;
+                    SendPackets(sender, normalPackets);
+                    SendPackets(sender, heartbeatPackets);
+
+                    long m2Window = 0;
+                    long m1Window = 0;
+                    int windowFrames = 0;
+                    for (int i = 0; i < 120 && (diagnostics.ReceivedDatagramCount < expectedPackets || windowFrames < WindowFrames); i++)
+                    {
+                        yield return null;
+                        m2Window += m2.LastValue;
+                        m1Window += m1.LastValue;
+                        windowFrames++;
+                    }
+                    long m3After = GC.GetTotalMemory(false);
+
+                    Assert.That(diagnostics.ReceivedDatagramCount, Is.EqualTo(expectedPackets), "事前構築パケットが全て受信されること");
+                    TestContext.Out.WriteLine(
+                        "[OscReceiverGCWorkloadSelfValidation] workload packets=" + expectedPackets +
+                        " received=" + diagnostics.ReceivedDatagramCount +
+                        " windowFrames=" + windowFrames +
+                        " m2AllThreadsBaseline=" + m2Baseline + " m2AllThreadsWindow=" + m2Window +
+                        " m1MainThreadBaseline=" + m1Baseline + " m1MainThreadWindow=" + m1Window +
+                        " m3HeapDeltaBytes=" + (m3After - m3Before));
+                    loop.Stop();
+                }
             }
 
-            long positiveControlBytes = 0;
-            var positiveDiagnostics = new OscReceiveDiagnostics();
-            var positiveRing = new OscDatagramRing(options, positiveDiagnostics);
-            using (var positiveLoop = new OscUdpReceiveLoop(positiveRing, positiveDiagnostics))
-            using (var positiveSender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-            using (var positiveRecorder = ProfilerRecorder.StartNew(
-                       ProfilerCategory.Memory,
-                       "GC.Alloc",
-                       256,
-                       ProfilerRecorderOptions.SumAllSamplesInFrame))
+            // --- positive control: 受信スレッドに意図的確保を注入し、M2 が検出することを assert する ---
             {
-                positiveLoop.ThreadHooks = new OscReceiveThreadHooks
-                {
-                    OnDatagramCommitted = () =>
-                    {
-                        byte[] calibrationAllocation = new byte[1024];
-                        positiveControlBytes += calibrationAllocation.Length;
-                    }
-                };
+                long positiveControlBytes = 0;
                 int positivePort = OscPortResolver.ResolveAvailablePort(39800);
-                positiveLoop.Start(positivePort, options);
-                positiveSender.Connect(new IPEndPoint(IPAddress.Loopback, positivePort));
-                yield return null;
-                long m2Before = positiveDiagnostics.ReceiveThreadAllocatedBytes;
-                byte[] calibrationPacket = { 1, 2, 3, 4 };
-                for (int i = 0; i < 5; i++)
-                    positiveSender.Send(calibrationPacket, 0, calibrationPacket.Length, SocketFlags.None);
-
-                for (int i = 0; i < 120 && positiveDiagnostics.ReceivedDatagramCount < 5; i++)
+                Assert.That(positivePort, Is.GreaterThan(0));
+                var positiveDiagnostics = new OscReceiveDiagnostics();
+                var positiveRing = new OscDatagramRing(options, positiveDiagnostics);
+                using (var positiveLoop = new OscUdpReceiveLoop(positiveRing, positiveDiagnostics))
+                using (var positiveSender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+                using (var m2 = ManagedAllocationProbe.Start())
+                using (var m1 = ProfilerRecorder.StartNew(
+                           ProfilerCategory.Memory, "GC.Alloc", 64, ProfilerRecorderOptions.SumAllSamplesInFrame))
+                {
+                    positiveLoop.ThreadHooks = new OscReceiveThreadHooks
+                    {
+                        OnDatagramCommitted = () =>
+                        {
+                            byte[] calibrationAllocation = new byte[PositiveControlBytesPerDatagram];
+                            Interlocked.Add(ref positiveControlBytes, calibrationAllocation.Length);
+                            GC.KeepAlive(calibrationAllocation);
+                        }
+                    };
+                    positiveLoop.Start(positivePort, options);
+                    positiveSender.Connect(new IPEndPoint(IPAddress.Loopback, positivePort));
                     yield return null;
-                yield return null;
 
-                Assert.That(positiveControlBytes, Is.GreaterThan(0), "positive control が受信スレッド上で確実に確保すること");
-                long m2After = positiveDiagnostics.ReceiveThreadAllocatedBytes;
-                long m2Delta = m2After - m2Before;
-                TestContext.Out.WriteLine(
-                    "[OscReceiverGCWorkloadSelfValidation] positiveControlBytes=" + positiveControlBytes +
-                    ", m1PositiveControlLastValue=" + positiveRecorder.LastValue +
-                    ", profilerSeesWorkerThread=" + (positiveRecorder.LastValue > 0) +
-                    ", m2Before=" + m2Before +
-                    ", m2After=" + m2After +
-                    ", m2Delta=" + m2Delta);
-                if (m2Delta <= 0)
-                    Assert.Inconclusive("M2 (GC.GetAllocatedBytesForCurrentThread) は positive control の受信スレッド確保を観測できませんでした。");
-                positiveLoop.Stop();
+                    long m2Baseline = 0;
+                    long m1Baseline = 0;
+                    for (int i = 0; i < WindowFrames; i++)
+                    {
+                        yield return null;
+                        m2Baseline += m2.LastValue;
+                        m1Baseline += m1.LastValue;
+                    }
+
+                    byte[] calibrationPacket = { 1, 2, 3, 4 };
+                    for (int i = 0; i < PositiveControlDatagrams; i++)
+                        positiveSender.Send(calibrationPacket, 0, calibrationPacket.Length, SocketFlags.None);
+
+                    long m2Window = 0;
+                    long m1Window = 0;
+                    int windowFrames = 0;
+                    for (int i = 0; i < 120 && (positiveDiagnostics.ReceivedDatagramCount < PositiveControlDatagrams || windowFrames < WindowFrames); i++)
+                    {
+                        yield return null;
+                        m2Window += m2.LastValue;
+                        m1Window += m1.LastValue;
+                        windowFrames++;
+                    }
+
+                    long injected = Interlocked.Read(ref positiveControlBytes);
+                    long m2Delta = m2Window - m2Baseline;
+                    long m1Delta = m1Window - m1Baseline;
+                    bool profilerSeesWorkerThread = m1Delta >= injected;
+                    TestContext.Out.WriteLine(
+                        "[OscReceiverGCWorkloadSelfValidation] positiveControl injectedBytes=" + injected +
+                        " received=" + positiveDiagnostics.ReceivedDatagramCount +
+                        " windowFrames=" + windowFrames +
+                        " m2AllThreadsBaseline=" + m2Baseline + " m2AllThreadsWindow=" + m2Window + " m2Delta=" + m2Delta +
+                        " m1MainThreadBaseline=" + m1Baseline + " m1MainThreadWindow=" + m1Window + " m1Delta=" + m1Delta +
+                        " profilerSeesWorkerThread=" + profilerSeesWorkerThread);
+
+                    Assert.That(positiveDiagnostics.ReceivedDatagramCount, Is.EqualTo(PositiveControlDatagrams));
+                    Assert.That(injected, Is.EqualTo((long)PositiveControlBytesPerDatagram * PositiveControlDatagrams),
+                        "positive control が受信スレッド上で確実に確保すること");
+                    Assert.That(m2Delta, Is.GreaterThanOrEqualTo(injected),
+                        "M2（GC Allocated In Frame）が受信スレッドの注入確保 " + injected + " byte を検出できない（差分 " + m2Delta + " byte）。計測器故障のため GC ゲートは信頼できない。");
+                    positiveLoop.Stop();
+                }
             }
         }
 
@@ -188,17 +244,6 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
         {
             for (int i = 0; i < packets.Length; i++)
                 sender.Send(packets[i], 0, packets[i].Length, SocketFlags.None);
-        }
-
-        private static long TryGetTotalAllocatedBytes()
-        {
-            MethodInfo method = typeof(GC).GetMethod(
-                "GetTotalAllocatedBytes",
-                BindingFlags.Public | BindingFlags.Static,
-                null,
-                new[] { typeof(bool) },
-                null);
-            return method == null ? -1L : (long)method.Invoke(null, new object[] { true });
         }
     }
 }

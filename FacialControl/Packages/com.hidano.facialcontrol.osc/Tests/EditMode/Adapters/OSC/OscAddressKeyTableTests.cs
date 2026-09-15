@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Hidano.FacialControl.Domain.Models;
+using Hidano.FacialControl.Tests.Shared;
 using NUnit.Framework;
 
 namespace Hidano.FacialControl.Adapters.OSC.Tests
@@ -65,14 +66,13 @@ namespace Hidano.FacialControl.Adapters.OSC.Tests
 
             table.TryResolve(known, out _);
             table.TryResolve(unknown, out _);
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 100; i++)
+            long allocated = ManagedAllocationProbe.MeasureAllocatedBytes(() =>
             {
                 table.TryResolve(known, out _);
                 table.TryResolve(unknown, out _);
-            }
+            }, 100);
 
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(allocated, Is.EqualTo(0));
         }
 
         [Test]
@@ -116,13 +116,14 @@ namespace Hidano.FacialControl.Adapters.OSC.Tests
             Assert.That(table.TryResolve(known, out var resolution), Is.True);
             Assert.That(resolution.MappingIndex, Is.EqualTo(0));
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 100; i++)
+            bool anyResolved = false;
+            long allocated = ManagedAllocationProbe.MeasureAllocatedBytes(() =>
             {
-                Assert.That(table.TryResolve(collidingUnknown, out _), Is.False);
-            }
+                if (table.TryResolve(collidingUnknown, out _)) anyResolved = true;
+            }, 100);
 
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(anyResolved, Is.False);
+            Assert.That(allocated, Is.EqualTo(0));
         }
 
         private static string FindDifferentAddressWithSameInitialBucket(byte[] known, OscAddressKeyTable table)
