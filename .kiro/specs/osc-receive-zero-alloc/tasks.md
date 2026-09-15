@@ -160,7 +160,7 @@
   - _Requirements: 6.1, 6.2_
   - _Boundary: OscBundleAccumulator_
 
-- [ ] 7.2 gaze フレームリストのプール化と残存経路の確保確認
+- [x] 7.2 gaze フレームリストのプール化と残存経路の確保確認
   - binding の gaze bundle 用フレームリストを accumulator と同じプール方式にし、混入なしをテストで固定する
   - IndividualMessage モードの書込経路、staleness 判定、FailSafe の処理経路にフレームごとの確保がないことを確認し、見つかった確保源を除去する（判定はタスク 8 の GC ゲートで最終確認）
   - 完了条件: gaze プールの EditMode テストが緑、既存の fail-safe / staleness テストが緑

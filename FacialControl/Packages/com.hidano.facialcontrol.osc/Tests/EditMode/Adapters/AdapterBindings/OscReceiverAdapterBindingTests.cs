@@ -80,6 +80,69 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters.AdapterBindings
         }
 
         [Test]
+        public void GazeAtomicSwap_CompletedFramesReusePool_AndClearReturnsAllFrames()
+        {
+            var binding = new OscReceiverAdapterBinding();
+            var bindingType = typeof(OscReceiverAdapterBinding);
+            var initialize = bindingType.GetMethod(
+                "InitializeGazeBundleState",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            initialize.Invoke(binding, null);
+
+            var poolField = bindingType.GetField(
+                "_gazeFramePool",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var currentField = bindingType.GetField(
+                "_currentGazeBundleValues",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var complete = bindingType.GetMethod(
+                "CompleteCurrentGazeBundleLocked",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var flush = bindingType.GetMethod(
+                "FlushBufferedGazeMessages",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var clear = bindingType.GetMethod(
+                "ClearGazeBundleState",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var hasCurrentField = bindingType.GetField(
+                "_hasCurrentGazeBundle",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            var sampleType = bindingType.GetNestedType(
+                "GazeSample",
+                System.Reflection.BindingFlags.NonPublic);
+            var runtimeType = bindingType.GetNestedType(
+                "GazeRuntimeEntry",
+                System.Reflection.BindingFlags.NonPublic);
+            object runtime = Activator.CreateInstance(
+                runtimeType,
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic,
+                null,
+                new object[] { OscMappingMode.Gaze_VRChat_XY },
+                null);
+            object sample = Activator.CreateInstance(
+                sampleType,
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic,
+                null,
+                new object[] { runtime, 0, 0f },
+                null);
+            var current = (System.Collections.IList)currentField.GetValue(binding);
+            current.Add(sample);
+            hasCurrentField.SetValue(binding, true);
+
+            complete.Invoke(binding, null);
+            Assert.That(((System.Collections.ICollection)poolField.GetValue(binding)).Count, Is.EqualTo(1));
+            flush.Invoke(binding, new object[] { 1d });
+            Assert.That(((System.Collections.ICollection)poolField.GetValue(binding)).Count, Is.EqualTo(2));
+            clear.Invoke(binding, null);
+            Assert.That(((System.Collections.ICollection)poolField.GetValue(binding)).Count, Is.EqualTo(2));
+        }
+
+        [Test]
         public void Type_IsConcreteSealedClass()
         {
             Type type = typeof(OscReceiverAdapterBinding);

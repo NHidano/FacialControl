@@ -52,6 +52,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private const int GazeAdvertisementScratchBytes = 8 * 1024;
         private const int GazeAdvertisementScratchValues = 256 * 2;
         private const int PresetScratchBytes = 256;
+        private const int InitialGazeFramePoolCapacity = 4;
 
         /// <summary>
         /// 環境/運用依存の Receiver 設定を保持する SettingsSO (sub-asset)。
@@ -171,6 +172,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         [NonSerialized]
         private Queue<List<GazeSample>> _readyGazeFrames;
+
+        [NonSerialized]
+        private Stack<List<GazeSample>> _gazeFramePool;
 
         [NonSerialized]
         private List<GazeSample> _currentGazeBundleValues;
@@ -1137,9 +1141,15 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private void InitializeGazeBundleState()
         {
             _gazeBundleSync = new object();
-            _readyGazeFrames = new Queue<List<GazeSample>>();
-            _currentGazeBundleValues = new List<GazeSample>();
-            _bareGazeValues = new List<GazeSample>();
+            _readyGazeFrames = new Queue<List<GazeSample>>(InitialGazeFramePoolCapacity);
+            _gazeFramePool = new Stack<List<GazeSample>>(InitialGazeFramePoolCapacity);
+            for (int i = 0; i < InitialGazeFramePoolCapacity; i++)
+            {
+                _gazeFramePool.Push(new List<GazeSample>());
+            }
+
+            _currentGazeBundleValues = RentGazeFrameLocked();
+            _bareGazeValues = RentGazeFrameLocked();
             _currentGazeTimestampKey = 0UL;
             _currentGazeBundleFirstReceivedAtSeconds = 0d;
             _hasCurrentGazeBundle = false;
@@ -1154,9 +1164,26 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
             lock (_gazeBundleSync)
             {
-                _readyGazeFrames?.Clear();
-                _currentGazeBundleValues?.Clear();
-                _bareGazeValues?.Clear();
+                if (_readyGazeFrames != null)
+                {
+                    while (_readyGazeFrames.Count > 0)
+                    {
+                        ReturnGazeFrameLocked(_readyGazeFrames.Dequeue());
+                    }
+                }
+
+                if (_currentGazeBundleValues != null)
+                {
+                    ReturnGazeFrameLocked(_currentGazeBundleValues);
+                }
+
+                if (_bareGazeValues != null)
+                {
+                    ReturnGazeFrameLocked(_bareGazeValues);
+                }
+
+                _currentGazeBundleValues = RentGazeFrameLocked();
+                _bareGazeValues = RentGazeFrameLocked();
                 _currentGazeTimestampKey = 0UL;
                 _currentGazeBundleFirstReceivedAtSeconds = 0d;
                 _hasCurrentGazeBundle = false;
@@ -2338,7 +2365,7 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             if (_currentGazeBundleValues.Count > 0)
             {
                 _readyGazeFrames.Enqueue(_currentGazeBundleValues);
-                _currentGazeBundleValues = new List<GazeSample>(_currentGazeBundleValues.Count);
+                _currentGazeBundleValues = RentGazeFrameLocked();
             }
 
             _currentGazeTimestampKey = 0UL;
@@ -2354,16 +2381,37 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             }
 
             _readyGazeFrames.Enqueue(_bareGazeValues);
-            _bareGazeValues = new List<GazeSample>(_bareGazeValues.Count);
+            _bareGazeValues = RentGazeFrameLocked();
         }
 
         private void ApplyGazeFrame(List<GazeSample> frame)
         {
-            for (int i = 0; i < frame.Count; i++)
+            try
             {
-                GazeSample sample = frame[i];
-                sample.Runtime.Record(sample.AxisIndex, sample.Value);
+                for (int i = 0; i < frame.Count; i++)
+                {
+                    GazeSample sample = frame[i];
+                    sample.Runtime.Record(sample.AxisIndex, sample.Value);
+                }
             }
+            finally
+            {
+                lock (_gazeBundleSync)
+                {
+                    ReturnGazeFrameLocked(frame);
+                }
+            }
+        }
+
+        private List<GazeSample> RentGazeFrameLocked()
+        {
+            return _gazeFramePool.Count > 0 ? _gazeFramePool.Pop() : new List<GazeSample>();
+        }
+
+        private void ReturnGazeFrameLocked(List<GazeSample> frame)
+        {
+            frame.Clear();
+            _gazeFramePool.Push(frame);
         }
 
         private double GetCurrentTimeSeconds()
