@@ -152,7 +152,7 @@
   - _Requirements: 4.1, 4.4, 4.5, 4.6, 4.7_
 
 - [ ] 7. FacialControl 側の残存確保の排除
-- [ ] 7.1 (P) bundle accumulator のフレームリストプール化
+- [x] 7.1 (P) bundle accumulator のフレームリストプール化
   - 「bundle 完了ごとに新規リストを作らず、プールから再利用したインスタンスが再登場する」「返却前にクリアされ前 bundle の値が混入しない」失敗テストを先に書く
   - プール（初期 4 本）から借りて bundle 完了時に使い、フレーム適用後にクリアして返却する。全消去時も全フレームをプールへ戻す。uOSC.Message を受ける既存の記録 API は互換で残す
   - 完了条件: 上記 EditMode テストが緑で、既存の accumulator テストも緑
