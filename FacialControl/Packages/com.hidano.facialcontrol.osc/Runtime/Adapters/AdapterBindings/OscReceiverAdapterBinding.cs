@@ -49,6 +49,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         private const int MaxCachedBundleSenderDecisions = 32;
         private const int HeartbeatScratchBytes = 32 * 1024;
         private const int HeartbeatScratchNames = 1024;
+        private const int GazeAdvertisementScratchBytes = 8 * 1024;
+        private const int GazeAdvertisementScratchValues = 256 * 2;
+        private const int PresetScratchBytes = 256;
 
         /// <summary>
         /// 環境/運用依存の Receiver 設定を保持する SettingsSO (sub-asset)。
@@ -238,6 +241,12 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         [NonSerialized] private bool _hasProcessedHeartbeatBytes;
         [NonSerialized] private bool _warnedHeartbeatScratchOverflow;
 
+        [NonSerialized] private byte[] _presetBytes;
+        [NonSerialized] private byte[] _customPrefixBytes;
+        [NonSerialized] private int _presetByteCount;
+        [NonSerialized] private int _customPrefixByteCount;
+        [NonSerialized] private bool _hasCustomPrefixBytes;
+
         [NonSerialized]
         private List<string> _gazeAdScratch;
 
@@ -252,6 +261,14 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
 
         [NonSerialized]
         private bool _gazeAdAccumulating;
+
+        [NonSerialized] private byte[] _gazeAdScratchBytes;
+        [NonSerialized] private int[] _gazeAdScratchOffsets;
+        [NonSerialized] private int _gazeAdScratchByteCount;
+        [NonSerialized] private int _gazeAdScratchValueCount;
+        [NonSerialized] private uint _lastGazeAdvertisementBytesHash;
+        [NonSerialized] private bool _hasProcessedGazeAdvertisementBytes;
+        [NonSerialized] private bool _warnedGazeAdvertisementScratchOverflow;
 
         [NonSerialized]
         private bool _warnedOnEmptyHeartbeatIntersection;
@@ -735,6 +752,18 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _lastHeartbeatBytesHash = 0u;
             _hasProcessedHeartbeatBytes = false;
             _warnedHeartbeatScratchOverflow = false;
+            _presetBytes = null;
+            _customPrefixBytes = null;
+            _presetByteCount = 0;
+            _customPrefixByteCount = 0;
+            _hasCustomPrefixBytes = false;
+            _gazeAdScratchBytes = null;
+            _gazeAdScratchOffsets = null;
+            _gazeAdScratchByteCount = 0;
+            _gazeAdScratchValueCount = 0;
+            _lastGazeAdvertisementBytesHash = 0u;
+            _hasProcessedGazeAdvertisementBytes = false;
+            _warnedGazeAdvertisementScratchOverflow = false;
             _gazeAdScratch = null;
             _gazeAdSync = null;
             _gazeAdDirty = 0;
@@ -838,6 +867,10 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _heartbeatScratchBytes = new byte[HeartbeatScratchBytes];
             _heartbeatScratchOffsets = new int[HeartbeatScratchNames + 1];
             _gazeAdScratch = new List<string>();
+            _gazeAdScratchBytes = new byte[GazeAdvertisementScratchBytes];
+            _gazeAdScratchOffsets = new int[GazeAdvertisementScratchValues + 1];
+            _presetBytes = new byte[PresetScratchBytes];
+            _customPrefixBytes = new byte[PresetScratchBytes];
             _gazeAdSync = new object();
             _gazeAdProcessingScratch = new List<string>();
             _gazeAdPlan = new List<GazeAdvertisementResolver.GazeAdvertisement>();
@@ -1189,6 +1222,14 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                     AccumulateHeartbeatBytes(in view);
                     _helperHost?.Receiver?.Diagnostics?.IncrementHeartbeatArrivals();
                 }
+                else if (resolved.Control == OscControlKind.Preset)
+                {
+                    HandlePresetBytes(in view);
+                }
+                else
+                {
+                    AccumulateGazeAdvertisementBytes(in view);
+                }
                 return false;
             }
 
@@ -1274,6 +1315,60 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _currentCustomPrefix = message.values.Length > 1 && message.values[1] is string customPrefix
                 ? customPrefix
                 : null;
+        }
+
+        private void HandlePresetBytes(in OscMessageView view)
+        {
+            if (_presetBytes == null || _customPrefixBytes == null)
+            {
+                return;
+            }
+
+            var reader = view.GetArgumentReader();
+            if (!reader.TryReadNext(out OscArgument preset) || !preset.IsString ||
+                preset.Bytes.Length == 0 || preset.Bytes.Length > PresetScratchBytes ||
+                !reader.TryReadNext(out OscArgument custom) && view.ArgumentCount > 1)
+            {
+                return;
+            }
+
+            bool hasCustom = view.ArgumentCount > 1;
+            if (hasCustom && (!custom.IsString || custom.Bytes.Length > PresetScratchBytes))
+            {
+                return;
+            }
+
+            bool presetChanged = !BytesEqual(_presetBytes, _presetByteCount, preset.Bytes);
+            bool customChanged = hasCustom != _hasCustomPrefixBytes ||
+                (hasCustom && !BytesEqual(_customPrefixBytes, _customPrefixByteCount, custom.Bytes));
+            if (!presetChanged && !customChanged)
+            {
+                return;
+            }
+
+            if (presetChanged)
+            {
+                preset.Bytes.CopyTo(_presetBytes);
+                _presetByteCount = preset.Bytes.Length;
+                _currentPresetName = Encoding.UTF8.GetString(_presetBytes, 0, _presetByteCount);
+            }
+
+            if (customChanged)
+            {
+                _hasCustomPrefixBytes = hasCustom;
+                if (hasCustom)
+                {
+                    custom.Bytes.CopyTo(_customPrefixBytes);
+                    _customPrefixByteCount = custom.Bytes.Length;
+                    _currentCustomPrefix = Encoding.UTF8.GetString(
+                        _customPrefixBytes, 0, _customPrefixByteCount);
+                }
+                else
+                {
+                    _customPrefixByteCount = 0;
+                    _currentCustomPrefix = null;
+                }
+            }
         }
 
         private void HandleSenderIdentityMessage(uOSC.Message message)
@@ -1461,11 +1556,54 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             Volatile.Write(ref _gazeAdDirty, 1);
         }
 
+        private void AccumulateGazeAdvertisementBytes(in OscMessageView view)
+        {
+            if (_gazeAdScratchBytes == null || _gazeAdScratchOffsets == null)
+            {
+                return;
+            }
+
+            lock (_gazeAdSync)
+            {
+                if (!_gazeAdAccumulating || view.TimestampKey != _gazeAdAccumulationTimestamp)
+                {
+                    _gazeAdScratchByteCount = 0;
+                    _gazeAdScratchValueCount = 0;
+                    _gazeAdScratchOffsets[0] = 0;
+                    _gazeAdAccumulationTimestamp = view.TimestampKey;
+                    _gazeAdAccumulating = true;
+                }
+
+                var reader = view.GetArgumentReader();
+                while (reader.TryReadNext(out OscArgument argument))
+                {
+                    if (!argument.IsString || _gazeAdScratchValueCount >= GazeAdvertisementScratchValues ||
+                        argument.Bytes.Length > GazeAdvertisementScratchBytes - _gazeAdScratchByteCount)
+                    {
+                        if (!_warnedGazeAdvertisementScratchOverflow)
+                        {
+                            _warnedGazeAdvertisementScratchOverflow = true;
+                            Debug.LogWarning("[OscReceiverAdapterBinding] gaze advertisement scratch exceeded 8 KB / 256 pairs; remaining values were truncated.");
+                        }
+                        break;
+                    }
+
+                    argument.Bytes.CopyTo(new Span<byte>(
+                        _gazeAdScratchBytes, _gazeAdScratchByteCount, argument.Bytes.Length));
+                    _gazeAdScratchByteCount += argument.Bytes.Length;
+                    _gazeAdScratchValueCount++;
+                    _gazeAdScratchOffsets[_gazeAdScratchValueCount] = _gazeAdScratchByteCount;
+                }
+            }
+
+            Volatile.Write(ref _gazeAdDirty, 1);
+        }
+
         private void ProcessPendingGazeAdvertisement()
         {
             if (Interlocked.Exchange(ref _gazeAdDirty, 0) == 0 ||
                 _gazeAdProcessingScratch == null ||
-                _gazeAdScratch == null)
+                _gazeAdScratchBytes == null)
             {
                 return;
             }
@@ -1473,7 +1611,21 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             lock (_gazeAdSync)
             {
                 _gazeAdProcessingScratch.Clear();
-                _gazeAdProcessingScratch.AddRange(_gazeAdScratch);
+                uint bytesHash = ComputeGazeAdvertisementBytesHash();
+                if (_hasProcessedGazeAdvertisementBytes && bytesHash == _lastGazeAdvertisementBytesHash)
+                {
+                    return;
+                }
+
+                _lastGazeAdvertisementBytesHash = bytesHash;
+                _hasProcessedGazeAdvertisementBytes = true;
+                for (int i = 0; i < _gazeAdScratchValueCount; i++)
+                {
+                    int start = _gazeAdScratchOffsets[i];
+                    int length = _gazeAdScratchOffsets[i + 1] - start;
+                    _gazeAdProcessingScratch.Add(Encoding.UTF8.GetString(
+                        _gazeAdScratchBytes, start, length));
+                }
             }
 
             _gazeAdvertisedEntries.Clear();
@@ -1492,6 +1644,37 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
             _lastGazeAdvertisementHash = hash;
             _hasProcessedGazeAdvertisement = true;
             RebuildGazeRoutes(_gazeAdvertisedEntries);
+        }
+
+        private uint ComputeGazeAdvertisementBytesHash()
+        {
+            unchecked
+            {
+                uint hash = HeartbeatHashHelper.Fnv1aOffsetBasis;
+                for (int i = 0; i < _gazeAdScratchValueCount; i++)
+                {
+                    int start = _gazeAdScratchOffsets[i];
+                    int end = _gazeAdScratchOffsets[i + 1];
+                    for (int j = start; j < end; j++)
+                    {
+                        hash ^= _gazeAdScratchBytes[j];
+                        hash *= HeartbeatHashHelper.Fnv1aPrime;
+                    }
+                    hash ^= 0;
+                    hash *= HeartbeatHashHelper.Fnv1aPrime;
+                }
+                return hash;
+            }
+        }
+
+        private static bool BytesEqual(byte[] destination, int length, ReadOnlySpan<byte> source)
+        {
+            if (length != source.Length) return false;
+            for (int i = 0; i < length; i++)
+            {
+                if (destination[i] != source[i]) return false;
+            }
+            return true;
         }
 
         private void RebuildGazeRoutes(
