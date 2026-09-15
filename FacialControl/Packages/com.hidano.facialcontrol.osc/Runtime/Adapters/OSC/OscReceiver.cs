@@ -216,6 +216,8 @@ namespace Hidano.FacialControl.Adapters.OSC
         {
             if (!_initialized || _ring == null || _drainBuffer == null) return;
             _ring.Drain(_drainBuffer);
+            if (_drainBuffer.DatagramCount != 0)
+                _diagnostics.IncrementAppliedDatagramsBy(_drainBuffer.DatagramCount);
             for (int i = 0; i < _drainBuffer.RecordCount; i++)
             {
                 ref readonly OscResolvedMessage resolved = ref _drainBuffer.GetRecord(i);

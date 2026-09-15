@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Collections;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using Hidano.FacialControl.Adapters.AdapterBindings;
 using Hidano.FacialControl.Adapters.InputSources;
 using Hidano.FacialControl.Adapters.OSC;
@@ -11,6 +15,7 @@ using Hidano.FacialControl.Tests.Shared;
 using NUnit.Framework;
 using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.Profiling;
 
 namespace Hidano.FacialControl.Tests.PlayMode.Performance
@@ -152,6 +157,128 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                 "heartbeat hash unchanged OnFixedTick hot path reported GC.Alloc: " + gcAllocBytes + " bytes.");
         }
 
+        [UnityTest]
+        public IEnumerator OnFixedTick_RealUdp100Frames_ZeroGCExceptHeartbeat()
+        {
+            var registry = new InputSourceRegistry();
+            var timeProvider = new ManualTimeProvider();
+            StartReceiverForAutoMapping(registry, timeProvider, "smile", "frown");
+            var receiver = _binding.HelperHost.Receiver;
+            if (!receiver.IsRunning)
+                receiver.StartReceiving();
+
+            byte[][] normalPackets;
+            byte[][] heartbeatPackets;
+            byte[][] addresses =
+            {
+                Encoding.UTF8.GetBytes("/avatar/parameters/smile"),
+                Encoding.UTF8.GetBytes("/avatar/parameters/frown")
+            };
+            float[] values = { 0.25f, 0.75f };
+            byte[] senderAddress = Encoding.UTF8.GetBytes(OscReceiverAdapterBinding.SenderIdentityAddress);
+            byte[] senderUuid = new byte[16];
+            for (int i = 0; i < senderUuid.Length; i++) senderUuid[i] = (byte)(i + 1);
+            byte[] heartbeatAddress = Encoding.UTF8.GetBytes(OscReceiverAdapterBinding.BlendShapeNamesAddress);
+
+            using (var builder = new OscBundleBuilder())
+            {
+                int normalCount = builder.BuildFrameBundle(1, senderAddress, senderUuid, "1700000000000", addresses, values, 2);
+                normalPackets = CopyPackets(builder, normalCount);
+                int heartbeatCount = builder.BuildFrameBundle(
+                    2, senderAddress, senderUuid, "1700000000000", addresses, values, 2,
+                    heartbeatAddress, new[] { "smile", "frown" }, 2,
+                    Encoding.UTF8.GetBytes(OscReceiverAdapterBinding.PresetAddress),
+                    AddressPresetEstimator.PresetVrChat, null);
+                heartbeatPackets = CopyPackets(builder, heartbeatCount);
+            }
+
+            using (var sender = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+            using (var recorder = ProfilerRecorder.StartNew(
+                       ProfilerCategory.Memory, "GC.Alloc", 256,
+                       ProfilerRecorderOptions.SumAllSamplesInFrame))
+            {
+                sender.Connect(new IPEndPoint(IPAddress.Loopback, receiver.ActivePort));
+                yield return null;
+                int warmupSent = 0;
+                for (int frame = 1; frame <= 30; frame++)
+                {
+                    SendPackets(sender, normalPackets);
+                    warmupSent += normalPackets.Length;
+                    if (frame % 25 == 0)
+                    {
+                        SendPackets(sender, heartbeatPackets);
+                        warmupSent += heartbeatPackets.Length;
+                    }
+                    yield return null;
+                    receiver.PumpReceived();
+                    _binding.OnFixedTick(1f / 60f);
+                }
+
+                for (int i = 0; i < 120 && receiver.Diagnostics.AppliedDatagramCount < warmupSent; i++)
+                {
+                    yield return null;
+                    receiver.PumpReceived();
+                }
+
+                Assert.That(receiver.Diagnostics.AppliedDatagramCount, Is.EqualTo(warmupSent));
+                for (int i = 0; i < 30 && _binding.InputSource == null; i++)
+                {
+                    yield return null;
+                    receiver.PumpReceived();
+                    _binding.OnFixedTick(1f / 60f);
+                }
+                StabilizeManagedHeap();
+                long receiveBytesBefore = receiver.Diagnostics.ReceiveThreadAllocatedBytes;
+                long heartbeatBefore = receiver.Diagnostics.HeartbeatArrivalCount;
+                long fixedTicksBefore = receiver.Diagnostics.FixedTickCount;
+                var allocations = new List<long>(FrameCount);
+                var heartbeatFrames = new List<int>();
+                long sent = warmupSent;
+                var fixedWait = new WaitForFixedUpdate();
+
+                for (int frame = 0; frame < FrameCount; frame++)
+                {
+                    SendPackets(sender, normalPackets);
+                    sent += normalPackets.Length;
+                    bool heartbeat = (frame + 1) % 25 == 0;
+                    if (heartbeat)
+                    {
+                        SendPackets(sender, heartbeatPackets);
+                        sent += heartbeatPackets.Length;
+                    }
+                    yield return fixedWait;
+                    yield return null;
+                    receiver.PumpReceived();
+                    _binding.OnFixedTick(1f / 60f);
+                    long heartbeatAfter = receiver.Diagnostics.HeartbeatArrivalCount;
+                    bool appliedHeartbeat = heartbeatAfter > heartbeatBefore;
+                    heartbeatBefore = heartbeatAfter;
+                    if (frame >= 20)
+                    {
+                        allocations.Add(recorder.LastValue);
+                        if (appliedHeartbeat) heartbeatFrames.Add(frame);
+                    }
+                }
+
+                for (int i = 0; i < 120 && receiver.Diagnostics.AppliedDatagramCount < sent; i++)
+                {
+                    yield return null;
+                    receiver.PumpReceived();
+                }
+
+                Assert.That(receiver.Diagnostics.AppliedDatagramCount, Is.EqualTo(sent));
+                Assert.That(receiver.Diagnostics.FixedTickCount - fixedTicksBefore, Is.EqualTo(FrameCount));
+                Assert.That(receiver.Diagnostics.ReceiveThreadAllocatedBytes - receiveBytesBefore, Is.EqualTo(0));
+                for (int i = 0; i < allocations.Count; i++)
+                {
+                    if (!heartbeatFrames.Contains(i + 20))
+                        Assert.That(allocations[i], Is.EqualTo(0),
+                            $"frame={i} gcAllocBytes={allocations[i]} heartbeatFrame=false");
+                }
+                TestContext.Out.WriteLine($"[OscReceiverGCAllocationTests] frames={FrameCount} heartbeatFrames={string.Join(",", heartbeatFrames)} receiveThreadGcDelta={receiver.Diagnostics.ReceiveThreadAllocatedBytes - receiveBytesBefore}");
+            }
+        }
+
         [Test]
         public void GazeAdvertisement_ContentUnchanged_ArrivesEveryTick_ZeroAllocPerFrame()
         {
@@ -280,6 +407,7 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
                 StalenessSeconds = 0f,
                 BundleMode = BundleInterpretationMode.IndividualMessage,
                 Mappings = new List<OscMappingEntry>(),
+                ReceiveOptions = new OscReceiveOptions(2048, 32, 0, captureThreadAllocationStats: true),
             };
 
             _binding.OnStart(CreateContext(registry, timeProvider, blendShapeNames));
@@ -386,6 +514,24 @@ namespace Hidano.FacialControl.Tests.PlayMode.Performance
         private static int AllocatePort()
         {
             return PortBase + System.Threading.Interlocked.Increment(ref s_portCounter);
+        }
+
+        private static void SendPackets(Socket sender, byte[][] packets)
+        {
+            for (int i = 0; i < packets.Length; i++)
+                sender.Send(packets[i], 0, packets[i].Length, SocketFlags.None);
+        }
+
+        private static byte[][] CopyPackets(OscBundleBuilder builder, int packetCount)
+        {
+            var packets = new byte[packetCount][];
+            for (int i = 0; i < packetCount; i++)
+            {
+                OscBundlePacket packet = builder.GetPacket(i);
+                packets[i] = new byte[packet.Length];
+                Buffer.BlockCopy(packet.Buffer, 0, packets[i], 0, packet.Length);
+            }
+            return packets;
         }
 
         private readonly struct BaselineResult

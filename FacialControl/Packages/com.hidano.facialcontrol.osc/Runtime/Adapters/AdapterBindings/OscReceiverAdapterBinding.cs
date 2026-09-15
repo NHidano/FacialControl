@@ -46,6 +46,9 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
         public const string PresetAddress = "/_facialcontrol/preset";
         public const string GazeAdvertisementAddress = "/_facialcontrol/gaze";
 
+        [NonSerialized]
+        public OscReceiveOptions ReceiveOptions = OscReceiveOptions.Default;
+
         private const int MaxCachedBundleSenderDecisions = 32;
         private const int HeartbeatScratchBytes = 32 * 1024;
         private const int HeartbeatScratchNames = 1024;
@@ -671,6 +674,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 return;
             }
 
+            _helperHost?.Receiver?.Diagnostics?.IncrementFixedTicks();
+
             // 受信スレッドが write バッファに積んだ値を read バッファに切り替える。
             // OscReceiver の Update / 個別タイマに依存せず binding 自前 tick で進める。
             if (_helperHost != null)
@@ -907,7 +912,8 @@ namespace Hidano.FacialControl.Adapters.AdapterBindings
                 runtimeMappings,
                 settings.BundleMode == BundleInterpretationMode.AtomicSwap ? _bundleAccumulator : null,
                 settings.BundleMode,
-                ctx.TimeProvider);
+                ctx.TimeProvider,
+                ReceiveOptions);
 
             if (_helperHost.Receiver != null)
             {

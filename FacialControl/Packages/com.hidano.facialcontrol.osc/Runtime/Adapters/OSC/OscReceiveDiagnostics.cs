@@ -21,6 +21,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         private long _staleRecords;
         private long _heartbeatArrivals;
         private long _receiveThreadAllocatedBytes;
+        private long _fixedTicks;
         private int _warningMask;
 
         public long ReceivedDatagramCount => Interlocked.Read(ref _receivedDatagrams);
@@ -32,9 +33,11 @@ namespace Hidano.FacialControl.Adapters.OSC
         public long StaleRecordCount => Interlocked.Read(ref _staleRecords);
         public long HeartbeatArrivalCount => Interlocked.Read(ref _heartbeatArrivals);
         public long ReceiveThreadAllocatedBytes => Interlocked.Read(ref _receiveThreadAllocatedBytes);
+        public long FixedTickCount => Interlocked.Read(ref _fixedTicks);
 
         public void IncrementReceivedDatagrams() => Interlocked.Increment(ref _receivedDatagrams);
         public void IncrementAppliedDatagrams() => Interlocked.Increment(ref _appliedDatagrams);
+        public void IncrementAppliedDatagramsBy(int count) => Interlocked.Add(ref _appliedDatagrams, count);
         public void IncrementDroppedDatagrams() => Interlocked.Increment(ref _droppedDatagrams);
         public void IncrementOversizedDatagrams() => Interlocked.Increment(ref _oversizedDatagrams);
         public void IncrementTruncatedDatagrams() => Interlocked.Increment(ref _truncatedDatagrams);
@@ -42,6 +45,7 @@ namespace Hidano.FacialControl.Adapters.OSC
         public void IncrementStaleRecords() => Interlocked.Increment(ref _staleRecords);
         public void IncrementHeartbeatArrivals() => Interlocked.Increment(ref _heartbeatArrivals);
         public void SetReceiveThreadAllocatedBytes(long bytes) => Interlocked.Exchange(ref _receiveThreadAllocatedBytes, bytes);
+        public void IncrementFixedTicks() => Interlocked.Increment(ref _fixedTicks);
 
         public bool TryMarkWarning(OscDiagnosticWarning warning)
         {
