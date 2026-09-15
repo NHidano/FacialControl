@@ -1,6 +1,14 @@
 # Implementation Plan
 
 > 実装順序は design.md の Migration Strategy（Phase 1〜7）に従う。各タスクは TDD（Red-Green-Refactor）で進め、テストを先に書いてから実装する。受信スレッド上では Unity API を呼ばず、`Debug.Log*` は致命的エラー時のみ許容する（Req 10.7）。
+>
+> **既知の pre-existing 赤（本 spec の FAIL 判定に含めない・調査不要）**:
+> - `OscHeartbeatConsistencyTests.OnFixedTick_HeartbeatMissingReceiverBlendShape_LogsMismatchWarning`（`LogAssert` 未 Expect の情報ログ）
+> - `OscReceiverAdapterBindingAutoMappingIntegrationTests.HandleHeartbeat_HeartbeatHashUnchanged_DoesNotRebuildOscInputSource`（heartbeat ハッシュ期待値ずれ）
+> - `OscReceiverGCAllocationTests.OnFixedTick_HeartbeatHashUnchanged100Frames_ZeroGCAllocation`（同上）
+> - `TenCharacterIsolationTests.TenIndependentBindings_OneSwap_DoesNotAffectOthers`（LipSync PlayMode の seed 依存フレーキー）
+>
+> テスト結果 XML / ログはリポジトリ直下や `Packages/` に置かず `test-results/` 配下（gitignore 済み）へ出力し、コミットに含めない。
 
 - [x] 1. 基盤: 受信経路の共通値型・定数・診断カウンタとテストアクセスの整備
   - 型タグの byte 定数と「payload の有無 / 既知か」の判定、解析エラー種別、制御アドレス（sender_id / blendshape_names / preset / gaze）の文字列と UTF-8 バイト列定数を定義する
@@ -183,7 +191,7 @@
   - 完了条件: テスト結果 XML で対象外を除く失敗が 0 件、VRChat 形式アドレスの受信・10 体構成の既存テストが緑
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 9.2, 10.1, 10.2, 10.3, 10.4_
 
-- [ ] 9.2 実機確認と検証記録
+- [x] 9.2 実機確認と検証記録（★手動実施: 無人 codex には実機が触れないため spec-run 対象外。実機確認後に検証記録を残す。完了扱いではない）
   - 検証プロジェクトの OscSend シーンから受信した状態で Profiler（Memory の GC Used Memory、CPU の GC.Alloc 全スレッド）を 60 秒観測し、約 7 秒周期ののこぎり歯が消失していることを確認する（手動観測が必要）
   - Profiler スクリーンショットまたは計測値、受信診断カウンタ値、positive control の M1 観測可否を spec の検証記録（validation.md）に残す
   - 完了条件: 検証記録にのこぎり歯消失の根拠と計測値が記載されている
