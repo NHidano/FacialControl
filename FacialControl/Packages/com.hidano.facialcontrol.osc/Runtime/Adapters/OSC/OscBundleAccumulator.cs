@@ -10,13 +10,16 @@ namespace Hidano.FacialControl.Adapters.OSC
         private const double MillisecondsToSeconds = 0.001d;
         private const ulong BareTimestampKey = 0UL;
         private const ulong ImmediateTimestampKey = 0x1UL;
+        private const int InitialFramePoolCapacity = 4;
+        private const int InitialReadyFrameCapacity = 8;
 
         private readonly OscDoubleBuffer _buffer;
         private readonly object _sync = new object();
-        private readonly Queue<List<BufferedValue>> _readyFrames = new Queue<List<BufferedValue>>();
+        private readonly Stack<List<BufferedValue>> _framePool = new Stack<List<BufferedValue>>(InitialFramePoolCapacity);
+        private readonly Queue<List<BufferedValue>> _readyFrames = new Queue<List<BufferedValue>>(InitialReadyFrameCapacity);
 
-        private List<BufferedValue> _currentBundleValues = new List<BufferedValue>();
-        private List<BufferedValue> _bareValues = new List<BufferedValue>();
+        private List<BufferedValue> _currentBundleValues;
+        private List<BufferedValue> _bareValues;
         private float _bundleAccumulationTimeoutMs;
         private ulong _currentTimestampKey;
         private double _currentBundleFirstReceivedAtSeconds;
@@ -27,6 +30,13 @@ namespace Hidano.FacialControl.Adapters.OSC
             float bundleAccumulationTimeoutMs = DefaultBundleAccumulationTimeoutMs)
         {
             _buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));
+            for (int i = 0; i < InitialFramePoolCapacity; i++)
+            {
+                _framePool.Push(new List<BufferedValue>());
+            }
+
+            _currentBundleValues = RentLocked();
+            _bareValues = RentLocked();
             BundleAccumulationTimeoutMs = bundleAccumulationTimeoutMs;
         }
 
@@ -170,9 +180,15 @@ namespace Hidano.FacialControl.Adapters.OSC
         {
             lock (_sync)
             {
-                _readyFrames.Clear();
-                _currentBundleValues.Clear();
-                _bareValues.Clear();
+                while (_readyFrames.Count > 0)
+                {
+                    ReturnLocked(_readyFrames.Dequeue());
+                }
+
+                ReturnLocked(_currentBundleValues);
+                ReturnLocked(_bareValues);
+                _currentBundleValues = RentLocked();
+                _bareValues = RentLocked();
                 _currentTimestampKey = 0UL;
                 _currentBundleFirstReceivedAtSeconds = 0d;
                 _hasCurrentBundle = false;
@@ -216,7 +232,7 @@ namespace Hidano.FacialControl.Adapters.OSC
             if (_currentBundleValues.Count > 0)
             {
                 _readyFrames.Enqueue(_currentBundleValues);
-                _currentBundleValues = new List<BufferedValue>(_currentBundleValues.Count);
+                _currentBundleValues = RentLocked();
             }
 
             _currentTimestampKey = 0UL;
@@ -232,18 +248,39 @@ namespace Hidano.FacialControl.Adapters.OSC
             }
 
             _readyFrames.Enqueue(_bareValues);
-            _bareValues = new List<BufferedValue>(_bareValues.Count);
+            _bareValues = RentLocked();
         }
 
         private void ApplyFrame(List<BufferedValue> frame)
         {
-            for (int i = 0; i < frame.Count; i++)
+            try
             {
-                BufferedValue value = frame[i];
-                _buffer.Write(value.Index, value.Value);
-            }
+                for (int i = 0; i < frame.Count; i++)
+                {
+                    BufferedValue value = frame[i];
+                    _buffer.Write(value.Index, value.Value);
+                }
 
-            _buffer.Swap();
+                _buffer.Swap();
+            }
+            finally
+            {
+                lock (_sync)
+                {
+                    ReturnLocked(frame);
+                }
+            }
+        }
+
+        private List<BufferedValue> RentLocked()
+        {
+            return _framePool.Count > 0 ? _framePool.Pop() : new List<BufferedValue>();
+        }
+
+        private void ReturnLocked(List<BufferedValue> frame)
+        {
+            frame.Clear();
+            _framePool.Push(frame);
         }
 
         private readonly struct BufferedValue

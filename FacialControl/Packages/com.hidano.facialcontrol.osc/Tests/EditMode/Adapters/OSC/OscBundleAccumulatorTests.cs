@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Hidano.FacialControl.Adapters.OSC;
 using NUnit.Framework;
 
@@ -87,6 +89,60 @@ namespace Hidano.FacialControl.Tests.EditMode.Adapters
 
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new OscBundleAccumulator(buffer, bundleAccumulationTimeoutMs: -1f));
+        }
+
+        [Test]
+        public void FlushDue_CompletedBundle_ReusesFrameListFromPool()
+        {
+            using var buffer = new OscDoubleBuffer(1);
+            var accumulator = new OscBundleAccumulator(buffer, bundleAccumulationTimeoutMs: 0f);
+
+            accumulator.RecordBundleMessage(100UL, 0, 0.25f, receivedAtSeconds: 0d);
+            accumulator.RecordBundleMessage(200UL, 0, 0.5f, receivedAtSeconds: 1d);
+            object firstFrame = PeekReadyFrame(accumulator);
+            Assert.AreEqual(1, accumulator.FlushDue(0d));
+
+            accumulator.RecordBundleMessage(300UL, 0, 0.75f, receivedAtSeconds: 2d);
+            Assert.AreEqual(1, accumulator.FlushDue(1d));
+            object secondFrame = GetCurrentFrame(accumulator);
+
+            Assert.AreSame(firstFrame, secondFrame);
+        }
+
+        [Test]
+        public void Clear_ReturnsCompletedFramesWithoutLeakingPreviousValues()
+        {
+            using var buffer = new OscDoubleBuffer(2);
+            var accumulator = new OscBundleAccumulator(buffer, bundleAccumulationTimeoutMs: 0f);
+
+            accumulator.RecordBundleMessage(100UL, 0, 0.25f, receivedAtSeconds: 0d);
+            accumulator.RecordBundleMessage(100UL, 1, 0.5f, receivedAtSeconds: 0d);
+            accumulator.Clear();
+
+            accumulator.RecordBundleMessage(200UL, 1, 0.75f, receivedAtSeconds: 1d);
+            Assert.AreEqual(1, accumulator.FlushDue(1d));
+
+            Assert.AreEqual(0f, buffer.GetReadBuffer()[0], 0.0001f);
+            Assert.AreEqual(0.75f, buffer.GetReadBuffer()[1], 0.0001f);
+        }
+
+        private static object GetCurrentFrame(OscBundleAccumulator accumulator)
+        {
+            var field = typeof(OscBundleAccumulator).GetField(
+                "_currentBundleValues", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field);
+            return field.GetValue(accumulator);
+        }
+
+        private static object PeekReadyFrame(OscBundleAccumulator accumulator)
+        {
+            var field = typeof(OscBundleAccumulator).GetField(
+                "_readyFrames", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field);
+            var queueValue = field.GetValue(accumulator);
+            var peek = queueValue.GetType().GetMethod("Peek");
+            Assert.IsNotNull(peek);
+            return peek.Invoke(queueValue, null);
         }
     }
 }
