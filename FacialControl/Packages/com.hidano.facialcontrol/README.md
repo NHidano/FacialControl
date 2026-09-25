@@ -54,9 +54,13 @@ VContainer（OpenUPM 配布）に依存するため、npmjs と OpenUPM の 2 �
 ```csharp
 // スクリプトから Expression を切り替える
 var profile = _facialController.CurrentProfile.Value;
-var smile = profile.FindExpressionById("smile");
-if (smile.HasValue) _facialController.Activate(smile.Value);
-_facialController.Deactivate(smile.Value);
+var smile = profile.FindExpressionById("smile");   // Expression? を返す
+if (smile.HasValue)
+{
+    _facialController.Activate(smile.Value);
+    // ... 解除するとき
+    _facialController.Deactivate(smile.Value);
+}
 ```
 
 詳細は [Documentation~/quickstart.md](Documentation~/quickstart.md)、JSON の構造は [Documentation~/json-schema.md](Documentation~/json-schema.md) を参照。

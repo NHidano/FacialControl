@@ -21,7 +21,7 @@ endpoint やポートなど環境依存の設定は binding ではなく **`OscR
 
 ## 使い方
 
-1. **Create → FacialControl → Adapter Runtime Settings Collection** を作成し、**Add → OscRuntimeSettings** で sub-asset を追加。Receiver の listen ポート（既定 9001）、Sender の endpoint 一覧（既定送信先 9000）とプリセット（VRChat / ARKit）を設定
+1. **Create → FacialControl → Adapter Runtime Settings Collection** を作成し、**Add → OscRuntimeSettingsSO**（Add メニューは型名で表示される）で sub-asset を追加。Receiver の listen ポート（既定 9001）、Sender の endpoint 一覧（既定送信先 9000）とプリセット（VRChat / ARKit）を設定
 2. `FacialCharacterProfileSO` の **Adapter Bindings** で **OSC Receiver** / **OSC Sender** を Add し、Runtime Settings 欄に sub-asset を割り当てる
 3. 受信をレイヤーに繋ぐ場合はレイヤーの入力源 id に `<slug>`（例 `osc-receiver`）を追加する。binding を Add した時点で既定レイヤーが自動追加される
 4. Gaze を受信する場合は Profile の目線タブでチャネル `gaze` の入力ソースに Receiver を選ぶ。送信側が FacialControl なら手動 mapping は不要

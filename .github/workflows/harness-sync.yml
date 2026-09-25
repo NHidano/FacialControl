@@ -30,7 +30,9 @@ env:
   HARNESS_REPO: Hidano-Dev/agentic-dev-harness
   HARNESS_REF: main
   # 取り込むパス(空白区切り)。AGENTS.md に独自追記があるリポジトリでは外す
-  SYNC_PATHS: ".claude .codex .kiro .agents AGENTS.md"
+  # このリポジトリの AGENTS.md には Unity Editor バージョン固定とテスト実行方法の
+  # プロジェクト固有記述があるため同期対象から外している(上流の変更は手動で取り込む)
+  SYNC_PATHS: ".claude .codex .kiro .agents"
 
 jobs:
   sync:

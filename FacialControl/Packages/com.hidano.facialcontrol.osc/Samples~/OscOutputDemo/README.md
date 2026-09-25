@@ -27,7 +27,7 @@
 
 1. `OscOutputDemo.unity` を開く
 2. お手持ちのモデル prefab を Hierarchy の **`Character` の子** に配置する。`FacialController` が子の `SkinnedMeshRenderer` を自動探索する
-3. 送信先を変えるときは `OscOutputDemoSettings.asset` の sub-asset **OscRuntimeSettings → Sender → Endpoints** を編集する
+3. 送信先を変えるときは `OscOutputDemoSettings.asset` の sub-asset **OscOutputSettings → Sender → Endpoints** を編集する
 4. Play。受信側で `/avatar/parameters/...` または `/ARKit/...` が届くことを確認する
 
 ## 補足

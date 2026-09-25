@@ -4,16 +4,16 @@
 
 ```
 AdapterRuntimeSettingsCollection.asset
-  ├─ OscRuntimeSettings            (com.hidano.facialcontrol.osc)
+  ├─ OscRuntimeSettingsSO            (com.hidano.facialcontrol.osc)
   │    ├─ Receiver: receiverEnabled / listenEndpoint / listenPort / stalenessSeconds / failSafeMode / consistencyCheckWarnLog / bundleMode / bundleAccumulationTimeoutMs
   │    └─ Sender:   senderEnabled / endpoints[] / heartbeatIntervalSeconds / suppressLoopback
-  └─ IFacialMocapReceiverSettings  (com.hidano.facialcontrol.ifacialmocap)
+  └─ IFacialMocapRuntimeSettingsSO   (com.hidano.facialcontrol.ifacialmocap)
 ```
 
 ## 作成と編集
 
 1. Project ウィンドウで **Create → FacialControl → Adapter Runtime Settings Collection** を作成
-2. Inspector の **Add** で sub-asset の型を選ぶ（`AdapterRuntimeSettingsBase` の派生型が自動列挙される）
+2. Inspector の **Add** で sub-asset の型を選ぶ（`AdapterRuntimeSettingsBase` の派生型が型名で自動列挙される。例: `OscRuntimeSettingsSO`）
 3. `_label` に識別名（例 `local-debug`）を付ける。同じ型を複数追加でき、同じ label を重複させると警告が出る
 4. Profile の Adapter Bindings で該当 binding の **Runtime Settings** 欄に sub-asset を割り当てる
 5. 不要になった sub-asset は **Remove**（確認ダイアログあり）。参照していた binding は Inspector に「未設定」警告を出し、`OnStart` で起動をスキップする

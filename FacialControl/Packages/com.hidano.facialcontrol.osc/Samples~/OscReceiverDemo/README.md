@@ -26,7 +26,7 @@
 1. `OscReceiverDemo.unity` を開く
 2. お手持ちのモデル prefab を Hierarchy の **`Character` の子** に配置する
 3. **目ボーンを設定**（Gaze を反映する場合）: `OscReceiverDemoProfile.asset` の **参照モデル** にモデルを割り当て、**目線** タブのチャネル `gaze` で **参照モデルから目ボーンを自動解決** を押す。自動解決できないモデルは左右の目ボーン path を手入力する
-4. listen ポートを変えるときは `OscReceiverDemoSettings.asset` の sub-asset **OscRuntimeSettings → Receiver → Listen Port** を編集する
+4. listen ポートを変えるときは `OscReceiverDemoSettings.asset` の sub-asset **OscReceiverSettings → Receiver → Listen Port** を編集する
 5. Play。送信側（`OscOutputDemo` 等）から `127.0.0.1:9000` へ送ると反映される
 
 ## FacialControl 以外の送信元から受ける場合
