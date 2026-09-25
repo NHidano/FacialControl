@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="28" result="Passed" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.1179331">
+  <test-suite type="TestSuite" id="1000" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="1977" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.117933" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="3293" name="Hidano.FacialControl.Timeline.Tests.EditMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Timeline.Tests.EditMode.dll" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.089787" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="92396" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="3294" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.089423" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="3295" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.089275" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="3296" name="Timeline" fullname="Hidano.FacialControl.Timeline" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.089155" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="3297" name="Tests" fullname="Hidano.FacialControl.Timeline.Tests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.088920" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="3298" name="EditMode" fullname="Hidano.FacialControl.Timeline.Tests.EditMode" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.088735" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="3257" name="FacialTimelineHashCalculatorTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.038792" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3258" name="ComputeHash_SameSource_ReturnsSameValue" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests.ComputeHash_SameSource_ReturnsSameValue" methodname="ComputeHash_SameSource_ReturnsSameValue" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" seed="1512713677" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.021475" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3259" name="ComputeHash_WhenClipTimingChanges_ReturnsDifferentValue" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests.ComputeHash_WhenClipTimingChanges_ReturnsDifferentValue" methodname="ComputeHash_WhenClipTimingChanges_ReturnsDifferentValue" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" seed="1973080789" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.003114" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3260" name="ComputeHash_WhenKeyframeChanges_ReturnsDifferentValue" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests.ComputeHash_WhenKeyframeChanges_ReturnsDifferentValue" methodname="ComputeHash_WhenKeyframeChanges_ReturnsDifferentValue" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" seed="1275551426" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001437" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3261" name="ComputeHash_WhenProfileTransitionDurationChanges_ReturnsDifferentValue" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests.ComputeHash_WhenProfileTransitionDurationChanges_ReturnsDifferentValue" methodname="ComputeHash_WhenProfileTransitionDurationChanges_ReturnsDifferentValue" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" seed="1396131925" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000899" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3263" name="ComputeHash_WhenTrackIsRenamed_ReturnsSameValue" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests.ComputeHash_WhenTrackIsRenamed_ReturnsSameValue" methodname="ComputeHash_WhenTrackIsRenamed_ReturnsSameValue" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" seed="765305487" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001386" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3262" name="ComputeHash_WhenTrackOrderChanges_ReturnsDifferentValue" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests.ComputeHash_WhenTrackOrderChanges_ReturnsDifferentValue" methodname="ComputeHash_WhenTrackOrderChanges_ReturnsDifferentValue" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineHashCalculatorTests" runstate="Runnable" seed="479966633" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.002101" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3264" name="FacialTimelineTrackAssetTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.011592" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3265" name="ExpressionTrack_CreatesExpressionClip_WithClipCapsNone" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests.ExpressionTrack_CreatesExpressionClip_WithClipCapsNone" methodname="ExpressionTrack_CreatesExpressionClip_WithClipCapsNone" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests" runstate="Runnable" seed="2128729898" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.003742" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3266" name="ExpressionTrack_SupportsLayeredChildTracks" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests.ExpressionTrack_SupportsLayeredChildTracks" methodname="ExpressionTrack_SupportsLayeredChildTracks" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests" runstate="Runnable" seed="1227885824" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.003010" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3267" name="ValueTrack_CreatesValueClip_WithTrackMetadataAndPlayablePayload" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests.ValueTrack_CreatesValueClip_WithTrackMetadataAndPlayablePayload" methodname="ValueTrack_CreatesValueClip_WithTrackMetadataAndPlayablePayload" classname="Hidano.FacialControl.Timeline.Tests.EditMode.FacialTimelineTrackAssetTests" runstate="Runnable" seed="1362754247" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.002041" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3268" name="TimelineAnalogInputSourceTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.003923" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3270" name="Invalidate_MakesAllAnalogReadsFail" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests.Invalidate_MakesAllAnalogReadsFail" methodname="Invalidate_MakesAllAnalogReadsFail" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests" runstate="Runnable" seed="952280349" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001440" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3269" name="SetAxes_WithMatchingAxisCount_MarksSourceValidAndUpdatesReads" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests.SetAxes_WithMatchingAxisCount_MarksSourceValidAndUpdatesReads" methodname="SetAxes_WithMatchingAxisCount_MarksSourceValidAndUpdatesReads" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests" runstate="Runnable" seed="26954858" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001031" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3271" name="TryWriteValues_NeverTouchesBlendShapeOutput" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests.TryWriteValues_NeverTouchesBlendShapeOutput" methodname="TryWriteValues_NeverTouchesBlendShapeOutput" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineAnalogInputSourceTests" runstate="Runnable" seed="136638077" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000319" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3272" name="TimelineBakedValueSinkTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.002964" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3277" name="BaseContract_IsReachableAsIInputSource" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests.BaseContract_IsReachableAsIInputSource" methodname="BaseContract_IsReachableAsIInputSource" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" runstate="Runnable" seed="339963422" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000834" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3273" name="ContributeMask_TracksOnlyBakedBlendShapes" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests.ContributeMask_TracksOnlyBakedBlendShapes" methodname="ContributeMask_TracksOnlyBakedBlendShapes" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" runstate="Runnable" seed="54409034" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000298" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3276" name="TryGetBufferIndex_ResolvesSparseCurveOrder" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests.TryGetBufferIndex_ResolvesSparseCurveOrder" methodname="TryGetBufferIndex_ResolvesSparseCurveOrder" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" runstate="Runnable" seed="2053368538" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000189" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3275" name="TryWriteValues_WhenInvalid_DoesNotTouchOutput" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests.TryWriteValues_WhenInvalid_DoesNotTouchOutput" methodname="TryWriteValues_WhenInvalid_DoesNotTouchOutput" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" runstate="Runnable" seed="1666241031" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000358" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3274" name="TryWriteValues_WhenValid_WritesSparseValuesOnly" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests.TryWriteValues_WhenValid_WritesSparseValuesOnly" methodname="TryWriteValues_WhenValid_WritesSparseValuesOnly" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineBakedValueSinkTests" runstate="Runnable" seed="1701713123" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000179" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3278" name="TimelineEmptyParentTrackSpikeTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEmptyParentTrackSpikeTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEmptyParentTrackSpikeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.019916" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3279" name="ParentTrackWithoutClips_WithChildLaneClip_DoesNotCreateParentMixer" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEmptyParentTrackSpikeTests.ParentTrackWithoutClips_WithChildLaneClip_DoesNotCreateParentMixer" methodname="ParentTrackWithoutClips_WithChildLaneClip_DoesNotCreateParentMixer" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEmptyParentTrackSpikeTests" runstate="Runnable" seed="564740729" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.016145" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3280" name="ParentTrackWithOwnClip_AndChildLaneClip_CreatesParentMixer" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEmptyParentTrackSpikeTests.ParentTrackWithOwnClip_AndChildLaneClip_CreatesParentMixer" methodname="ParentTrackWithOwnClip_AndChildLaneClip_CreatesParentMixer" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEmptyParentTrackSpikeTests" runstate="Runnable" seed="842526956" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.002656" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3281" name="TimelineEventStateReconstructorTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.002960" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3282" name="AdvanceLinear_ReplaysEventsInRecordedOrder_AndMatchesExpectedStack" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests.AdvanceLinear_ReplaysEventsInRecordedOrder_AndMatchesExpectedStack" methodname="AdvanceLinear_ReplaysEventsInRecordedOrder_AndMatchesExpectedStack" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests" runstate="Runnable" seed="1142398954" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001062" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3283" name="JumpTo_ReordersExistingStack_ByReplayingTargetStackFromOldestToNewest" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests.JumpTo_ReordersExistingStack_ByReplayingTargetStackFromOldestToNewest" methodname="JumpTo_ReordersExistingStack_ByReplayingTargetStackFromOldestToNewest" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests" runstate="Runnable" seed="1268324683" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000575" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3284" name="JumpTo_WithSameTimestampEvents_PreservesRecordedOrderWhenRestoringLifoStack" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests.JumpTo_WithSameTimestampEvents_PreservesRecordedOrderWhenRestoringLifoStack" methodname="JumpTo_WithSameTimestampEvents_PreservesRecordedOrderWhenRestoringLifoStack" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineEventStateReconstructorTests" runstate="Runnable" seed="1669221640" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000196" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3285" name="TimelineExpressionStateSinkTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.005538" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3288" name="ActiveExpressionIds_AreReadableByLayer2ActiveExpressionProvider" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests.ActiveExpressionIds_AreReadableByLayer2ActiveExpressionProvider" methodname="ActiveExpressionIds_AreReadableByLayer2ActiveExpressionProvider" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests" runstate="Runnable" seed="1130402790" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.002636" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3286" name="TriggerStack_RetainsBaseLifoSemantics_WithRetriggerAndDepthLimit" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests.TriggerStack_RetainsBaseLifoSemantics_WithRetriggerAndDepthLimit" methodname="TriggerStack_RetainsBaseLifoSemantics_WithRetriggerAndDepthLimit" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests" runstate="Runnable" seed="1982434192" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001426" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[ExpressionTriggerInputSource] id='timeline:emotion': Expression stack depth exceeded (maxStackDepth=2). Dropping oldest expression. This warning is emitted only once per instance.
+]]></output>
+                  </test-case>
+                  <test-case id="3287" name="TryWriteValues_DoesNotWriteAnyBlendShapeValues_WhenStateIsActive" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests.TryWriteValues_DoesNotWriteAnyBlendShapeValues_WhenStateIsActive" methodname="TryWriteValues_DoesNotWriteAnyBlendShapeValues_WhenStateIsActive" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineExpressionStateSinkTests" runstate="Runnable" seed="1283791925" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000609" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="3289" name="TimelineGazeInputSourceTests" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.001502" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="3292" name="Invalidate_MakesReadsFail" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests.Invalidate_MakesReadsFail" methodname="Invalidate_MakesReadsFail" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests" runstate="Runnable" seed="972456668" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3290" name="Publish_PreservesUnclampedVector2Values" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests.Publish_PreservesUnclampedVector2Values" methodname="Publish_PreservesUnclampedVector2Values" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests" runstate="Runnable" seed="26983288" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000254" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="3291" name="PublishZero_StoresCenterWithoutInvalidating" fullname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests.PublishZero_StoresCenterWithoutInvalidating" methodname="PublishZero_StoresCenterWithoutInvalidating" classname="Hidano.FacialControl.Timeline.Tests.EditMode.TimelineGazeInputSourceTests" runstate="Runnable" seed="1613577595" result="Passed" start-time="2026-07-16 20:01:40Z" end-time="2026-07-16 20:01:40Z" duration="0.000238" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,7 +1,7 @@
 # FacialControl 技術仕様書
 
-> **バージョン**: 3.0.0
-> **最終更新**: 2026-02-02
+> **バージョン**: 3.1.0
+> **最終更新**: 2026-08-25
 > **ステータス**: レビュー待ち
 > **対象リリース**: preview.1
 
@@ -9,28 +9,39 @@
 
 ## 1. preview.1 スコープ
 
+> **注記**: 本節は実装実態に追従して更新する。以降の「決定事項」テーブル（v1.0 / v2.0.0 dig セッション）は策定当時の記録であり、スコープの最新状態は本節を正とする。
+
 ### 含まれる機能
 
 | 機能 | 説明 |
 |------|------|
 | コア（プロファイル + レイヤー + 遷移） | 表情プロファイル管理、マルチレイヤー制御、表情遷移・補間 |
 | OSC 送受信 | uOsc ベースの UDP 通信。VRChat + ARKit アドレスプリセット |
+| OSC 自動マッピング | heartbeat 広告による送受信 mapping の自動構築（BlendShape / gaze）。手動 mapping との共存 |
 | ARKit 52 / PerfectSync | 手動トリガーによる BlendShape スキャン + Expression 自動生成 |
-| Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援、JSON インポート / エクスポート |
+| 視線制御（Gaze セクション） | 独立チャネルの Vector2 入力（OSC / InputSystem / Timeline / iFacialMocap）→ 目ボーン yaw/pitch。入力源はドロップダウンで選択し、可動角はチャネル単位で設定 |
+| AdapterBinding アーキテクチャ | 入力源・出力先を `IAdapterBinding` として `FacialCharacterProfileSO` に結線。ランタイム設定は `AdapterRuntimeSettingsCollectionSO` |
+| 入力源ルーティング・グラフエディタ | ノードグラフ UI で入力源とレイヤーを配線（slug 直書きの廃止） |
+| Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援（プレビューカメラ / PNG 書き出し）、JSON インポート / エクスポート |
 | 複数 Renderer 対応 | 1 つの FacialController が複数の SkinnedMeshRenderer を制御 |
-| ドキュメント | API リファレンス（DocFX 自動生成）、クイックスタートガイド、JSON スキーマドキュメント |
+| Timeline 統合（`com.hidano.facialcontrol.timeline`） | Timeline トラックからの表情 / gaze 駆動と、AnimationClip へのベイク |
+| 記録・再生（`com.hidano.facialcontrol.rec`） | 入力イベントの記録・再生、Timeline への書き出し、再生中の入力排他 |
+| uLipSync アダプタ（`com.hidano.facialcontrol.lipsync`） | 外部リップシンクプラグインからの音素入力を overlay slot へ接続 |
+| iFacialMocap 受信（`com.hidano.facialcontrol.ifacialmocap`） | iOS の UDP テキストプロトコルを受信し、ARKit 互換 BlendShape / 視線 / 頭部ポーズへ変換 |
+| ドキュメント | パッケージ README、クイックスタートガイド、JSON スキーマドキュメント（`Documentation~/` 配下の Markdown） |
 
 ### preview.2 以降に延期
 
-| 機能 | 理由 |
+| 機能 | 理由 / 現状 |
 |------|------|
-| 自動まばたき | IBlinkTrigger インターフェースは定義するが、実装は延期 |
-| 視線制御（視線追従 / カメラ目線） | Vector3 ターゲット + BlendShape / ボーン両対応の設計は行うが、実装は延期 |
+| 自動まばたき | `IBlinkTrigger` インターフェースは定義済み。実装は延期（§11） |
+| 視線追従の Vector3 ターゲット指定 / カメラ目線 | Gaze は preview.1 のボーン経路を提供する。Vector3 ターゲット解決とカメラ目線 procedural ソースは延期（backlog M-5）。入力ソースの宣言・選択による拡張点は用意する |
+| BlendShape ベース視線の runtime 配線 | 本 spec では扱わない。look* 系スキーマと runtime 配線は削除し、将来 spec で新データモデルごと再設計する（backlog M-29） |
+| 瞳の微細動（マイクロサッカード） | 入力が静止すると瞳も完全静止する。プロシージャル生成は未計画（backlog M-31） |
 | VRM 対応 | リリース後の早期マイルストーン |
-| Timeline 統合 | Animator ベースのリアルタイム制御を優先 |
 | テクスチャ切替 / UV アニメーションの JSON 対応 | preview.1 では BlendShape のみ JSON 対応 |
-| ホットリロード自動検知 | preview.1 では明示的 API のみ |
-| OSC マッピング Editor UI | preview.1 では JSON 直接編集のみ |
+| ホットリロード自動検知 | preview.1 では明示的 API（`ProfileUseCase.ReloadProfile`）のみ |
+| Addressables 対応 | プロファイル JSON は `StreamingAssets/FacialControl/` から直接読み込む（`IProfileJsonLoader` 抽象化は preview.2、backlog M-2） |
 
 ### 実装順序
 
@@ -461,13 +472,20 @@ public interface IBlinkTrigger
 
 ---
 
-## 12. 視線制御（preview.2 延期）
+## 12. 視線制御（Gaze セクション、preview.1）
 
-### 12.1 設計方針（preview.1 でインターフェース定義）
+### 12.1 設計方針
 
-- **BlendShape + ボーン両方対応**: モデルの仕様に応じて選択
-- **ターゲット指定**: Vector3 座標指定（Transform 参照は将来拡張）
-- 「視線追従」と「カメラ目線」のデフォルト Expression テンプレートとして同梱
+- Gaze は `FacialCharacterProfileSO` 直下の `gaze.channels[]` で構成し、先頭チャネルの id は `gaze` に固定する。チャネルは Expression やレイヤー合成に参加しない。
+- 各チャネルは入力 source の選択、左右の目ボーン path、初期回転、ローカル yaw/pitch 軸、上下左右の可動角を保持する。参照モデル割当時に Animator 起点のフル path を自動解決する。
+- 入力 source は `IGazeSourceProvider` の宣言を Inspector が列挙し、ユーザーは Gaze セクションのドロップダウンで切り替える。`providerSlug` が空の場合は binding の宣言と `{slug}:{channelId}[.left|.right]` の規約から自動解決する。
+- `GazeBonePoseProvider` は source の Vector2 を読み、Quaternion 合成で左右の目の `Transform.localRotation` を毎フレーム更新する。未入力時は設定した初期回転へ戻し、破棄時は書込み開始前の回転へ復元する。
+- 「視線追従」「カメラ目線」は Expression テンプレートではなく、将来追加できる procedural gaze 入力 source の候補である。Vector3 ターゲットとカメラ目線 source 自体は本リリースに含めない。
+
+### 12.2 JSON と source id
+
+- JSON はルート `gaze` オブジェクト内の `channels[]` にチャネルを保存する。旧 `gaze_configs` は検出して警告し、gaze 部分を読み捨てる。
+- source id は `GazeSourceIdConvention` が `{slug}:{channelId}`（共有）、`{slug}:{channelId}.left`、`{slug}:{channelId}.right`（左右独立）へ統一する。`GazeSnapshot` は `ChannelId` と正規化された `X` / `Y` を保持する。
 
 ---
 
@@ -715,8 +733,8 @@ Editor/
 |--------------------------|---------|------|
 | default | emotion | デフォルト表情（ニュートラル） |
 | blink | eye | まばたき |
-| gaze_follow | eye | 視線追従（preview.2 で実装） |
-| gaze_camera | eye | カメラ目線（preview.2 で実装） |
+| gaze channel | Gaze セクション | Vector2 入力で目ボーンを駆動する独立チャネル（既定 id は `gaze`） |
+| procedural gaze source | Gaze セクション | 視線追従・カメラ目線などを将来追加するための入力 source 拡張点 |
 
 - モデル固有の BlendShape 名はユーザーがカスタマイズ
 - ARKit 検出時にモデル固有の Expression もレイヤー単位で自動生成
@@ -774,8 +792,7 @@ com.hidano.facialcontrol/
 │   ├── Tools/                     # Expression 作成支援、ARKit 検出
 │   └── Common/                    # 共通ユーティリティ、スタイル、PreviewRenderUtility
 ├── Templates/                     # デフォルトプロファイル JSON テンプレート
-├── Documentation~/                # ドキュメント（DocFX 自動生成）
-│   ├── api-reference.md
+├── Documentation~/                # ドキュメント（Unity Package Manager 表示用 Markdown）
 │   ├── quickstart.md
 │   └── json-schema.md
 └── Tests/
@@ -828,9 +845,11 @@ com.hidano.facialcontrol/
 
 | ドキュメント | 内容 |
 |------------|------|
-| API リファレンス | XML コメントから DocFX で自動生成。CI 統合 |
-| クイックスタート | 基本的なセットアップ手順、最初のプロファイル作成 |
-| JSON スキーマ | プロファイル JSON の全フィールド定義と例 |
+| パッケージ README | インストール手順、主な機能、アーキテクチャ概要、API 利用例（`Packages/com.hidano.facialcontrol/README.md`） |
+| クイックスタート | 基本的なセットアップ手順、最初のプロファイル作成（`Documentation~/quickstart.md`） |
+| JSON スキーマ | プロファイル JSON の全フィールド定義と例（`Documentation~/json-schema.md`） |
+
+> **補足**: 自動生成 API リファレンス（DocFX）は preview.1 スコープから外し、XML コメントは IDE の IntelliSense 用途に限定する。Unity UPM パッケージの一般的な慣習（README + `Documentation~/` の Markdown）に揃える方針。
 
 ---
 
@@ -860,7 +879,7 @@ com.hidano.facialcontrol/
 | 18 | サムネイル | 手動ボタンで生成 | 対象モデル指定が必要 |
 | 19 | Curve シリアライズ | キーフレーム配列そのまま JSON 化 | Keyframe 全フィールド保持 |
 | 20 | 検索 | 名前検索のみ | レイヤーフィルターは将来 |
-| 21 | uOsc 同梱 | package.json 依存定義 | OpenUPM 登録確認要 |
+| 21 | uOsc 同梱 | package.json 依存定義 | npmjs.com 公開確認要 |
 | 22 | コントローラー | キャラクターごとにコンポーネント | グローバルマネージャーは別途 |
 | 23 | UDP ポート | デフォルト VRChat 標準 + ユーザー設定可 | Inspector / JSON で変更 |
 | 24 | PlayableGraph 構成 | 1 Graph / キャラクター + レイヤー分ノード | AnimationLayerMixerPlayable |
@@ -868,13 +887,13 @@ com.hidano.facialcontrol/
 | 26 | 排他動作（後勝ち） | A → B クロスフェード | 遷移中の新トリガーは現在値から即新遷移 |
 | 27 | ブレンド動作 | 加算ブレンド（クランプ） | 0〜1 にクランプ |
 | 28 | まばたき | IBlinkTrigger IF 定義（実装は preview.2） | 人間的しぐさアルゴリズム |
-| 29 | 視線制御 | BlendShape + ボーン両対応（preview.2） | Vector3 ターゲット指定 |
+| 29 | 視線制御 | Gaze セクションの独立チャネルから目ボーンを駆動 | BlendShape gaze / Vector3 ターゲットは別 spec |
 | 30 | GC 許容範囲 | 初期化 + プロファイル切り替え | 毎フレームはゼロ |
 | 31 | Graph 再構築 | 動的再構築（GC 許容） | メモリ効率優先 |
 | 32 | テスト戦略 | ドメイン EditMode / 統合 PlayMode | CLAUDE.md 基準と整合 |
 | 33 | Editor 構造 | 機能別 + 共通層 | Inspector, Windows, Tools, Common |
 | 34 | SO 構造 | 別構造（Unity 最適化）+ マッパー | Adapters 層にマッパー配置 |
-| 35 | preview.1 スコープ | コア + OSC + ARKit + Editor | まばたき・視線は preview.2 |
+| 35 | preview.1 スコープ | コア + OSC + ARKit + Editor + Gaze ボーン経路 | 自動まばたき・procedural gaze source は preview.2 以降 |
 | 36 | ドキュメント | API + クイックスタート + JSON スキーマ | チュートリアルは将来 |
 
 ### v2.0.0 追加決定事項（2026-02-02 dig セッション）
@@ -946,7 +965,7 @@ com.hidano.facialcontrol/
 | 94 | Renderer 検索 | 全子階層再帰 | GetComponentsInChildren |
 | 95 | layerSlots | オーバーライド値で完全置換 | 排他モード無視 |
 | 96 | Animator | 既存 Animator を共有 | ボディアニメと共存 |
-| 97 | API ドキュメント | DocFX 自動生成 | CI 統合 |
+| 97 | パッケージドキュメント | README + `Documentation~/` Markdown | Unity UPM 慣習準拠。DocFX 自動生成は preview.1 では採用しない |
 | 98 | uOsc フォーク | ポート再利用設定のみ変更 | SO_REUSEADDR 相当 |
 | 99 | 実装順序 | Domain → Adapters → Editor | ボトムアップ / TDD |
 | 100 | プレビュー更新 | 値変更毎に即座更新 | リアルタイム |

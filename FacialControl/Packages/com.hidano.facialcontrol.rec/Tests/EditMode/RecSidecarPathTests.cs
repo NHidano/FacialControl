@@ -1,0 +1,54 @@
+using System.IO;
+using Hidano.FacialControl.Adapters.ScriptableObject.Serializable;
+using Hidano.FacialControl.Rec.Adapters.Recording;
+using NUnit.Framework;
+
+namespace Hidano.FacialControl.Rec.Tests.EditMode
+{
+    [TestFixture]
+    public class RecSidecarPathTests
+    {
+        [Test]
+        public void TryBuildRecordingFilePath_ValidNames_ReturnsExpectedPath()
+        {
+            bool success = RecSidecarPath.TryBuildRecordingFilePath("Miku", "session_01", out string path, out string error);
+
+            Assert.That(success, Is.True, error);
+            Assert.That(path, Is.Not.Null);
+            string expectedTail = Path.Combine(
+                FacialCharacterProfileSO.StreamingAssetsRootFolder,
+                "Miku",
+                RecSidecarPath.RecordingsFolderName,
+                "session_01" + RecSidecarPath.FileExtension);
+            StringAssert.EndsWith(expectedTail, path);
+        }
+
+        [Test]
+        public void TryBuildRecordingFilePath_InvalidFileNameChars_SanitizesSegments()
+        {
+            bool success = RecSidecarPath.TryBuildRecordingFilePath("Miku:01*", "take?A", out string path, out string error);
+
+            Assert.That(success, Is.True, error);
+            string expectedTail = Path.Combine(
+                FacialCharacterProfileSO.StreamingAssetsRootFolder,
+                "Miku-01-",
+                RecSidecarPath.RecordingsFolderName,
+                "take-A" + RecSidecarPath.FileExtension);
+            StringAssert.EndsWith(expectedTail, path);
+        }
+
+        [Test]
+        public void TryBuildRecordingFilePath_TraversalName_ReturnsFalse()
+        {
+            Assert.That(
+                RecSidecarPath.TryBuildRecordingFilePath("../Miku", "session", out _, out string assetError),
+                Is.False);
+            Assert.That(assetError, Does.Contain("assetName"));
+
+            Assert.That(
+                RecSidecarPath.TryBuildRecordingFilePath("Miku", "..\\session", out _, out string recordingError),
+                Is.False);
+            Assert.That(recordingError, Does.Contain("recordingName"));
+        }
+    }
+}

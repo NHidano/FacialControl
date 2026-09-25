@@ -36,7 +36,7 @@
 - 3D キャラクターの表情をリアルタイムに制御するシステムという理解で合っていますか？
 
 **回答**:
-- ライブラリ（開発者向けアセット）である。OpenUPM へのリリースを想定している。
+- ライブラリ（開発者向けアセット）である。npmjs.com へのリリースを想定している。
 - 3D キャラクターの表情をリアルタイムに制御するシステムという理解で合っている。
 
 **決定日**: 2026-01-28
@@ -443,6 +443,24 @@
 
 ---
 
+### Q8-3. InputAction と Expression の紐付けはどのように永続化しますか？
+
+**背景**: `InputSystemAdapter.BindExpression(InputAction, Expression)` API は存在するが、紐付けをコード記述以外で保存する仕組みがない。サンプル `TestExpressionToggle.cs` はコード直書きで運用に耐えない。preview.1 リリース前に実用的なキーコンフィグ手段が必要。
+
+**確認事項**:
+- InputAction 名 ↔ Expression ID の紐付けを ScriptableObject として永続化する設計で問題ないか？
+- 同梱するデフォルト InputActions の `Trigger1〜Trigger12` 方式（汎用スロット）を維持するか？
+- ランタイムでの Rebinding UI 提供は必要か？
+
+**回答**:
+- `InputBindingProfileSO` として ScriptableObject で永続化する。
+- デフォルト InputActions の `Trigger1〜Trigger12` 汎用スロット方式を維持。ユーザーは InputActions Asset を複製してキーバインドをカスタマイズ可能。
+- ランタイム Rebinding UI は提供しない（ライブラリとしてスコープ外）。InputActions Asset を Unity Editor で編集する運用とする。
+
+**決定日**: 2026-04-14
+
+---
+
 ## 9. タイムライン・アニメーション
 
 ### Q9-1. Timeline パッケージの使用目的は何ですか？
@@ -602,7 +620,7 @@
   - `Editor/` — Editor 拡張（UI Toolkit）
   - 各レイヤーは asmdef で依存方向を強制する。
 - C# 名前空間のルート: `Hidano.FacialControl`（例: `Hidano.FacialControl.Domain`、`Hidano.FacialControl.Application`）
-- OpenUPM パッケージ名: `com.hidano.facialcontrol`
+- npm パッケージ名: `com.hidano.facialcontrol`
 
 **決定日**: 2026-02-02
 
@@ -620,7 +638,7 @@
 - 依存パッケージ（lilToon、MagicaCloth2）のライセンスとの整合性は確認済みですか？
 
 **回答**:
-- MIT ライセンスを採用する。商用利用可。OpenUPM で最も一般的なライセンス。
+- MIT ライセンスを採用する。商用利用可。npm で最も一般的なライセンス。
 - lilToon、MagicaCloth2 はリリースパッケージには含めないため、ライセンスの整合性は問題ない。
 
 **決定日**: 2026-02-02
@@ -677,8 +695,8 @@
 
 | 項目 | 決定内容 |
 |------|----------|
-| プレリリース同梱物 | API ドキュメントのみ。サンプルシーンは同梱しない |
-| サンプルシーン | 別リポジトリまたは後のリリースで提供 |
+| プレリリース同梱物 | API ドキュメント + `com.hidano.facialcontrol.inputsystem` の `Multi Source Blend Demo` サンプル |
+| サンプルシーン | `com.hidano.facialcontrol.inputsystem/Samples~/MultiSourceBlendDemo` に Scene + FacialProfileSO + InputBindingProfileSO + JSON + HUD を同梱。モデルはライセンスの都合で含めず、ユーザーが Character GameObject の子に配置する設計 |
 
 ---
 

@@ -155,6 +155,14 @@ ClientBin/
 [Ss]tyle[Cc]op.*
 ~$*
 *~
+!Samples~/
+!Samples~/**
+!FacialControl/Packages/com.hidano.facialcontrol/Documentation~/
+!FacialControl/Packages/com.hidano.facialcontrol/Documentation~/**
+!FacialControl/Packages/com.hidano.facialcontrol.lipsync/Documentation~/
+!FacialControl/Packages/com.hidano.facialcontrol.lipsync/Documentation~/**
+!FacialControl/Packages/com.hidano.facialcontrol.osc/Documentation~/
+!FacialControl/Packages/com.hidano.facialcontrol.osc/Documentation~/**
 *.dbmdl
 *.dbproj.schemaview
 *.pfx
@@ -238,6 +246,10 @@ coverage.xml
 #Msbuild binary log output
 output.binlog
 
+# Unity test runner output (logs, XML, diagnostic artifacts — regenerated locally & in CI)
+/test-results/
+FacialControl/test-results/
+
 # KDiff3
 *_BACKUP_*
 *_BASE_*
@@ -250,3 +262,17 @@ NuGetBuild
 WiX.Toolset.DummyFile.txt
 GitHubVS.sln.DotSettings
 */UserSettings
+FacialControl/Assets/Samples/ARKitModel
+# Package Manager の Import Sample 展開先（正本は各パッケージの Samples~/。追跡しない）
+FacialControl/Assets/Samples/
+FacialControl/Assets/Samples.meta
+
+# Session handover notes (local-only, not tracked)
+HANDOVER.md
+
+# Claude Code ローカル設定・ランタイム（マシン固有、追跡しない）
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+FacialControl/Assets/Samples/Debug_Temp
+FacialControl/Assets/Samples/Debug_Temp.meta
+FacialControl/.uloop/outputs/Screenshots

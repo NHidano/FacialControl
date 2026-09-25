@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "layers": [
+    {
+      "name": "face",
+      "priority": 0,
+      "exclusionMode": "blend",
+      "inputSources": [
+        {
+          "id": "mock-trigger",
+          "weight": 0.5
+        },
+        {
+          "id": "mock-analog",
+          "weight": 0.75
+        }
+      ]
+    }
+  ],
+  "expressions": [],
+  "rendererPaths": []
+}

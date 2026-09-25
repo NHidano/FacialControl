@@ -1,0 +1,234 @@
+using System;
+using System.Collections.Generic;
+using Hidano.FacialControl.Domain.Services;
+using Hidano.FacialControl.Rec.Application.UseCases;
+using Hidano.FacialControl.Rec.Domain.Interfaces;
+using Hidano.FacialControl.Rec.Domain.Models;
+using NUnit.Framework;
+using Unity.Profiling;
+
+namespace Hidano.FacialControl.Rec.Tests.PlayMode
+{
+    [TestFixture]
+    public sealed class RecGcZeroGateTests
+    {
+        private const int WarmupFrames = 8;
+        private const int MeasurementFrames = 120;
+        private const float DeltaTime = 1f / 60f;
+
+        [Test]
+        public void RecordingUseCase_SteadyState_AfterWarmup_AllocatesZeroGC()
+        {
+            var observationBus = new FacialInputObservationBus();
+            var clock = new ManualRecClock();
+            var sink = new NullRecEventSink();
+            using var useCase = new RecordingUseCase(observationBus, clock, sink);
+
+            RecBaselineState baseline = new RecBaselineState(
+                new[]
+                {
+                    new RecBaselineState.TriggerEntry("input:trigger", new[] { "smile" }),
+                },
+                new[]
+                {
+                    new RecBaselineState.AnalogEntry("input:gaze", new[] { 0f, 0f }),
+                });
+
+            useCase.StartRecording(baseline);
+
+            float[] axes = { 0.25f, -0.5f };
+            for (int i = 0; i < WarmupFrames; i++)
+            {
+                PublishRecordingFrame(useCase, clock, axes, i);
+            }
+
+            ForceFullCollection();
+            using var recorder = StartGcRecorder();
+
+            for (int i = 0; i < MeasurementFrames; i++)
+            {
+                PublishRecordingFrame(useCase, clock, axes, WarmupFrames + i);
+            }
+
+            Assert.That(recorder.LastValue, Is.EqualTo(0L),
+                "RecordingUseCase steady-state hot path must not allocate GC.");
+
+            useCase.StopRecording();
+        }
+
+        [Test]
+        public void PlaybackUseCase_SteadyState_AfterWarmup_AllocatesZeroGC()
+        {
+            var triggerPort = new NullTriggerInjectionPort();
+            var analogPort = new NullAnalogInjectionPort();
+            var useCase = new PlaybackUseCase(triggerPort, analogPort);
+            RecTimeline timeline = CreatePlaybackTimeline(WarmupFrames + MeasurementFrames + 1);
+
+            useCase.Load(timeline, CreateProfile());
+            Assert.That(useCase.StartPlayback(), Is.True);
+
+            for (int i = 0; i < WarmupFrames; i++)
+            {
+                useCase.Tick(DeltaTime);
+            }
+
+            ForceFullCollection();
+            using var recorder = StartGcRecorder();
+
+            for (int i = 0; i < MeasurementFrames; i++)
+            {
+                useCase.Tick(DeltaTime);
+            }
+
+            Assert.That(recorder.LastValue, Is.EqualTo(0L),
+                "PlaybackUseCase steady-state Tick path must not allocate GC.");
+        }
+
+        [Test]
+        public void FacialInputObservationBus_WithoutObservers_PublishHotPath_AllocatesZeroGC()
+        {
+            var bus = new FacialInputObservationBus();
+            float[] axes = { 0.1f, -0.2f };
+
+            for (int i = 0; i < WarmupFrames; i++)
+            {
+                bus.OnTriggerOn("input:trigger", "smile");
+                bus.OnTriggerOff("input:trigger", "smile");
+                bus.PublishAnalogSample("input:gaze", axes);
+            }
+
+            ForceFullCollection();
+            using var recorder = StartGcRecorder();
+
+            for (int i = 0; i < MeasurementFrames; i++)
+            {
+                bus.OnTriggerOn("input:trigger", "smile");
+                bus.OnTriggerOff("input:trigger", "smile");
+                bus.PublishAnalogSample("input:gaze", axes);
+            }
+
+            Assert.That(recorder.LastValue, Is.EqualTo(0L),
+                "FacialInputObservationBus publish hot path must stay zero-alloc when no observers are attached.");
+        }
+
+        private static void PublishRecordingFrame(
+            RecordingUseCase useCase,
+            ManualRecClock clock,
+            float[] axes,
+            int frameIndex)
+        {
+            clock.SetElapsedSeconds(frameIndex * DeltaTime);
+            useCase.OnTriggerOn("input:trigger", "smile");
+            useCase.OnTriggerOff("input:trigger", "smile");
+            useCase.OnAnalogSample("input:gaze", axes);
+        }
+
+        private static RecTimeline CreatePlaybackTimeline(int frameCount)
+        {
+            var events = new RecEvent[frameCount];
+            var analogAxes = new IReadOnlyList<float>[frameCount];
+            for (int i = 0; i < frameCount; i++)
+            {
+                events[i] = RecEvent.CreateAnalogSample((i + 1) * DeltaTime, 0, 2);
+                analogAxes[i] = new[] { 0.25f, -0.5f };
+            }
+
+            return new RecTimeline(
+                RecBaselineState.Empty,
+                events,
+                new[] { "input:gaze" },
+                Array.Empty<string>(),
+                (frameCount + 1) * DeltaTime,
+                analogAxes);
+        }
+
+        private static Hidano.FacialControl.Domain.Models.FacialProfile CreateProfile()
+        {
+            return new Hidano.FacialControl.Domain.Models.FacialProfile(
+                "1.0.0",
+                Array.Empty<Hidano.FacialControl.Domain.Models.LayerDefinition>(),
+                Array.Empty<Hidano.FacialControl.Domain.Models.Expression>());
+        }
+
+        private static ProfilerRecorder StartGcRecorder()
+        {
+            return ProfilerRecorder.StartNew(
+                ProfilerCategory.Memory,
+                "GC.Alloc",
+                1,
+                ProfilerRecorderOptions.SumAllSamplesInFrame
+                | ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
+        }
+
+        private static void ForceFullCollection()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+
+        private sealed class ManualRecClock : IRecClock
+        {
+            public double ElapsedSeconds { get; private set; }
+
+            public void Reset()
+            {
+                ElapsedSeconds = 0d;
+            }
+
+            public void SetElapsedSeconds(double elapsedSeconds)
+            {
+                ElapsedSeconds = elapsedSeconds;
+            }
+        }
+
+        private sealed class NullRecEventSink : IRecEventSink
+        {
+            public void Open(RecBaselineState baseline)
+            {
+            }
+
+            public void AppendEvent(in RecEvent evt, ReadOnlySpan<float> axes, string idValue = null)
+            {
+            }
+
+            public void Complete(double durationSeconds, int eventCount)
+            {
+            }
+        }
+
+        private sealed class NullTriggerInjectionPort : ITriggerInjectionPort
+        {
+            public void BeginInjection(RecBaselineState baseline)
+            {
+            }
+
+            public void InjectTriggerOn(string sourceId, string expressionId)
+            {
+            }
+
+            public void InjectTriggerOff(string sourceId, string expressionId)
+            {
+            }
+
+            public void EndInjection()
+            {
+            }
+        }
+
+        private sealed class NullAnalogInjectionPort : IAnalogInjectionPort
+        {
+            public void BeginInjection(RecBaselineState baseline)
+            {
+            }
+
+            public void InjectAnalogSample(string sourceId, ReadOnlySpan<float> axes)
+            {
+            }
+
+            public void EndInjection()
+            {
+            }
+        }
+    }
+}

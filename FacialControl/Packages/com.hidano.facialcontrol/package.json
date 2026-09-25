@@ -1,0 +1,28 @@
+{
+    "name": "com.hidano.facialcontrol",
+    "version": "0.1.0-preview.2",
+    "displayName": "FacialControl",
+    "description": "3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ。OSC 配信は com.hidano.facialcontrol.osc、InputSystem 連携は com.hidano.facialcontrol.inputsystem を別途追加して使う。",
+    "unity": "6000.3",
+    "license": "MIT",
+    "author": {
+        "name": "Hidano"
+    },
+    "dependencies": {
+        "com.hidano.scene-view-style-camera-controller": "1.0.0"
+    },
+    "keywords": [
+        "facial",
+        "blendshape",
+        "expression",
+        "vtuber",
+        "osc"
+    ],
+    "samples": [
+        {
+            "displayName": "MultiSourceBlendBasicSample",
+            "description": "AdapterBindingBase 派生の Mock binding 2 種（Mock Trigger / Mock Analog）と最小 Runner を使い、core の MultiSourceBlend 処理だけを HUD / Scene なしで確認できる最小サンプル。Tools > FacialControl > Run MultiSourceBlend Basic Sample メニューから 1 click で実行可能。",
+            "path": "Samples~/MultiSourceBlendBasicSample"
+        }
+    ]
+}

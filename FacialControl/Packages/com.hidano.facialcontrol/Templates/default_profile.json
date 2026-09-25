@@ -1,0 +1,68 @@
+{
+    "schemaVersion": "1.0",
+    "rendererPaths": [],
+    "layers": [
+        {"name": "emotion", "priority": 0, "exclusionMode": "lastWins", "inputSources": [
+            {"id": "input", "weight": 0.5},
+            {"id": "osc", "weight": 0.5, "options": {"stalenessSeconds": 1.0}}
+        ]},
+        {"name": "lipsync", "priority": 1, "exclusionMode": "blend", "inputSources": [{"id": "lipsync", "weight": 1.0}]},
+        {"name": "eye", "priority": 2, "exclusionMode": "lastWins", "inputSources": [
+            {"id": "input", "weight": 1.0, "options": {"maxStackDepth": 4}}
+        ]}
+    ],
+    "expressions": [
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "name": "default",
+            "layer": "emotion",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.0667,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [],
+                "bones": [],
+                "rendererPaths": []
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "name": "blink",
+            "layer": "eye",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.08,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [],
+                "bones": [],
+                "rendererPaths": []
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000003",
+            "name": "gaze_follow",
+            "layer": "eye",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.0667,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [],
+                "bones": [],
+                "rendererPaths": []
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000004",
+            "name": "gaze_camera",
+            "layer": "eye",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.0667,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [],
+                "bones": [],
+                "rendererPaths": []
+            }
+        }
+    ]
+}

@@ -1,0 +1,109 @@
+{
+    "schemaVersion": "1.0",
+    "layers": [
+        {
+            "name": "overlay",
+            "priority": 10,
+            "exclusionMode": "blend",
+            "inputSources": [
+                {
+                    "id": "overlay:a",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:a",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:i",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:i",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:u",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:u",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:e",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:e",
+                    "weight": 1.0
+                },
+                {
+                    "id": "overlay:o",
+                    "weight": 1.0
+                },
+                {
+                    "id": "lipsync-overlay:o",
+                    "weight": 1.0
+                }
+            ]
+        }
+    ],
+    "slots": [
+        "a",
+        "i",
+        "u",
+        "e",
+        "o"
+    ],
+    "expressions": [
+        {
+            "id": "smile",
+            "name": "Smile",
+            "layer": "overlay",
+            "layerOverrideMask": [],
+            "snapshot": {
+                "transitionDuration": 0.06666667014360428,
+                "transitionCurvePreset": "Linear",
+                "blendShapes": [],
+                "bones": [],
+                "rendererPaths": [],
+                "overlays": [
+                    {
+                        "slot": "a",
+                        "suppress": false,
+                        "snapshot": {
+                            "transitionDuration": 0.06666667014360428,
+                            "transitionCurvePreset": "Linear",
+                            "blendShapes": [
+                                {
+                                    "rendererPath": "Face",
+                                    "name": "あ_smile",
+                                    "value": 1.0
+                                }
+                            ],
+                            "bones": [],
+                            "rendererPaths": [
+                                "Face"
+                            ],
+                            "overlays": []
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "baseExpression": {
+        "transitionDuration": 0.06666667014360428,
+        "transitionCurvePreset": "Linear",
+        "blendShapes": [],
+        "bones": [],
+        "rendererPaths": [],
+        "overlays": []
+    },
+    "rendererPaths": [
+        "Face"
+    ],
+    "gaze_configs": [],
+    "defaultOverlays": []
+}

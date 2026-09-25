@@ -1,0 +1,22 @@
+{
+    "name": "com.hidano.facialcontrol.rec",
+    "version": "0.1.0-preview.1",
+    "displayName": "FacialControl REC",
+    "description": "FacialControl のトリガー on/off、アナログ入力、gaze を記録・再生する REC パッケージです。core パッケージのみに依存する骨格を提供します。",
+    "unity": "6000.3",
+    "license": "MIT",
+    "author": {
+        "name": "Hidano"
+    },
+    "dependencies": {
+        "com.hidano.facialcontrol": "0.1.0-preview.2"
+    },
+    "keywords": [
+        "facial",
+        "blendshape",
+        "expression",
+        "recording",
+        "playback",
+        "rec"
+    ]
+}

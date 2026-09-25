@@ -1,0 +1,16 @@
+{
+    "name": "Hidano.FacialControl.Application",
+    "rootNamespace": "Hidano.FacialControl.Application",
+    "references": [
+        "Hidano.FacialControl.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

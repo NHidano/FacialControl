@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Failed(Child)" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.650062">
+  <test-suite type="TestSuite" id="1554" name="FacialControl" fullname="FacialControl" runstate="Runnable" testcasecount="414" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.650062" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1357" name="Hidano.FacialControl.Osc.Tests.PlayMode.dll" fullname="D:/Personal/Repositries/FacialControl/FacialControl/Library/ScriptAssemblies/Hidano.FacialControl.Osc.Tests.PlayMode.dll" runstate="Runnable" testcasecount="158" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.638690" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="60500" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1358" name="Hidano" fullname="Hidano" runstate="Runnable" testcasecount="158" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.637364" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1359" name="FacialControl" fullname="Hidano.FacialControl" runstate="Runnable" testcasecount="158" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.636271" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1360" name="Tests" fullname="Hidano.FacialControl.Tests" runstate="Runnable" testcasecount="158" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.635220" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestSuite" id="1361" name="PlayMode" fullname="Hidano.FacialControl.Tests.PlayMode" runstate="Runnable" testcasecount="158" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.633995" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-suite type="TestSuite" id="1363" name="Integration" fullname="Hidano.FacialControl.Tests.PlayMode.Integration" runstate="Runnable" testcasecount="103" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.632455" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[One or more child tests had errors]]></message>
+                </failure>
+                <test-suite type="TestFixture" id="1194" name="OscGazeE2ETests" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" testcasecount="11" result="Failed" site="Child" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:44Z" duration="3.628999" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <failure>
+                    <message><![CDATA[One or more child tests had errors]]></message>
+                  </failure>
+                  <test-case id="1200" name="GazeAdvertisement_ContentChanged_RebuildsAndUnregistersRemovedId" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeAdvertisement_ContentChanged_RebuildsAndUnregistersRemovedId" methodname="GazeAdvertisement_ContentChanged_RebuildsAndUnregistersRemovedId" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1152102905" result="Passed" start-time="2026-08-09 04:17:40Z" end-time="2026-08-09 04:17:41Z" duration="0.367088" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look]
+[OscReceiverAdapterBinding] 広告由来 gaze id 'eye-look' に一致する GazeConfig がありません。 GazeConfig の expressionId を 'eye-look' に一致させると目ボーンへ反映されます。
+[FacialControl] ZombieEvictionPolicy adopted sender changed: previousUuid=65881199-f114-4079-9810-d8712b4826c3, previousStartedAtUnixMs=1786249060685, currentUuid=9404af60-e3f2-467e-a22a-58f1b1d5ab04, currentStartedAtUnixMs=1786249060953
+[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look-new]
+[OscReceiverAdapterBinding] 広告由来 gaze id 'eye-look-new' に一致する GazeConfig がありません。 GazeConfig の expressionId を 'eye-look-new' に一致させると目ボーンへ反映されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1203" name="GazeAdvertisement_GazeConfigMatch_IsAcceptedForLateBoneConnection" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeAdvertisement_GazeConfigMatch_IsAcceptedForLateBoneConnection" methodname="GazeAdvertisement_GazeConfigMatch_IsAcceptedForLateBoneConnection" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1616776664" result="Passed" start-time="2026-08-09 04:17:41Z" end-time="2026-08-09 04:17:41Z" duration="0.258626" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look]
+]]></output>
+                  </test-case>
+                  <test-case id="1202" name="GazeAdvertisement_ManualSameId_ManualMappingWinsWithoutError" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeAdvertisement_ManualSameId_ManualMappingWinsWithoutError" methodname="GazeAdvertisement_ManualSameId_ManualMappingWinsWithoutError" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="460722545" result="Failed" start-time="2026-08-09 04:17:41Z" end-time="2026-08-09 04:17:42Z" duration="1.216408" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <failure>
+                      <message><![CDATA[gaze advertisement was not processed]]></message>
+                      <stack-trace><![CDATA[at Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests+<SendGazeUntilProcessed>d__23.MoveNext () [0x00108] in .\Packages\com.hidano.facialcontrol.osc\Tests\PlayMode\Integration\OscGazeE2ETests.cs:367
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0004e] in .\Library\PackageCache\com.unity.test-framework@bd7f943e9647\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                    </failure>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=1, auto=0, autoIds=[]
+]]></output>
+                  </test-case>
+                  <test-case id="1199" name="GazeAdvertisement_SameContentTwice_ReusesSources" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeAdvertisement_SameContentTwice_ReusesSources" methodname="GazeAdvertisement_SameContentTwice_ReusesSources" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="448894372" result="Passed" start-time="2026-08-09 04:17:42Z" end-time="2026-08-09 04:17:42Z" duration="0.314039" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look]
+[OscReceiverAdapterBinding] 広告由来 gaze id 'eye-look' に一致する GazeConfig がありません。 GazeConfig の expressionId を 'eye-look' に一致させると目ボーンへ反映されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1201" name="GazeAdvertisement_Stops_PreservesRoutesAndSources" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeAdvertisement_Stops_PreservesRoutesAndSources" methodname="GazeAdvertisement_Stops_PreservesRoutesAndSources" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1218868986" result="Passed" start-time="2026-08-09 04:17:42Z" end-time="2026-08-09 04:17:43Z" duration="0.261804" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look]
+[OscReceiverAdapterBinding] 広告由来 gaze id 'eye-look' に一致する GazeConfig がありません。 GazeConfig の expressionId を 'eye-look' に一致させると目ボーンへ反映されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1197" name="GazeArKit8Bs_DefaultConfig_PreservesLeftRightAsymmetricVectors" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeArKit8Bs_DefaultConfig_PreservesLeftRightAsymmetricVectors" methodname="GazeArKit8Bs_DefaultConfig_PreservesLeftRightAsymmetricVectors" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1325699430" result="Passed" start-time="2026-08-09 04:17:43Z" end-time="2026-08-09 04:17:43Z" duration="0.261717" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1196" name="GazeArKitPreset_UdpLoopback_DecomposesSenderVector2" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeArKitPreset_UdpLoopback_DecomposesSenderVector2" methodname="GazeArKitPreset_UdpLoopback_DecomposesSenderVector2" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="2069520553" result="Passed" start-time="2026-08-09 04:17:43Z" end-time="2026-08-09 04:17:43Z" duration="0.311489" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look]
+[OscReceiverAdapterBinding] 広告由来 gaze id 'eye-look' に一致する GazeConfig がありません。 GazeConfig の expressionId を 'eye-look' に一致させると目ボーンへ反映されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1205" name="GazeResolver_OscAndInputSystemSameExpressionId_SelectsLexicographicallyFirstSlug" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeResolver_OscAndInputSystemSameExpressionId_SelectsLexicographicallyFirstSlug" methodname="GazeResolver_OscAndInputSystemSameExpressionId_SelectsLexicographicallyFirstSlug" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1848697625" result="Passed" start-time="2026-08-09 04:17:43Z" end-time="2026-08-09 04:17:43Z" duration="0.304557" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[GazeBindingConfigResolver] expressionId 'eye-look' is provided by multiple binding slugs; selected 'a-input-system-gaze' by Ordinal lexicographic order.
+]]></output>
+                  </test-case>
+                  <test-case id="1195" name="GazeVrChatPreset_UdpLoopback_ReconstructsReceiverVector2" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.GazeVrChatPreset_UdpLoopback_ReconstructsReceiverVector2" methodname="GazeVrChatPreset_UdpLoopback_ReconstructsReceiverVector2" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="2055162763" result="Passed" start-time="2026-08-09 04:17:43Z" end-time="2026-08-09 04:17:44Z" duration="0.310894" asserts="0">
+                    <properties>
+                      <property name="_JOINTYPE" value="UnityCombinatorial" />
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[[OscReceiverAdapterBinding] gaze routes published: manual=0, auto=1, autoIds=[eye-look]
+[OscReceiverAdapterBinding] 広告由来 gaze id 'eye-look' に一致する GazeConfig がありません。 GazeConfig の expressionId を 'eye-look' に一致させると目ボーンへ反映されます。
+]]></output>
+                  </test-case>
+                  <test-case id="1204" name="NoAdvertisementNoManual_NoRoutesNoErrorLog" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.NoAdvertisementNoManual_NoRoutesNoErrorLog" methodname="NoAdvertisementNoManual_NoRoutesNoErrorLog" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="1078083712" result="Passed" start-time="2026-08-09 04:17:44Z" end-time="2026-08-09 04:17:44Z" duration="0.007829" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1198" name="OldReceiverEquivalent_UnknownGazeAdvertisement_IsIgnoredWithoutLogs" fullname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests.OldReceiverEquivalent_UnknownGazeAdvertisement_IsIgnoredWithoutLogs" methodname="OldReceiverEquivalent_UnknownGazeAdvertisement_IsIgnoredWithoutLogs" classname="Hidano.FacialControl.Tests.PlayMode.Integration.OscGazeE2ETests" runstate="Runnable" seed="468695194" result="Passed" start-time="2026-08-09 04:17:44Z" end-time="2026-08-09 04:17:44Z" duration="0.002886" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/Hidano/AppData/LocalLow/DefaultCompany/FacialControl\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -24,7 +24,7 @@
 
 ### 1.1 目的
 
-FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）である。OpenUPM でのパッケージ配布を想定する。
+FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）である。npmjs.com でのパッケージ配布を想定する。
 
 ### 1.2 背景
 
@@ -90,7 +90,7 @@ Unity エンジニア（開発者）。本プロジェクトはライブラリ�
 | FR-005 | 入力デバイス制御 | InputSystem によるコントローラ / キーボードからの Expression 切り替え |
 | FR-006 | ARKit / PerfectSync 対応 | ARKit 52 ブレンドシェイプ・PerfectSync の自動検出と Expression 自動生成 |
 | FR-007 | リップシンク連携 | 外部リップシンクプラグインからの入力受付インターフェース |
-| FR-008 | Editor 拡張 | Inspector カスタマイズ、プロファイル管理ウィンドウ、Expression 作成支援 |
+| FR-008 | Editor 拡張 | Inspector カスタマイズ（プロファイル管理・Expression CRUD・検索・インポート/エクスポート統合）、Expression 作成支援 |
 | FR-009 | JSON インポート / エクスポート | プロファイルの JSON 形式での入出力 |
 
 ### 3.2 機能詳細
@@ -141,8 +141,8 @@ Unity エンジニア（開発者）。本プロジェクトはライブラリ�
 |-------------|------|
 | デフォルト | 無操作時の基本表情。ニュートラルフェイスをユーザーが設定可能（モデルのデフォルトが意図しない表情の場合に上書き用） |
 | まばたき | まばたき制御 |
-| 目線操作 | ボーン制御 / BlendShape 制御の両方に対応。モデル構成に応じてユーザーが選択 |
-| カメラ目線 | ボーン制御 / BlendShape 制御の両方に対応。モデル構成に応じてユーザーが選択 |
+| 目線操作 | Profile の Gaze セクションで構成する独立チャネル。Vector2 入力から目ボーンを制御し、入力 source は Inspector で選択 |
+| カメラ目線 | Gaze の入力 source 拡張点として扱う。procedural なカメラ目線 source と Vector3 ターゲット指定は将来対応 |
 
 - Expression 数に依存しない設計とし、今後の追加を容易にする
 - ユーザーカスタム Expression の上限は暫定 512。ペイロード数を可変にし通信帯域を節約
@@ -166,7 +166,7 @@ Unity エンジニア（開発者）。本プロジェクトはライブラリ�
 |---------|--------|------|
 | 感情ベース（emotion） | 最低 | 喜怒哀楽などの基本表情 |
 | リップシンク（lipsync） | 中 | 口の動き（外部プラグインからの入力） |
-| 目（eye） | 高 | まばたき・目線操作 |
+| 目（eye） | 高 | まばたき等の BlendShape 表情。Gaze（目ボーン駆動）はレイヤー外の独立チャネル |
 
 **排他制御**
 
@@ -310,8 +310,7 @@ UI Toolkit で実装する Editor 専用の拡張機能群。ランタイム UI 
 
 | 機能 | 説明 |
 |------|------|
-| Inspector カスタマイズ | FacialController コンポーネント（プロファイル SO 参照、Renderer リスト）の編集 UI |
-| プロファイル管理ウィンドウ | EditorWindow によるプロファイル内の Expression 一覧表示、名前検索、プレビュー機能。データソースはプロファイル JSON |
+| Inspector カスタマイズ | FacialController コンポーネントの編集 UI + FacialProfileSO Inspector でのプロファイル管理（Expression の追加・編集・削除・検索、JSON インポート/エクスポート、新規プロファイル作成）。データソースはプロファイル JSON |
 | Expression 作成支援ツール | 専用プレビューウィンドウ（Scene とは独立）で 3D モデルを表示し、BlendShape スライダーでリアルタイムプレビューしながら Expression を作成。Scene オブジェクトと Prefab/FBX の両方から対象モデルを指定可能。プレビューは値変更毎に即座更新 |
 | JSON インポート / エクスポート | プロファイル JSON の入出力。SO と JSON の同期は手動エクスポートのみ |
 | ARKit 検出ツール | BlendShape スキャン + Expression / OSC マッピング自動生成 |
@@ -468,7 +467,7 @@ Tests/
 
 ### 5.3 表情制御方式
 
-ブレンドシェイプ + ボーン + テクスチャ切り替え + UV アニメーションの組み合わせ。
+ブレンドシェイプ + ボーン + テクスチャ切り替え + UV アニメーションの組み合わせ。Gaze の目ボーン駆動は Expression / レイヤー合成とは独立した経路である。
 
 | 制御方式 | 用途 |
 |---------|------|
@@ -501,7 +500,7 @@ JSON (FacialProfile)
 | パッケージ名 | `com.hidano.facialcontrol` |
 | C# 名前空間 | `Hidano.FacialControl`（例: `Hidano.FacialControl.Domain`） |
 | ライセンス | MIT |
-| 配布先 | OpenUPM |
+| 配布先 | npmjs.com |
 | uOsc | 自前フォーク `com.hidano.uosc` を必須依存として npmjs.com から取得 |
 
 ---
@@ -540,8 +539,8 @@ JSON (FacialProfile)
 | Editor 拡張（フルエディタ） | 含む |
 | OSC 通信 | 含む |
 | ARKit / PerfectSync 完全対応 | 含む |
-| API ドキュメント（DocFX 自動生成） | 含む |
-| サンプルシーン | 含まない（別リポジトリまたは後のリリースで提供） |
+| パッケージドキュメント（README / Documentation~ の Markdown） | 含む |
+| サンプルシーン | `com.hidano.facialcontrol.inputsystem` の `Multi Source Blend Demo` を同梱（Scene + FacialProfileSO + InputBindingProfileSO + JSON + HUD 一式、モデルはユーザー持ち込み） |
 | OSC マッピング Editor UI | 含まない（JSON 直接編集のみ） |
 
 ### 7.3 実装順序

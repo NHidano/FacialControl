@@ -1,0 +1,24 @@
+﻿{
+    "schemaVersion": "1.0",
+    "layers": [
+        {
+            "name": "emotion",
+            "priority": 0,
+            "exclusionMode": "lastWins",
+            "inputSources": [
+                {"id": "input", "weight": 1.0, "options": {}}
+            ]
+        }
+    ],
+    "expressions": [
+        {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "name": "blink",
+            "layer": "emotion",
+            "transitionDuration": 0.25,
+            "transitionCurve": {"type": "linear", "keys": []},
+            "blendShapeValues": [],
+            "layerSlots": []
+        }
+    ]
+}

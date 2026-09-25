@@ -1,0 +1,22 @@
+{
+    "name": "Hidano.FacialControl.IFacialMocap.Editor",
+    "rootNamespace": "Hidano.FacialControl.IFacialMocap.Editor",
+    "references": [
+        "Hidano.FacialControl.Domain",
+        "Hidano.FacialControl.Application",
+        "Hidano.FacialControl.Adapters",
+        "Hidano.FacialControl.Editor",
+        "Hidano.FacialControl.IFacialMocap"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）。OpenUPM へのリリースを想定。主なユースケースは VTuber 配信用フェイシャルキャプチャ連動と、GUI エディタでの AnimationClip 作成支援。ターゲットユーザーは Unity エンジニア。
+FacialControl は、3D キャラクターの表情をリアルタイムに制御する Unity 向けライブラリ（開発者向けアセット）。npmjs.com へのリリースを想定。主なユースケースは VTuber 配信用フェイシャルキャプチャ連動と、GUI エディタでの AnimationClip 作成支援。ターゲットユーザーは Unity エンジニア。
 
 ## 重要なドキュメント
 
 - **QA シート**: `docs/requirements-qa.md` — プロジェクト要件の詳細な Q&A。実装判断に迷った場合はここを参照
 - **要件定義**: `docs/requirements.md`
+- **作業手順書**: `docs/work-procedure.md` — 実装作業のフェーズ・タスク分解。「作業手順書」と呼ばれたらこのファイルを参照
+- **Backlog**: `docs/backlog.md` — 「別 PR ネタ」「preview.2 以降」「別 spec で対処」と先送りされたタスクの集約先。HANDOVER.md の優先度低項目はここへ昇格させる
 - **Copilot 指示**: `.github/copilot-instructions.md`
 
 ## 開発環境
 
-- **Unity**: 6000.3.2f1 (Unity 6)
+- **Unity**: 6000.3.19f1 (Unity 6)。Editor 実体は `D:/UnityEditors/6000.3.19f1/Editor/Unity.exe`（他バージョンでの batchmode 実行禁止 — `ProjectVersion.txt` が書き換わり全リインポートが走る）
 - **レンダリング**: URP v17.3.0（PC / モバイル別設定あり）
 - **カラースペース**: Linear
 - **Unity プロジェクトルート**: `FacialControl/` ディレクトリ配下
@@ -87,10 +89,8 @@ Editor/                 # Editor 拡張（UI Toolkit）
 
 ### Editor 拡張
 
-- Inspector カスタマイズ（プロファイル編集 UI）
-- 表情プロファイル管理ウィンドウ（EditorWindow）
+- Inspector カスタマイズ（FacialProfileSO Inspector でプロファイル管理を一元化: Expression の追加・編集・削除・検索、JSON インポート/エクスポート、新規プロファイル作成）
 - AnimationClip 作成支援ツール（専用プレビューウィンドウで BlendShape スライダー操作）
-- JSON インポート / エクスポート
 - UI Toolkit で実装。ランタイム UI は提供しない
 
 ### 入力システム
@@ -197,11 +197,13 @@ Tests/
 - 機能単位リリース: preview.1 → preview.2 → ... → 1.0.0
 - 2026 年 2 月末までにプレリリース目標
 - プレリリーススコープ: コア + Editor 拡張 + OSC 通信 + ARKit/PerfectSync 完全対応
-- プレリリースにはドキュメントのみ同梱（サンプルシーンなし）
+- プレリリース同梱物: ドキュメント + `com.hidano.facialcontrol.inputsystem` の `Multi Source Blend Demo` サンプル（Scene / FacialProfileSO / InputBindingProfileSO / JSON / HUD 一式。モデルはユーザー持ち込み）
 
 ## Claude Code 実行ルール
 
 - Unity テストランナーは `run_in_background` を使わず、`timeout: 600000` の同期 Bash 呼び出しで実行する
+- `tasks.txt` は作業手順書（`docs/work-procedure.md`）に記載のタスク ID のみを列挙するファイルである。ターミナルから for 文で連続実行するために使用する。タスクの説明や詳細を `tasks.txt` に直接追記してはならない。タスクの追加・変更は必ず `docs/work-procedure.md` に記載し、`tasks.txt` には ID のみを転記する
+- 同じ原因仮説を 2 回外したら、推測を続けず実機ログ/データ取得に切り替えて一度ユーザーに確認する
 
 ## 重要な注意事項
 
@@ -214,6 +216,58 @@ Tests/
 - `FacialControl/Packages/manifest.json` でパッケージ更新
 - `packages-lock.json` を同期維持
 
+### Samples 配置ルール
+- `Packages/com.hidano.facialcontrol*/Samples~/` が UPM 配布用の canonical なサンプル置き場。`package.json` の `samples` 配列に登録されたもののみが Package Manager から Import 可能
+- `Assets/Samples/` は使用しない（過去の dev 動作確認用 mirror を削除済み）。動作確認は `Samples~` を直接編集し、必要に応じて Package Manager の Import Sample 経由で `Assets/Samples/` に展開する
+- サンプル Scene にはユーザーモデルを同梱しない。README で「モデル持ち込み」方式を案内する（`Multi Source Blend Demo` / `OscOutputDemo` / `OscReceiverDemo` 共通）
+
 ### バージョン管理
 - 短縮系命令形コミットメッセージ（日本語可）
 - 例: "表情プロファイルのJSON読み込み機能を追加"
+
+
+# Agentic SDLC and Spec-Driven Development
+
+Kiro-style Spec-Driven Development on an agentic SDLC
+
+## Project Context
+
+### Paths
+- Steering: `.kiro/steering/`
+- Specs: `.kiro/specs/`
+
+### Steering vs Specification
+
+**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
+**Specs** (`.kiro/specs/`) - Formalize development process for individual features
+
+### Active Specifications
+- Check `.kiro/specs/` for active specifications
+- Use `/kiro:spec-status [feature-name]` to check progress
+
+## Development Guidelines
+- Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
+
+## Minimal Workflow
+- Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`
+- Phase 1 (Specification):
+  - `/kiro:spec-init "description"`
+  - `/kiro:spec-requirements {feature}`
+  - `/kiro:validate-gap {feature}` (optional: for existing codebase)
+  - `/kiro:spec-design {feature} [-y]`
+  - `/kiro:validate-design {feature}` (optional: design review)
+  - `/kiro:spec-tasks {feature} [-y]`
+- Phase 2 (Implementation): `/kiro:spec-impl {feature} [tasks]`
+  - `/kiro:validate-impl {feature}` (optional: after implementation)
+- Progress check: `/kiro:spec-status {feature}` (use anytime)
+
+## Development Rules
+- 3-phase approval workflow: Requirements → Design → Tasks → Implementation
+- Human review required each phase; use `-y` only for intentional fast-track
+- Keep steering current and verify alignment with `/kiro:spec-status`
+- Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
+
+## Steering Configuration
+- Load entire `.kiro/steering/` as project memory
+- Default files: `product.md`, `tech.md`, `structure.md`
+- Custom files are supported (managed via `/kiro:steering-custom`)

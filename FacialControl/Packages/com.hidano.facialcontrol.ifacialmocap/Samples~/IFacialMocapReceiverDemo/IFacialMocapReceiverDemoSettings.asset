@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b103e6453bc41f3b02e9f40c47846e4, type: 3}
+  m_Name: IFacialMocapReceiverDemoSettings
+  m_EditorClassIdentifier:
+  _items:
+  - {fileID: 7390215486033129640}
+--- !u!114 &7390215486033129640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0df37fbc13754938b06dc484b47754d2, type: 3}
+  m_Name: IFacialMocapReceiverSettings
+  m_EditorClassIdentifier:
+  _label: receiver
+  _schemaVersion: 1
+  _receiverEnabled: 1
+  _listenPort: 49983
+  _deviceAddress:
+  _sendHandshake: 0
+  _dataVersion: 0
+  _handshakeIntervalSeconds: 1
+  _stalenessSeconds: 1
+  _failSafeMode: 0
+  _enableGaze: 1
+  _eyeGaze:
+    maxYawDegrees: 30
+    maxPitchDegrees: 25
+    invertYaw: 0
+    invertPitch: 0
+  _enableHead: 1
+  _includeHeadPosition: 0
